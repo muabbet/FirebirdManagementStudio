@@ -31,6 +31,10 @@ baglantilar.json
 ayar.json
 *.dpapi
 
+# Tema (RAD Studio ile gelir, depoya konmaz)
+*.vsf
+Stiller/
+
 # Firebird istemci dosyalari (Firebird'un kendi lisansi var, depoya konmaz)
 istemci/
 fbclient.dll
