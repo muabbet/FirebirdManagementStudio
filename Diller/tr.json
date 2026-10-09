@@ -1,0 +1,72 @@
+{
+  "DIL_ADI": "Türkçe",
+  "APP_BASLIK": "Firebird Yöneticisi",
+
+  "BTN_BAGLAN": "Bağlan",
+  "BTN_KES": "Bağlantıyı Kes",
+  "BTN_YENILE": "Yenile",
+  "BTN_EVET": "Evet",
+  "BTN_HAYIR": "Hayır",
+  "BTN_KAPAT": "Kapat",
+  "BTN_YENI": "Yeni",
+  "BTN_SIL": "Listeden Kaldır",
+  "LBL_DIL": "Dil",
+
+  "AGAC_TABLOLAR": "Tablolar",
+  "AGAC_VIEWLAR": "View'lar",
+  "AGAC_PROSEDURLER": "Prosedürler",
+  "AGAC_GENERATORLER": "Generator'lar",
+
+  "MENU_AC": "Aç (kolonlar ve ilk satırlar)",
+  "MENU_YENILE": "Yenile",
+  "MENU_SEKME_KAPAT": "Sekmeyi kapat",
+
+  "DURUM_BAGLI": "Bağlı: %s",
+  "DURUM_BAGLI_DEGIL": "Bağlı değil",
+  "DURUM_SURUM": "Firebird %s",
+  "DURUM_ISLEM_ACIK": "İşlem: açık",
+  "DURUM_ISLEM_KAPALI": "İşlem: kapalı",
+
+  "MSG_BAGLANDI": "Bağlandı: %s (Firebird %s)",
+  "MSG_KESILDI": "Bağlantı kesildi.",
+  "MSG_AGAC_YENILENDI": "Nesne listesi yenilendi.",
+  "MSG_TABLO_ACILDI": "%s tablosu açıldı. En fazla %d satır gösteriliyor.",
+
+  "AYRINTI": "Ayrıntı",
+
+  "LBL_KOLONLAR": "Kolonlar",
+  "LBL_ILK_SATIRLAR": "İlk satırlar",
+  "KOLON_AD": "Kolon",
+  "KOLON_TIP": "Veri tipi",
+  "KOLON_BOS_OLUR": "Boş olabilir",
+  "EVET": "Evet",
+  "HAYIR": "Hayır",
+
+  "BAGLANTI_BASLIK": "Veritabanına Bağlan",
+  "LBL_KAYITLI": "Kayıtlı bağlantılar",
+  "LBL_BAGLANTI_AD": "Bağlantı adı",
+  "LBL_SUNUCU": "Sunucu",
+  "LBL_PORT": "Port",
+  "LBL_VERITABANI": "Veritabanı yolu (sunucudaki yol)",
+  "LBL_KULLANICI": "Kullanıcı",
+  "LBL_SIFRE": "Şifre",
+  "LBL_KARAKTER_SETI": "Karakter seti",
+  "CHK_SIFRE_KAYDET": "Şifreyi bu bilgisayarda şifreli sakla",
+  "DOSYA_FILTRE": "Firebird veritabanı (*.fdb;*.gdb)|*.fdb;*.gdb|Tüm dosyalar (*.*)|*.*",
+
+  "ONAY_BASLIK": "Onay",
+  "ONAY_BAGLANTI_SIL": "'%s' kayıtlı bağlantısı listeden kaldırılsın mı? Veritabanına dokunulmaz.",
+
+  "ERR_SIFRE": "Kullanıcı adı veya şifre yanlış.",
+  "ERR_SUNUCU": "Sunucuya ulaşılamadı. Sunucu adını, port numarasını ve Firebird servisinin çalıştığını kontrol edin.",
+  "ERR_VERITABANI": "Veritabanı dosyası bulunamadı veya açılamadı. Yolu kontrol edin (bu yol sunucunun bilgisayarındaki yoldur).",
+  "ERR_KILIT": "Kayıt başka bir kullanıcı tarafından kilitlenmiş. Biraz sonra tekrar deneyin.",
+  "ERR_KOPTU": "Sunucu ile bağlantı koptu. Yeniden bağlanın.",
+  "ERR_ISTEMCI": "Firebird istemci dosyası (fbclient.dll) yüklenemedi. Programın yanındaki 'istemci' klasörünü kontrol edin.",
+  "ERR_ISTEMCI_YOK": "Firebird istemci dosyası bulunamadı: %s",
+  "ERR_GENEL": "Beklenmeyen bir hata oluştu.",
+  "ERR_YOL_BOS": "Veritabanı yolunu girin.",
+  "ERR_PORT": "Port, 1 ile 65535 arasında bir sayı olmalı.",
+  "ERR_DPAPI": "Şifre Windows tarafından şifrelenemedi.",
+  "ERR_TABLO_ACILAMADI": "%s tablosu açılamadı."
+}
