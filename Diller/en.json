@@ -1,0 +1,72 @@
+{
+  "DIL_ADI": "English",
+  "APP_BASLIK": "Firebird Manager",
+
+  "BTN_BAGLAN": "Connect",
+  "BTN_KES": "Disconnect",
+  "BTN_YENILE": "Refresh",
+  "BTN_EVET": "Yes",
+  "BTN_HAYIR": "No",
+  "BTN_KAPAT": "Close",
+  "BTN_YENI": "New",
+  "BTN_SIL": "Remove from list",
+  "LBL_DIL": "Language",
+
+  "AGAC_TABLOLAR": "Tables",
+  "AGAC_VIEWLAR": "Views",
+  "AGAC_PROSEDURLER": "Procedures",
+  "AGAC_GENERATORLER": "Generators",
+
+  "MENU_AC": "Open (columns and first rows)",
+  "MENU_YENILE": "Refresh",
+  "MENU_SEKME_KAPAT": "Close tab",
+
+  "DURUM_BAGLI": "Connected: %s",
+  "DURUM_BAGLI_DEGIL": "Not connected",
+  "DURUM_SURUM": "Firebird %s",
+  "DURUM_ISLEM_ACIK": "Transaction: open",
+  "DURUM_ISLEM_KAPALI": "Transaction: closed",
+
+  "MSG_BAGLANDI": "Connected: %s (Firebird %s)",
+  "MSG_KESILDI": "Disconnected.",
+  "MSG_AGAC_YENILENDI": "Object list refreshed.",
+  "MSG_TABLO_ACILDI": "Table %s opened. Showing at most %d rows.",
+
+  "AYRINTI": "Details",
+
+  "LBL_KOLONLAR": "Columns",
+  "LBL_ILK_SATIRLAR": "First rows",
+  "KOLON_AD": "Column",
+  "KOLON_TIP": "Data type",
+  "KOLON_BOS_OLUR": "Nullable",
+  "EVET": "Yes",
+  "HAYIR": "No",
+
+  "BAGLANTI_BASLIK": "Connect to Database",
+  "LBL_KAYITLI": "Saved connections",
+  "LBL_BAGLANTI_AD": "Connection name",
+  "LBL_SUNUCU": "Server",
+  "LBL_PORT": "Port",
+  "LBL_VERITABANI": "Database path (path on the server)",
+  "LBL_KULLANICI": "User",
+  "LBL_SIFRE": "Password",
+  "LBL_KARAKTER_SETI": "Character set",
+  "CHK_SIFRE_KAYDET": "Store the password encrypted on this computer",
+  "DOSYA_FILTRE": "Firebird database (*.fdb;*.gdb)|*.fdb;*.gdb|All files (*.*)|*.*",
+
+  "ONAY_BASLIK": "Confirm",
+  "ONAY_BAGLANTI_SIL": "Remove the saved connection '%s' from the list? The database is not touched.",
+
+  "ERR_SIFRE": "The user name or password is wrong.",
+  "ERR_SUNUCU": "The server could not be reached. Check the server name, the port number and that the Firebird service is running.",
+  "ERR_VERITABANI": "The database file was not found or could not be opened. Check the path (it is the path on the server's computer).",
+  "ERR_KILIT": "The record is locked by another user. Try again in a moment.",
+  "ERR_KOPTU": "The connection to the server was lost. Please connect again.",
+  "ERR_ISTEMCI": "The Firebird client file (fbclient.dll) could not be loaded. Check the 'istemci' folder next to the program.",
+  "ERR_ISTEMCI_YOK": "Firebird client file not found: %s",
+  "ERR_GENEL": "An unexpected error occurred.",
+  "ERR_YOL_BOS": "Enter the database path.",
+  "ERR_PORT": "The port must be a number between 1 and 65535.",
+  "ERR_DPAPI": "Windows could not encrypt the password.",
+  "ERR_TABLO_ACILAMADI": "Table %s could not be opened."
+}

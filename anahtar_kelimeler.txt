@@ -1,0 +1,27 @@
+# SQL anahtar kelimeleri ve veri tipleri. Her satira bir kelime.
+# Asama 2'de SQL editoru (SynEdit) bu dosyayi okuyacak. Surume ozel kelimeler
+# "#FB3", "#FB4", "#FB5" gibi basliklarla ayrilabilir.
+SELECT
+FROM
+WHERE
+INSERT
+UPDATE
+DELETE
+CREATE
+ALTER
+DROP
+TABLE
+VIEW
+PROCEDURE
+TRIGGER
+GENERATOR
+SEQUENCE
+INTEGER
+BIGINT
+SMALLINT
+VARCHAR
+CHAR
+DATE
+TIME
+TIMESTAMP
+BLOB

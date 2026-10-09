@@ -1,0 +1,72 @@
+{
+  "DIL_ADI": "Deutsch",
+  "APP_BASLIK": "Firebird-Verwaltung",
+
+  "BTN_BAGLAN": "Verbinden",
+  "BTN_KES": "Trennen",
+  "BTN_YENILE": "Aktualisieren",
+  "BTN_EVET": "Ja",
+  "BTN_HAYIR": "Nein",
+  "BTN_KAPAT": "Schließen",
+  "BTN_YENI": "Neu",
+  "BTN_SIL": "Aus Liste entfernen",
+  "LBL_DIL": "Sprache",
+
+  "AGAC_TABLOLAR": "Tabellen",
+  "AGAC_VIEWLAR": "Views",
+  "AGAC_PROSEDURLER": "Prozeduren",
+  "AGAC_GENERATORLER": "Generatoren",
+
+  "MENU_AC": "Öffnen (Spalten und erste Zeilen)",
+  "MENU_YENILE": "Aktualisieren",
+  "MENU_SEKME_KAPAT": "Tab schließen",
+
+  "DURUM_BAGLI": "Verbunden: %s",
+  "DURUM_BAGLI_DEGIL": "Nicht verbunden",
+  "DURUM_SURUM": "Firebird %s",
+  "DURUM_ISLEM_ACIK": "Transaktion: offen",
+  "DURUM_ISLEM_KAPALI": "Transaktion: geschlossen",
+
+  "MSG_BAGLANDI": "Verbunden: %s (Firebird %s)",
+  "MSG_KESILDI": "Verbindung getrennt.",
+  "MSG_AGAC_YENILENDI": "Objektliste aktualisiert.",
+  "MSG_TABLO_ACILDI": "Tabelle %s geöffnet. Es werden höchstens %d Zeilen angezeigt.",
+
+  "AYRINTI": "Details",
+
+  "LBL_KOLONLAR": "Spalten",
+  "LBL_ILK_SATIRLAR": "Erste Zeilen",
+  "KOLON_AD": "Spalte",
+  "KOLON_TIP": "Datentyp",
+  "KOLON_BOS_OLUR": "Null erlaubt",
+  "EVET": "Ja",
+  "HAYIR": "Nein",
+
+  "BAGLANTI_BASLIK": "Mit Datenbank verbinden",
+  "LBL_KAYITLI": "Gespeicherte Verbindungen",
+  "LBL_BAGLANTI_AD": "Verbindungsname",
+  "LBL_SUNUCU": "Server",
+  "LBL_PORT": "Port",
+  "LBL_VERITABANI": "Datenbankpfad (Pfad auf dem Server)",
+  "LBL_KULLANICI": "Benutzer",
+  "LBL_SIFRE": "Passwort",
+  "LBL_KARAKTER_SETI": "Zeichensatz",
+  "CHK_SIFRE_KAYDET": "Passwort verschlüsselt auf diesem Computer speichern",
+  "DOSYA_FILTRE": "Firebird-Datenbank (*.fdb;*.gdb)|*.fdb;*.gdb|Alle Dateien (*.*)|*.*",
+
+  "ONAY_BASLIK": "Bestätigung",
+  "ONAY_BAGLANTI_SIL": "Die gespeicherte Verbindung '%s' aus der Liste entfernen? Die Datenbank wird nicht verändert.",
+
+  "ERR_SIFRE": "Benutzername oder Passwort ist falsch.",
+  "ERR_SUNUCU": "Der Server ist nicht erreichbar. Prüfen Sie Servername, Portnummer und ob der Firebird-Dienst läuft.",
+  "ERR_VERITABANI": "Die Datenbankdatei wurde nicht gefunden oder konnte nicht geöffnet werden. Prüfen Sie den Pfad (es ist der Pfad auf dem Server-Computer).",
+  "ERR_KILIT": "Der Datensatz ist von einem anderen Benutzer gesperrt. Versuchen Sie es gleich noch einmal.",
+  "ERR_KOPTU": "Die Verbindung zum Server wurde unterbrochen. Bitte erneut verbinden.",
+  "ERR_ISTEMCI": "Die Firebird-Clientdatei (fbclient.dll) konnte nicht geladen werden. Prüfen Sie den Ordner 'istemci' neben dem Programm.",
+  "ERR_ISTEMCI_YOK": "Firebird-Clientdatei nicht gefunden: %s",
+  "ERR_GENEL": "Ein unerwarteter Fehler ist aufgetreten.",
+  "ERR_YOL_BOS": "Geben Sie den Datenbankpfad ein.",
+  "ERR_PORT": "Der Port muss eine Zahl zwischen 1 und 65535 sein.",
+  "ERR_DPAPI": "Windows konnte das Passwort nicht verschlüsseln.",
+  "ERR_TABLO_ACILAMADI": "Tabelle %s konnte nicht geöffnet werden."
+}
