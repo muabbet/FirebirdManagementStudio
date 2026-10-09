@@ -35,6 +35,9 @@ begin
   try
     Result.Connection := FbBaglantisi;
     Result.UpdateOptions.ReadOnly := True;
+    { En fazla 100 satir hepsi birden cekilir. Boylece okuma isleminin sunucuda
+      acik kalmasi onlenir (parca parca cekme Asama 2'de, buraya eklenecek). }
+    Result.FetchOptions.Mode := fmAll;
     Result.SQL.Text := 'SELECT FIRST ' + IntToStr(SatirSayisi) + ' * FROM ' + TirnakliAd(Tablo);
     Result.Open;
   except

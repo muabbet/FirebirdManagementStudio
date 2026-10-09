@@ -1,7 +1,8 @@
 program FirebirdYonetici;
 
 { Firebird Yoneticisi - Win64, Delphi (RAD Studio 12), VCL + FireDAC.
-  Test edilen Firebird surumleri: 2.5, 3.0, 4.0, 5.0 }
+  Hedeflenen Firebird surumleri: 2.5, 3.0, 4.0, 5.0
+  Denenen Firebird surumleri: 2.5.9, 5.0.4 }
 
 uses
   System.SysUtils,

@@ -68,5 +68,11 @@
   "ERR_YOL_BOS": "Veritabanı yolunu girin.",
   "ERR_PORT": "Port, 1 ile 65535 arasında bir sayı olmalı.",
   "ERR_DPAPI": "Şifre Windows tarafından şifrelenemedi.",
-  "ERR_TABLO_ACILAMADI": "%s tablosu açılamadı."
+  "ERR_TABLO_ACILAMADI": "%s tablosu açılamadı.",
+
+  "BTN_TAMAM": "Tamam",
+  "UYARI_BASLIK": "Uyarı",
+  "ERR_BAGLANTI_DOSYASI_BOZUK": "Kayıtlı bağlantılar dosyası okunamadı. Dosya silinmedi, şu adla yanına taşındı: %s. Bağlantılarınızı bu dosyadan geri alabilirsiniz.",
+  "ERR_KAYIT_BASARISIZ": "Bağlantı kuruldu ancak bağlantı bilgileri kaydedilemedi. Bağlantı açık kalıyor, bir sonraki açılışta listede görünmeyebilir.",
+  "ERR_IKON_YOK": "İkon dosyası bulunamadı: %s. Programın yanındaki 'Ikonlar' klasörünün eksiksiz olduğundan emin olun."
 }

@@ -68,5 +68,11 @@
   "ERR_YOL_BOS": "Geben Sie den Datenbankpfad ein.",
   "ERR_PORT": "Der Port muss eine Zahl zwischen 1 und 65535 sein.",
   "ERR_DPAPI": "Windows konnte das Passwort nicht verschlüsseln.",
-  "ERR_TABLO_ACILAMADI": "Tabelle %s konnte nicht geöffnet werden."
+  "ERR_TABLO_ACILAMADI": "Tabelle %s konnte nicht geöffnet werden.",
+
+  "BTN_TAMAM": "OK",
+  "UYARI_BASLIK": "Warnung",
+  "ERR_BAGLANTI_DOSYASI_BOZUK": "Die Datei mit den gespeicherten Verbindungen konnte nicht gelesen werden. Sie wurde nicht gelöscht, sondern daneben verschoben als: %s. Ihre Verbindungen können Sie aus dieser Datei wiederherstellen.",
+  "ERR_KAYIT_BASARISIZ": "Die Verbindung wurde hergestellt, aber ihre Angaben konnten nicht gespeichert werden. Die Verbindung bleibt geöffnet, erscheint aber beim nächsten Mal eventuell nicht in der Liste.",
+  "ERR_IKON_YOK": "Symboldatei nicht gefunden: %s. Prüfen Sie, ob der Ordner 'Ikonlar' neben dem Programm vollständig ist."
 }
