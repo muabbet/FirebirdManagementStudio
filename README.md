@@ -4,7 +4,7 @@ Firebird için sade, kolay kullanımlı, SSMS'e benzeyen yönetim aracı. Delphi
 
 > **Kişisel proje, destek sınırlı.** Boş zamanda yavaş yavaş geliştirilir.
 
-Test edilen Firebird sürümleri: 2.5, 3.0, 4.0, 5.0 (Aşama 1'de 2.5.9 ve 5.0.4 hedeflendi).
+Hedeflenen Firebird sürümleri: 2.5, 3.0, 4.0, 5.0. Denenen: 2.5.9 ve 5.0.4 (3.0 ve 4.0 henüz denenmedi).
 
 ## Durum
 
@@ -29,5 +29,7 @@ Tek bir `fbclient.dll` (5.0) yüklenir; 2.5 ve 5.0 sunuculara onunla bağlanıl�
 ## Deneme
 
 `Test\MetadataTest.dpr`: arayüz açmadan bağlantı, metadata ve ilk satırları dener. Şifre ortam değişkeninden (`FBTEST_SIFRE`) okunur, hiçbir dosyaya yazılmaz.
+
+`Test\BaglantiDosyasiTest.dpr`: kayıtlı bağlantı dosyasının güvenliğini (bozuk dosyanın silinmeden yanına taşınması, atomik yazma, DPAPI şifre gidiş-dönüş) geçici bir klasörde dener, gerçek verilere dokunmaz. Bu iki deneme programı için `.dproj` yoktur; `dcc64` ile derlenir (örnek: `dcc64 Test\BaglantiDosyasiTest.dpr -UKaynak`).
 
 Lisanslar: `LISANSLAR.md`.
