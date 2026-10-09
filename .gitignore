@@ -1,0 +1,39 @@
+# Derleme ciktilari
+bin/
+obj/
+Win32/
+Win64/
+*.exe
+*.dcu
+*.res
+*.map
+*.rsm
+*.drc
+*.dsv
+*.stat
+*.identcache
+*.dsk
+*.tvsconfig
+*.local
+*.~*
+__history/
+__recovery/
+
+# Veritabanlari ve yedekleri (gercek veri GitHub'a gitmesin)
+*.fdb
+*.gdb
+*.fbk
+*.nbk
+*.fbz
+
+# Baglanti ve ayar dosyalari (sifreli de olsa gitmesin)
+baglantilar.json
+ayar.json
+*.dpapi
+
+# Firebird istemci dosyalari (Firebird'un kendi lisansi var, depoya konmaz)
+istemci/
+fbclient.dll
+
+# Ajan arsivi ve gecici dosyalar
+_arsiv/
