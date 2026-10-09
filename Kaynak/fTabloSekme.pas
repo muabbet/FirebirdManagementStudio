@@ -20,8 +20,6 @@ type
     gridVeri: TDBGrid;
     dsKolonlar: TDataSource;
     dsVeri: TDataSource;
-  private
-    FTablo: string;
   public
     procedure Yukle(const Tablo: string);
     procedure YazilariYenile;
@@ -33,7 +31,6 @@ implementation
 
 procedure TTabloSekme.Yukle(const Tablo: string);
 begin
-  FTablo := Tablo;
   dsKolonlar.DataSet := KolonTablosuOlustur(Tablo, Self);
   dsVeri.DataSet := TabloVerisiSorgusu(Tablo, ILK_SATIR_SAYISI, Self);
   YazilariYenile;

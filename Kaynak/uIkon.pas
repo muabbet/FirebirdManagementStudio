@@ -7,7 +7,8 @@ unit uIkon;
 interface
 
 uses
-  System.SysUtils, System.IOUtils, Vcl.Graphics, Vcl.ImageCollection, Vcl.VirtualImageList, Vcl.ImgList;
+  System.SysUtils, System.IOUtils, Vcl.Graphics, Vcl.ImageCollection, Vcl.VirtualImageList, Vcl.ImgList,
+  uDil;
 
 const
   IKON_BAGLAN = 0;
@@ -40,7 +41,7 @@ begin
     if TFile.Exists(Dosya) then
       Koleksiyon.Add(Ad, Dosya)
     else
-      raise Exception.Create(Dosya);
+      raise Exception.Create(TF('ERR_IKON_YOK', [Dosya]));
   end;
   { Sanal ikon listesi, koleksiyona sonradan eklenenleri bu sekilde alir. }
   Liste.ColorDepth := cd32Bit;

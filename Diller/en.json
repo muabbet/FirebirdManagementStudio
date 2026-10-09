@@ -68,5 +68,11 @@
   "ERR_YOL_BOS": "Enter the database path.",
   "ERR_PORT": "The port must be a number between 1 and 65535.",
   "ERR_DPAPI": "Windows could not encrypt the password.",
-  "ERR_TABLO_ACILAMADI": "Table %s could not be opened."
+  "ERR_TABLO_ACILAMADI": "Table %s could not be opened.",
+
+  "BTN_TAMAM": "OK",
+  "UYARI_BASLIK": "Warning",
+  "ERR_BAGLANTI_DOSYASI_BOZUK": "The saved connections file could not be read. It was not deleted but moved next to the original as: %s. You can recover your connections from that file.",
+  "ERR_KAYIT_BASARISIZ": "The connection was established but its details could not be saved. The connection stays open, but it may not appear in the list next time.",
+  "ERR_IKON_YOK": "Icon file not found: %s. Make sure the 'Ikonlar' folder next to the program is complete."
 }

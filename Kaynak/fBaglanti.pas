@@ -81,10 +81,16 @@ begin
 end;
 
 procedure TfrmBaglanti.FormCreate(Sender: TObject);
+var
+  Uyari: string;
 begin
   YazilariYenile;
   ListeyiDoldur;
   AlanlariBosalt;
+  { Kayitli baglanti dosyasi bozuksa silinmeden yanina tasinmistir, kullanici bilgilendirilir. }
+  Uyari := BozukDosyaUyarisiAl;
+  if Uyari <> '' then
+    HataGoster(Uyari, '');
 end;
 
 procedure TfrmBaglanti.YazilariYenile;
@@ -257,14 +263,20 @@ begin
     except
       on E: Exception do
       begin
-        HataGoster(HataMetniniCevir(E.Message), E.Message);
+        HataGoster(HataMetniniCevir(E), E.Message);
         Exit;
       end;
     end;
   finally
     Screen.Cursor := crDefault;
   end;
-  BaglantiKaydet(Tanim);
+  { Baglanti kuruldu. Kayit basarisiz olsa bile baglanti acik kalir ve pencere kapanir. }
+  try
+    BaglantiKaydet(Tanim);
+  except
+    on E: Exception do
+      UyariGoster(T('ERR_KAYIT_BASARISIZ') + #13#10#13#10 + T('AYRINTI') + ': ' + E.Message);
+  end;
   ModalResult := mrOk;
 end;
 

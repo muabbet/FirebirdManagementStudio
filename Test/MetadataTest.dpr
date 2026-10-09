@@ -11,7 +11,8 @@ program MetadataTest;
 {$APPTYPE CONSOLE}
 
 uses
-  System.SysUtils, System.Classes, System.IOUtils, Data.DB,
+  System.SysUtils, System.Classes, System.IOUtils, System.Variants, Data.DB,
+  FireDAC.Stan.Error, FireDAC.Comp.Client,
   uDil, uBaglanti, uMetadata, uSorgu;
 
 function Ortam(const Ad, Varsayilan: string): string;
@@ -38,6 +39,7 @@ var
   Veri: TDataSet;
   i: Integer;
   Satir: string;
+  Basit: TFDQuery;
 begin
   Cikti := TStringList.Create;
   Liste := TStringList.Create;
@@ -76,7 +78,18 @@ begin
           Kolonlar.Next;
         end;
         Cikti.Add('--- Ilk satirlar: ' + Tablo);
+        { Karsilastirma: varsayilan getirme ayarlariyla acilan sorgu }
+        Basit := TFDQuery.Create(nil);
+        Basit.Connection := FbBaglantisi;
+        Basit.SQL.Text := 'SELECT FIRST 100 * FROM "' + Tablo + '"';
+        Basit.Open;
+        Cikti.Add('[varsayilan ayarli sorgu] FbIslemAcikMi = ' + BoolToStr(FbIslemAcikMi, True) + ', sunucuda acik islem = ' +
+          VarToStr(FbBaglantisi.ExecSQLScalar('SELECT COUNT(*) FROM MON$TRANSACTIONS WHERE MON$ATTACHMENT_ID = CURRENT_CONNECTION AND MON$TRANSACTION_ID <> CURRENT_TRANSACTION')));
+        Basit.Close;
+        Basit.Free;
         Veri := TabloVerisiSorgusu(Tablo, 5, nil);
+        Cikti.Add('Sorgu acik, FbIslemAcikMi = ' + BoolToStr(FbIslemAcikMi, True) + ', sunucuda acik islem sayisi = ' +
+          VarToStr(FbBaglantisi.ExecSQLScalar('SELECT COUNT(*) FROM MON$TRANSACTIONS WHERE MON$ATTACHMENT_ID = CURRENT_CONNECTION AND MON$TRANSACTION_ID <> CURRENT_TRANSACTION')));
         while not Veri.Eof do
         begin
           Satir := '';
@@ -91,7 +104,10 @@ begin
       on E: Exception do
       begin
         Cikti.Add('HATA (ham): ' + E.ClassName + ': ' + E.Message);
-        Cikti.Add('HATA (anlasilir): ' + HataMetniniCevir(E.Message));
+        if E is EFDDBEngineException then
+          for i := 0 to EFDDBEngineException(E).ErrorCount - 1 do
+            Cikti.Add('  hata kodu: ' + IntToStr(EFDDBEngineException(E).Errors[i].ErrorCode));
+        Cikti.Add('HATA (anlasilir): ' + HataMetniniCevir(E));
       end;
     end;
     Cikti.SaveToFile(Ortam('FBTEST_CIKTI', 'cikti.txt'), TEncoding.UTF8);

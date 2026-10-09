@@ -8,7 +8,7 @@ uses
   Winapi.Windows, System.SysUtils, System.Classes, Vcl.Controls, Vcl.Forms,
   Vcl.ComCtrls, Vcl.ToolWin, Vcl.ExtCtrls, Vcl.StdCtrls, Vcl.Menus,
   Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection, Vcl.ImageCollection,
-  uDil, uIkon, uBaglanti, uMetadata, fBaglanti, fTabloSekme;
+  uDil, uIkon, uBaglanti, uMetadata, uSorgu, fBaglanti, fTabloSekme;
 
 type
   TfrmAna = class(TForm)
@@ -278,12 +278,12 @@ begin
     on E: Exception do
     begin
       Sayfa.Free;
-      HataYaz(TF('ERR_TABLO_ACILAMADI', [Tablo]) + ' ' + HataMetniniCevir(E.Message), E.Message);
+      HataYaz(TF('ERR_TABLO_ACILAMADI', [Tablo]) + ' ' + HataMetniniCevir(E), E.Message);
       Exit;
     end;
   end;
   pcCalisma.ActivePage := Sayfa;
-  MesajYaz(TF('MSG_TABLO_ACILDI', [Tablo, 100]));
+  MesajYaz(TF('MSG_TABLO_ACILDI', [Tablo, ILK_SATIR_SAYISI]));
   DurumuGuncelle;
 end;
 
@@ -298,7 +298,7 @@ begin
     Result := True;
   except
     on E: Exception do
-      HataYaz(HataMetniniCevir(E.Message), E.Message);
+      HataYaz(HataMetniniCevir(E), E.Message);
   end;
 end;
 
@@ -366,6 +366,7 @@ procedure TfrmAna.miSekmeKapatClick(Sender: TObject);
 begin
   if pcCalisma.ActivePage <> nil then
     pcCalisma.ActivePage.Free;
+  DurumuGuncelle;
 end;
 
 end.

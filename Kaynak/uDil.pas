@@ -26,6 +26,7 @@ procedure SonKullanilanDiliKaydet;
 function T(const Anahtar: string): string;
 function TF(const Anahtar: string; const Degerler: array of const): string;
 function UygulamaVeriKlasoru: string;
+procedure VeriKlasoruAyarla(const Yol: string);
 
 implementation
 
@@ -37,15 +38,26 @@ var
   GSecili: TDictionary<string, string>;
   GIngilizce: TDictionary<string, string>;
   GKod: string;
+  GVeriKlasoru: string;
 
 function DilKlasoru: string;
 begin
   Result := TPath.Combine(ExtractFilePath(ParamStr(0)), 'Diller');
 end;
 
+{ Deneme programlari baska bir klasor secebilsin diye. Bos birakilirsa
+  uygulama verisi (Roaming AppData altindaki FirebirdYonetici klasoru) kullanilir. }
+procedure VeriKlasoruAyarla(const Yol: string);
+begin
+  GVeriKlasoru := Yol;
+end;
+
 function UygulamaVeriKlasoru: string;
 begin
-  Result := TPath.Combine(TPath.GetHomePath, 'FirebirdYonetici');
+  if GVeriKlasoru <> '' then
+    Result := GVeriKlasoru
+  else
+    Result := TPath.Combine(TPath.GetHomePath, 'FirebirdYonetici');
   TDirectory.CreateDirectory(Result);
 end;
 

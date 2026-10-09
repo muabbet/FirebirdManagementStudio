@@ -1,6 +1,7 @@
 { uMetadata.pas - Tablo, view, prosedur, generator listeleri ve kolon bilgisi.
 
-  Test edilen Firebird surumleri: 2.5, 3.0, 4.0, 5.0
+  Hedeflenen Firebird surumleri: 2.5, 3.0, 4.0, 5.0
+  Denenen Firebird surumleri: 2.5.9, 5.0.4 (3.0 ve 4.0 henuz denenmedi)
   Surume bagli her sey bu unit'te toplanir. Once FireDAC TFDMetaInfoQuery
   kullanilir, yetmezse RDB$ sistem tablolarina dogrudan sorgu yazilir. }
 unit uMetadata;
