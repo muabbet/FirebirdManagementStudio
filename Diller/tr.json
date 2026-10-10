@@ -2,14 +2,16 @@
   "DIL_ADI": "Türkçe",
   "APP_BASLIK": "Firebird Yöneticisi",
 
+  "BTN_YENI_BAGLANTI": "Yeni Bağlantı",
   "BTN_BAGLAN": "Bağlan",
   "BTN_KES": "Bağlantıyı Kes",
   "BTN_YENILE": "Yenile",
+  "BTN_YENI_KLASOR": "Yeni Klasör",
   "BTN_EVET": "Evet",
   "BTN_HAYIR": "Hayır",
   "BTN_KAPAT": "Kapat",
-  "BTN_YENI": "Yeni",
-  "BTN_SIL": "Listeden Kaldır",
+  "BTN_KAYDET": "Kaydet",
+  "BTN_IPTAL": "İptal",
   "LBL_DIL": "Dil",
 
   "AGAC_TABLOLAR": "Tablolar",
@@ -19,8 +21,13 @@
 
   "MENU_AC": "Aç (kolonlar ve ilk satırlar)",
   "MENU_YENILE": "Yenile",
+  "MENU_DUZENLE": "Düzenle",
+  "MENU_KAYITTAN_KALDIR": "Kayıttan Kaldır",
+  "MENU_KLASOR_ADLANDIR": "Yeniden adlandır",
+  "MENU_KLASOR_KALDIR": "Klasörü kaldır",
   "MENU_SEKME_KAPAT": "Sekmeyi kapat",
 
+  "DURUM_SECIM_YOK": "Ağaçta bir bağlantı seçin",
   "DURUM_BAGLI": "Bağlı: %s",
   "DURUM_BAGLI_DEGIL": "Bağlı değil",
   "DURUM_SURUM": "Firebird %s",
@@ -28,9 +35,11 @@
   "DURUM_ISLEM_KAPALI": "İşlem: kapalı",
 
   "MSG_BAGLANDI": "Bağlandı: %s (Firebird %s)",
-  "MSG_KESILDI": "Bağlantı kesildi.",
-  "MSG_AGAC_YENILENDI": "Nesne listesi yenilendi.",
-  "MSG_TABLO_ACILDI": "%s tablosu açıldı. En fazla %d satır gösteriliyor.",
+  "MSG_KESILDI": "Bağlantı kesildi: %s",
+  "MSG_AGAC_YENILENDI": "%s: nesne listesi yenilendi.",
+  "MSG_TABLO_ACILDI": "%s tablosu açıldı (%s). En fazla %d satır gösteriliyor.",
+  "MSG_KAYIT_KALDIRILDI": "'%s' kayıttan kaldırıldı. Veritabanına dokunulmadı.",
+  "MSG_KLASOR_KALDIRILDI": "'%s' klasörü kaldırıldı. İçindeki bağlantılar kök düzeye çıktı.",
 
   "AYRINTI": "Ayrıntı",
 
@@ -42,8 +51,8 @@
   "EVET": "Evet",
   "HAYIR": "Hayır",
 
-  "BAGLANTI_BASLIK": "Veritabanına Bağlan",
-  "LBL_KAYITLI": "Kayıtlı bağlantılar",
+  "BAGLANTI_BASLIK": "Yeni Bağlantı",
+  "BAGLANTI_DUZENLE_BASLIK": "Bağlantıyı Düzenle",
   "LBL_BAGLANTI_AD": "Bağlantı adı",
   "LBL_SUNUCU": "Sunucu",
   "LBL_PORT": "Port",
@@ -54,8 +63,18 @@
   "CHK_SIFRE_KAYDET": "Şifreyi bu bilgisayarda şifreli sakla",
   "DOSYA_FILTRE": "Firebird veritabanı (*.fdb;*.gdb)|*.fdb;*.gdb|Tüm dosyalar (*.*)|*.*",
 
+  "SIFRE_BASLIK": "Şifre girin",
+  "SIFRE_ISTEK": "'%s' bağlantısı için şifre girin. Şifre kaydedilmez, yalnızca bu bağlantı için kullanılır.",
+
+  "KLASOR_YENI_BASLIK": "Yeni klasör",
+  "KLASOR_ADLANDIR_BASLIK": "Klasörü yeniden adlandır",
+  "LBL_KLASOR_AD": "Klasör adı",
+
   "ONAY_BASLIK": "Onay",
-  "ONAY_BAGLANTI_SIL": "'%s' kayıtlı bağlantısı listeden kaldırılsın mı? Veritabanına dokunulmaz.",
+  "ONAY_KAYIT_KALDIR": "'%s' bağlantısı kayıtlı listeden kaldırılsın mı? Veritabanına dokunulmaz.",
+  "ONAY_KAYIT_KALDIR_ACIK": "'%s' bağlantısı şu an açık. Önce bağlantı kesilecek ve bu bağlantının sekmeleri kapanacak, sonra kayıtlı listeden kaldırılacak. Veritabanına dokunulmaz. Devam edilsin mi?",
+  "ONAY_DUZENLE_KES": "'%s' bağlantısı şu an açık. Düzenlemek için önce bağlantı kesilecek ve bu bağlantının sekmeleri kapanacak. Devam edilsin mi?",
+  "ONAY_KLASOR_KALDIR": "'%s' klasörü kaldırılsın mı? İçindeki bağlantılar silinmez, kök düzeye çıkar.",
 
   "ERR_SIFRE": "Kullanıcı adı veya şifre yanlış.",
   "ERR_SUNUCU": "Sunucuya ulaşılamadı. Sunucu adını, port numarasını ve Firebird servisinin çalıştığını kontrol edin.",
@@ -69,6 +88,13 @@
   "ERR_PORT": "Port, 1 ile 65535 arasında bir sayı olmalı.",
   "ERR_DPAPI": "Şifre Windows tarafından şifrelenemedi.",
   "ERR_TABLO_ACILAMADI": "%s tablosu açılamadı.",
+  "ERR_BAGLANTI_ACILAMADI": "'%s' bağlantısı kurulamadı.",
+  "ERR_KAYIT_YOK": "'%s' kayıtlı bağlantılar arasında bulunamadı.",
+  "ERR_AD_VAR": "'%s' adında bir bağlantı zaten kayıtlı. Başka bir ad girin.",
+  "ERR_KLASOR_AD_BOS": "Klasör adı boş olamaz.",
+  "ERR_KLASOR_VAR": "'%s' adında bir klasör zaten var.",
+  "ERR_KLASOR_YOK": "'%s' adında bir klasör yok.",
+  "ERR_KAYDEDILEMEDI": "Değişiklik kaydedilemedi. Bağlantı listesi dosyasına yazılamadı.",
 
   "BTN_TAMAM": "Tamam",
   "UYARI_BASLIK": "Uyarı",

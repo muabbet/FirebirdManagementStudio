@@ -32,6 +32,18 @@ type
     Sifre: string;
     KarakterSeti: string;
     SifreyiKaydet: Boolean;
+    Klasor: string;
+  end;
+
+  { Kayit kurali ihlali (ayni ad, bos ad vb.): mesaj kullaniciya oldugu gibi gosterilir. }
+  EKayitKurali = class(Exception);
+
+  { Acik bir baglanti. Acik baglantilar tek bir listede durur. }
+  TAcikBaglanti = class
+    Tanim: TBaglantiTanimi;
+    Surum: string;
+    Baglanti: TFDConnection;
+    destructor Destroy; override;
   end;
 
 const
@@ -41,18 +53,24 @@ const
   VARSAYILAN_KARAKTER_SETI = 'WIN1254';
   VARSAYILAN_DIALECT = 3;
 
+{ Kayitli baglantilar ve klasorler (baglantilar.json) }
 function KayitliBaglantilar: TArray<TBaglantiTanimi>;
-procedure BaglantiKaydet(const Tanim: TBaglantiTanimi);
+function KayitliKlasorler: TArray<string>;
+function KayitliBaglantiBul(const Ad: string; out Tanim: TBaglantiTanimi): Boolean;
+{ EskiAd doluysa o adli kayit yenisiyle degisir (ad degistirme). Klasor bilgisi eski kayittan korunur. }
+procedure BaglantiKaydet(const Tanim: TBaglantiTanimi; const EskiAd: string = '');
 procedure BaglantiListedenKaldir(const Ad: string);
+procedure KlasorEkle(const Ad: string);
+procedure KlasorYenidenAdlandir(const EskiAd, YeniAd: string);
+procedure KlasorKaldir(const Ad: string);
+procedure BaglantiKlasoruAyarla(const BaglantiAd, Klasor: string);
 function BozukDosyaUyarisiAl: string;
 
-procedure FbBaglan(const Tanim: TBaglantiTanimi);
-procedure FbBaglantiyiKes;
-function FbBagliMi: Boolean;
-function FbBaglantisi: TFDConnection;
-function FbAktifBaglantiAdi: string;
-function FbSurum: string;
-function FbIslemAcikMi: Boolean;
+{ Acik baglantilar }
+function FbBaglan(const Tanim: TBaglantiTanimi): TAcikBaglanti;
+procedure FbBaglantiyiKes(Bag: TAcikBaglanti);
+function FbAcikBaglanti(const Ad: string): TAcikBaglanti;
+function FbIslemAcikMi(Bag: TAcikBaglanti): Boolean;
 
 function HataMetniniCevir(Hata: Exception): string;
 
@@ -73,12 +91,39 @@ function DpapiAc(GirdiVeri: PVeriBlob; Aciklama: PPWideChar; Entropi: PVeriBlob;
   Ayrilmis: Pointer; Istem: Pointer; Bayraklar: DWORD; CiktiVeri: PVeriBlob): BOOL; stdcall;
   external 'crypt32.dll' name 'CryptUnprotectData';
 
+type
+  { baglantilar.json icerigi: baglantilar ve (bos olanlar dahil) klasor adlari }
+  TKayit = class
+    Baglantilar: TList<TBaglantiTanimi>;
+    Klasorler: TList<string>;
+    constructor Create;
+    destructor Destroy; override;
+  end;
+
 var
   GSurucu: TFDPhysFBDriverLink;
-  GBaglanti: TFDConnection;
-  GSurum: string;
-  GAktifAd: string;
+  GAcikBaglantilar: TObjectList<TAcikBaglanti>;
   GBozukDosyaUyarisi: string;
+
+destructor TAcikBaglanti.Destroy;
+begin
+  Baglanti.Free;
+  inherited;
+end;
+
+constructor TKayit.Create;
+begin
+  inherited;
+  Baglantilar := TList<TBaglantiTanimi>.Create;
+  Klasorler := TList<string>.Create;
+end;
+
+destructor TKayit.Destroy;
+begin
+  Klasorler.Free;
+  Baglantilar.Free;
+  inherited;
+end;
 
 { ---------- Sifre saklama (DPAPI) ---------- }
 
@@ -162,19 +207,41 @@ begin
   GBozukDosyaUyarisi := '';
 end;
 
-function ListeyiOku: TList<TBaglantiTanimi>;
+function KlasorSirasi(Liste: TList<string>; const Ad: string): Integer;
+var
+  i: Integer;
+begin
+  Result := -1;
+  for i := 0 to Liste.Count - 1 do
+    if SameText(Liste[i], Trim(Ad)) then
+      Exit(i);
+end;
+
+function BaglantiSirasi(Kayit: TKayit; const Ad: string): Integer;
+var
+  i: Integer;
+begin
+  Result := -1;
+  for i := 0 to Kayit.Baglantilar.Count - 1 do
+    if SameText(Kayit.Baglantilar[i].Ad, Ad) then
+      Exit(i);
+end;
+
+{ Dosyayi okur. Eski bicim (Klasor ve Klasorler olmayan) da okunur. Okunamayan
+  dosya "bos liste" sayilmaz: silinmez, yanina tasinir. }
+function DosyayiOku: TKayit;
 var
   Kok: TJSONValue;
-  Dizi: TJSONArray;
+  Dizi, KlasorDizisi: TJSONArray;
   Oge: TJSONValue;
   Tanim: TBaglantiTanimi;
-  SifreliMetin: string;
+  SifreliMetin, KlasorAdi: string;
+  i: Integer;
 begin
-  Result := TList<TBaglantiTanimi>.Create;
+  Result := TKayit.Create;
   if not TFile.Exists(BaglantiDosyasi) then
     Exit;
   Kok := TJSONObject.ParseJSONValue(TFile.ReadAllText(BaglantiDosyasi, TEncoding.UTF8));
-  { Okunamayan dosya "bos liste" sayilmaz: silinmez, yanina tasinir. }
   if (Kok = nil) or not (Kok is TJSONObject) then
   begin
     Kok.Free;
@@ -198,30 +265,50 @@ begin
       Oge.TryGetValue<string>('Kullanici', Tanim.Kullanici);
       if not Oge.TryGetValue<string>('KarakterSeti', Tanim.KarakterSeti) then
         Tanim.KarakterSeti := VARSAYILAN_KARAKTER_SETI;
+      Oge.TryGetValue<string>('Klasor', Tanim.Klasor);
       SifreliMetin := '';
       Oge.TryGetValue<string>('SifreDpapi', SifreliMetin);
       Tanim.Sifre := SifreCoz(SifreliMetin);
       Tanim.SifreyiKaydet := SifreliMetin <> '';
-      Result.Add(Tanim);
+      Result.Baglantilar.Add(Tanim);
+    end;
+    { Eski biciminde Klasorler yoktur: liste bos kalir. }
+    if Kok.TryGetValue<TJSONArray>('Klasorler', KlasorDizisi) then
+      for Oge in KlasorDizisi do
+      begin
+        KlasorAdi := Oge.Value;
+        if (KlasorAdi <> '') and (KlasorSirasi(Result.Klasorler, KlasorAdi) < 0) then
+          Result.Klasorler.Add(KlasorAdi);
+      end;
+    { Elle bozulmus dosya: listede olmayan klasor adi kaybolmasin, listeye eklenir. }
+    for i := 0 to Result.Baglantilar.Count - 1 do
+    begin
+      KlasorAdi := Result.Baglantilar[i].Klasor;
+      if (KlasorAdi <> '') and (KlasorSirasi(Result.Klasorler, KlasorAdi) < 0) then
+        Result.Klasorler.Add(KlasorAdi);
     end;
   finally
     Kok.Free;
   end;
 end;
 
-procedure ListeyiYaz(Liste: TList<TBaglantiTanimi>);
+procedure DosyayiYaz(Kayit: TKayit);
 var
   Kok: TJSONObject;
-  Dizi: TJSONArray;
+  Dizi, KlasorDizisi: TJSONArray;
   Oge: TJSONObject;
   Tanim: TBaglantiTanimi;
-  Gecici: string;
+  KlasorAdi, Gecici: string;
 begin
   Kok := TJSONObject.Create;
   try
+    KlasorDizisi := TJSONArray.Create;
+    Kok.AddPair('Klasorler', KlasorDizisi);
+    for KlasorAdi in Kayit.Klasorler do
+      KlasorDizisi.Add(KlasorAdi);
     Dizi := TJSONArray.Create;
     Kok.AddPair('Baglantilar', Dizi);
-    for Tanim in Liste do
+    for Tanim in Kayit.Baglantilar do
     begin
       Oge := TJSONObject.Create;
       Oge.AddPair('Ad', Tanim.Ad);
@@ -230,6 +317,7 @@ begin
       Oge.AddPair('VeritabaniYolu', Tanim.VeritabaniYolu);
       Oge.AddPair('Kullanici', Tanim.Kullanici);
       Oge.AddPair('KarakterSeti', Tanim.KarakterSeti);
+      Oge.AddPair('Klasor', Tanim.Klasor);
       if Tanim.SifreyiKaydet then
         Oge.AddPair('SifreDpapi', SifreSifrele(Tanim.Sifre))
       else
@@ -250,54 +338,190 @@ end;
 
 function KayitliBaglantilar: TArray<TBaglantiTanimi>;
 var
-  Liste: TList<TBaglantiTanimi>;
+  Kayit: TKayit;
 begin
-  Liste := ListeyiOku;
+  Kayit := DosyayiOku;
   try
-    Result := Liste.ToArray;
+    Result := Kayit.Baglantilar.ToArray;
   finally
-    Liste.Free;
+    Kayit.Free;
   end;
 end;
 
-procedure BaglantiKaydet(const Tanim: TBaglantiTanimi);
+function KayitliKlasorler: TArray<string>;
 var
-  Liste: TList<TBaglantiTanimi>;
+  Kayit: TKayit;
+begin
+  Kayit := DosyayiOku;
+  try
+    Result := Kayit.Klasorler.ToArray;
+  finally
+    Kayit.Free;
+  end;
+end;
+
+function KayitliBaglantiBul(const Ad: string; out Tanim: TBaglantiTanimi): Boolean;
+var
+  Kayit: TKayit;
   i: Integer;
 begin
-  Liste := ListeyiOku;
+  Result := False;
+  Tanim := Default(TBaglantiTanimi);
+  Kayit := DosyayiOku;
   try
-    for i := 0 to Liste.Count - 1 do
-      if SameText(Liste[i].Ad, Tanim.Ad) then
-      begin
-        Liste[i] := Tanim;
-        ListeyiYaz(Liste);
-        Exit;
-      end;
-    Liste.Add(Tanim);
-    ListeyiYaz(Liste);
+    i := BaglantiSirasi(Kayit, Ad);
+    if i >= 0 then
+    begin
+      Tanim := Kayit.Baglantilar[i];
+      Result := True;
+    end;
   finally
-    Liste.Free;
+    Kayit.Free;
+  end;
+end;
+
+procedure BaglantiKaydet(const Tanim: TBaglantiTanimi; const EskiAd: string);
+var
+  Kayit: TKayit;
+  Yeni: TBaglantiTanimi;
+  i: Integer;
+begin
+  Kayit := DosyayiOku;
+  try
+    Yeni := Tanim;
+    if EskiAd <> '' then
+      i := BaglantiSirasi(Kayit, EskiAd)
+    else
+      i := BaglantiSirasi(Kayit, Tanim.Ad);
+    if i >= 0 then
+    begin
+      { Klasor degisikligi sadece BaglantiKlasoruAyarla ile yapilir. }
+      Yeni.Klasor := Kayit.Baglantilar[i].Klasor;
+      Kayit.Baglantilar[i] := Yeni;
+    end
+    else
+      Kayit.Baglantilar.Add(Yeni);
+    DosyayiYaz(Kayit);
+  finally
+    Kayit.Free;
   end;
 end;
 
 procedure BaglantiListedenKaldir(const Ad: string);
 var
-  Liste: TList<TBaglantiTanimi>;
+  Kayit: TKayit;
   i: Integer;
 begin
-  Liste := ListeyiOku;
+  Kayit := DosyayiOku;
   try
-    for i := Liste.Count - 1 downto 0 do
-      if SameText(Liste[i].Ad, Ad) then
-        Liste.Delete(i);
-    ListeyiYaz(Liste);
+    i := BaglantiSirasi(Kayit, Ad);
+    if i >= 0 then
+      Kayit.Baglantilar.Delete(i);
+    DosyayiYaz(Kayit);
   finally
-    Liste.Free;
+    Kayit.Free;
   end;
 end;
 
-{ ---------- Firebird baglantisi ---------- }
+{ ---------- Klasorler ---------- }
+
+procedure KlasorEkle(const Ad: string);
+var
+  Kayit: TKayit;
+begin
+  if Trim(Ad) = '' then
+    raise EKayitKurali.Create(T('ERR_KLASOR_AD_BOS'));
+  Kayit := DosyayiOku;
+  try
+    if KlasorSirasi(Kayit.Klasorler, Ad) >= 0 then
+      raise EKayitKurali.Create(TF('ERR_KLASOR_VAR', [Trim(Ad)]));
+    Kayit.Klasorler.Add(Trim(Ad));
+    DosyayiYaz(Kayit);
+  finally
+    Kayit.Free;
+  end;
+end;
+
+{ Klasorun icindeki baglantilar yeni ada tasinir. }
+procedure KlasorYenidenAdlandir(const EskiAd, YeniAd: string);
+var
+  Kayit: TKayit;
+  Tanim: TBaglantiTanimi;
+  i, Sira: Integer;
+begin
+  if Trim(YeniAd) = '' then
+    raise EKayitKurali.Create(T('ERR_KLASOR_AD_BOS'));
+  Kayit := DosyayiOku;
+  try
+    Sira := KlasorSirasi(Kayit.Klasorler, EskiAd);
+    if Sira < 0 then
+      Exit;
+    { Sadece buyuk/kucuk harf degisiyorsa (ayni klasor) cakisma sayilmaz. }
+    if (KlasorSirasi(Kayit.Klasorler, YeniAd) >= 0) and not SameText(EskiAd, Trim(YeniAd)) then
+      raise EKayitKurali.Create(TF('ERR_KLASOR_VAR', [Trim(YeniAd)]));
+    Kayit.Klasorler[Sira] := Trim(YeniAd);
+    for i := 0 to Kayit.Baglantilar.Count - 1 do
+      if SameText(Kayit.Baglantilar[i].Klasor, EskiAd) then
+      begin
+        Tanim := Kayit.Baglantilar[i];
+        Tanim.Klasor := Trim(YeniAd);
+        Kayit.Baglantilar[i] := Tanim;
+      end;
+    DosyayiYaz(Kayit);
+  finally
+    Kayit.Free;
+  end;
+end;
+
+{ Klasor kalkar, icindeki baglantilar silinmez, kok duzeye cikar. }
+procedure KlasorKaldir(const Ad: string);
+var
+  Kayit: TKayit;
+  Tanim: TBaglantiTanimi;
+  i, Sira: Integer;
+begin
+  Kayit := DosyayiOku;
+  try
+    Sira := KlasorSirasi(Kayit.Klasorler, Ad);
+    if Sira >= 0 then
+      Kayit.Klasorler.Delete(Sira);
+    for i := 0 to Kayit.Baglantilar.Count - 1 do
+      if SameText(Kayit.Baglantilar[i].Klasor, Ad) then
+      begin
+        Tanim := Kayit.Baglantilar[i];
+        Tanim.Klasor := '';
+        Kayit.Baglantilar[i] := Tanim;
+      end;
+    DosyayiYaz(Kayit);
+  finally
+    Kayit.Free;
+  end;
+end;
+
+{ Klasor bos verilirse baglanti kok duzeye cikar. }
+procedure BaglantiKlasoruAyarla(const BaglantiAd, Klasor: string);
+var
+  Kayit: TKayit;
+  Tanim: TBaglantiTanimi;
+  i: Integer;
+begin
+  Kayit := DosyayiOku;
+  try
+    i := BaglantiSirasi(Kayit, BaglantiAd);
+    if i < 0 then
+      Exit;
+    if (Klasor <> '') and (KlasorSirasi(Kayit.Klasorler, Klasor) < 0) then
+      raise EKayitKurali.Create(TF('ERR_KLASOR_YOK', [Klasor]));
+    Tanim := Kayit.Baglantilar[i];
+    Tanim.Klasor := Klasor;
+    Kayit.Baglantilar[i] := Tanim;
+    DosyayiYaz(Kayit);
+  finally
+    Kayit.Free;
+  end;
+end;
+
+{ ---------- Firebird baglantilari ---------- }
 
 function IstemciDosyasi: string;
 begin
@@ -314,12 +538,26 @@ begin
   GSurucu.VendorLib := IstemciDosyasi;
 end;
 
-{ Yeni baglanti kurulursa eskisi kapatilir. Kurulamazsa eskisi bozulmaz. }
-procedure FbBaglan(const Tanim: TBaglantiTanimi);
+function FbAcikBaglanti(const Ad: string): TAcikBaglanti;
+var
+  Bag: TAcikBaglanti;
+begin
+  Result := nil;
+  for Bag in GAcikBaglantilar do
+    if SameText(Bag.Tanim.Ad, Ad) then
+      Exit(Bag);
+end;
+
+{ Yeni baglanti listeye eklenir, digerleri acik kalir. Ayni adli baglanti zaten
+  aciksa onu verir. Kurulamazsa hata verir ve listeye bir sey eklenmez. }
+function FbBaglan(const Tanim: TBaglantiTanimi): TAcikBaglanti;
 var
   Yeni: TFDConnection;
-  Surum: string;
+  Bag: TAcikBaglanti;
 begin
+  Result := FbAcikBaglanti(Tanim.Ad);
+  if Result <> nil then
+    Exit;
   SurucuyuHazirla;
   Yeni := TFDConnection.Create(nil);
   try
@@ -339,48 +577,28 @@ begin
     Yeni.Params.Values['SQLDialect'] := IntToStr(VARSAYILAN_DIALECT);
     Yeni.Params.Values['Pooled'] := 'False';
     Yeni.Open;
-    Surum := VarToStr(Yeni.ExecSQLScalar(
+    Bag := TAcikBaglanti.Create;
+    Bag.Baglanti := Yeni;
+    Bag.Tanim := Tanim;
+    Bag.Surum := VarToStr(Yeni.ExecSQLScalar(
       'SELECT RDB$GET_CONTEXT(''SYSTEM'', ''ENGINE_VERSION'') FROM RDB$DATABASE'));
   except
     Yeni.Free;
     raise;
   end;
-  FbBaglantiyiKes;
-  GBaglanti := Yeni;
-  GSurum := Surum;
-  GAktifAd := Tanim.Ad;
+  GAcikBaglantilar.Add(Bag);
+  Result := Bag;
 end;
 
-procedure FbBaglantiyiKes;
+{ Cagiran once bu baglantiya ait sekmeleri kapatmis olmalidir. }
+procedure FbBaglantiyiKes(Bag: TAcikBaglanti);
 begin
-  FreeAndNil(GBaglanti);
-  GSurum := '';
-  GAktifAd := '';
+  GAcikBaglantilar.Remove(Bag);
 end;
 
-function FbBagliMi: Boolean;
+function FbIslemAcikMi(Bag: TAcikBaglanti): Boolean;
 begin
-  Result := (GBaglanti <> nil) and GBaglanti.Connected;
-end;
-
-function FbBaglantisi: TFDConnection;
-begin
-  Result := GBaglanti;
-end;
-
-function FbAktifBaglantiAdi: string;
-begin
-  Result := GAktifAd;
-end;
-
-function FbSurum: string;
-begin
-  Result := GSurum;
-end;
-
-function FbIslemAcikMi: Boolean;
-begin
-  Result := FbBagliMi and GBaglanti.InTransaction;
+  Result := (Bag <> nil) and Bag.Baglanti.Connected and Bag.Baglanti.InTransaction;
 end;
 
 { ---------- Anlasilir hata cumleleri ---------- }
@@ -469,9 +687,10 @@ begin
 end;
 
 initialization
+  GAcikBaglantilar := TObjectList<TAcikBaglanti>.Create(True);
 
 finalization
-  FbBaglantiyiKes;
+  FreeAndNil(GAcikBaglantilar);
   FreeAndNil(GSurucu);
 
 end.

@@ -19,6 +19,7 @@ uses
   uEditor in 'uEditor.pas',
   uDDL in 'uDDL.pas',
   fTabloSekme in 'fTabloSekme.pas' {TabloSekme: TFrame},
+  fMetinSor in 'fMetinSor.pas' {frmMetinSor},
   fBaglanti in 'fBaglanti.pas' {frmBaglanti},
   fAna in 'fAna.pas' {frmAna};
 
