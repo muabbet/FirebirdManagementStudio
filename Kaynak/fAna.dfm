@@ -204,6 +204,9 @@ object frmAna: TfrmAna
     object miDuzenle: TMenuItem
       OnClick = miDuzenleClick
     end
+    object miKlonla: TMenuItem
+      OnClick = miKlonlaClick
+    end
     object miKaldir: TMenuItem
       OnClick = miKaldirClick
     end

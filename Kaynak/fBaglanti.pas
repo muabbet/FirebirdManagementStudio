@@ -59,26 +59,27 @@ type
     procedure HataGoster(const Anlasilir, Ayrinti: string);
     procedure HatayiGizle;
   public
-    procedure Hazirla(const DuzenlenecekAd: string);
+    procedure Hazirla(const DuzenlenecekAd, KlonAd: string);
   end;
 
 { DuzenlenecekAd bos ise yeni kayit, doluysa o kayit duzenlenir.
+  KlonAd doluysa yeni kayit, o kaydin bilgileriyle dolu ve "(kopya)" adiyla acilir.
   Kaydedilen (veya baglanilan) baglantinin adi KaydedilenAd'a yazilir. }
-function BaglantiPenceresiniGoster(const DuzenlenecekAd: string;
+function BaglantiPenceresiniGoster(const DuzenlenecekAd, KlonAd: string;
   out KaydedilenAd: string): TBaglantiSonucu;
 
 implementation
 
 {$R *.dfm}
 
-function BaglantiPenceresiniGoster(const DuzenlenecekAd: string;
+function BaglantiPenceresiniGoster(const DuzenlenecekAd, KlonAd: string;
   out KaydedilenAd: string): TBaglantiSonucu;
 var
   Pencere: TfrmBaglanti;
 begin
   Pencere := TfrmBaglanti.Create(Application);
   try
-    Pencere.Hazirla(DuzenlenecekAd);
+    Pencere.Hazirla(DuzenlenecekAd, KlonAd);
     Pencere.ShowModal;
     Result := Pencere.FSonuc;
     KaydedilenAd := Pencere.FKaydedilenAd;
@@ -94,11 +95,20 @@ begin
   AlanlariBosalt;
 end;
 
-procedure TfrmBaglanti.Hazirla(const DuzenlenecekAd: string);
+procedure TfrmBaglanti.Hazirla(const DuzenlenecekAd, KlonAd: string);
 var
   Tanim: TBaglantiTanimi;
 begin
   FEskiAd := DuzenlenecekAd;
+  if KlonAd <> '' then
+  begin
+    if KayitliBaglantiBul(KlonAd, Tanim) then
+    begin
+      AlanlaraYaz(Tanim);
+      edtAd.Text := TF('KLON_AD', [KlonAd]);
+    end;
+    Exit;
+  end;
   if DuzenlenecekAd = '' then
     Exit;
   Caption := T('BAGLANTI_DUZENLE_BASLIK');

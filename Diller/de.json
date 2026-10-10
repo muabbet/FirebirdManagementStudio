@@ -22,6 +22,8 @@
   "MENU_AC": "Öffnen (Spalten und erste Zeilen)",
   "MENU_YENILE": "Aktualisieren",
   "MENU_DUZENLE": "Bearbeiten",
+  "MENU_KLONLA": "Klonen",
+  "KLON_AD": "%s (Kopie)",
   "MENU_KAYITTAN_KALDIR": "Registrierung aufheben",
   "MENU_KLASOR_ADLANDIR": "Umbenennen",
   "MENU_KLASOR_KALDIR": "Ordner entfernen",

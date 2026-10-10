@@ -22,6 +22,8 @@
   "MENU_AC": "Aç (kolonlar ve ilk satırlar)",
   "MENU_YENILE": "Yenile",
   "MENU_DUZENLE": "Düzenle",
+  "MENU_KLONLA": "Klonla",
+  "KLON_AD": "%s (kopya)",
   "MENU_KAYITTAN_KALDIR": "Kayıttan Kaldır",
   "MENU_KLASOR_ADLANDIR": "Yeniden adlandır",
   "MENU_KLASOR_KALDIR": "Klasörü kaldır",

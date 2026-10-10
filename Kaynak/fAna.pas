@@ -55,6 +55,7 @@ type
     miYenile: TMenuItem;
     miDuzenle: TMenuItem;
     miKaldir: TMenuItem;
+    miKlonla: TMenuItem;
     miKlasorAdi: TMenuItem;
     miKlasorKaldir: TMenuItem;
     miYeniKlasor: TMenuItem;
@@ -82,6 +83,7 @@ type
     procedure miYenileClick(Sender: TObject);
     procedure miDuzenleClick(Sender: TObject);
     procedure miKaldirClick(Sender: TObject);
+    procedure miKlonlaClick(Sender: TObject);
     procedure miKlasorAdiClick(Sender: TObject);
     procedure miKlasorKaldirClick(Sender: TObject);
     procedure miYeniKlasorClick(Sender: TObject);
@@ -113,7 +115,7 @@ type
     procedure BaglantiyiAc(Dugme: TTreeNode);
     procedure BaglantiyiKapat(Dugme: TTreeNode);
     procedure AgaciYenile(Dugme: TTreeNode);
-    procedure YeniBaglanti;
+    procedure YeniBaglanti(const KlonAd: string);
     procedure BaglantiyiDuzenle(Dugme: TTreeNode);
     procedure KayittanKaldir(Dugme: TTreeNode);
     { klasor islemleri }
@@ -195,6 +197,7 @@ begin
   miYenile.Caption := T('MENU_YENILE');
   miDuzenle.Caption := T('MENU_DUZENLE');
   miKaldir.Caption := T('MENU_KAYITTAN_KALDIR');
+  miKlonla.Caption := T('MENU_KLONLA');
   miKlasorAdi.Caption := T('MENU_KLASOR_ADLANDIR');
   miKlasorKaldir.Caption := T('MENU_KLASOR_KALDIR');
   miYeniKlasor.Caption := T('BTN_YENI_KLASOR');
@@ -524,17 +527,35 @@ begin
   DurumuGuncelle;
 end;
 
-procedure TfrmAna.YeniBaglanti;
+{ KlonAd doluysa o baglantinin bilgileriyle dolu pencere acilir; yeni kayit
+  kaynagin klasorune konur. }
+procedure TfrmAna.YeniBaglanti(const KlonAd: string);
 var
   Ad: string;
-  Dugme: TTreeNode;
+  Dugme, Ust: TTreeNode;
+  Kaynak: TBaglantiTanimi;
+  Sonuc: TBaglantiSonucu;
 begin
-  case BaglantiPenceresiniGoster('', Ad) of
+  Sonuc := BaglantiPenceresiniGoster('', KlonAd, Ad);
+  if Sonuc = bsIptal then
+    Exit;
+  Ust := nil;
+  if (KlonAd <> '') and KayitliBaglantiBul(KlonAd, Kaynak) and (Kaynak.Klasor <> '') then
+  begin
+    try
+      BaglantiKlasoruAyarla(Ad, Kaynak.Klasor);
+      Ust := KlasorDugmesiBul(Kaynak.Klasor);
+    except
+      on E: Exception do
+        KayitHatasiGoster(E);
+    end;
+  end;
+  case Sonuc of
     bsKaydedildi:
-      Dugme := BaglantiDugmesiEkle(nil, Ad);
+      Dugme := BaglantiDugmesiEkle(Ust, Ad);
     bsBaglandi:
       begin
-        Dugme := BaglantiDugmesiEkle(nil, Ad);
+        Dugme := BaglantiDugmesiEkle(Ust, Ad);
         Dugme.ImageIndex := IKON_VERITABANI;
         Dugme.SelectedIndex := IKON_VERITABANI;
         try
@@ -565,7 +586,7 @@ begin
     BaglantiyiKapat(Dugme);
     MesajYaz(TF('MSG_KESILDI', [Ad]));
   end;
-  if BaglantiPenceresiniGoster(Ad, YeniAd) = bsIptal then
+  if BaglantiPenceresiniGoster(Ad, '', YeniAd) = bsIptal then
   begin
     DurumuGuncelle;
     Exit;
@@ -754,7 +775,7 @@ end;
 
 procedure TfrmAna.btnYeniBaglantiClick(Sender: TObject);
 begin
-  YeniBaglanti;
+  YeniBaglanti('');
 end;
 
 procedure TfrmAna.btnBaglanClick(Sender: TObject);
@@ -909,6 +930,7 @@ begin
   miKes.Visible := (not Bos) and (Tur = atBaglanti);
   miDuzenle.Visible := (not Bos) and (Tur = atBaglanti);
   miKaldir.Visible := (not Bos) and (Tur = atBaglanti);
+  miKlonla.Visible := (not Bos) and (Tur = atBaglanti);
   miAc.Visible := (not Bos) and (Tur = atNesne) and (OgeAl(Dugme).DalNo = DAL_TABLO);
   miYenile.Visible := (not Bos) and (Tur <> atKlasor) and Acik;
   miBaglan.Enabled := not Acik;
@@ -955,6 +977,12 @@ procedure TfrmAna.miKaldirClick(Sender: TObject);
 begin
   if SeciliBaglantiDugmesi <> nil then
     KayittanKaldir(SeciliBaglantiDugmesi);
+end;
+
+procedure TfrmAna.miKlonlaClick(Sender: TObject);
+begin
+  if SeciliBaglantiDugmesi <> nil then
+    YeniBaglanti(OgeAl(SeciliBaglantiDugmesi).BaglantiAd);
 end;
 
 procedure TfrmAna.miKlasorAdiClick(Sender: TObject);
