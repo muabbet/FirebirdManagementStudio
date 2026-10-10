@@ -22,6 +22,8 @@
   "MENU_AC": "Open (columns and first rows)",
   "MENU_YENILE": "Refresh",
   "MENU_DUZENLE": "Edit",
+  "MENU_KLONLA": "Clone",
+  "KLON_AD": "%s (copy)",
   "MENU_KAYITTAN_KALDIR": "Unregister",
   "MENU_KLASOR_ADLANDIR": "Rename",
   "MENU_KLASOR_KALDIR": "Remove folder",
