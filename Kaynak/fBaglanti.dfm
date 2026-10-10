@@ -3,7 +3,7 @@ object frmBaglanti: TfrmBaglanti
   Top = 0
   BorderStyle = bsDialog
   ClientHeight = 540
-  ClientWidth = 700
+  ClientWidth = 480
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -12,52 +12,14 @@ object frmBaglanti: TfrmBaglanti
   Font.Style = []
   Position = poOwnerFormCenter
   OnCreate = FormCreate
-  object pnlSol: TPanel
-    Left = 0
-    Top = 0
-    Width = 220
-    Height = 540
-    Align = alLeft
-    BevelOuter = bvNone
-    TabOrder = 0
-    object lblKayitli: TLabel
-      AlignWithMargins = True
-      Left = 12
-      Top = 12
-      Width = 196
-      Height = 17
-      Margins.Left = 12
-      Margins.Top = 12
-      Margins.Right = 12
-      Margins.Bottom = 4
-      Align = alTop
-      Font.Style = [fsBold]
-      ParentFont = False
-    end
-    object lstKayitli: TListBox
-      AlignWithMargins = True
-      Left = 12
-      Top = 45
-      Width = 196
-      Height = 483
-      Margins.Left = 12
-      Margins.Top = 4
-      Margins.Right = 12
-      Margins.Bottom = 12
-      Align = alClient
-      ItemHeight = 17
-      TabOrder = 0
-      OnClick = lstKayitliClick
-    end
-  end
   object pnlAlt: TPanel
-    Left = 220
+    Left = 0
     Top = 488
     Width = 480
     Height = 52
     Align = alBottom
     BevelOuter = bvNone
-    TabOrder = 3
+    TabOrder = 2
     object btnKapat: TButton
       AlignWithMargins = True
       Left = 392
@@ -70,7 +32,7 @@ object frmBaglanti: TfrmBaglanti
       Margins.Bottom = 10
       Align = alRight
       Constraints.MinWidth = 80
-      TabOrder = 3
+      TabOrder = 2
       OnClick = btnKapatClick
     end
     object btnBaglan: TButton
@@ -86,42 +48,27 @@ object frmBaglanti: TfrmBaglanti
       Align = alRight
       Constraints.MinWidth = 80
       Default = True
-      TabOrder = 2
+      TabOrder = 1
       OnClick = btnBaglanClick
     end
-    object btnSil: TButton
+    object btnKaydet: TButton
       AlignWithMargins = True
-      Left = 76
+      Left = 224
       Top = 8
-      Width = 120
+      Width = 80
       Height = 34
       Margins.Left = 4
       Margins.Top = 8
       Margins.Right = 4
       Margins.Bottom = 10
-      Align = alLeft
+      Align = alRight
       Constraints.MinWidth = 80
-      TabOrder = 1
-      OnClick = btnSilClick
-    end
-    object btnYeni: TButton
-      AlignWithMargins = True
-      Left = 12
-      Top = 8
-      Width = 60
-      Height = 34
-      Margins.Left = 12
-      Margins.Top = 8
-      Margins.Right = 4
-      Margins.Bottom = 10
-      Align = alLeft
-      Constraints.MinWidth = 60
       TabOrder = 0
-      OnClick = btnYeniClick
+      OnClick = btnKaydetClick
     end
   end
   object pnlHata: TPanel
-    Left = 220
+    Left = 0
     Top = 338
     Width = 480
     Height = 150
@@ -171,7 +118,7 @@ object frmBaglanti: TfrmBaglanti
     end
   end
   object pnlSag: TPanel
-    Left = 220
+    Left = 0
     Top = 0
     Width = 480
     Height = 338
@@ -295,7 +242,7 @@ object frmBaglanti: TfrmBaglanti
     end
   end
   object dlgAc: TOpenDialog
-    Left = 600
+    Left = 400
     Top = 20
   end
 end

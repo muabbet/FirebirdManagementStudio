@@ -1,0 +1,79 @@
+object frmMetinSor: TfrmMetinSor
+  Left = 0
+  Top = 0
+  BorderStyle = bsDialog
+  ClientHeight = 132
+  ClientWidth = 400
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -13
+  Font.Name = 'Segoe UI'
+  Font.Style = []
+  Position = poOwnerFormCenter
+  object lblEtiket: TLabel
+    AlignWithMargins = True
+    Left = 12
+    Top = 12
+    Width = 376
+    Height = 17
+    Margins.Left = 12
+    Margins.Top = 12
+    Margins.Right = 12
+    Margins.Bottom = 4
+    Align = alTop
+    WordWrap = True
+  end
+  object edtDeger: TEdit
+    AlignWithMargins = True
+    Left = 12
+    Top = 36
+    Width = 376
+    Height = 25
+    Margins.Left = 12
+    Margins.Right = 12
+    Align = alTop
+    TabOrder = 0
+  end
+  object pnlAlt: TPanel
+    Left = 0
+    Top = 80
+    Width = 400
+    Height = 52
+    Align = alBottom
+    BevelOuter = bvNone
+    TabOrder = 1
+    object btnIptal: TButton
+      AlignWithMargins = True
+      Left = 312
+      Top = 8
+      Width = 80
+      Height = 34
+      Margins.Left = 4
+      Margins.Top = 8
+      Margins.Right = 8
+      Margins.Bottom = 10
+      Align = alRight
+      Cancel = True
+      Constraints.MinWidth = 80
+      ModalResult = 2
+      TabOrder = 1
+    end
+    object btnTamam: TButton
+      AlignWithMargins = True
+      Left = 228
+      Top = 8
+      Width = 80
+      Height = 34
+      Margins.Left = 4
+      Margins.Top = 8
+      Margins.Right = 4
+      Margins.Bottom = 10
+      Align = alRight
+      Constraints.MinWidth = 80
+      Default = True
+      ModalResult = 1
+      TabOrder = 0
+    end
+  end
+end
