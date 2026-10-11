@@ -8,7 +8,7 @@ unit fSorguSekme;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Generics.Collections, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
+  Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes, System.Generics.Collections, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
   Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids,
   FireDAC.Comp.Client,
   uDil, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uSonucGrid;
@@ -19,6 +19,7 @@ type
     Bolucu: TSplitter;
     pnlSonuc: TPanel;
     lblSonuc: TLabel;
+    BolucuMesaj: TSplitter;
     memMesaj: TMemo;
     gridSonuc: TDBGrid;
     dsSonuc: TDataSource;
@@ -29,6 +30,7 @@ type
     FSonuc: TSorguSonucu;
     procedure SonucuBirak;
     procedure SatirSayisiniYaz;
+    procedure MesajYaz(const Metin: string);
     procedure HataYaz(Hata: Exception);
     function OnayAl(const Komutlar: TArray<string>): Boolean;
     procedure TekKomutCalistir(Bag: TAcikBaglanti; const Sql: string);
@@ -169,11 +171,16 @@ begin
   SatirSayisiniYaz;
 end;
 
+{ Mesaj kutusuna yazar ve kutuyu en uste kaydirir (ilk satir, ornegin hata, gorunsun). }
+procedure TSorguSekme.MesajYaz(const Metin: string);
+begin
+  memMesaj.Lines.Text := Metin;
+  memMesaj.Perform(EM_LINESCROLL, 0, -memMesaj.Lines.Count);
+end;
+
 procedure TSorguSekme.HataYaz(Hata: Exception);
 begin
-  memMesaj.Lines.Clear;
-  memMesaj.Lines.Add(HataMetniniCevir(Hata));
-  memMesaj.Lines.Add(T('AYRINTI') + ': ' + Hata.Message);
+  MesajYaz(HataMetniniCevir(Hata) + sLineBreak + T('AYRINTI') + ': ' + Hata.Message);
 end;
 
 { Tek komut: kullanici onayi (tehlikeliyse). Birden fazla: tek onay penceresi, tehlikeli
@@ -222,35 +229,38 @@ begin
   begin
     dsSonuc.DataSet := FSonuc.Sorgu;
     FGrid.YeniSonuc;
-    memMesaj.Lines.Text := TF('MSG_SORGU_SECIM', [FSonuc.Sure]);
+    MesajYaz(TF('MSG_SORGU_SECIM', [FSonuc.Sure]));
   end
   else if FSonuc.Etkilenen >= 0 then
-    memMesaj.Lines.Text := TF('MSG_SORGU_DEGISTI', [FSonuc.Etkilenen, FSonuc.Sure])
+    MesajYaz(TF('MSG_SORGU_DEGISTI', [FSonuc.Etkilenen, FSonuc.Sure]))
   else
-    memMesaj.Lines.Text := TF('MSG_SORGU_TAMAM', [FSonuc.Sure]);
+    MesajYaz(TF('MSG_SORGU_TAMAM', [FSonuc.Sure]));
   SatirSayisiniYaz;
 end;
 
 { Bir komutun mesaj kutusundaki satiri. }
 function TSorguSekme.KayitSatiri(No: Integer; const Kayit: TKomutKaydi): string;
 begin
+  Result := '';
+  if Kayit.OncekiSonucKapandi then
+    Result := TF('MSG_ONCEKI_SONUC_KAPANDI', [No]) + sLineBreak;
   case Kayit.Durum of
     kdAtlandi:
       if Kayit.Tur = ktCommit then
-        Result := TF('MSG_COMMIT_ATLANDI', [No])
+        Result := Result + TF('MSG_COMMIT_ATLANDI', [No])
       else
-        Result := TF('MSG_ISQL_ATLANDI', [No, Kayit.Komut]);
+        Result := Result + TF('MSG_ISQL_ATLANDI', [No, Kayit.Komut]);
     kdDurdu:
-      Result := TF('ERR_ROLLBACK_YOK', [No]);
+      Result := Result + TF('ERR_ROLLBACK_YOK', [No]);
     kdHata:
-      Result := TF('ERR_KOMUT_HATASI', [No, Kayit.Hata]) + sLineBreak + T('AYRINTI') + ': ' + Kayit.Ayrinti;
+      Result := Result + TF('ERR_KOMUT_HATASI', [No, Kayit.Hata]) + sLineBreak + T('AYRINTI') + ': ' + Kayit.Ayrinti;
   else
     if Kayit.SatirVar then
-      Result := TF('MSG_KOMUT_SATIRI_SECIM', [No, Kayit.Sure])
+      Result := Result + TF('MSG_KOMUT_SATIRI_SECIM', [No, Kayit.Sure])
     else if Kayit.Etkilenen >= 0 then
-      Result := TF('MSG_KOMUT_SATIRI_DEGISTI', [No, Kayit.Etkilenen, Kayit.Sure])
+      Result := Result + TF('MSG_KOMUT_SATIRI_DEGISTI', [No, Kayit.Etkilenen, Kayit.Sure])
     else
-      Result := TF('MSG_KOMUT_SATIRI_TAMAM', [No, Kayit.Sure]);
+      Result := Result + TF('MSG_KOMUT_SATIRI_TAMAM', [No, Kayit.Sure]);
   end;
 end;
 
@@ -260,16 +270,17 @@ procedure TSorguSekme.CokluKomutCalistir(Bag: TAcikBaglanti; const Komutlar: TAr
 var
   Kayitlar: TList<TKomutKaydi>;
   i: Integer;
+  Metin: string;
 begin
   Kayitlar := TList<TKomutKaydi>.Create;
   try
     FSonuc := BetikCalistir(Bag, Komutlar, Kayitlar);
-    memMesaj.Lines.Clear;
+    Metin := '';
     for i := 0 to Kayitlar.Count - 1 do
-      memMesaj.Lines.Add(KayitSatiri(i + 1, Kayitlar[i]));
+      Metin := Metin + KayitSatiri(i + 1, Kayitlar[i]) + sLineBreak;
     if (Kayitlar.Count > 0) and (Kayitlar.Last.Durum in [kdDurdu, kdHata]) then
-      memMesaj.Lines.Add(TF('MSG_KOMUT_DURDU', [Length(Komutlar) - Kayitlar.Count]));
-    memMesaj.Lines.Add(T('MSG_COKLU_ONAY_NOTU'));
+      Metin := Metin + TF('MSG_KOMUT_DURDU', [Length(Komutlar) - Kayitlar.Count]) + sLineBreak;
+    MesajYaz(Metin + T('MSG_COKLU_ONAY_NOTU'));
   finally
     Kayitlar.Free;
   end;
@@ -291,18 +302,18 @@ begin
   Komutlar := KomutlaraBol(FEditor.CalistirilacakMetin);
   if Length(Komutlar) = 0 then
   begin
-    memMesaj.Lines.Text := T('ERR_SORGU_BOS');
+    MesajYaz(T('ERR_SORGU_BOS'));
     Exit;
   end;
   Bag := FbAcikBaglanti(BaglantiAd);
   if Bag = nil then
   begin
-    memMesaj.Lines.Text := TF('ERR_SORGU_BAGLANTI_YOK', [BaglantiAd]);
+    MesajYaz(TF('ERR_SORGU_BAGLANTI_YOK', [BaglantiAd]));
     Exit;
   end;
   if not OnayAl(Komutlar) then
   begin
-    memMesaj.Lines.Text := T('MSG_SORGU_VAZGECILDI');
+    MesajYaz(T('MSG_SORGU_VAZGECILDI'));
     Exit;
   end;
   SonucuBirak;
@@ -322,18 +333,18 @@ begin
   Komutlar := KomutlaraBol(FEditor.CalistirilacakMetin);
   if Length(Komutlar) = 0 then
   begin
-    memMesaj.Lines.Text := T('ERR_SORGU_BOS');
+    MesajYaz(T('ERR_SORGU_BOS'));
     Exit;
   end;
   if Length(Komutlar) > 1 then
   begin
-    memMesaj.Lines.Text := T('ERR_PLAN_TEK_KOMUT');
+    MesajYaz(T('ERR_PLAN_TEK_KOMUT'));
     Exit;
   end;
   Bag := FbAcikBaglanti(BaglantiAd);
   if Bag = nil then
   begin
-    memMesaj.Lines.Text := TF('ERR_SORGU_BAGLANTI_YOK', [BaglantiAd]);
+    MesajYaz(TF('ERR_SORGU_BAGLANTI_YOK', [BaglantiAd]));
     Exit;
   end;
   try
@@ -341,17 +352,14 @@ begin
   except
     on E: Exception do
     begin
-      memMesaj.Lines.Clear;
-      memMesaj.Lines.Add(T('ERR_PLAN_ALINAMADI') + ' ' + HataMetniniCevir(E));
-      memMesaj.Lines.Add(T('AYRINTI') + ': ' + E.Message);
+      MesajYaz(T('ERR_PLAN_ALINAMADI') + ' ' + HataMetniniCevir(E) + sLineBreak + T('AYRINTI') + ': ' + E.Message);
       Exit;
     end;
   end;
   if Plan = '' then
-    memMesaj.Lines.Text := T('MSG_PLAN_YOK')
+    MesajYaz(T('MSG_PLAN_YOK'))
   else
-    memMesaj.Lines.Text := T('MSG_PLAN_BASLIK') + sLineBreak + Plan + sLineBreak + sLineBreak +
-      T('MSG_PLAN_CALISTIRILMADI');
+    MesajYaz(T('MSG_PLAN_BASLIK') + sLineBreak + Plan + sLineBreak + sLineBreak + T('MSG_PLAN_CALISTIRILMADI'));
 end;
 
 end.

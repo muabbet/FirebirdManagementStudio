@@ -43,11 +43,19 @@ object SorguSekme: TSorguSekme
       Font.Style = [fsBold]
       ParentFont = False
     end
+    object BolucuMesaj: TSplitter
+      Left = 0
+      Top = 135
+      Width = 720
+      Height = 5
+      Cursor = crVSplit
+      Align = alBottom
+    end
     object memMesaj: TMemo
       Left = 0
-      Top = 175
+      Top = 140
       Width = 720
-      Height = 80
+      Height = 115
       Align = alBottom
       ReadOnly = True
       ScrollBars = ssVertical
@@ -57,7 +65,7 @@ object SorguSekme: TSorguSekme
       Left = 0
       Top = 25
       Width = 720
-      Height = 150
+      Height = 110
       Align = alClient
       DataSource = dsSonuc
       Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgCancelOnExit]

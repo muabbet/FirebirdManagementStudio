@@ -53,6 +53,7 @@ type
     Sure: Int64;
     Hata: string;
     Ayrinti: string;
+    OncekiSonucKapandi: Boolean;
   end;
 
 function TabloVerisiSorgusu(Bag: TAcikBaglanti; const Tablo: string; SatirSayisi: Integer;
@@ -74,7 +75,9 @@ function KomutTuruBul(const Komut: string): TKomutTuru;
 
 { Komutlari sirayla calistirir, ilk hatada durur. Her komut icin Kayitlar'a bir satir eklenir.
   COMMIT ve isql komutlari atlanir, ROLLBACK'te durulur. Donen deger son SELECT'in sonucudur
-  (SELECT yoksa nil); onu cagiran serbest birakir. Hata istisna olarak firlamaz, kayda yazilir. }
+  (SELECT yoksa nil); onu cagiran serbest birakir. DDL komutundan (ALTER, DROP, RECREATE) once
+  tutulan SELECT sonucu kapatilir (nesne kullanimda kalmasin) ve kayda yazilir; DML'de tutulur.
+  Hata istisna olarak firlamaz, kayda yazilir. }
 function BetikCalistir(Bag: TAcikBaglanti; const Komutlar: TArray<string>;
   Kayitlar: TList<TKomutKaydi>): TSorguSonucu;
 
@@ -391,6 +394,14 @@ begin
   end;
 end;
 
+{ DDL (nesneyi degistiren/silen) komut mu? Acik bir SELECT sonucu nesneyi kullanimda tuttugu icin
+  bu komutlardan once sonuc birakilir (bkz. BetikCalistir). Olcum: Firebird 5.0.4'te DROP takiliyor. }
+function KomutDDLMi(const Komut: string): Boolean;
+begin
+  Result := TRegEx.IsMatch(YorumlariVeYazilariAt(Komut), '^\s*(ALTER|DROP|RECREATE|CREATE\s+OR\s+ALTER)\b',
+    [roIgnoreCase]);
+end;
+
 function BetikCalistir(Bag: TAcikBaglanti; const Komutlar: TArray<string>;
   Kayitlar: TList<TKomutKaydi>): TSorguSonucu;
 var
@@ -411,6 +422,11 @@ begin
         Kayit.Durum := kdDurdu;
       ktNormal:
         try
+          if (Result <> nil) and KomutDDLMi(Komut) then
+          begin
+            FreeAndNil(Result);
+            Kayit.OncekiSonucKapandi := True;
+          end;
           Sonuc := SorguCalistir(Bag, Komut);
           Kayit.Durum := kdCalisti;
           Kayit.SatirVar := Sonuc.SatirVar;
