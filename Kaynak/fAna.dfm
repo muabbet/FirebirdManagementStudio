@@ -90,14 +90,14 @@ object frmAna: TfrmAna
         Left = 300
         Top = 0
         AutoSize = True
-        ImageIndex = -1
+        ImageIndex = 9
         OnClick = btnKlonlaClick
       end
       object btnKaldir: TToolButton
         Left = 360
         Top = 0
         AutoSize = True
-        ImageIndex = -1
+        ImageIndex = 10
         OnClick = btnKaldirClick
       end
     end
