@@ -85,21 +85,21 @@ object frmAna: TfrmAna
         Left = 180
         Top = 0
         AutoSize = True
-        ImageIndex = 11
+        ImageIndex = 6
         OnClick = btnYeniSorguClick
       end
       object btnCalistir: TToolButton
         Left = 240
         Top = 0
         AutoSize = True
-        ImageIndex = 12
+        ImageIndex = 11
         OnClick = btnCalistirClick
       end
       object btnPlan: TToolButton
         Left = 300
         Top = 0
         AutoSize = True
-        ImageIndex = 13
+        ImageIndex = 12
         OnClick = btnPlanClick
       end
     end

@@ -204,7 +204,14 @@ begin
   Alan := Column.Field;
   if Alan = nil then
     Exit;
-  Secili := (gdSelected in State) or FGrid.SelectedRows.CurrentRowSelected;
+  { Sonuc bos: DBGrid yine de bir satir cizer, bunu bos ve beyaz birak (sahte "NULL" satiri olmasin). }
+  if Alan.DataSet.IsEmpty then
+  begin
+    FGrid.Canvas.Brush.Color := clWindow;
+    FGrid.Canvas.FillRect(Rect);
+    Exit;
+  end;
+  Secili :=(gdSelected in State) or FGrid.SelectedRows.CurrentRowSelected;
   if Secili then
   begin
     FGrid.Canvas.Brush.Color := clHighlight;
