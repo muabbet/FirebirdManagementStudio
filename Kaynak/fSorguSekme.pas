@@ -10,7 +10,8 @@ interface
 uses
   System.SysUtils, System.Classes, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
   Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids,
-  uDil, uOnay, uBaglanti, uSorgu, uEditor, uSonucGrid;
+  FireDAC.Comp.Client,
+  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uSonucGrid;
 
 type
   TSorguSekme = class(TFrame)
@@ -29,6 +30,8 @@ type
     procedure SonucuBirak;
     procedure SatirSayisiniYaz;
     procedure HataYaz(Hata: Exception);
+    procedure OneriHazirla;
+    procedure KolonlariGetir(const Tablo: string; Kolonlar: TStrings);
   public
     BaglantiAd: string;
     No: Integer;
@@ -57,7 +60,66 @@ begin
   BaglantiAd := Baglanti;
   FEditor := TSqlEditor.Create(pnlEditor);
   FGrid := TSonucGrid.Create(gridSonuc);
+  FEditor.KolonGetirici := KolonlariGetir;
+  OneriHazirla;
   YazilariYenile;
+end;
+
+{ Ctrl+Bosluk listesi icin anahtar kelimeleri ve veritabani nesne adlarini editore verir. }
+procedure TSorguSekme.OneriHazirla;
+var
+  Bag: TAcikBaglanti;
+  Adlar, Gecici: TStringList;
+begin
+  Bag := FbAcikBaglanti(BaglantiAd);
+  if Bag = nil then
+    Exit;
+  FEditor.AnahtarKelimeleriYukle(ExtractFilePath(ParamStr(0)) + 'anahtar_kelimeler.txt', Bag.Surum);
+  Adlar := TStringList.Create;
+  Gecici := TStringList.Create;
+  try
+    try
+      TablolariGetir(Bag, Gecici);
+      Adlar.AddStrings(Gecici);
+      ViewlariGetir(Bag, Gecici);
+      Adlar.AddStrings(Gecici);
+      ProsedurleriGetir(Bag, Gecici);
+      Adlar.AddStrings(Gecici);
+      GeneratorleriGetir(Bag, Gecici);
+      Adlar.AddStrings(Gecici);
+    except
+      { Nesne adlari alinamazsa sadece anahtar kelimeler onerilir; sekme yine acilir. }
+    end;
+    FEditor.NesneAdlariniVer(Adlar);
+  finally
+    Gecici.Free;
+    Adlar.Free;
+  end;
+end;
+
+{ "ad." yazilinca editor bunu cagirir: tablonun kolon adlarini verir, tablo yoksa bos birakir. }
+procedure TSorguSekme.KolonlariGetir(const Tablo: string; Kolonlar: TStrings);
+var
+  Bag: TAcikBaglanti;
+  Kolon: TFDMemTable;
+begin
+  Bag := FbAcikBaglanti(BaglantiAd);
+  if Bag = nil then
+    Exit;
+  try
+    Kolon := KolonTablosuOlustur(Bag, Tablo, nil);
+    try
+      while not Kolon.Eof do
+      begin
+        Kolonlar.Add(Kolon.FieldByName('AD').AsString);
+        Kolon.Next;
+      end;
+    finally
+      Kolon.Free;
+    end;
+  except
+    { Tablo bulunamadi ya da okunamadi: kolon onerisi acilmaz, hata gosterilmez. }
+  end;
 end;
 
 function TSorguSekme.Baslik: string;

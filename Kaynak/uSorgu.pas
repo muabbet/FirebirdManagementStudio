@@ -55,6 +55,10 @@ function TekKomutMu(const Sql: string): Boolean;
   Hata olursa istisna firlar, cagiran HataMetniniCevir ile gosterir. }
 function SorguPlaniAl(Bag: TAcikBaglanti; const Sql: string): string;
 
+{ "m." yazilirken m'nin hangi tablo oldugunu bulur: metinde FROM/JOIN sonrasi "tablo [AS] takma_ad"
+  kaliplarina bakar. Takma ad bulunamazsa Ad'in kendisi tablo adi sayilir. Tirnaksiz ad buyuk harfe cevrilir. }
+function TabloAdiniBul(const Metin, Ad: string): string;
+
 implementation
 
 function TirnakliAd(const Ad: string): string;
@@ -136,6 +140,38 @@ end;
 function TekKomutMu(const Sql: string): Boolean;
 begin
   Result := Pos(';', SonNoktaliVirgulleriAt(YorumlariVeYazilariAt(Sql))) = 0;
+end;
+
+function TirnaksizAd(const Ad: string): string;
+begin
+  if (Length(Ad) >= 2) and (Ad[1] = '"') then
+    Result := StringReplace(Copy(Ad, 2, Length(Ad) - 2), '""', '"', [rfReplaceAll])
+  else
+    Result := UpperCase(Ad);
+end;
+
+function TabloAdiniBul(const Metin, Ad: string): string;
+const
+  ADKALIBI = '("[^"]+"|[A-Za-z_][A-Za-z0-9_$]*)';
+  { Takma ad gibi gorunen ama aslinda sonraki SQL sozcugu olanlar. }
+  SOZCUKLER = ',WHERE,JOIN,LEFT,RIGHT,INNER,OUTER,FULL,CROSS,NATURAL,ON,ORDER,GROUP,HAVING,' +
+    'UNION,PLAN,ROWS,WITH,FOR,INTO,AS,SELECT,';
+var
+  Eslesme: TMatch;
+  Tablo, Takma: string;
+begin
+  Result := TirnaksizAd(Ad);
+  for Eslesme in TRegEx.Matches(Metin, '\b(?:FROM|JOIN)\s+' + ADKALIBI + '(?:\s+(?:AS\s+)?' + ADKALIBI + ')?',
+    [roIgnoreCase]) do
+  begin
+    Tablo := Eslesme.Groups[1].Value;
+    Takma := '';
+    if Eslesme.Groups[2].Success then
+      Takma := Eslesme.Groups[2].Value;
+    if (Takma <> '') and (Pos(',' + UpperCase(Takma) + ',', SOZCUKLER) = 0) and
+      (TirnaksizAd(Takma) = TirnaksizAd(Ad)) then
+      Exit(TirnaksizAd(Tablo));
+  end;
 end;
 
 type
