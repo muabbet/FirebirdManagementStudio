@@ -58,19 +58,19 @@ object frmAna: TfrmAna
       List = True
       ShowCaptions = True
       TabOrder = 0
-      object btnBaglan: TToolButton
+      object btnYeniBaglanti: TToolButton
         Left = 0
+        Top = 0
+        AutoSize = True
+        ImageIndex = 3
+        OnClick = btnYeniBaglantiClick
+      end
+      object btnBaglan: TToolButton
+        Left = 60
         Top = 0
         AutoSize = True
         ImageIndex = 0
         OnClick = btnBaglanClick
-      end
-      object btnKes: TToolButton
-        Left = 60
-        Top = 0
-        AutoSize = True
-        ImageIndex = 1
-        OnClick = btnKesClick
       end
       object btnYenile: TToolButton
         Left = 120
@@ -78,6 +78,27 @@ object frmAna: TfrmAna
         AutoSize = True
         ImageIndex = 2
         OnClick = btnYenileClick
+      end
+      object btnYeniKlasor: TToolButton
+        Left = 240
+        Top = 0
+        AutoSize = True
+        ImageIndex = 8
+        OnClick = btnYeniKlasorClick
+      end
+      object btnKlonla: TToolButton
+        Left = 300
+        Top = 0
+        AutoSize = True
+        ImageIndex = 9
+        OnClick = btnKlonlaClick
+      end
+      object btnKaldir: TToolButton
+        Left = 360
+        Top = 0
+        AutoSize = True
+        ImageIndex = 10
+        OnClick = btnKaldirClick
       end
     end
   end
@@ -110,7 +131,11 @@ object frmAna: TfrmAna
     ReadOnly = True
     RightClickSelect = True
     TabOrder = 1
+    OnChange = tvNesnelerChange
     OnDblClick = tvNesnelerDblClick
+    OnDragDrop = tvNesnelerDragDrop
+    OnDragOver = tvNesnelerDragOver
+    OnMouseDown = tvNesnelerMouseDown
   end
   object bolSol: TSplitter
     Left = 270
@@ -174,8 +199,32 @@ object frmAna: TfrmAna
     object miAc: TMenuItem
       OnClick = miAcClick
     end
+    object miBaglan: TMenuItem
+      OnClick = miBaglanClick
+    end
+    object miKes: TMenuItem
+      OnClick = miKesClick
+    end
     object miYenile: TMenuItem
       OnClick = miYenileClick
+    end
+    object miDuzenle: TMenuItem
+      OnClick = miDuzenleClick
+    end
+    object miKlonla: TMenuItem
+      OnClick = miKlonlaClick
+    end
+    object miKaldir: TMenuItem
+      OnClick = miKaldirClick
+    end
+    object miKlasorAdi: TMenuItem
+      OnClick = miKlasorAdiClick
+    end
+    object miKlasorKaldir: TMenuItem
+      OnClick = miKlasorKaldirClick
+    end
+    object miYeniKlasor: TMenuItem
+      OnClick = miYeniKlasorClick
     end
   end
   object pmSekme: TPopupMenu

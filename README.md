@@ -10,6 +10,8 @@ Hedeflenen Firebird sürümleri: 2.5, 3.0, 4.0, 5.0. Denenen: 2.5.9 ve 5.0.4 (3.
 
 Aşama 1 (iskelet ve ağaç): bağlantı penceresi, kayıtlı bağlantılar (şifreler DPAPI ile şifreli), sürüm algılama, Tablolar / View'lar / Prosedürler / Generator'lar ağacı, tabloya çift tıklayınca kolonlar ve ilk 100 satır, üç dil (tr, en, de). Ayrıntılar `CLAUDE.md` içinde.
 
+Aşama 1b (çoklu bağlantı ağacı): kayıtlı bağlantılar ağaçta görünür, aynı anda birden fazla bağlantı açık kalabilir, bağlantılar klasörlere konabilir (sürükle-bırak) ve "Kayıttan Kaldır" ile listeden çıkarılır (veritabanına dokunulmaz). Şifresi kayıtlı olmayan bağlantıda şifre sorulur (şifre kaydedilmez). `baglantilar.json` içinde her bağlantının `Klasor` alanı ve boş klasörler için `Klasorler` listesi tutulur; eski biçimdeki dosya okunmaya devam eder.
+
 ## Derleme
 
 RAD Studio 12 gerekir.
@@ -28,8 +30,8 @@ Tek bir `fbclient.dll` (5.0) yüklenir; 2.5 ve 5.0 sunuculara onunla bağlanıl�
 
 ## Deneme
 
-`Test\MetadataTest.dpr`: arayüz açmadan bağlantı, metadata ve ilk satırları dener. Şifre ortam değişkeninden (`FBTEST_SIFRE`) okunur, hiçbir dosyaya yazılmaz.
+`Test\MetadataTest.dpr`: arayüz açmadan bağlantı, metadata ve ilk satırları dener. Şifre ortam değişkeninden (`FBTEST_SIFRE`) okunur, hiçbir dosyaya yazılmaz. `FBTEST_YOL2` verilirse ikinci bir veritabanına da bağlanıp iki bağlantının aynı anda açık kalabildiğini dener.
 
-`Test\BaglantiDosyasiTest.dpr`: kayıtlı bağlantı dosyasının güvenliğini (bozuk dosyanın silinmeden yanına taşınması, atomik yazma, DPAPI şifre gidiş-dönüş) geçici bir klasörde dener, gerçek verilere dokunmaz. Bu iki deneme programı için `.dproj` yoktur; `dcc64` ile derlenir (örnek: `dcc64 Test\BaglantiDosyasiTest.dpr -UKaynak`).
+`Test\BaglantiDosyasiTest.dpr`: kayıtlı bağlantı dosyasının güvenliğini (bozuk dosyanın silinmeden yanına taşınması, atomik yazma, DPAPI şifre gidiş-dönüş, eski biçim okuma, klasör gidiş-dönüşü) geçici bir klasörde dener, gerçek verilere dokunmaz. Bu iki deneme programı için `.dproj` yoktur; `dcc64` ile derlenir (örnek: `dcc64 Test\BaglantiDosyasiTest.dpr -UKaynak`).
 
 Lisanslar: `LISANSLAR.md`.

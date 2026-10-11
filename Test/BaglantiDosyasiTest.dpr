@@ -65,6 +65,130 @@ begin
   Sleep(1100);
 end;
 
+{ Klasor alanlari olmayan eski bicimdeki dosya okunabilmeli ve silinmemeli. }
+procedure EskiBicimSenaryosu;
+var
+  Liste: TArray<TBaglantiTanimi>;
+begin
+  TFile.WriteAllText(Dosya,
+    '{"Baglantilar": [' +
+    '{"Ad": "Eski1", "Sunucu": "srv", "Port": 3051, "VeritabaniYolu": "C:\\x\\a.fdb", "Kullanici": "SYSDBA", "KarakterSeti": "UTF8", "SifreDpapi": ""},' +
+    '{"Ad": "Eski2", "Sunucu": "", "Port": 3050, "VeritabaniYolu": "C:\\x\\b.fdb", "Kullanici": "SYSDBA", "KarakterSeti": "WIN1254", "SifreDpapi": ""}]}',
+    TEncoding.UTF8);
+  Liste := KayitliBaglantilar;
+  Kontrol('eski bicim: 2 baglanti okunur', Length(Liste) = 2);
+  Kontrol('eski bicim: alanlar dogru', (Length(Liste) = 2) and (Liste[0].Ad = 'Eski1') and
+    (Liste[0].Port = 3051) and (Liste[0].KarakterSeti = 'UTF8') and (Liste[1].Ad = 'Eski2'));
+  Kontrol('eski bicim: Klasor bos', (Length(Liste) = 2) and (Liste[0].Klasor = '') and (Liste[1].Klasor = ''));
+  Kontrol('eski bicim: klasor listesi bos', Length(KayitliKlasorler) = 0);
+  Kontrol('eski bicim: uyari yok, dosya yerinde', (BozukDosyaUyarisiAl = '') and TFile.Exists(Dosya));
+  { Eski dosyaya yeni alanlarla yazilinca baglantilar kaybolmaz }
+  KlasorEkle('Yeni');
+  Kontrol('eski bicim: klasor eklenince baglantilar duruyor', Length(KayitliBaglantilar) = 2);
+end;
+
+{ Klasorler: ekleme, bos klasor, baglantiyi tasima, ad degistirme, kaldirma, gidis-donus. }
+procedure KlasorSenaryosu;
+var
+  Liste: TArray<TBaglantiTanimi>;
+  Klasorler: TArray<string>;
+  Musteri, Eski: string;
+  Kural: Boolean;
+  Bulunan: TBaglantiTanimi;
+begin
+  { 'Musteri' ve Turkce karakterli ad: M-u-s-t-e-r-i yerine U+00FC U+015F harfleri }
+  Musteri := 'M'#$00FC#$015F'teri';
+  TFile.WriteAllText(Dosya, '{"Baglantilar": []}', TEncoding.UTF8);
+  BaglantiKaydet(Tanim('A', 'sifre-a', True));
+  BaglantiKaydet(Tanim('B', '', False));
+  KlasorEkle(Musteri);
+  KlasorEkle('Bos klasor');
+  Klasorler := KayitliKlasorler;
+  Kontrol('klasor: iki klasor kayitli (bos olan dahil)', Length(Klasorler) = 2);
+
+  Kural := False;
+  try
+    KlasorEkle(AnsiLowerCase(Musteri));
+  except
+    on EKayitKurali do
+      Kural := True;
+  end;
+  Kontrol('klasor: ayni ad (buyuk/kucuk harf farkli) reddedilir', Kural);
+  Kural := False;
+  try
+    KlasorEkle('   ');
+  except
+    on EKayitKurali do
+      Kural := True;
+  end;
+  Kontrol('klasor: bos ad reddedilir', Kural);
+  Kural := False;
+  try
+    BaglantiKlasoruAyarla('A', 'Olmayan klasor');
+  except
+    on EKayitKurali do
+      Kural := True;
+  end;
+  Kontrol('klasor: olmayan klasore tasima reddedilir', Kural);
+
+  BaglantiKlasoruAyarla('A', Musteri);
+  Liste := KayitliBaglantilar;
+  Kontrol('klasor: A klasore girdi, B kokte', (Length(Liste) = 2) and (Liste[0].Klasor = Musteri) and (Liste[1].Klasor = ''));
+  Kontrol('klasor: klasore girince sifre bozulmadi', (Length(Liste) = 2) and (Liste[0].Sifre = 'sifre-a'));
+  { Duzenleme (BaglantiKaydet) klasoru silmemeli }
+  BaglantiKaydet(Tanim('A', 'sifre-a2', True));
+  KayitliBaglantiBul('A', Bulunan);
+  Kontrol('klasor: duzenleyince klasor korunur', (Bulunan.Klasor = Musteri) and (Bulunan.Sifre = 'sifre-a2'));
+  { Ad degistirme: ayni yerde kalir, klasor korunur }
+  BaglantiKaydet(Tanim('A-yeni', 'sifre-a2', True), 'A');
+  Liste := KayitliBaglantilar;
+  Kontrol('klasor: ad degisti, 2 kayit, sira ve klasor korundu', (Length(Liste) = 2) and
+    (Liste[0].Ad = 'A-yeni') and (Liste[0].Klasor = Musteri) and (Liste[1].Ad = 'B'));
+  Kontrol('klasor: eski ad artik yok', not KayitliBaglantiBul('A', Bulunan));
+
+  { Dosyadan yeniden okunan hali (program kapanip acilma benzetimi): ayni sonuc }
+  Klasorler := KayitliKlasorler;
+  Kontrol('klasor: gidis-donus klasor listesi ayni', (Length(Klasorler) = 2) and
+    (Klasorler[0] = Musteri) and (Klasorler[1] = 'Bos klasor'));
+  Kontrol('klasor: dosyada Klasorler alani var', Pos('"Klasorler"', TFile.ReadAllText(Dosya, TEncoding.UTF8)) > 0);
+  Kontrol('klasor: .tmp arkada kalmadi', not TFile.Exists(Dosya + '.tmp'));
+
+  { Klasor adi degisince icindeki baglanti da yeni adi gosterir }
+  Eski := Musteri;
+  Musteri := Musteri + '2';
+  KlasorYenidenAdlandir(Eski, Musteri);
+  Liste := KayitliBaglantilar;
+  Klasorler := KayitliKlasorler;
+  Kontrol('klasor: yeniden adlandirma baglantiya yansidi', (Length(Liste) = 2) and (Liste[0].Klasor = Musteri) and
+    (Length(Klasorler) = 2) and (Klasorler[0] = Musteri));
+  Kural := False;
+  try
+    KlasorYenidenAdlandir(Musteri, 'bos KLASOR');
+  except
+    on EKayitKurali do
+      Kural := True;
+  end;
+  Kontrol('klasor: baska klasorun adina yeniden adlandirma reddedilir', Kural);
+
+  { Klasoru kaldirmak baglantiyi silmez, kok duzeye cikarir }
+  KlasorKaldir(Musteri);
+  Liste := KayitliBaglantilar;
+  Klasorler := KayitliKlasorler;
+  Kontrol('klasor: kaldirinca baglanti silinmedi, kokte', (Length(Liste) = 2) and (Liste[0].Ad = 'A-yeni') and (Liste[0].Klasor = ''));
+  Kontrol('klasor: kaldirinca sadece diger klasor kaldi', (Length(Klasorler) = 1) and (Klasorler[0] = 'Bos klasor'));
+
+  { Elle bozulmus dosya: Klasorler listesinde olmayan klasor adi kaybolmaz }
+  TFile.WriteAllText(Dosya,
+    '{"Klasorler": [], "Baglantilar": [{"Ad": "Z", "Sunucu": "s", "Port": 3050, "VeritabaniYolu": "x", "Kullanici": "u", "KarakterSeti": "UTF8", "Klasor": "Yetim", "SifreDpapi": ""}]}',
+    TEncoding.UTF8);
+  Klasorler := KayitliKlasorler;
+  Kontrol('klasor: listede olmayan klasor adi eklenir', (Length(Klasorler) = 1) and (Klasorler[0] = 'Yetim'));
+
+  { Baglantiyi kayittan kaldirmak klasoru silmez }
+  BaglantiListedenKaldir('Z');
+  Kontrol('klasor: baglanti kalkinca klasor durur', (Length(KayitliBaglantilar) = 0) and (Length(KayitliKlasorler) = 1));
+end;
+
 var
   Liste: TArray<TBaglantiTanimi>;
   Bozuklar: TArray<string>;
@@ -75,6 +199,9 @@ begin
   Hatalar := 0;
   try
     try
+      { Uyari metni dil dosyasindan gelir: Diller klasoru exe'nin yaninda olmali }
+      if not TDirectory.Exists(TPath.Combine(ExtractFilePath(ParamStr(0)), 'Diller')) then
+        raise Exception.Create('Diller klasoru test exe''sinin yaninda yok. Uygulamanin Diller klasorunu exe''nin yanina kopyalayin.');
       Klasor := ParamStr(1);
       TDirectory.CreateDirectory(Klasor);
       VeriKlasoruAyarla(Klasor);
@@ -100,6 +227,9 @@ begin
       BaglantiListedenKaldir('B');
       Liste := KayitliBaglantilar;
       Kontrol('kaldirinca 1 kayit', Length(Liste) = 1);
+
+      EskiBicimSenaryosu;
+      KlasorSenaryosu;
 
       BozukSenaryo('yarim yazilmis JSON', '{"Baglantilar": [ {"Ad": "A", ');
       BozukSenaryo('bos dosya', '');

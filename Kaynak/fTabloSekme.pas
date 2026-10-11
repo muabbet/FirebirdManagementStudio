@@ -7,7 +7,7 @@ interface
 uses
   System.SysUtils, System.Classes, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
   Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids,
-  uDil, uMetadata, uSorgu;
+  uDil, uBaglanti, uMetadata, uSorgu;
 
 type
   TTabloSekme = class(TFrame)
@@ -21,7 +21,9 @@ type
     dsKolonlar: TDataSource;
     dsVeri: TDataSource;
   public
-    procedure Yukle(const Tablo: string);
+    BaglantiAd: string;
+    TabloAdi: string;
+    procedure Yukle(Bag: TAcikBaglanti; const Tablo: string);
     procedure YazilariYenile;
   end;
 
@@ -29,10 +31,12 @@ implementation
 
 {$R *.dfm}
 
-procedure TTabloSekme.Yukle(const Tablo: string);
+procedure TTabloSekme.Yukle(Bag: TAcikBaglanti; const Tablo: string);
 begin
-  dsKolonlar.DataSet := KolonTablosuOlustur(Tablo, Self);
-  dsVeri.DataSet := TabloVerisiSorgusu(Tablo, ILK_SATIR_SAYISI, Self);
+  BaglantiAd := Bag.Tanim.Ad;
+  TabloAdi := Tablo;
+  dsKolonlar.DataSet := KolonTablosuOlustur(Bag, Tablo, Self);
+  dsVeri.DataSet := TabloVerisiSorgusu(Bag, Tablo, ILK_SATIR_SAYISI, Self);
   YazilariYenile;
 end;
 

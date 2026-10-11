@@ -109,7 +109,7 @@ Standart **TDBGrid** kullanılacak, aşağıdaki altı özellik kendi kodumuzla 
 
 ## 8. Ekran Düzeni (SSMS'ten esinlenmiş, sadeleştirilmiş)
 
-- **Sol panel:** Bağlantı ve nesne ağacı. Başta sadece dört dal: Tablolar, View'lar, Prosedürler, Generator'lar.
+- **Sol panel:** Kayıtlı bağlantılar (klasörlere konabilir, aynı anda birden fazlası açık olabilir). Bağlı bir bağlantının altında dört dal: Tablolar, View'lar, Prosedürler, Generator'lar.
 - **Sağ üst:** Sekmeli çalışma alanı. Her açılan şey (sorgu, tablo verisi, tablo yapısı) kendi sekmesinde açılır.
 - **Sağ alt:** Sonuç alanı. Sorgu sonucu veya hata mesajı burada görünür.
 - **Üstte:** En fazla 5-6 düğmeli **tek** araç çubuğu (Bağlan, Yeni Sorgu, Çalıştır, Yenile gibi). İkinci çubuk ve iç içe menü yok.
@@ -161,6 +161,13 @@ Bu bir "boş zamanda yavaş yavaş" projesidir, acele yoktur. **Her aşama bitin
 - [ ] VCL Style teması ve ikon seti
 
 **Bitiş ölçütü:** Gerçek bir Firebird veritabanına bağlanıp ağacı görebiliyor, bir tabloyu açabiliyorum. Dil değiştirince yazılar anında değişiyor.
+
+### Aşama 1b: Çoklu bağlantı ağacı
+- [ ] Kayıtlı bağlantılar ağaçta görünür ve aynı anda birden fazla bağlantı açık kalabilir
+- [ ] Klasörler, sürükle-bırak ve "Kayıttan Kaldır"
+- [ ] Şifresi kayıtlı olmayan bağlantıda şifre sorma penceresi
+
+**Bitiş ölçütü:** İki veritabanına aynı anda bağlanıp ikisinden de tablo açabiliyorum, klasörler program kapanıp açılınca korunuyor.
 
 ### Aşama 2: SQL Editörü
 - [ ] `uEditor.pas` (SynEdit sarmalayıcı), SQL renklendirme, çoklu sekme

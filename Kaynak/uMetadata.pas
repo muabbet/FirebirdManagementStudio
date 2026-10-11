@@ -15,11 +15,11 @@ uses
   FireDAC.Comp.Client,
   uDil, uBaglanti;
 
-procedure TablolariGetir(Hedef: TStrings);
-procedure ViewlariGetir(Hedef: TStrings);
-procedure ProsedurleriGetir(Hedef: TStrings);
-procedure GeneratorleriGetir(Hedef: TStrings);
-function KolonTablosuOlustur(const Tablo: string; Sahip: TComponent): TFDMemTable;
+procedure TablolariGetir(Bag: TAcikBaglanti; Hedef: TStrings);
+procedure ViewlariGetir(Bag: TAcikBaglanti; Hedef: TStrings);
+procedure ProsedurleriGetir(Bag: TAcikBaglanti; Hedef: TStrings);
+procedure GeneratorleriGetir(Bag: TAcikBaglanti; Hedef: TStrings);
+function KolonTablosuOlustur(Bag: TAcikBaglanti; const Tablo: string; Sahip: TComponent): TFDMemTable;
 procedure KolonTablosuYazilariniYenile(Tablo: TDataSet);
 
 implementation
@@ -40,13 +40,13 @@ begin
   end;
 end;
 
-procedure TablolariGetir(Hedef: TStrings);
+procedure TablolariGetir(Bag: TAcikBaglanti; Hedef: TStrings);
 var
   Sorgu: TFDMetaInfoQuery;
 begin
   Sorgu := TFDMetaInfoQuery.Create(nil);
   try
-    Sorgu.Connection := FbBaglantisi;
+    Sorgu.Connection := Bag.Baglanti;
     Sorgu.MetaInfoKind := mkTables;
     Sorgu.TableKinds := [tkTable];
     Sorgu.ObjectScopes := [osMy];
@@ -56,13 +56,13 @@ begin
   end;
 end;
 
-procedure ViewlariGetir(Hedef: TStrings);
+procedure ViewlariGetir(Bag: TAcikBaglanti; Hedef: TStrings);
 var
   Sorgu: TFDMetaInfoQuery;
 begin
   Sorgu := TFDMetaInfoQuery.Create(nil);
   try
-    Sorgu.Connection := FbBaglantisi;
+    Sorgu.Connection := Bag.Baglanti;
     Sorgu.MetaInfoKind := mkTables;
     Sorgu.TableKinds := [tkView];
     Sorgu.ObjectScopes := [osMy];
@@ -72,13 +72,13 @@ begin
   end;
 end;
 
-procedure ProsedurleriGetir(Hedef: TStrings);
+procedure ProsedurleriGetir(Bag: TAcikBaglanti; Hedef: TStrings);
 var
   Sorgu: TFDMetaInfoQuery;
 begin
   Sorgu := TFDMetaInfoQuery.Create(nil);
   try
-    Sorgu.Connection := FbBaglantisi;
+    Sorgu.Connection := Bag.Baglanti;
     Sorgu.MetaInfoKind := mkProcs;
     Sorgu.ObjectScopes := [osMy];
     ListeyiDoldur(Sorgu, 'PROC_NAME', Hedef);
@@ -87,13 +87,13 @@ begin
   end;
 end;
 
-procedure GeneratorleriGetir(Hedef: TStrings);
+procedure GeneratorleriGetir(Bag: TAcikBaglanti; Hedef: TStrings);
 var
   Sorgu: TFDMetaInfoQuery;
 begin
   Sorgu := TFDMetaInfoQuery.Create(nil);
   try
-    Sorgu.Connection := FbBaglantisi;
+    Sorgu.Connection := Bag.Baglanti;
     Sorgu.MetaInfoKind := mkGenerators;
     Sorgu.ObjectScopes := [osMy];
     ListeyiDoldur(Sorgu, 'GENERATOR_NAME', Hedef);
@@ -127,7 +127,7 @@ begin
 end;
 
 { Kolon bilgisini kucuk bir bellek tablosuna koyar. Tablo, Sahip ile birlikte yok olur. }
-function KolonTablosuOlustur(const Tablo: string; Sahip: TComponent): TFDMemTable;
+function KolonTablosuOlustur(Bag: TAcikBaglanti; const Tablo: string; Sahip: TComponent): TFDMemTable;
 var
   Sorgu: TFDMetaInfoQuery;
   BosOlur: Boolean;
@@ -144,7 +144,7 @@ begin
   Result.FieldByName('BOS_OLUR_MI').Visible := False;
   Sorgu := TFDMetaInfoQuery.Create(nil);
   try
-    Sorgu.Connection := FbBaglantisi;
+    Sorgu.Connection := Bag.Baglanti;
     Sorgu.MetaInfoKind := mkTableFields;
     { Buyuk/kucuk harf ve ozel karakterler korunsun diye tirnakli verilir. }
     Sorgu.ObjectName := '"' + StringReplace(Tablo, '"', '""', [rfReplaceAll]) + '"';
