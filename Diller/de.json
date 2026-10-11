@@ -102,5 +102,27 @@
   "UYARI_BASLIK": "Warnung",
   "ERR_BAGLANTI_DOSYASI_BOZUK": "Die Datei mit den gespeicherten Verbindungen konnte nicht gelesen werden. Sie wurde nicht gelöscht, sondern daneben verschoben als: %s. Ihre Verbindungen können Sie aus dieser Datei wiederherstellen.",
   "ERR_KAYIT_BASARISIZ": "Die Verbindung wurde hergestellt, aber ihre Angaben konnten nicht gespeichert werden. Die Verbindung bleibt geöffnet, erscheint aber beim nächsten Mal eventuell nicht in der Liste.",
-  "ERR_IKON_YOK": "Symboldatei nicht gefunden: %s. Prüfen Sie, ob der Ordner 'Ikonlar' neben dem Programm vollständig ist."
+  "ERR_IKON_YOK": "Symboldatei nicht gefunden: %s. Prüfen Sie, ob der Ordner 'Ikonlar' neben dem Programm vollständig ist.",
+
+  "BTN_YENI_SORGU": "Neue Abfrage",
+  "BTN_CALISTIR": "Ausführen (F5)",
+  "SEKME_SORGU": "Abfrage",
+  "LBL_SONUC": "Ergebnis",
+  "LBL_SATIR_YUKLENDI": "%d Zeilen geladen.",
+  "LBL_SATIR_DEVAMI": "Beim Hinunterscrollen werden ggf. %d weitere Zeilen nachgeladen.",
+  "GRID_BLOB": "(BLOB, %d Byte)",
+  "GRID_BLOB_ILK": "... (die ersten %d Byte angezeigt)",
+  "ERR_SORGU_BOS": "Geben Sie einen SQL-Befehl zum Ausführen ein.",
+  "ERR_SORGU_BAGLANTI_YOK": "Die Verbindung '%s' ist nicht geöffnet. Verbinden Sie sich zuerst im Baum.",
+  "ERR_SORGU_BAGLANTI_SEC": "Wählen Sie für eine neue Abfrage eine geöffnete (verbundene) Verbindung im Baum.",
+  "MSG_SORGU_VAZGECILDI": "Der Befehl wurde nicht ausgeführt.",
+  "MSG_SORGU_SECIM": "Abfrage ausgeführt (%d ms). Ergebnisse werden in Blöcken von 500 Zeilen geladen. Die Transaktion ist im Auto-Commit-Modus.",
+  "MSG_SORGU_DEGISTI": "Befehl ausgeführt: %d Zeilen betroffen (%d ms). Die Transaktion wurde automatisch bestätigt (Commit) und kann nicht rückgängig gemacht werden.",
+  "MSG_SORGU_TAMAM": "Befehl ausgeführt (%d ms). Die Transaktion wurde automatisch bestätigt (Commit).",
+  "ONAY_SORGU_DROP": "Dieser Befehl enthält DROP: Ein Datenbankobjekt (Tabelle, View, Spalte usw.) wird DAUERHAFT gelöscht. Die Transaktion wird automatisch bestätigt und kann nicht rückgängig gemacht werden.\n\nAusführen?",
+  "ONAY_SORGU_WHERE_YOK": "Dieser DELETE/UPDATE-Befehl hat kein WHERE: ALLE Zeilen der Tabelle sind betroffen. Die Transaktion wird automatisch bestätigt und kann nicht rückgängig gemacht werden.\n\nAusführen?",
+  "ERR_SQL_BENZERSIZ": "Dieser Wert existiert bereits. In ein eindeutiges Feld kann derselbe Wert nicht zweimal geschrieben werden.",
+  "ERR_SQL_YABANCI_ANAHTAR": "Der Vorgang wurde abgelehnt, weil er eine Verknüpfung zwischen Tabellen (Fremdschlüssel) verletzen würde.",
+  "ERR_SQL_NESNE_YOK": "Eine im Befehl genannte Tabelle, Spalte oder ein anderes Objekt wurde in der Datenbank nicht gefunden.",
+  "ERR_SQL_SOZDIZIMI": "Der SQL-Befehl enthält einen Syntaxfehler. Es kann immer nur ein Befehl ausgeführt werden."
 }

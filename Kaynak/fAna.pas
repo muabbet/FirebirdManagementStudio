@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uOnay, uBaglanti, uMetadata, uSorgu, fBaglanti, fMetinSor,
-  fTabloSekme;
+  fTabloSekme, fSorguSekme;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -35,9 +35,8 @@ type
     btnYeniBaglanti: TToolButton;
     btnBaglan: TToolButton;
     btnYenile: TToolButton;
-    btnKlonla: TToolButton;
-    btnKaldir: TToolButton;
-    btnYeniKlasor: TToolButton;
+    btnYeniSorgu: TToolButton;
+    btnCalistir: TToolButton;
     pnlDil: TPanel;
     cmbDil: TComboBox;
     stbDurum: TStatusBar;
@@ -63,13 +62,14 @@ type
     pmSekme: TPopupMenu;
     miSekmeKapat: TMenuItem;
     procedure FormCreate(Sender: TObject);
+    procedure FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+    procedure pcCalismaChange(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnYeniBaglantiClick(Sender: TObject);
     procedure btnBaglanClick(Sender: TObject);
-    procedure btnKlonlaClick(Sender: TObject);
-    procedure btnKaldirClick(Sender: TObject);
+    procedure btnYeniSorguClick(Sender: TObject);
+    procedure btnCalistirClick(Sender: TObject);
     procedure btnYenileClick(Sender: TObject);
-    procedure btnYeniKlasorClick(Sender: TObject);
     procedure cmbDilChange(Sender: TObject);
     procedure tvNesnelerChange(Sender: TObject; Node: TTreeNode);
     procedure tvNesnelerDblClick(Sender: TObject);
@@ -94,6 +94,7 @@ type
     FDilKodlari: TArray<string>;
     FOgeler: TObjectList<TAgacOgesi>;
     FSurukleNode: TTreeNode;
+    FSorguNo: Integer;
     procedure YazilariYenile;
     procedure DilListesiniDoldur;
     procedure DurumuGuncelle;
@@ -128,6 +129,10 @@ type
     function SekmeAl(Sayfa: TTabSheet): TTabloSekme;
     procedure BaglantiSekmeleriniKapat(const BaglantiAd: string);
     procedure TabloAc(Dugme: TTreeNode);
+    function SorguSekmeAl(Sayfa: TTabSheet): TSorguSekme;
+    function AktifSorguSekmesi: TSorguSekme;
+    procedure YeniSorgu;
+    procedure SorguyuCalistir;
   end;
 
 var
@@ -186,13 +191,13 @@ procedure TfrmAna.YazilariYenile;
 var
   i: Integer;
   Sekme: TTabloSekme;
+  SorguSekme: TSorguSekme;
 begin
   Caption := T('APP_BASLIK');
   btnYeniBaglanti.Caption := T('BTN_YENI_BAGLANTI');
-  btnKlonla.Caption := T('MENU_KLONLA');
-  btnKaldir.Caption := T('MENU_KAYITTAN_KALDIR');
   btnYenile.Caption := T('BTN_YENILE');
-  btnYeniKlasor.Caption := T('BTN_YENI_KLASOR');
+  btnYeniSorgu.Caption := T('BTN_YENI_SORGU');
+  btnCalistir.Caption := T('BTN_CALISTIR');
   miAc.Caption := T('MENU_AC');
   miBaglan.Caption := T('BTN_BAGLAN');
   miKes.Caption := T('BTN_KES');
@@ -211,6 +216,12 @@ begin
     Sekme := SekmeAl(pcCalisma.Pages[i]);
     if Sekme <> nil then
       Sekme.YazilariYenile;
+    SorguSekme := SorguSekmeAl(pcCalisma.Pages[i]);
+    if SorguSekme <> nil then
+    begin
+      pcCalisma.Pages[i].Caption := SorguSekme.Baslik;
+      SorguSekme.YazilariYenile;
+    end;
   end;
   DurumuGuncelle;
 end;
@@ -264,8 +275,8 @@ begin
   end;
   btnBaglan.Enabled := Dugme <> nil;
   btnYenile.Enabled := Bag <> nil;
-  btnKlonla.Enabled := Dugme <> nil;
-  btnKaldir.Enabled := Dugme <> nil;
+  btnYeniSorgu.Enabled := Bag <> nil;
+  btnCalistir.Enabled := AktifSorguSekmesi <> nil;
 end;
 
 procedure TfrmAna.MesajYaz(const Metin: string);
@@ -728,16 +739,74 @@ begin
     Result := TTabloSekme(Sayfa.Controls[0]);
 end;
 
+function TfrmAna.SorguSekmeAl(Sayfa: TTabSheet): TSorguSekme;
+begin
+  Result := nil;
+  if (Sayfa.ControlCount > 0) and (Sayfa.Controls[0] is TSorguSekme) then
+    Result := TSorguSekme(Sayfa.Controls[0]);
+end;
+
+function TfrmAna.AktifSorguSekmesi: TSorguSekme;
+begin
+  Result := nil;
+  if pcCalisma.ActivePage <> nil then
+    Result := SorguSekmeAl(pcCalisma.ActivePage);
+end;
+
+{ Secili (acik) baglanti icin yeni bir sorgu sekmesi acar. }
+procedure TfrmAna.YeniSorgu;
+var
+  Dugme: TTreeNode;
+  Bag: TAcikBaglanti;
+  Sayfa: TTabSheet;
+  Sekme: TSorguSekme;
+begin
+  Dugme := SeciliBaglantiDugmesi;
+  Bag := nil;
+  if Dugme <> nil then
+    Bag := FbAcikBaglanti(OgeAl(Dugme).BaglantiAd);
+  if Bag = nil then
+  begin
+    UyariGoster(T('ERR_SORGU_BAGLANTI_SEC'));
+    Exit;
+  end;
+  Inc(FSorguNo);
+  Sayfa := TTabSheet.Create(pcCalisma);
+  Sayfa.PageControl := pcCalisma;
+  Sayfa.ImageIndex := IKON_SORGU;
+  Sekme := TSorguSekme.Create(Sayfa);
+  Sekme.Parent := Sayfa;
+  Sekme.Align := alClient;
+  Sekme.Hazirla(FSorguNo, Bag.Tanim.Ad);
+  Sayfa.Caption := Sekme.Baslik;
+  pcCalisma.ActivePage := Sayfa;
+  Sekme.EditoreOdaklan;
+  DurumuGuncelle;
+end;
+
+procedure TfrmAna.SorguyuCalistir;
+begin
+  if AktifSorguSekmesi <> nil then
+    AktifSorguSekmesi.Calistir;
+end;
+
 procedure TfrmAna.BaglantiSekmeleriniKapat(const BaglantiAd: string);
 var
   i: Integer;
   Sekme: TTabloSekme;
+  SorguSekme: TSorguSekme;
 begin
   for i := pcCalisma.PageCount - 1 downto 0 do
   begin
     Sekme := SekmeAl(pcCalisma.Pages[i]);
     if (Sekme <> nil) and SameText(Sekme.BaglantiAd, BaglantiAd) then
-      pcCalisma.Pages[i].Free;
+      pcCalisma.Pages[i].Free
+    else
+    begin
+      SorguSekme := SorguSekmeAl(pcCalisma.Pages[i]);
+      if (SorguSekme <> nil) and SameText(SorguSekme.BaglantiAd, BaglantiAd) then
+        pcCalisma.Pages[i].Free;
+    end;
   end;
 end;
 
@@ -810,27 +879,35 @@ begin
   end;
 end;
 
-procedure TfrmAna.btnKlonlaClick(Sender: TObject);
+procedure TfrmAna.btnYeniSorguClick(Sender: TObject);
 begin
-  if SeciliBaglantiDugmesi <> nil then
-    YeniBaglanti(OgeAl(SeciliBaglantiDugmesi).BaglantiAd);
+  YeniSorgu;
 end;
 
-procedure TfrmAna.btnKaldirClick(Sender: TObject);
+procedure TfrmAna.btnCalistirClick(Sender: TObject);
 begin
-  if SeciliBaglantiDugmesi <> nil then
-    KayittanKaldir(SeciliBaglantiDugmesi);
+  SorguyuCalistir;
+end;
+
+{ F5: aktif sekme bir sorgu sekmesiyse calistirir. }
+procedure TfrmAna.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+begin
+  if Key = VK_F5 then
+  begin
+    Key := 0;
+    SorguyuCalistir;
+  end;
+end;
+
+procedure TfrmAna.pcCalismaChange(Sender: TObject);
+begin
+  DurumuGuncelle;
 end;
 
 procedure TfrmAna.btnYenileClick(Sender: TObject);
 begin
   if SeciliBaglantiDugmesi <> nil then
     AgaciYenile(SeciliBaglantiDugmesi);
-end;
-
-procedure TfrmAna.btnYeniKlasorClick(Sender: TObject);
-begin
-  YeniKlasor;
 end;
 
 procedure TfrmAna.cmbDilChange(Sender: TObject);

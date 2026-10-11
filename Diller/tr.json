@@ -102,5 +102,27 @@
   "UYARI_BASLIK": "Uyarı",
   "ERR_BAGLANTI_DOSYASI_BOZUK": "Kayıtlı bağlantılar dosyası okunamadı. Dosya silinmedi, şu adla yanına taşındı: %s. Bağlantılarınızı bu dosyadan geri alabilirsiniz.",
   "ERR_KAYIT_BASARISIZ": "Bağlantı kuruldu ancak bağlantı bilgileri kaydedilemedi. Bağlantı açık kalıyor, bir sonraki açılışta listede görünmeyebilir.",
-  "ERR_IKON_YOK": "İkon dosyası bulunamadı: %s. Programın yanındaki 'Ikonlar' klasörünün eksiksiz olduğundan emin olun."
+  "ERR_IKON_YOK": "İkon dosyası bulunamadı: %s. Programın yanındaki 'Ikonlar' klasörünün eksiksiz olduğundan emin olun.",
+
+  "BTN_YENI_SORGU": "Yeni Sorgu",
+  "BTN_CALISTIR": "Çalıştır (F5)",
+  "SEKME_SORGU": "Sorgu",
+  "LBL_SONUC": "Sonuç",
+  "LBL_SATIR_YUKLENDI": "%d satır yüklendi.",
+  "LBL_SATIR_DEVAMI": "Aşağı indikçe varsa %d satır daha yüklenir.",
+  "GRID_BLOB": "(BLOB, %d bayt)",
+  "GRID_BLOB_ILK": "... (ilk %d bayt gösterildi)",
+  "ERR_SORGU_BOS": "Çalıştırılacak bir SQL komutu yazın.",
+  "ERR_SORGU_BAGLANTI_YOK": "'%s' bağlantısı açık değil. Önce ağaçtan bağlanın.",
+  "ERR_SORGU_BAGLANTI_SEC": "Yeni sorgu için ağaçta açık (bağlı) bir bağlantı seçin.",
+  "MSG_SORGU_VAZGECILDI": "Komut çalıştırılmadı.",
+  "MSG_SORGU_SECIM": "Sorgu çalıştı (%d ms). Sonuç 500'er satır yüklenir. İşlem otomatik onay (autocommit) modunda.",
+  "MSG_SORGU_DEGISTI": "Komut çalıştı: %d satır etkilendi (%d ms). İşlem otomatik onaylandı (commit), geri alınamaz.",
+  "MSG_SORGU_TAMAM": "Komut çalıştı (%d ms). İşlem otomatik onaylandı (commit).",
+  "ONAY_SORGU_DROP": "Bu komutta DROP var: bir veritabanı nesnesi (tablo, view, kolon vb.) KALICI olarak silinir. İşlem otomatik onaylanır ve geri alınamaz.\n\nÇalıştırılsın mı?",
+  "ONAY_SORGU_WHERE_YOK": "Bu DELETE/UPDATE komutunda WHERE yok: tablodaki TÜM satırlar etkilenecek. İşlem otomatik onaylanır ve geri alınamaz.\n\nÇalıştırılsın mı?",
+  "ERR_SQL_BENZERSIZ": "Bu değer zaten var. Tekrar edemeyen (benzersiz) bir alana aynı değer yazılmak isteniyor.",
+  "ERR_SQL_YABANCI_ANAHTAR": "İşlem, tablolar arasındaki bir bağlantıyı (yabancı anahtar) bozacağı için yapılamadı.",
+  "ERR_SQL_NESNE_YOK": "Komutta adı geçen tablo, kolon veya başka bir nesne veritabanında bulunamadı.",
+  "ERR_SQL_SOZDIZIMI": "SQL komutunda yazım hatası var. Aynı anda yalnızca tek bir komut çalıştırılır."
 }

@@ -624,6 +624,7 @@ const
   GDS_DEADLOCK = 335544336;
   GDS_UPDATE_CONFLICT = 335544451;
   GDS_LOCK_TIMEOUT = 335544510;
+  GDS_TOKEN_UNKNOWN = 335544634;
 
 { Firebird hata koduna bakar. Taninan bir kod varsa cumleyi verir. }
 function KodundanCevir(Hata: EFDDBEngineException; out Cevap: string): Boolean;
@@ -632,7 +633,31 @@ var
 begin
   Result := True;
   for i := 0 to Hata.ErrorCount - 1 do
+  begin
+    { SQL komutu hatalari: FireDAC bunlari surumden bagimsiz siniflandirir. }
+    case Hata.Errors[i].Kind of
+      ekUKViolated:
+        begin
+          Cevap := T('ERR_SQL_BENZERSIZ');
+          Exit;
+        end;
+      ekFKViolated:
+        begin
+          Cevap := T('ERR_SQL_YABANCI_ANAHTAR');
+          Exit;
+        end;
+      ekObjNotExists:
+        begin
+          Cevap := T('ERR_SQL_NESNE_YOK');
+          Exit;
+        end;
+    end;
     case Hata.Errors[i].ErrorCode of
+      GDS_TOKEN_UNKNOWN:
+        begin
+          Cevap := T('ERR_SQL_SOZDIZIMI');
+          Exit;
+        end;
       GDS_LOGIN:
         begin
           Cevap := T('ERR_SIFRE');
@@ -659,6 +684,7 @@ begin
           Exit;
         end;
     end;
+  end;
   Result := False;
 end;
 
