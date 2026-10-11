@@ -102,5 +102,27 @@
   "UYARI_BASLIK": "Warning",
   "ERR_BAGLANTI_DOSYASI_BOZUK": "The saved connections file could not be read. It was not deleted but moved next to the original as: %s. You can recover your connections from that file.",
   "ERR_KAYIT_BASARISIZ": "The connection was established but its details could not be saved. The connection stays open, but it may not appear in the list next time.",
-  "ERR_IKON_YOK": "Icon file not found: %s. Make sure the 'Ikonlar' folder next to the program is complete."
+  "ERR_IKON_YOK": "Icon file not found: %s. Make sure the 'Ikonlar' folder next to the program is complete.",
+
+  "BTN_YENI_SORGU": "New Query",
+  "BTN_CALISTIR": "Execute (F5)",
+  "SEKME_SORGU": "Query",
+  "LBL_SONUC": "Result",
+  "LBL_SATIR_YUKLENDI": "%d rows loaded.",
+  "LBL_SATIR_DEVAMI": "If there are more, %d further rows load as you scroll down.",
+  "GRID_BLOB": "(BLOB, %d bytes)",
+  "GRID_BLOB_ILK": "... (first %d bytes shown)",
+  "ERR_SORGU_BOS": "Type an SQL statement to run.",
+  "ERR_SORGU_BAGLANTI_YOK": "Connection '%s' is not open. Connect from the tree first.",
+  "ERR_SORGU_BAGLANTI_SEC": "Select an open (connected) connection in the tree for a new query.",
+  "MSG_SORGU_VAZGECILDI": "The statement was not executed.",
+  "MSG_SORGU_SECIM": "Query executed (%d ms). Results load 500 rows at a time. Transaction is in auto-commit mode.",
+  "MSG_SORGU_DEGISTI": "Statement executed: %d rows affected (%d ms). The transaction was committed automatically and cannot be undone.",
+  "MSG_SORGU_TAMAM": "Statement executed (%d ms). The transaction was committed automatically.",
+  "ONAY_SORGU_DROP": "This statement contains DROP: a database object (table, view, column etc.) will be deleted PERMANENTLY. The transaction is committed automatically and cannot be undone.\n\nRun it?",
+  "ONAY_SORGU_WHERE_YOK": "This DELETE/UPDATE statement has no WHERE: ALL rows of the table will be affected. The transaction is committed automatically and cannot be undone.\n\nRun it?",
+  "ERR_SQL_BENZERSIZ": "This value already exists. The same value cannot be written to a unique field twice.",
+  "ERR_SQL_YABANCI_ANAHTAR": "The operation was refused because it would break a link between tables (foreign key).",
+  "ERR_SQL_NESNE_YOK": "A table, column or other object named in the statement was not found in the database.",
+  "ERR_SQL_SOZDIZIMI": "The SQL statement has a syntax error. Only one statement can be run at a time."
 }

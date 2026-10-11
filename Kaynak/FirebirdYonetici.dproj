@@ -94,6 +94,15 @@
             <FormType>dfm</FormType>
             <DesignClass>TFrame</DesignClass>
         </DCCReference>
+        <DCCReference Include="fSorguSekme.pas">
+            <Form>SorguSekme</Form>
+            <FormType>dfm</FormType>
+            <DesignClass>TFrame</DesignClass>
+        </DCCReference>
+        <DCCReference Include="fMetinGoster.pas">
+            <Form>frmMetinGoster</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <DCCReference Include="fMetinSor.pas">
             <Form>frmMetinSor</Form>
             <FormType>dfm</FormType>
