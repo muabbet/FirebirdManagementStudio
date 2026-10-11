@@ -57,3 +57,27 @@ Sunucular çalışıyor (3050 = 2.5.9, 3051 = 5.0.4, `Aşama 1b` raporuyla aynı
    (Port 3051 ve 5.0.4 test veritabanı yoluyla ikinci kez.)
 2. Başlık sıralamasında (madde 3.2) yukarıdaki (a)/(b) kararı.
 3. Adım 1'e (sorgu planı) geçmem için onay.
+
+---
+
+# Adım 1: Sorgu planı
+
+**Karar (sıralama):** Başlık sıralaması olduğu gibi kalıyor (Bölüm 3, madde 2).
+
+**Seçilen yol: A (FireDAC iç yolu).** `uSorgu.pas` içinde `SorguPlaniAl(Bag, Sql)`: komut yalnızca `Prepare` edilir, `TIBStatement.sql_explain_plan` (Firebird 3+; boşsa `sql_get_plan`) okunur. Neden A: `FStmt` alanı *private* değil *protected* (`TFDPhysIBCommandBase`); içeriye tek satırlık bir sınıf erişimi (`TFbKomutErisim = class(TFDPhysIBCommandBase)`) yetiyor, RTTI/helper gerekmedi. Toplam yaklaşık 35 satır, tek unit, Windows'a bağlı kod yok. B (`fbclient.dll`, `isc_dsql_sql_info`) ayrı bağlantı/işlem açıp C API'yi elle çağırmayı gerektirirdi, çok daha uzun olurdu. B'nin kodu yazılmadı, depoda yok.
+
+Dikkat: A, FireDAC'in iç sınıf adlarına (`FireDAC.Phys.IBBase/IBWrapper`) bağlı; RAD Studio sürümü değişirse derleme hatası verebilir, tek yer `uSorgu.pas`. Firebird 2.5.9'da denenmedi (aşağıya bakın); orada çalışmazsa B'ye geçerim.
+
+**Ne eklendi**
+- `uSorgu.pas`: `SorguPlaniAl`, `TekKomutMu` (yorum/tırnak dışında `;` yoksa tek komut; Adım 3'te `KomutlaraBol` ile değişecek). CREATE/ALTER/DROP/SET gibi komutların planı yoktur, boş döner ("Bu komut için sorgu planı yok" yazar).
+- Araç çubuğunda 6. düğme **Plan** (Tabler `list-tree` ikonu, `Ikonlar\list-tree.png` + `Ikonlar\svg\list-tree.svg`), **Ctrl+L**. Sorgu sekmesi aktifken açık. Sonuç sekmenin mesaj kutusunda: "Sorgu planı:" + plan + "Komut çalıştırılmadı, yalnızca hazırlandı."
+- Birden fazla komut varsa: "Plan için tek bir komut seçin." Hata olursa: "Sorgu planı alınamadı." + anlaşılır cümle + Ayrıntı.
+- Dil: `BTN_PLAN`, `MSG_PLAN_BASLIK`, `MSG_PLAN_YOK`, `MSG_PLAN_CALISTIRILMADI`, `ERR_PLAN_TEK_KOMUT`, `ERR_PLAN_ALINAMADI` (tr, en, de).
+
+**Denenen (5.0.4 gömülü, geçici veritabanı, `Adim0Olcum` bölüm 5)**
+- `select ... where ID = 5`: ayrıntılı plan geldi (Filter / Table "OLCUM_T" Access By ID / Index Unique Scan).
+- `update ... where`, `delete`: plan geldi (satırlar **değişmedi**: 2301 / 2301, `ID=5` yazısı aynı).
+- `insert`: plan boş (Firebird INSERT için plan üretmiyor); satır eklenmedi.
+- DDL (`create table`): boş, tablo oluşmadı. Hatalı SQL: "bulunamadı" cümlesi + ayrıntı.
+- Uygulama derlendi ve açılıyor. **Arayüzde Plan düğmesine tıklayarak denemedim.**
+- **Firebird 2.5.9 / 5.0.4 sunucu: DENENMEDİ** (şifre sizde, yukarıdaki komutlar).

@@ -124,5 +124,11 @@
   "ERR_SQL_BENZERSIZ": "Dieser Wert existiert bereits. In ein eindeutiges Feld kann derselbe Wert nicht zweimal geschrieben werden.",
   "ERR_SQL_YABANCI_ANAHTAR": "Der Vorgang wurde abgelehnt, weil er eine Verknüpfung zwischen Tabellen (Fremdschlüssel) verletzen würde.",
   "ERR_SQL_NESNE_YOK": "Eine im Befehl genannte Tabelle, Spalte oder ein anderes Objekt wurde in der Datenbank nicht gefunden.",
-  "ERR_SQL_SOZDIZIMI": "Der SQL-Befehl enthält einen Syntaxfehler. Es kann immer nur ein Befehl ausgeführt werden."
+  "ERR_SQL_SOZDIZIMI": "Der SQL-Befehl enthält einen Syntaxfehler. Es kann immer nur ein Befehl ausgeführt werden.",
+  "BTN_PLAN": "Plan (Strg+L)",
+  "MSG_PLAN_BASLIK": "Abfrageplan:",
+  "MSG_PLAN_YOK": "Für diesen Befehl gibt es keinen Abfrageplan (der Befehl wurde nicht ausgeführt).",
+  "MSG_PLAN_CALISTIRILMADI": "Der Befehl wurde nicht ausgeführt, sondern nur vorbereitet.",
+  "ERR_PLAN_TEK_KOMUT": "Wählen Sie für den Plan einen einzelnen Befehl aus.",
+  "ERR_PLAN_ALINAMADI": "Der Abfrageplan konnte nicht abgerufen werden."
 }
