@@ -130,5 +130,19 @@
   "MSG_PLAN_YOK": "Bu komut için sorgu planı yok (komut çalıştırılmadı).",
   "MSG_PLAN_CALISTIRILMADI": "Komut çalıştırılmadı, yalnızca hazırlandı.",
   "ERR_PLAN_TEK_KOMUT": "Plan için tek bir komut seçin.",
-  "ERR_PLAN_ALINAMADI": "Sorgu planı alınamadı."
+  "ERR_PLAN_ALINAMADI": "Sorgu planı alınamadı.",
+  "MSG_KOMUT_SATIRI_SECIM": "%d) sorgu çalıştı (%d ms), sonuç tabloda.",
+  "MSG_KOMUT_SATIRI_DEGISTI": "%d) %d satır etkilendi (%d ms).",
+  "MSG_KOMUT_SATIRI_TAMAM": "%d) tamam (%d ms).",
+  "MSG_COMMIT_ATLANDI": "%d) atlandı (otomatik onay açık, ayrıca COMMIT gerekmez).",
+  "MSG_ISQL_ATLANDI": "%d) atlandı: \"%s\" bir isql komutudur, burada çalışmaz.",
+  "ERR_ROLLBACK_YOK": "%d) durdu: ROLLBACK desteklenmez. Önceki komutlar otomatik onaylandı, geri alınamaz.",
+  "ERR_KOMUT_HATASI": "%d. komutta hata: %s",
+  "MSG_KOMUT_DURDU": "Hatadan sonraki %d komut çalıştırılmadı.",
+  "MSG_COKLU_ONAY_NOTU": "Her komut ayrı ayrı otomatik onaylandı (commit). Hata olsa bile önceki komutlar geri alınmaz.",
+  "ONAY_COKLU_KOMUT": "%d komut sırayla çalıştırılacak ve aralarında tehlikeli olanlar var:",
+  "ONAY_COKLU_SATIR": "%d. komut: %s  [%s]",
+  "ONAY_COKLU_SON": "Her komut ayrı ayrı otomatik onaylanır; ilk hatada durulur ve önceki komutlar geri alınamaz.\n\nHepsi çalıştırılsın mı?",
+  "ETIKET_DROP": "DROP: nesne kalıcı silinir",
+  "ETIKET_WHERE_YOK": "WHERE yok: tüm satırlar etkilenir"
 }

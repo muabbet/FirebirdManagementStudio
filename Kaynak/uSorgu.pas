@@ -1,7 +1,7 @@
 { uSorgu.pas - SQL calistirma.
 
   Tablo sekmesi: bir tablonun ilk satirlarini getirir (salt okunur).
-  Sorgu sekmesi: yazilan tek bir SQL komutunu calistirir. SELECT ise sonuc
+  Sorgu sekmesi: yazilan komutu (birden fazlaysa sirayla, bkz. BetikCalistir) calistirir. SELECT ise sonuc
   SATIR_PARCASI'ser satir cekilir, kullanici asagi indikce devami gelir (FireDAC
   fmOnDemand). Komut baska bir sey ise (INSERT, UPDATE, DDL ...) etkilenen satir
   sayisi doner.
@@ -16,8 +16,8 @@ unit uSorgu;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Diagnostics, System.RegularExpressions,
-  Data.DB,
+  System.SysUtils, System.Classes, System.StrUtils, System.Diagnostics, System.RegularExpressions,
+  System.Generics.Collections, Data.DB,
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error,
   FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Comp.DataSet,
   FireDAC.Comp.Client, FireDAC.Phys.IBBase, FireDAC.Phys.IBWrapper,
@@ -39,6 +39,22 @@ type
     destructor Destroy; override;
   end;
 
+type
+  TKomutTuru = (ktNormal, ktCommit, ktRollback, ktIsql);
+  TKomutDurumu = (kdCalisti, kdAtlandi, kdDurdu, kdHata);
+
+  { Betikteki bir komutun ne oldugu. Metinleri arayuz (dil dosyasi) yazar. }
+  TKomutKaydi = record
+    Tur: TKomutTuru;
+    Durum: TKomutDurumu;
+    Komut: string;
+    SatirVar: Boolean;
+    Etkilenen: Integer;
+    Sure: Int64;
+    Hata: string;
+    Ayrinti: string;
+  end;
+
 function TabloVerisiSorgusu(Bag: TAcikBaglanti; const Tablo: string; SatirSayisi: Integer;
   Sahip: TComponent): TFDQuery;
 
@@ -48,7 +64,21 @@ function SorguCalistir(Bag: TAcikBaglanti; const Sql: string): TSorguSonucu;
 { Komut tehlikeliyse dil anahtarini ('ONAY_SORGU_...') verir, degilse bos doner. }
 function TehlikeliSorguUyarisi(const Sql: string): string;
 
-{ Yazi tek bir komut mu? (yorum ve tirnak disinda ';' yok; sondaki ';' sayilmaz) }
+{ Yaziyi komutlara boler. Ayirici ';' dir; "SET TERM ^ ;" ile degisir (isql gibi), boylece
+  prosedur govdesindeki ';' komutu bolmez. Tirnak ve yorum icindeki ayirici bolmez.
+  Bos komutlar atilir. Ayirici sonuca dahil edilmez. }
+function KomutlaraBol(const Metin: string): TArray<string>;
+
+{ Komut COMMIT, ROLLBACK, isql'e ozgu bir komut (SET SQL DIALECT, CONNECT ...) ya da normal mi? }
+function KomutTuruBul(const Komut: string): TKomutTuru;
+
+{ Komutlari sirayla calistirir, ilk hatada durur. Her komut icin Kayitlar'a bir satir eklenir.
+  COMMIT ve isql komutlari atlanir, ROLLBACK'te durulur. Donen deger son SELECT'in sonucudur
+  (SELECT yoksa nil); onu cagiran serbest birakir. Hata istisna olarak firlamaz, kayda yazilir. }
+function BetikCalistir(Bag: TAcikBaglanti; const Komutlar: TArray<string>;
+  Kayitlar: TList<TKomutKaydi>): TSorguSonucu;
+
+{ Yazi tek bir komut mu? }
 function TekKomutMu(const Sql: string): Boolean;
 
 { Komutu CALISTIRMADAN, sadece hazirlayarak (prepare) Firebird sorgu planini verir.
@@ -137,9 +167,122 @@ begin
     Result := 'ONAY_SORGU_WHERE_YOK';
 end;
 
+function KomutlaraBol(const Metin: string): TArray<string>;
+var
+  Liste: TList<string>;
+  Komut: TStringBuilder;
+  Ayirici, Bas: string;
+  i, Boy, Son: Integer;
+  Tirnak: Char;
+  KodVar: Boolean;
+  SetTerm: TMatch;
+
+  procedure KomutuBitir;
+  begin
+    if KodVar then
+      Liste.Add(Trim(Komut.ToString));
+    Komut.Clear;
+    KodVar := False;
+  end;
+
+begin
+  Liste := TList<string>.Create;
+  Komut := TStringBuilder.Create;
+  try
+    Ayirici := ';';
+    KodVar := False;
+    Boy := Length(Metin);
+    i := 1;
+    while i <= Boy do
+    begin
+      if (Metin[i] = '-') and (i < Boy) and (Metin[i + 1] = '-') then
+      begin
+        while (i <= Boy) and (Metin[i] <> #10) do
+        begin
+          Komut.Append(Metin[i]);
+          Inc(i);
+        end;
+      end
+      else if (Metin[i] = '/') and (i < Boy) and (Metin[i + 1] = '*') then
+      begin
+        Son := PosEx('*/', Metin, i + 2);
+        if Son = 0 then
+          Son := Boy
+        else
+          Inc(Son);
+        Komut.Append(Copy(Metin, i, Son - i + 1));
+        i := Son + 1;
+      end
+      else if (Metin[i] = '''') or (Metin[i] = '"') then
+      begin
+        Tirnak := Metin[i];
+        Son := PosEx(Tirnak, Metin, i + 1);
+        if Son = 0 then
+          Son := Boy;
+        Komut.Append(Copy(Metin, i, Son - i + 1));
+        KodVar := True;
+        i := Son + 1;
+      end
+      else if Copy(Metin, i, Length(Ayirici)) = Ayirici then
+      begin
+        KomutuBitir;
+        Inc(i, Length(Ayirici));
+      end
+      else
+      begin
+        { Komutun basinda "SET TERM yeni eski" varsa ayirici degisir, komut sayilmaz. }
+        if not KodVar and CharInSet(Metin[i], ['S', 's']) then
+        begin
+          SetTerm := TRegEx.Match(Copy(Metin, i, 200), '^SET\s+TERM\s+', [roIgnoreCase]);
+          if SetTerm.Success then
+          begin
+            Bas := '';
+            Son := PosEx(Ayirici, Metin, i + SetTerm.Length);
+            if Son = 0 then
+              Son := Boy + 1;
+            Bas := Trim(Copy(Metin, i + SetTerm.Length, Son - i - SetTerm.Length));
+            if (Bas <> '') and (Pos(' ', Bas) = 0) then
+              Ayirici := Bas;
+            i := Son + 1;
+            Continue;
+          end;
+        end;
+        if not CharInSet(Metin[i], [' ', #9, #10, #13]) then
+          KodVar := True;
+        Komut.Append(Metin[i]);
+        Inc(i);
+      end;
+    end;
+    KomutuBitir;
+    Result := Liste.ToArray;
+  finally
+    Komut.Free;
+    Liste.Free;
+  end;
+end;
+
+function KomutTuruBul(const Komut: string): TKomutTuru;
+const
+  ISQL_KOMUTLARI = '^\s*(SET\s+(SQL\s+DIALECT|NAMES|AUTODDL|AUTO|BAIL|BLOB|COUNT|ECHO|HEADING|LIST|' +
+    'PLAN|PLANONLY|ROWCOUNT|SQLDA_DISPLAY|STATS|TIME|WARNINGS|WNG|MAXROWS)|CONNECT|SHOW|INPUT|OUTPUT|' +
+    'QUIT|EXIT|EDIT|HELP|SHELL|BLOBDUMP|BLOBVIEW)\b';
+var
+  Yalin: string;
+begin
+  Yalin := YorumlariVeYazilariAt(Komut);
+  if TRegEx.IsMatch(Yalin, '^\s*COMMIT\b', [roIgnoreCase]) then
+    Result := ktCommit
+  else if TRegEx.IsMatch(Yalin, '^\s*ROLLBACK\b', [roIgnoreCase]) then
+    Result := ktRollback
+  else if TRegEx.IsMatch(Yalin, ISQL_KOMUTLARI, [roIgnoreCase]) then
+    Result := ktIsql
+  else
+    Result := ktNormal;
+end;
+
 function TekKomutMu(const Sql: string): Boolean;
 begin
-  Result := Pos(';', SonNoktaliVirgulleriAt(YorumlariVeYazilariAt(Sql))) = 0;
+  Result := Length(KomutlaraBol(Sql)) <= 1;
 end;
 
 function TirnaksizAd(const Ad: string): string;
@@ -166,7 +309,7 @@ begin
   begin
     Tablo := Eslesme.Groups[1].Value;
     Takma := '';
-    if Eslesme.Groups[2].Success then
+    if (Eslesme.Groups.Count > 2) and Eslesme.Groups[2].Success then
       Takma := Eslesme.Groups[2].Value;
     if (Takma <> '') and (Pos(',' + UpperCase(Takma) + ',', SOZCUKLER) = 0) and
       (TirnaksizAd(Takma) = TirnaksizAd(Ad)) then
@@ -245,6 +388,53 @@ begin
   except
     Result.Free;
     raise;
+  end;
+end;
+
+function BetikCalistir(Bag: TAcikBaglanti; const Komutlar: TArray<string>;
+  Kayitlar: TList<TKomutKaydi>): TSorguSonucu;
+var
+  Kayit: TKomutKaydi;
+  Sonuc: TSorguSonucu;
+  Komut: string;
+begin
+  Result := nil;
+  for Komut in Komutlar do
+  begin
+    Kayit := Default(TKomutKaydi);
+    Kayit.Komut := Copy(Trim(Komut), 1, 60);
+    Kayit.Tur := KomutTuruBul(Komut);
+    case Kayit.Tur of
+      ktCommit, ktIsql:
+        Kayit.Durum := kdAtlandi;
+      ktRollback:
+        Kayit.Durum := kdDurdu;
+      ktNormal:
+        try
+          Sonuc := SorguCalistir(Bag, Komut);
+          Kayit.Durum := kdCalisti;
+          Kayit.SatirVar := Sonuc.SatirVar;
+          Kayit.Etkilenen := Sonuc.Etkilenen;
+          Kayit.Sure := Sonuc.Sure;
+          if Sonuc.SatirVar then
+          begin
+            Result.Free;
+            Result := Sonuc;
+          end
+          else
+            Sonuc.Free;
+        except
+          on E: Exception do
+          begin
+            Kayit.Durum := kdHata;
+            Kayit.Hata := HataMetniniCevir(E);
+            Kayit.Ayrinti := E.Message;
+          end;
+        end;
+    end;
+    Kayitlar.Add(Kayit);
+    if Kayit.Durum in [kdDurdu, kdHata] then
+      Break;
   end;
 end;
 
