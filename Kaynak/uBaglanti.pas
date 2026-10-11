@@ -701,6 +701,8 @@ begin
     Result := T('ERR_SUNUCU')
   else if Iceriyor(HamMesaj, 'i/o error') or Iceriyor(HamMesaj, 'unavailable database') then
     Result := T('ERR_VERITABANI')
+  else if Iceriyor(HamMesaj, 'token unknown') or Iceriyor(HamMesaj, 'sql error code = -104') then
+    Result := T('ERR_SQL_SOZDIZIMI')
   else
     Result := T('ERR_GENEL');
 end;
