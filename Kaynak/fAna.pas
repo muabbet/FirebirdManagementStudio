@@ -34,8 +34,9 @@ type
     tbAna: TToolBar;
     btnYeniBaglanti: TToolButton;
     btnBaglan: TToolButton;
-    btnKes: TToolButton;
     btnYenile: TToolButton;
+    btnKlonla: TToolButton;
+    btnKaldir: TToolButton;
     btnYeniKlasor: TToolButton;
     pnlDil: TPanel;
     cmbDil: TComboBox;
@@ -65,7 +66,8 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure btnYeniBaglantiClick(Sender: TObject);
     procedure btnBaglanClick(Sender: TObject);
-    procedure btnKesClick(Sender: TObject);
+    procedure btnKlonlaClick(Sender: TObject);
+    procedure btnKaldirClick(Sender: TObject);
     procedure btnYenileClick(Sender: TObject);
     procedure btnYeniKlasorClick(Sender: TObject);
     procedure cmbDilChange(Sender: TObject);
@@ -187,8 +189,8 @@ var
 begin
   Caption := T('APP_BASLIK');
   btnYeniBaglanti.Caption := T('BTN_YENI_BAGLANTI');
-  btnBaglan.Caption := T('BTN_BAGLAN');
-  btnKes.Caption := T('BTN_KES');
+  btnKlonla.Caption := T('MENU_KLONLA');
+  btnKaldir.Caption := T('MENU_KAYITTAN_KALDIR');
   btnYenile.Caption := T('BTN_YENILE');
   btnYeniKlasor.Caption := T('BTN_YENI_KLASOR');
   miAc.Caption := T('MENU_AC');
@@ -249,9 +251,21 @@ begin
     else
       stbDurum.Panels[2].Text := T('DURUM_ISLEM_KAPALI');
   end;
-  btnBaglan.Enabled := (Dugme <> nil) and (Bag = nil);
-  btnKes.Enabled := Bag <> nil;
+  { Bagla/Kes tek dugme: yazisi ve ikonu secili baglantinin durumuna gore degisir. }
+  if Bag = nil then
+  begin
+    btnBaglan.Caption := T('BTN_BAGLAN');
+    btnBaglan.ImageIndex := IKON_BAGLAN;
+  end
+  else
+  begin
+    btnBaglan.Caption := T('BTN_KES');
+    btnBaglan.ImageIndex := IKON_KES;
+  end;
+  btnBaglan.Enabled := Dugme <> nil;
   btnYenile.Enabled := Bag <> nil;
+  btnKlonla.Enabled := Dugme <> nil;
+  btnKaldir.Enabled := Dugme <> nil;
 end;
 
 procedure TfrmAna.MesajYaz(const Metin: string);
@@ -778,22 +792,34 @@ begin
   YeniBaglanti('');
 end;
 
+{ Tek dugme: secili baglanti kapaliysa baglanir, aciksa keser. }
 procedure TfrmAna.btnBaglanClick(Sender: TObject);
-begin
-  if SeciliBaglantiDugmesi <> nil then
-    BaglantiyiAc(SeciliBaglantiDugmesi);
-end;
-
-procedure TfrmAna.btnKesClick(Sender: TObject);
 var
   Dugme: TTreeNode;
 begin
   Dugme := SeciliBaglantiDugmesi;
   if Dugme = nil then
     Exit;
-  BaglantiyiKapat(Dugme);
-  MesajYaz(TF('MSG_KESILDI', [OgeAl(Dugme).BaglantiAd]));
-  DurumuGuncelle;
+  if FbAcikBaglanti(OgeAl(Dugme).BaglantiAd) = nil then
+    BaglantiyiAc(Dugme)
+  else
+  begin
+    BaglantiyiKapat(Dugme);
+    MesajYaz(TF('MSG_KESILDI', [OgeAl(Dugme).BaglantiAd]));
+    DurumuGuncelle;
+  end;
+end;
+
+procedure TfrmAna.btnKlonlaClick(Sender: TObject);
+begin
+  if SeciliBaglantiDugmesi <> nil then
+    YeniBaglanti(OgeAl(SeciliBaglantiDugmesi).BaglantiAd);
+end;
+
+procedure TfrmAna.btnKaldirClick(Sender: TObject);
+begin
+  if SeciliBaglantiDugmesi <> nil then
+    KayittanKaldir(SeciliBaglantiDugmesi);
 end;
 
 procedure TfrmAna.btnYenileClick(Sender: TObject);

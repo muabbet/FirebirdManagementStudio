@@ -18,7 +18,7 @@ Dal: `asama1b-coklu-baglanti` (`main` d831c08 üzerine). `main`'e yazılmadı. S
 - **Şifre**: Kayıtlı şifresi olmayan bağlantıya bağlanırken küçük "Şifre girin" penceresi (`fMetinSor.pas`, `PasswordChar`) çıkar. Şifre kaydedilmez, yalnızca o bağlantı için kullanılır. Aynı küçük pencere klasör adı sorarken de kullanılıyor.
 - **Durum çubuğu**: Ağaçta seçili bağlantının adı, Firebird sürümü ve işlem durumu (açık/kapalı). Bağlı olmayan bağlantı seçilince "Bağlı değil", hiçbir şey seçili değilse yönlendirme yazısı.
 - **Sekmeler**: Tablo sekmesi hangi bağlantıya ait olduğunu bilir (`BaglantiAd`, `TabloAdi`). Başlık: `Tablo [Bağlantı]`. Aynı adlı tablo iki ayrı bağlantıda ayrı sekmelerde açılır, aynı bağlantıda tekrar açılırsa mevcut sekmeye geçilir. Bağlantı kesilince veya kayıttan kaldırılınca o bağlantının sekmeleri kapanır (önce sekmeler, sonra bağlantı).
-- **Araç çubuğu** (tek çubuk, 5 düğme): Yeni Bağlantı, Bağlan, Bağlantıyı Kes, Yenile, Yeni Klasör.
+- **Araç çubuğu** (tek çubuk, 6 düğme): Yeni Bağlantı, Bağlan/Bağlantıyı Kes (tek düğme, seçili bağlantının durumuna göre yazısı ve ikonu değişir), Yenile, Yeni Klasör, Klonla, Kayıttan Kaldır. Klonla ve Kayıttan Kaldır düğmelerinin ikonu yok (ikon setinde karşılığı yok).
 - **Dil dosyaları**: `tr`, `en`, `de` üçünde aynı anahtarlar (anahtar kontrolü yapıldı: kodda kullanılan her `T('...')` üç dosyada da var, üç dosyanın anahtar listesi aynı). Menü: "Kayıttan Kaldır" / "Unregister" / "Registrierung aufheben". Kullanılmayan eski anahtarlar (`BTN_YENI`, `BTN_SIL`, `LBL_KAYITLI`, `ONAY_BAGLANTI_SIL`) çıkarıldı. `MSG_KESILDI`, `MSG_AGAC_YENILENDI`, `MSG_TABLO_ACILDI` artık bağlantı adı da gösteriyor.
 - **`CLAUDE.md`**: Bölüm 8 sol panel satırı ve Bölüm 11 "Aşama 1b" başlığı, istenen metinle eklendi. Aşama 4 maddesi aynen duruyor. `README.md` kısa güncellendi.
 - Düğme ve menü genişlikleri yazıya göre uzar (araç çubuğu düğmeleri `AutoSize`, pencere düğmeleri yazıya göre genişletiliyor).
@@ -43,7 +43,7 @@ Dal: `asama1b-coklu-baglanti` (`main` d831c08 üzerine). `main`'e yazılmadı. S
 
 Önce `Derle.bat` ile derleyin (veya IDE'den). Bu denemeler `%APPDATA%\FirebirdYonetici\baglantilar.json` dosyanızı değiştirir; denemeden önce kopyasını almanız iyi olur.
 
-1. **Açılış**: Program açılınca kayıtlı iki bağlantı kökte, kapalı (fişi çekilmiş ikon) görünmeli. Durum çubuğunda "Ağaçta bir bağlantı seçin". Araç çubuğunda 5 düğme var, "Bağlan/Bağlantıyı Kes/Yenile" bağlantı seçilene kadar soluk.
+1. **Açılış**: Program açılınca kayıtlı iki bağlantı kökte, kapalı (fişi çekilmiş ikon) görünmeli. Durum çubuğunda "Ağaçta bir bağlantı seçin". Araç çubuğunda 6 düğme var, "Bağlan", "Yenile", "Klonla", "Kayıttan Kaldır" bağlantı seçilene kadar soluk.
 2. **İki bağlantı aynı anda**: 2.5.9 bağlantısına çift tıkla (şifre kayıtlı değilse "Şifre girin" penceresi çıkar, `*` ile gizli yazılmalı). Dört dal dolmalı, durum çubuğunda ad + "Firebird 2.5.9" + işlem durumu. Sonra 5.0.4 bağlantısına çift tıkla. İlki kapanmamış olmalı, ikisi de açık.
 3. **Aynı anda iki tablo**: Her birinden bir tabloyu çift tıkla aç. İki sekme açılır, başlıkları `Tablo [Bağlantı adı]`. Mümkünse iki veritabanında aynı adlı bir tabloyu aç: iki ayrı sekme olmalı. Aynı tabloya tekrar çift tıklayınca yeni sekme açılmamalı, var olan sekmeye geçilmeli.
 4. **Birini kapat**: 5.0.4 bağlantısına sağ tık, "Bağlantıyı Kes". O bağlantının sekmeleri kapanmalı, diğer bağlantının sekmeleri ve ağacı kalmalı. Ağaçta bağlantı yine görünür ama kapalı.
