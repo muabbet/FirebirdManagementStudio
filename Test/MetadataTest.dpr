@@ -40,6 +40,8 @@ var
   i: Integer;
   Satir: string;
   Basit: TFDQuery;
+  Bag, Bag2: TAcikBaglanti;
+  Tanim2: TBaglantiTanimi;
 begin
   Cikti := TStringList.Create;
   Liste := TStringList.Create;
@@ -53,23 +55,23 @@ begin
       Tanim.Kullanici := Ortam('FBTEST_KULLANICI', 'SYSDBA');
       Tanim.Sifre := Ortam('FBTEST_SIFRE', '');
       Tanim.KarakterSeti := Ortam('FBTEST_KARAKTER', VARSAYILAN_KARAKTER_SETI);
-      FbBaglan(Tanim);
-      Cikti.Add('Baglandi. Surum: ' + FbSurum);
-      TablolariGetir(Liste);
+      Bag := FbBaglan(Tanim);
+      Cikti.Add('Baglandi. Surum: ' + Bag.Surum);
+      TablolariGetir(Bag, Liste);
       Listele(Cikti, 'Tablolar', Liste);
       Tablo := Ortam('FBTEST_TABLO', '');
       if (Tablo = '') and (Liste.Count > 0) then
         Tablo := Liste[0];
-      ViewlariGetir(Liste);
+      ViewlariGetir(Bag, Liste);
       Listele(Cikti, 'View', Liste);
-      ProsedurleriGetir(Liste);
+      ProsedurleriGetir(Bag, Liste);
       Listele(Cikti, 'Prosedur', Liste);
-      GeneratorleriGetir(Liste);
+      GeneratorleriGetir(Bag, Liste);
       Listele(Cikti, 'Generator', Liste);
       if Tablo <> '' then
       begin
         Cikti.Add('--- Kolonlar: ' + Tablo);
-        Kolonlar := KolonTablosuOlustur(Tablo, nil);
+        Kolonlar := KolonTablosuOlustur(Bag, Tablo, nil);
         while not Kolonlar.Eof do
         begin
           Cikti.Add('  ' + Kolonlar.FieldByName('AD').AsString + ' | ' +
@@ -80,16 +82,16 @@ begin
         Cikti.Add('--- Ilk satirlar: ' + Tablo);
         { Karsilastirma: varsayilan getirme ayarlariyla acilan sorgu }
         Basit := TFDQuery.Create(nil);
-        Basit.Connection := FbBaglantisi;
+        Basit.Connection := Bag.Baglanti;
         Basit.SQL.Text := 'SELECT FIRST 100 * FROM "' + Tablo + '"';
         Basit.Open;
-        Cikti.Add('[varsayilan ayarli sorgu] FbIslemAcikMi = ' + BoolToStr(FbIslemAcikMi, True) + ', sunucuda acik islem = ' +
-          VarToStr(FbBaglantisi.ExecSQLScalar('SELECT COUNT(*) FROM MON$TRANSACTIONS WHERE MON$ATTACHMENT_ID = CURRENT_CONNECTION AND MON$TRANSACTION_ID <> CURRENT_TRANSACTION')));
+        Cikti.Add('[varsayilan ayarli sorgu] FbIslemAcikMi(Bag) = ' + BoolToStr(FbIslemAcikMi(Bag), True) + ', sunucuda acik islem = ' +
+          VarToStr(Bag.Baglanti.ExecSQLScalar('SELECT COUNT(*) FROM MON$TRANSACTIONS WHERE MON$ATTACHMENT_ID = CURRENT_CONNECTION AND MON$TRANSACTION_ID <> CURRENT_TRANSACTION')));
         Basit.Close;
         Basit.Free;
-        Veri := TabloVerisiSorgusu(Tablo, 5, nil);
-        Cikti.Add('Sorgu acik, FbIslemAcikMi = ' + BoolToStr(FbIslemAcikMi, True) + ', sunucuda acik islem sayisi = ' +
-          VarToStr(FbBaglantisi.ExecSQLScalar('SELECT COUNT(*) FROM MON$TRANSACTIONS WHERE MON$ATTACHMENT_ID = CURRENT_CONNECTION AND MON$TRANSACTION_ID <> CURRENT_TRANSACTION')));
+        Veri := TabloVerisiSorgusu(Bag, Tablo, 5, nil);
+        Cikti.Add('Sorgu acik, FbIslemAcikMi(Bag) = ' + BoolToStr(FbIslemAcikMi(Bag), True) + ', sunucuda acik islem sayisi = ' +
+          VarToStr(Bag.Baglanti.ExecSQLScalar('SELECT COUNT(*) FROM MON$TRANSACTIONS WHERE MON$ATTACHMENT_ID = CURRENT_CONNECTION AND MON$TRANSACTION_ID <> CURRENT_TRANSACTION')));
         while not Veri.Eof do
         begin
           Satir := '';
@@ -99,7 +101,47 @@ begin
           Veri.Next;
         end;
       end;
-      FbBaglantiyiKes;
+      { Yanlis sifre (sunucu varsa; gomulu kipte sifre kontrol edilmez): acik baglanti listesine girmemeli. }
+      if Tanim.Sunucu <> '' then
+      begin
+        Tanim2 := Tanim;
+        Tanim2.Ad := 'yanlis-sifre';
+        Tanim2.Sifre := 'kesinlikle-yanlis-sifre';
+        try
+          FbBaglan(Tanim2);
+          Cikti.Add('YANLIS SIFRE: hata beklenirdi ama baglandi');
+        except
+          on E: Exception do
+            Cikti.Add('Yanlis sifre: anlasilir mesaj = ' + HataMetniniCevir(E) + ', listede yok = ' +
+              BoolToStr(FbAcikBaglanti('yanlis-sifre') = nil, True));
+        end;
+      end;
+      { Ikinci veritabani verilmisse: iki baglanti ayni anda acik kalabilmeli. }
+      if Ortam('FBTEST_YOL2', '') <> '' then
+      begin
+        Tanim2 := Tanim;
+        Tanim2.Ad := 'test2';
+        Tanim2.VeritabaniYolu := Ortam('FBTEST_YOL2', '');
+        Tanim2.Sifre := Ortam('FBTEST_SIFRE2', Tanim.Sifre);
+        Bag2 := FbBaglan(Tanim2);
+        Cikti.Add('Ikinci baglanti: ' + Bag2.Tanim.Ad + ' Surum: ' + Bag2.Surum);
+        Cikti.Add('Iki baglanti ayni anda acik: ' + BoolToStr(
+          (FbAcikBaglanti('test') = Bag) and (FbAcikBaglanti('test2') = Bag2) and
+          Bag.Baglanti.Connected and Bag2.Baglanti.Connected, True));
+        Cikti.Add('Ayni adla tekrar baglanma ayni nesneyi verir: ' +
+          BoolToStr(FbBaglan(Tanim2) = Bag2, True));
+        TablolariGetir(Bag2, Liste);
+        Listele(Cikti, 'Ikinci baglanti tablolari', Liste);
+        FbBaglantiyiKes(Bag);
+        Cikti.Add('Birincisi kesildi, ikincisi hala acik: ' + BoolToStr(
+          (FbAcikBaglanti('test') = nil) and (FbAcikBaglanti('test2') = Bag2) and
+          Bag2.Baglanti.Connected, True));
+        TablolariGetir(Bag2, Liste);
+        Cikti.Add('Ikincisi birincisi kesildikten sonra calisiyor, tablo sayisi: ' + IntToStr(Liste.Count));
+        FbBaglantiyiKes(Bag2);
+      end
+      else
+        FbBaglantiyiKes(Bag);
     except
       on E: Exception do
       begin

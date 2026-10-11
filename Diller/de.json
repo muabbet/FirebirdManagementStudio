@@ -2,14 +2,16 @@
   "DIL_ADI": "Deutsch",
   "APP_BASLIK": "Firebird-Verwaltung",
 
+  "BTN_YENI_BAGLANTI": "Neue Verbindung",
   "BTN_BAGLAN": "Verbinden",
   "BTN_KES": "Trennen",
   "BTN_YENILE": "Aktualisieren",
+  "BTN_YENI_KLASOR": "Neuer Ordner",
   "BTN_EVET": "Ja",
   "BTN_HAYIR": "Nein",
   "BTN_KAPAT": "Schließen",
-  "BTN_YENI": "Neu",
-  "BTN_SIL": "Aus Liste entfernen",
+  "BTN_KAYDET": "Speichern",
+  "BTN_IPTAL": "Abbrechen",
   "LBL_DIL": "Sprache",
 
   "AGAC_TABLOLAR": "Tabellen",
@@ -19,8 +21,15 @@
 
   "MENU_AC": "Öffnen (Spalten und erste Zeilen)",
   "MENU_YENILE": "Aktualisieren",
+  "MENU_DUZENLE": "Bearbeiten",
+  "MENU_KLONLA": "Klonen",
+  "KLON_AD": "%s (Kopie)",
+  "MENU_KAYITTAN_KALDIR": "Registrierung aufheben",
+  "MENU_KLASOR_ADLANDIR": "Umbenennen",
+  "MENU_KLASOR_KALDIR": "Ordner entfernen",
   "MENU_SEKME_KAPAT": "Tab schließen",
 
+  "DURUM_SECIM_YOK": "Wählen Sie im Baum eine Verbindung aus",
   "DURUM_BAGLI": "Verbunden: %s",
   "DURUM_BAGLI_DEGIL": "Nicht verbunden",
   "DURUM_SURUM": "Firebird %s",
@@ -28,9 +37,11 @@
   "DURUM_ISLEM_KAPALI": "Transaktion: geschlossen",
 
   "MSG_BAGLANDI": "Verbunden: %s (Firebird %s)",
-  "MSG_KESILDI": "Verbindung getrennt.",
-  "MSG_AGAC_YENILENDI": "Objektliste aktualisiert.",
-  "MSG_TABLO_ACILDI": "Tabelle %s geöffnet. Es werden höchstens %d Zeilen angezeigt.",
+  "MSG_KESILDI": "Verbindung getrennt: %s",
+  "MSG_AGAC_YENILENDI": "%s: Objektliste aktualisiert.",
+  "MSG_TABLO_ACILDI": "Tabelle %s geöffnet (%s). Es werden höchstens %d Zeilen angezeigt.",
+  "MSG_KAYIT_KALDIRILDI": "Die Registrierung von '%s' wurde aufgehoben. Die Datenbank wurde nicht verändert.",
+  "MSG_KLASOR_KALDIRILDI": "Der Ordner '%s' wurde entfernt. Seine Verbindungen liegen jetzt auf der obersten Ebene.",
 
   "AYRINTI": "Details",
 
@@ -42,8 +53,8 @@
   "EVET": "Ja",
   "HAYIR": "Nein",
 
-  "BAGLANTI_BASLIK": "Mit Datenbank verbinden",
-  "LBL_KAYITLI": "Gespeicherte Verbindungen",
+  "BAGLANTI_BASLIK": "Neue Verbindung",
+  "BAGLANTI_DUZENLE_BASLIK": "Verbindung bearbeiten",
   "LBL_BAGLANTI_AD": "Verbindungsname",
   "LBL_SUNUCU": "Server",
   "LBL_PORT": "Port",
@@ -54,8 +65,18 @@
   "CHK_SIFRE_KAYDET": "Passwort verschlüsselt auf diesem Computer speichern",
   "DOSYA_FILTRE": "Firebird-Datenbank (*.fdb;*.gdb)|*.fdb;*.gdb|Alle Dateien (*.*)|*.*",
 
+  "SIFRE_BASLIK": "Passwort eingeben",
+  "SIFRE_ISTEK": "Geben Sie das Passwort für die Verbindung '%s' ein. Das Passwort wird nicht gespeichert, sondern nur für diese Verbindung verwendet.",
+
+  "KLASOR_YENI_BASLIK": "Neuer Ordner",
+  "KLASOR_ADLANDIR_BASLIK": "Ordner umbenennen",
+  "LBL_KLASOR_AD": "Ordnername",
+
   "ONAY_BASLIK": "Bestätigung",
-  "ONAY_BAGLANTI_SIL": "Die gespeicherte Verbindung '%s' aus der Liste entfernen? Die Datenbank wird nicht verändert.",
+  "ONAY_KAYIT_KALDIR": "Die Registrierung der Verbindung '%s' aus der gespeicherten Liste aufheben? Die Datenbank wird nicht verändert.",
+  "ONAY_KAYIT_KALDIR_ACIK": "Die Verbindung '%s' ist gerade geöffnet. Sie wird zuerst getrennt und ihre Tabs werden geschlossen, danach wird sie aus der gespeicherten Liste entfernt. Die Datenbank wird nicht verändert. Fortfahren?",
+  "ONAY_DUZENLE_KES": "Die Verbindung '%s' ist gerade geöffnet. Zum Bearbeiten wird sie zuerst getrennt und ihre Tabs werden geschlossen. Fortfahren?",
+  "ONAY_KLASOR_KALDIR": "Den Ordner '%s' entfernen? Seine Verbindungen werden nicht gelöscht, sie wandern auf die oberste Ebene.",
 
   "ERR_SIFRE": "Benutzername oder Passwort ist falsch.",
   "ERR_SUNUCU": "Der Server ist nicht erreichbar. Prüfen Sie Servername, Portnummer und ob der Firebird-Dienst läuft.",
@@ -69,6 +90,13 @@
   "ERR_PORT": "Der Port muss eine Zahl zwischen 1 und 65535 sein.",
   "ERR_DPAPI": "Windows konnte das Passwort nicht verschlüsseln.",
   "ERR_TABLO_ACILAMADI": "Tabelle %s konnte nicht geöffnet werden.",
+  "ERR_BAGLANTI_ACILAMADI": "Die Verbindung '%s' konnte nicht hergestellt werden.",
+  "ERR_KAYIT_YOK": "'%s' wurde unter den gespeicherten Verbindungen nicht gefunden.",
+  "ERR_AD_VAR": "Eine Verbindung mit dem Namen '%s' ist bereits gespeichert. Geben Sie einen anderen Namen ein.",
+  "ERR_KLASOR_AD_BOS": "Der Ordnername darf nicht leer sein.",
+  "ERR_KLASOR_VAR": "Ein Ordner mit dem Namen '%s' existiert bereits.",
+  "ERR_KLASOR_YOK": "Es gibt keinen Ordner mit dem Namen '%s'.",
+  "ERR_KAYDEDILEMEDI": "Die Änderung konnte nicht gespeichert werden. Die Datei mit der Verbindungsliste konnte nicht geschrieben werden.",
 
   "BTN_TAMAM": "OK",
   "UYARI_BASLIK": "Warnung",

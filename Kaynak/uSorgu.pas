@@ -17,7 +17,7 @@ uses
 const
   ILK_SATIR_SAYISI = 100;
 
-function TabloVerisiSorgusu(const Tablo: string; SatirSayisi: Integer;
+function TabloVerisiSorgusu(Bag: TAcikBaglanti; const Tablo: string; SatirSayisi: Integer;
   Sahip: TComponent): TFDQuery;
 
 implementation
@@ -28,12 +28,12 @@ begin
 end;
 
 { Sorgu, Sahip ile birlikte yok olur. Sorgu salt okunurdur. }
-function TabloVerisiSorgusu(const Tablo: string; SatirSayisi: Integer;
+function TabloVerisiSorgusu(Bag: TAcikBaglanti; const Tablo: string; SatirSayisi: Integer;
   Sahip: TComponent): TFDQuery;
 begin
   Result := TFDQuery.Create(Sahip);
   try
-    Result.Connection := FbBaglantisi;
+    Result.Connection := Bag.Baglanti;
     Result.UpdateOptions.ReadOnly := True;
     { En fazla 100 satir hepsi birden cekilir. Boylece okuma isleminin sunucuda
       acik kalmasi onlenir (parca parca cekme Asama 2'de, buraya eklenecek). }

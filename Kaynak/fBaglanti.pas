@@ -1,6 +1,6 @@
-{ fBaglanti.pas - Baglanti penceresi.
+{ fBaglanti.pas - Baglanti penceresi (yeni baglanti kaydi veya mevcut kaydi duzenleme).
   Form sadece arayuzu bilir; baglanma, kayit ve sifreleme uBaglanti'dadir.
-  Basarili baglantida pencere kapanir ve baglanti kayitli listeye eklenir. }
+  "Kaydet" sadece kaydeder. "Baglan" baglanir, basarili olursa kaydeder. }
 unit fBaglanti;
 
 interface
@@ -11,10 +11,9 @@ uses
   uDil, uBaglanti, uOnay;
 
 type
+  TBaglantiSonucu = (bsIptal, bsKaydedildi, bsBaglandi);
+
   TfrmBaglanti = class(TForm)
-    pnlSol: TPanel;
-    lblKayitli: TLabel;
-    lstKayitli: TListBox;
     pnlSag: TPanel;
     lblAd: TLabel;
     edtAd: TEdit;
@@ -39,64 +38,87 @@ type
     pnlAlt: TPanel;
     btnKapat: TButton;
     btnBaglan: TButton;
-    btnSil: TButton;
-    btnYeni: TButton;
+    btnKaydet: TButton;
     dlgAc: TOpenDialog;
     procedure FormCreate(Sender: TObject);
-    procedure lstKayitliClick(Sender: TObject);
-    procedure btnYeniClick(Sender: TObject);
-    procedure btnSilClick(Sender: TObject);
     procedure btnGozatClick(Sender: TObject);
     procedure btnAyrintiClick(Sender: TObject);
+    procedure btnKaydetClick(Sender: TObject);
     procedure btnBaglanClick(Sender: TObject);
     procedure btnKapatClick(Sender: TObject);
   private
-    FKayitlilar: TArray<TBaglantiTanimi>;
+    FEskiAd: string;
+    FSonuc: TBaglantiSonucu;
+    FKaydedilenAd: string;
     procedure YazilariYenile;
     procedure DugmeyiYaziyaUydur(Dugme: TButton);
-    procedure ListeyiDoldur;
     procedure AlanlariBosalt;
     procedure AlanlaraYaz(const Tanim: TBaglantiTanimi);
     function AlanlardanOku(out Tanim: TBaglantiTanimi): Boolean;
+    function AdKullanilabilirMi(const Ad: string): Boolean;
     procedure HataGoster(const Anlasilir, Ayrinti: string);
     procedure HatayiGizle;
+  public
+    procedure Hazirla(const DuzenlenecekAd, KlonAd: string);
   end;
 
-function BaglantiPenceresiniGoster: Boolean;
+{ DuzenlenecekAd bos ise yeni kayit, doluysa o kayit duzenlenir.
+  KlonAd doluysa yeni kayit, o kaydin bilgileriyle dolu ve "(kopya)" adiyla acilir.
+  Kaydedilen (veya baglanilan) baglantinin adi KaydedilenAd'a yazilir. }
+function BaglantiPenceresiniGoster(const DuzenlenecekAd, KlonAd: string;
+  out KaydedilenAd: string): TBaglantiSonucu;
 
 implementation
 
 {$R *.dfm}
 
-function BaglantiPenceresiniGoster: Boolean;
+function BaglantiPenceresiniGoster(const DuzenlenecekAd, KlonAd: string;
+  out KaydedilenAd: string): TBaglantiSonucu;
 var
   Pencere: TfrmBaglanti;
 begin
   Pencere := TfrmBaglanti.Create(Application);
   try
-    Result := Pencere.ShowModal = mrOk;
+    Pencere.Hazirla(DuzenlenecekAd, KlonAd);
+    Pencere.ShowModal;
+    Result := Pencere.FSonuc;
+    KaydedilenAd := Pencere.FKaydedilenAd;
   finally
     Pencere.Free;
   end;
 end;
 
 procedure TfrmBaglanti.FormCreate(Sender: TObject);
-var
-  Uyari: string;
 begin
+  FSonuc := bsIptal;
   YazilariYenile;
-  ListeyiDoldur;
   AlanlariBosalt;
-  { Kayitli baglanti dosyasi bozuksa silinmeden yanina tasinmistir, kullanici bilgilendirilir. }
-  Uyari := BozukDosyaUyarisiAl;
-  if Uyari <> '' then
-    HataGoster(Uyari, '');
+end;
+
+procedure TfrmBaglanti.Hazirla(const DuzenlenecekAd, KlonAd: string);
+var
+  Tanim: TBaglantiTanimi;
+begin
+  FEskiAd := DuzenlenecekAd;
+  if KlonAd <> '' then
+  begin
+    if KayitliBaglantiBul(KlonAd, Tanim) then
+    begin
+      AlanlaraYaz(Tanim);
+      edtAd.Text := TF('KLON_AD', [KlonAd]);
+    end;
+    Exit;
+  end;
+  if DuzenlenecekAd = '' then
+    Exit;
+  Caption := T('BAGLANTI_DUZENLE_BASLIK');
+  if KayitliBaglantiBul(DuzenlenecekAd, Tanim) then
+    AlanlaraYaz(Tanim);
 end;
 
 procedure TfrmBaglanti.YazilariYenile;
 begin
   Caption := T('BAGLANTI_BASLIK');
-  lblKayitli.Caption := T('LBL_KAYITLI');
   lblAd.Caption := T('LBL_BAGLANTI_AD');
   lblSunucu.Caption := T('LBL_SUNUCU');
   lblPort.Caption := T('LBL_PORT');
@@ -107,15 +129,13 @@ begin
   chkSifreKaydet.Caption := T('CHK_SIFRE_KAYDET');
   btnAyrinti.Caption := T('AYRINTI');
   btnBaglan.Caption := T('BTN_BAGLAN');
+  btnKaydet.Caption := T('BTN_KAYDET');
   btnKapat.Caption := T('BTN_KAPAT');
-  btnYeni.Caption := T('BTN_YENI');
-  btnSil.Caption := T('BTN_SIL');
   dlgAc.Filter := T('DOSYA_FILTRE');
   DugmeyiYaziyaUydur(btnAyrinti);
   DugmeyiYaziyaUydur(btnBaglan);
+  DugmeyiYaziyaUydur(btnKaydet);
   DugmeyiYaziyaUydur(btnKapat);
-  DugmeyiYaziyaUydur(btnYeni);
-  DugmeyiYaziyaUydur(btnSil);
 end;
 
 { Dugme genisligi yaziya gore uzar (Almanca yazilar kesilmesin). }
@@ -124,21 +144,6 @@ begin
   Dugme.Width := Dugme.Constraints.MinWidth;
   if Canvas.TextWidth(Dugme.Caption) + 32 > Dugme.Width then
     Dugme.Width := Canvas.TextWidth(Dugme.Caption) + 32;
-end;
-
-procedure TfrmBaglanti.ListeyiDoldur;
-var
-  Tanim: TBaglantiTanimi;
-begin
-  FKayitlilar := KayitliBaglantilar;
-  lstKayitli.Items.BeginUpdate;
-  try
-    lstKayitli.Items.Clear;
-    for Tanim in FKayitlilar do
-      lstKayitli.Items.Add(Tanim.Ad);
-  finally
-    lstKayitli.Items.EndUpdate;
-  end;
 end;
 
 procedure TfrmBaglanti.AlanlariBosalt;
@@ -194,7 +199,24 @@ begin
   Tanim.Ad := Trim(edtAd.Text);
   if Tanim.Ad = '' then
     Tanim.Ad := Tanim.Sunucu + ' - ' + ExtractFileName(StringReplace(Tanim.VeritabaniYolu, '/', '\', [rfReplaceAll]));
+  if not AdKullanilabilirMi(Tanim.Ad) then
+    Exit;
   Result := True;
+end;
+
+{ Ayni adli baska bir kayit varsa kullanilamaz (duzenlerken kendi adi serbest). }
+function TfrmBaglanti.AdKullanilabilirMi(const Ad: string): Boolean;
+var
+  Baska: TBaglantiTanimi;
+begin
+  Result := True;
+  if (FEskiAd <> '') and SameText(FEskiAd, Ad) then
+    Exit;
+  if KayitliBaglantiBul(Ad, Baska) then
+  begin
+    HataGoster(TF('ERR_AD_VAR', [Ad]), '');
+    Result := False;
+  end;
 end;
 
 procedure TfrmBaglanti.HataGoster(const Anlasilir, Ayrinti: string);
@@ -212,32 +234,6 @@ begin
   memAyrinti.Visible := False;
 end;
 
-procedure TfrmBaglanti.lstKayitliClick(Sender: TObject);
-begin
-  if lstKayitli.ItemIndex >= 0 then
-    AlanlaraYaz(FKayitlilar[lstKayitli.ItemIndex]);
-end;
-
-procedure TfrmBaglanti.btnYeniClick(Sender: TObject);
-begin
-  lstKayitli.ItemIndex := -1;
-  AlanlariBosalt;
-end;
-
-procedure TfrmBaglanti.btnSilClick(Sender: TObject);
-var
-  Ad: string;
-begin
-  if lstKayitli.ItemIndex < 0 then
-    Exit;
-  Ad := FKayitlilar[lstKayitli.ItemIndex].Ad;
-  if not OnayIste(TF('ONAY_BAGLANTI_SIL', [Ad])) then
-    Exit;
-  BaglantiListedenKaldir(Ad);
-  ListeyiDoldur;
-  AlanlariBosalt;
-end;
-
 procedure TfrmBaglanti.btnGozatClick(Sender: TObject);
 begin
   if dlgAc.Execute then
@@ -247,6 +243,27 @@ end;
 procedure TfrmBaglanti.btnAyrintiClick(Sender: TObject);
 begin
   memAyrinti.Visible := not memAyrinti.Visible;
+end;
+
+procedure TfrmBaglanti.btnKaydetClick(Sender: TObject);
+var
+  Tanim: TBaglantiTanimi;
+begin
+  if not AlanlardanOku(Tanim) then
+    Exit;
+  HatayiGizle;
+  try
+    BaglantiKaydet(Tanim, FEskiAd);
+  except
+    on E: Exception do
+    begin
+      HataGoster(T('ERR_KAYDEDILEMEDI'), E.Message);
+      Exit;
+    end;
+  end;
+  FKaydedilenAd := Tanim.Ad;
+  FSonuc := bsKaydedildi;
+  ModalResult := mrOk;
 end;
 
 procedure TfrmBaglanti.btnBaglanClick(Sender: TObject);
@@ -272,11 +289,13 @@ begin
   end;
   { Baglanti kuruldu. Kayit basarisiz olsa bile baglanti acik kalir ve pencere kapanir. }
   try
-    BaglantiKaydet(Tanim);
+    BaglantiKaydet(Tanim, FEskiAd);
   except
     on E: Exception do
       UyariGoster(T('ERR_KAYIT_BASARISIZ') + #13#10#13#10 + T('AYRINTI') + ': ' + E.Message);
   end;
+  FKaydedilenAd := Tanim.Ad;
+  FSonuc := bsBaglandi;
   ModalResult := mrOk;
 end;
 

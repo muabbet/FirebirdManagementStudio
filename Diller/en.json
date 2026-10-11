@@ -2,14 +2,16 @@
   "DIL_ADI": "English",
   "APP_BASLIK": "Firebird Manager",
 
+  "BTN_YENI_BAGLANTI": "New Connection",
   "BTN_BAGLAN": "Connect",
   "BTN_KES": "Disconnect",
   "BTN_YENILE": "Refresh",
+  "BTN_YENI_KLASOR": "New Folder",
   "BTN_EVET": "Yes",
   "BTN_HAYIR": "No",
   "BTN_KAPAT": "Close",
-  "BTN_YENI": "New",
-  "BTN_SIL": "Remove from list",
+  "BTN_KAYDET": "Save",
+  "BTN_IPTAL": "Cancel",
   "LBL_DIL": "Language",
 
   "AGAC_TABLOLAR": "Tables",
@@ -19,8 +21,15 @@
 
   "MENU_AC": "Open (columns and first rows)",
   "MENU_YENILE": "Refresh",
+  "MENU_DUZENLE": "Edit",
+  "MENU_KLONLA": "Clone",
+  "KLON_AD": "%s (copy)",
+  "MENU_KAYITTAN_KALDIR": "Unregister",
+  "MENU_KLASOR_ADLANDIR": "Rename",
+  "MENU_KLASOR_KALDIR": "Remove folder",
   "MENU_SEKME_KAPAT": "Close tab",
 
+  "DURUM_SECIM_YOK": "Select a connection in the tree",
   "DURUM_BAGLI": "Connected: %s",
   "DURUM_BAGLI_DEGIL": "Not connected",
   "DURUM_SURUM": "Firebird %s",
@@ -28,9 +37,11 @@
   "DURUM_ISLEM_KAPALI": "Transaction: closed",
 
   "MSG_BAGLANDI": "Connected: %s (Firebird %s)",
-  "MSG_KESILDI": "Disconnected.",
-  "MSG_AGAC_YENILENDI": "Object list refreshed.",
-  "MSG_TABLO_ACILDI": "Table %s opened. Showing at most %d rows.",
+  "MSG_KESILDI": "Disconnected: %s",
+  "MSG_AGAC_YENILENDI": "%s: object list refreshed.",
+  "MSG_TABLO_ACILDI": "Table %s opened (%s). Showing at most %d rows.",
+  "MSG_KAYIT_KALDIRILDI": "'%s' was unregistered. The database was not touched.",
+  "MSG_KLASOR_KALDIRILDI": "Folder '%s' was removed. Its connections moved to the top level.",
 
   "AYRINTI": "Details",
 
@@ -42,8 +53,8 @@
   "EVET": "Yes",
   "HAYIR": "No",
 
-  "BAGLANTI_BASLIK": "Connect to Database",
-  "LBL_KAYITLI": "Saved connections",
+  "BAGLANTI_BASLIK": "New Connection",
+  "BAGLANTI_DUZENLE_BASLIK": "Edit Connection",
   "LBL_BAGLANTI_AD": "Connection name",
   "LBL_SUNUCU": "Server",
   "LBL_PORT": "Port",
@@ -54,8 +65,18 @@
   "CHK_SIFRE_KAYDET": "Store the password encrypted on this computer",
   "DOSYA_FILTRE": "Firebird database (*.fdb;*.gdb)|*.fdb;*.gdb|All files (*.*)|*.*",
 
+  "SIFRE_BASLIK": "Enter password",
+  "SIFRE_ISTEK": "Enter the password for connection '%s'. The password is not saved; it is only used for this connection.",
+
+  "KLASOR_YENI_BASLIK": "New folder",
+  "KLASOR_ADLANDIR_BASLIK": "Rename folder",
+  "LBL_KLASOR_AD": "Folder name",
+
   "ONAY_BASLIK": "Confirm",
-  "ONAY_BAGLANTI_SIL": "Remove the saved connection '%s' from the list? The database is not touched.",
+  "ONAY_KAYIT_KALDIR": "Remove the connection '%s' from the saved list? The database is not touched.",
+  "ONAY_KAYIT_KALDIR_ACIK": "The connection '%s' is currently open. It will be disconnected first and its tabs will be closed, then it will be removed from the saved list. The database is not touched. Continue?",
+  "ONAY_DUZENLE_KES": "The connection '%s' is currently open. To edit it, it will be disconnected first and its tabs will be closed. Continue?",
+  "ONAY_KLASOR_KALDIR": "Remove the folder '%s'? Its connections are not deleted; they move to the top level.",
 
   "ERR_SIFRE": "The user name or password is wrong.",
   "ERR_SUNUCU": "The server could not be reached. Check the server name, the port number and that the Firebird service is running.",
@@ -69,6 +90,13 @@
   "ERR_PORT": "The port must be a number between 1 and 65535.",
   "ERR_DPAPI": "Windows could not encrypt the password.",
   "ERR_TABLO_ACILAMADI": "Table %s could not be opened.",
+  "ERR_BAGLANTI_ACILAMADI": "Connection '%s' could not be established.",
+  "ERR_KAYIT_YOK": "'%s' was not found among the saved connections.",
+  "ERR_AD_VAR": "A connection named '%s' is already saved. Enter a different name.",
+  "ERR_KLASOR_AD_BOS": "The folder name cannot be empty.",
+  "ERR_KLASOR_VAR": "A folder named '%s' already exists.",
+  "ERR_KLASOR_YOK": "There is no folder named '%s'.",
+  "ERR_KAYDEDILEMEDI": "The change could not be saved. The connection list file could not be written.",
 
   "BTN_TAMAM": "OK",
   "UYARI_BASLIK": "Warning",
