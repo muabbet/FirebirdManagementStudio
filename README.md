@@ -12,11 +12,11 @@ Aşama 1 (iskelet ve ağaç): bağlantı penceresi, kayıtlı bağlantılar (şi
 
 Aşama 1b (çoklu bağlantı ağacı): kayıtlı bağlantılar ağaçta görünür, aynı anda birden fazla bağlantı açık kalabilir, bağlantılar klasörlere konabilir (sürükle-bırak) ve "Kayıttan Kaldır" ile listeden çıkarılır (veritabanına dokunulmaz). Şifresi kayıtlı olmayan bağlantıda şifre sorulur (şifre kaydedilmez). `baglantilar.json` içinde her bağlantının `Klasor` alanı ve boş klasörler için `Klasorler` listesi tutulur; eski biçimdeki dosya okunmaya devam eder.
 
-Aşama 2 (SQL editörü): sorgu sekmeleri (SynEdit, SQL renklendirme), `F5` ile çalıştırma, sonuç 500'er satır parça parça yüklenir, sonuç ızgarasında sıralama / zebra / NULL gösterimi / otomatik genişlik / Ctrl+C / uzun metin ve BLOB kısaltma. Her sorgu sekmesi kendi işleminde ve otomatik onay (autocommit) modunda çalışır. DROP ve WHERE'siz DELETE/UPDATE onay ister. Sorgu planı henüz yok.
+Aşama 2 (SQL editörü): sorgu sekmeleri (SynEdit, SQL renklendirme), `F5` ile çalıştırma, sonuç 500'er satır parça parça yüklenir, sonuç ızgarasında sıralama / zebra / NULL gösterimi / otomatik genişlik / Ctrl+C / uzun metin ve BLOB kısaltma. Her sorgu sekmesi kendi işleminde ve otomatik onay (autocommit) modunda çalışır. DROP ve WHERE'siz DELETE/UPDATE onay ister. `Ctrl+L` ile sorgu planı (komut çalıştırılmaz). `Ctrl+Boşluk` ile otomatik tamamlama (anahtar kelimeler `anahtar_kelimeler.txt` dosyasından, nesne adları, `ad.` yazınca kolon adları; `ad` takma ad da olabilir). Editörde birden fazla komut varsa (veya seçili kısımda) hepsi sırayla çalışır, `SET TERM` desteklenir, ilk hatada durulur; her komut ayrı otomatik onaylandığı için önceki komutlar geri alınmaz.
 
 ## Derleme
 
-RAD Studio 12 gerekir. SQL editörü için **SynEdit**, GetIt ile kurulmuş olmalıdır (kaynak depoda yoktur).
+RAD Studio 12 gerekir. SQL editörü için **SynEdit** (TurboPack, `TSynCompletionProposal` dahil) kütüphane yolunda olmalıdır; GetIt veya https://github.com/TurboPack/SynEdit kaynağı (kaynak depoda yoktur).
 
 - IDE: `Kaynak\FirebirdYonetici.dproj` dosyasını açın, **Win64 / Release** derleyin.
 - Komut satırı: `Derle.bat` (rsvars.bat + msbuild).

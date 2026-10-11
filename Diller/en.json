@@ -130,5 +130,19 @@
   "MSG_PLAN_YOK": "There is no query plan for this statement (the statement was not executed).",
   "MSG_PLAN_CALISTIRILMADI": "The statement was not executed, only prepared.",
   "ERR_PLAN_TEK_KOMUT": "Select a single statement to get its plan.",
-  "ERR_PLAN_ALINAMADI": "The query plan could not be retrieved."
+  "ERR_PLAN_ALINAMADI": "The query plan could not be retrieved.",
+  "MSG_KOMUT_SATIRI_SECIM": "%d) query ran (%d ms), result is in the grid.",
+  "MSG_KOMUT_SATIRI_DEGISTI": "%d) %d rows affected (%d ms).",
+  "MSG_KOMUT_SATIRI_TAMAM": "%d) done (%d ms).",
+  "MSG_COMMIT_ATLANDI": "%d) skipped (autocommit is on, no COMMIT needed).",
+  "MSG_ISQL_ATLANDI": "%d) skipped: \"%s\" is an isql command and does not work here.",
+  "ERR_ROLLBACK_YOK": "%d) stopped: ROLLBACK is not supported. Earlier statements were already committed and cannot be undone.",
+  "ERR_KOMUT_HATASI": "Error in statement %d: %s",
+  "MSG_KOMUT_DURDU": "The %d statements after the error were not run.",
+  "MSG_COKLU_ONAY_NOTU": "Each statement was committed on its own (autocommit). Even after an error, earlier statements are not rolled back.",
+  "ONAY_COKLU_KOMUT": "%d statements will run in order, and some of them are dangerous:",
+  "ONAY_COKLU_SATIR": "Statement %d: %s  [%s]",
+  "ONAY_COKLU_SON": "Each statement is committed on its own; execution stops at the first error and earlier statements cannot be undone.\n\nRun them all?",
+  "ETIKET_DROP": "DROP: object is deleted permanently",
+  "ETIKET_WHERE_YOK": "no WHERE: all rows are affected"
 }

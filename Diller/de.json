@@ -130,5 +130,19 @@
   "MSG_PLAN_YOK": "Für diesen Befehl gibt es keinen Abfrageplan (der Befehl wurde nicht ausgeführt).",
   "MSG_PLAN_CALISTIRILMADI": "Der Befehl wurde nicht ausgeführt, sondern nur vorbereitet.",
   "ERR_PLAN_TEK_KOMUT": "Wählen Sie für den Plan einen einzelnen Befehl aus.",
-  "ERR_PLAN_ALINAMADI": "Der Abfrageplan konnte nicht abgerufen werden."
+  "ERR_PLAN_ALINAMADI": "Der Abfrageplan konnte nicht abgerufen werden.",
+  "MSG_KOMUT_SATIRI_SECIM": "%d) Abfrage ausgeführt (%d ms), Ergebnis in der Tabelle.",
+  "MSG_KOMUT_SATIRI_DEGISTI": "%d) %d Zeilen betroffen (%d ms).",
+  "MSG_KOMUT_SATIRI_TAMAM": "%d) fertig (%d ms).",
+  "MSG_COMMIT_ATLANDI": "%d) übersprungen (Autocommit ist aktiv, COMMIT nicht nötig).",
+  "MSG_ISQL_ATLANDI": "%d) übersprungen: \"%s\" ist ein isql-Befehl und funktioniert hier nicht.",
+  "ERR_ROLLBACK_YOK": "%d) angehalten: ROLLBACK wird nicht unterstützt. Frühere Befehle wurden bereits bestätigt und können nicht rückgängig gemacht werden.",
+  "ERR_KOMUT_HATASI": "Fehler in Befehl %d: %s",
+  "MSG_KOMUT_DURDU": "Die %d Befehle nach dem Fehler wurden nicht ausgeführt.",
+  "MSG_COKLU_ONAY_NOTU": "Jeder Befehl wurde einzeln bestätigt (Autocommit). Auch nach einem Fehler werden frühere Befehle nicht zurückgerollt.",
+  "ONAY_COKLU_KOMUT": "%d Befehle werden der Reihe nach ausgeführt, einige davon sind gefährlich:",
+  "ONAY_COKLU_SATIR": "Befehl %d: %s  [%s]",
+  "ONAY_COKLU_SON": "Jeder Befehl wird einzeln bestätigt; bei dem ersten Fehler wird abgebrochen und frühere Befehle können nicht rückgängig gemacht werden.\n\nAlle ausführen?",
+  "ETIKET_DROP": "DROP: Objekt wird dauerhaft gelöscht",
+  "ETIKET_WHERE_YOK": "kein WHERE: alle Zeilen betroffen"
 }
