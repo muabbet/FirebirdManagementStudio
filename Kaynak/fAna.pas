@@ -37,6 +37,7 @@ type
     btnYenile: TToolButton;
     btnYeniSorgu: TToolButton;
     btnCalistir: TToolButton;
+    btnPlan: TToolButton;
     pnlDil: TPanel;
     cmbDil: TComboBox;
     stbDurum: TStatusBar;
@@ -69,6 +70,7 @@ type
     procedure btnBaglanClick(Sender: TObject);
     procedure btnYeniSorguClick(Sender: TObject);
     procedure btnCalistirClick(Sender: TObject);
+    procedure btnPlanClick(Sender: TObject);
     procedure btnYenileClick(Sender: TObject);
     procedure cmbDilChange(Sender: TObject);
     procedure tvNesnelerChange(Sender: TObject; Node: TTreeNode);
@@ -133,6 +135,7 @@ type
     function AktifSorguSekmesi: TSorguSekme;
     procedure YeniSorgu;
     procedure SorguyuCalistir;
+    procedure PlaniGoster;
   end;
 
 var
@@ -198,6 +201,7 @@ begin
   btnYenile.Caption := T('BTN_YENILE');
   btnYeniSorgu.Caption := T('BTN_YENI_SORGU');
   btnCalistir.Caption := T('BTN_CALISTIR');
+  btnPlan.Caption := T('BTN_PLAN');
   miAc.Caption := T('MENU_AC');
   miBaglan.Caption := T('BTN_BAGLAN');
   miKes.Caption := T('BTN_KES');
@@ -277,6 +281,7 @@ begin
   btnYenile.Enabled := Bag <> nil;
   btnYeniSorgu.Enabled := Bag <> nil;
   btnCalistir.Enabled := AktifSorguSekmesi <> nil;
+  btnPlan.Enabled := AktifSorguSekmesi <> nil;
 end;
 
 procedure TfrmAna.MesajYaz(const Metin: string);
@@ -790,6 +795,12 @@ begin
     AktifSorguSekmesi.Calistir;
 end;
 
+procedure TfrmAna.PlaniGoster;
+begin
+  if AktifSorguSekmesi <> nil then
+    AktifSorguSekmesi.PlanGoster;
+end;
+
 procedure TfrmAna.BaglantiSekmeleriniKapat(const BaglantiAd: string);
 var
   i: Integer;
@@ -889,13 +900,23 @@ begin
   SorguyuCalistir;
 end;
 
-{ F5: aktif sekme bir sorgu sekmesiyse calistirir. }
+procedure TfrmAna.btnPlanClick(Sender: TObject);
+begin
+  PlaniGoster;
+end;
+
+{ F5: aktif sekme bir sorgu sekmesiyse calistirir. Ctrl+L: komutun planini gosterir. }
 procedure TfrmAna.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
   if Key = VK_F5 then
   begin
     Key := 0;
     SorguyuCalistir;
+  end
+  else if (Key = Ord('L')) and (ssCtrl in Shift) then
+  begin
+    Key := 0;
+    PlaniGoster;
   end;
 end;
 

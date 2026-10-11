@@ -95,6 +95,13 @@ object frmAna: TfrmAna
         ImageIndex = 12
         OnClick = btnCalistirClick
       end
+      object btnPlan: TToolButton
+        Left = 300
+        Top = 0
+        AutoSize = True
+        ImageIndex = 13
+        OnClick = btnPlanClick
+      end
     end
   end
   object stbDurum: TStatusBar

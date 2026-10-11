@@ -20,7 +20,7 @@ uses
   Data.DB,
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error,
   FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Comp.DataSet,
-  FireDAC.Comp.Client,
+  FireDAC.Comp.Client, FireDAC.Phys.IBBase, FireDAC.Phys.IBWrapper,
   uBaglanti;
 
 const
@@ -47,6 +47,13 @@ function SorguCalistir(Bag: TAcikBaglanti; const Sql: string): TSorguSonucu;
 
 { Komut tehlikeliyse dil anahtarini ('ONAY_SORGU_...') verir, degilse bos doner. }
 function TehlikeliSorguUyarisi(const Sql: string): string;
+
+{ Yazi tek bir komut mu? (yorum ve tirnak disinda ';' yok; sondaki ';' sayilmaz) }
+function TekKomutMu(const Sql: string): Boolean;
+
+{ Komutu CALISTIRMADAN, sadece hazirlayarak (prepare) Firebird sorgu planini verir.
+  Hata olursa istisna firlar, cagiran HataMetniniCevir ile gosterir. }
+function SorguPlaniAl(Bag: TAcikBaglanti; const Sql: string): string;
 
 implementation
 
@@ -124,6 +131,51 @@ begin
     not TRegEx.IsMatch(Yalin, '^\s*UPDATE\s+OR\b', [roIgnoreCase]) and
     not TRegEx.IsMatch(Yalin, '\bWHERE\b', [roIgnoreCase]) then
     Result := 'ONAY_SORGU_WHERE_YOK';
+end;
+
+function TekKomutMu(const Sql: string): Boolean;
+begin
+  Result := Pos(';', SonNoktaliVirgulleriAt(YorumlariVeYazilariAt(Sql))) = 0;
+end;
+
+type
+  { FireDAC'in Firebird komutundaki korunmus alana (FStmt) ulasmak icin. Baska is yapmaz. }
+  TFbKomutErisim = class(TFDPhysIBCommandBase);
+
+function SorguPlaniAl(Bag: TAcikBaglanti; const Sql: string): string;
+var
+  Islem: TFDTransaction;
+  Sorgu: TFDQuery;
+  Komut: TFbKomutErisim;
+begin
+  Islem := TFDTransaction.Create(nil);
+  Sorgu := TFDQuery.Create(nil);
+  try
+    Islem.Connection := Bag.Baglanti;
+    Sorgu.Connection := Bag.Baglanti;
+    Sorgu.Transaction := Islem;
+    Sorgu.ResourceOptions.ParamCreate := False;
+    Sorgu.ResourceOptions.MacroCreate := False;
+    Sorgu.ResourceOptions.MacroExpand := False;
+    Sorgu.ResourceOptions.EscapeExpand := False;
+    Sorgu.SQL.Text := SonNoktaliVirgulleriAt(Sql);
+    Sorgu.Prepare;
+    { CREATE/ALTER/DROP gibi komutlarin plani yoktur (FireDAC bunlari hazirlamadan gonderir). }
+    if Sorgu.Command.CommandKind in [skStartTransaction, skCommit, skRollback, skCreate,
+      skAlter, skDrop, skSet, skSetSchema, skOther] then
+      Exit('');
+    Komut := TFbKomutErisim(Sorgu.Command.CommandIntf as TFDPhysIBCommandBase);
+    { Firebird 3 ve sonrasi ayrintili plani da verir; 2.5'te yalnizca kisa plan var. }
+    Result := '';
+    if StrToIntDef(Copy(Bag.Surum, 1, Pos('.', Bag.Surum) - 1), 0) >= 3 then
+      Result := Komut.FStmt.sql_explain_plan;
+    if Result = '' then
+      Result := Komut.FStmt.sql_get_plan;
+    Result := Trim(Result);
+  finally
+    Sorgu.Free;
+    Islem.Free;
+  end;
 end;
 
 function SorguCalistir(Bag: TAcikBaglanti; const Sql: string): TSorguSonucu;

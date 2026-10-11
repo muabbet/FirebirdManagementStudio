@@ -35,6 +35,7 @@ type
     destructor Destroy; override;
     procedure Hazirla(SekmeNo: Integer; const Baglanti: string);
     procedure Calistir;
+    procedure PlanGoster;
     procedure EditoreOdaklan;
     function Baslik: string;
     procedure YazilariYenile;
@@ -155,6 +156,47 @@ begin
   else
     memMesaj.Lines.Text := TF('MSG_SORGU_TAMAM', [FSonuc.Sure]);
   SatirSayisiniYaz;
+end;
+
+{ Ctrl+L / Plan dugmesi: komutu calistirmadan planini mesaj kutusuna yazar. }
+procedure TSorguSekme.PlanGoster;
+var
+  Sql, Plan: string;
+  Bag: TAcikBaglanti;
+begin
+  Sql := FEditor.CalistirilacakMetin;
+  if Trim(Sql) = '' then
+  begin
+    memMesaj.Lines.Text := T('ERR_SORGU_BOS');
+    Exit;
+  end;
+  if not TekKomutMu(Sql) then
+  begin
+    memMesaj.Lines.Text := T('ERR_PLAN_TEK_KOMUT');
+    Exit;
+  end;
+  Bag := FbAcikBaglanti(BaglantiAd);
+  if Bag = nil then
+  begin
+    memMesaj.Lines.Text := TF('ERR_SORGU_BAGLANTI_YOK', [BaglantiAd]);
+    Exit;
+  end;
+  try
+    Plan := SorguPlaniAl(Bag, Sql);
+  except
+    on E: Exception do
+    begin
+      memMesaj.Lines.Clear;
+      memMesaj.Lines.Add(T('ERR_PLAN_ALINAMADI') + ' ' + HataMetniniCevir(E));
+      memMesaj.Lines.Add(T('AYRINTI') + ': ' + E.Message);
+      Exit;
+    end;
+  end;
+  if Plan = '' then
+    memMesaj.Lines.Text := T('MSG_PLAN_YOK')
+  else
+    memMesaj.Lines.Text := T('MSG_PLAN_BASLIK') + sLineBreak + Plan + sLineBreak + sLineBreak +
+      T('MSG_PLAN_CALISTIRILMADI');
 end;
 
 end.

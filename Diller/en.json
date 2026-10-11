@@ -124,5 +124,11 @@
   "ERR_SQL_BENZERSIZ": "This value already exists. The same value cannot be written to a unique field twice.",
   "ERR_SQL_YABANCI_ANAHTAR": "The operation was refused because it would break a link between tables (foreign key).",
   "ERR_SQL_NESNE_YOK": "A table, column or other object named in the statement was not found in the database.",
-  "ERR_SQL_SOZDIZIMI": "The SQL statement has a syntax error. Only one statement can be run at a time."
+  "ERR_SQL_SOZDIZIMI": "The SQL statement has a syntax error. Only one statement can be run at a time.",
+  "BTN_PLAN": "Plan (Ctrl+L)",
+  "MSG_PLAN_BASLIK": "Query plan:",
+  "MSG_PLAN_YOK": "There is no query plan for this statement (the statement was not executed).",
+  "MSG_PLAN_CALISTIRILMADI": "The statement was not executed, only prepared.",
+  "ERR_PLAN_TEK_KOMUT": "Select a single statement to get its plan.",
+  "ERR_PLAN_ALINAMADI": "The query plan could not be retrieved."
 }

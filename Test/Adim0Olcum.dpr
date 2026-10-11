@@ -45,6 +45,9 @@ begin
       Bag := FbBaglan(Tanim);
       Cikti.Add('Surum: ' + Bag.Surum);
 
+      { Onceki yarim kalmis bir denemeden artik varsa temizle (yoksa hata onemsiz). }
+      try SorguCalistir(Bag, 'DROP TABLE OLCUM_C').Free; except end;
+      try SorguCalistir(Bag, 'DROP TABLE OLCUM_T').Free; except end;
       SorguCalistir(Bag, 'CREATE TABLE OLCUM_T (ID INTEGER NOT NULL PRIMARY KEY, YAZI VARCHAR(40))').Free;
       SorguCalistir(Bag,
         'EXECUTE BLOCK AS DECLARE I INTEGER = 1; BEGIN WHILE (I <= 2300) DO BEGIN ' +
@@ -104,6 +107,23 @@ begin
       Say := Bag.Baglanti.ExecSQLScalar('select count(*) from OLCUM_T');
       Cikti.Add('Yeni sorguda count(*) = ' + IntToStr(Say) + ' (insert kalici oldu mu)');
 
+      Cikti.Add('');
+      Cikti.Add('--- 5) Sorgu plani (calistirmadan) ---');
+      Cikti.Add('select: ' + SorguPlaniAl(Bag, 'select * from OLCUM_T where ID = 5'));
+      Say := Bag.Baglanti.ExecSQLScalar('select count(*) from OLCUM_T');
+      Cikti.Add('insert: ' + SorguPlaniAl(Bag, 'insert into OLCUM_T values (7777, ''plan'')'));
+      Cikti.Add('update: ' + SorguPlaniAl(Bag, 'update OLCUM_T set YAZI = ''x'' where ID = 5'));
+      Cikti.Add('delete: ' + SorguPlaniAl(Bag, 'delete from OLCUM_T'));
+      Cikti.Add('satir sayisi plan oncesi/sonrasi: ' + IntToStr(Say) + ' / ' +
+        VarToStr(Bag.Baglanti.ExecSQLScalar('select count(*) from OLCUM_T')));
+      Cikti.Add('ID=5 yazisi: ' + VarToStr(Bag.Baglanti.ExecSQLScalar('select YAZI from OLCUM_T where ID = 5')));
+      Cikti.Add('DDL plani: [' + SorguPlaniAl(Bag, 'create table OLCUM_X (A integer)') + ']');
+      try
+        SorguPlaniAl(Bag, 'select * from OLCUM_YOK');
+      except
+        on E: Exception do
+          Cikti.Add('hatali sql: ' + HataMetniniCevir(E));
+      end;
       Cikti.Add('');
       Cikti.Add('--- 4) Hata cumleleri ---');
       SorguCalistir(Bag, 'CREATE TABLE OLCUM_C (ID INTEGER NOT NULL PRIMARY KEY, OLCUM_ID INTEGER REFERENCES OLCUM_T(ID))').Free;

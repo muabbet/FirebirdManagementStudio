@@ -124,5 +124,11 @@
   "ERR_SQL_BENZERSIZ": "Bu değer zaten var. Tekrar edemeyen (benzersiz) bir alana aynı değer yazılmak isteniyor.",
   "ERR_SQL_YABANCI_ANAHTAR": "İşlem, tablolar arasındaki bir bağlantıyı (yabancı anahtar) bozacağı için yapılamadı.",
   "ERR_SQL_NESNE_YOK": "Komutta adı geçen tablo, kolon veya başka bir nesne veritabanında bulunamadı.",
-  "ERR_SQL_SOZDIZIMI": "SQL komutunda yazım hatası var. Aynı anda yalnızca tek bir komut çalıştırılır."
+  "ERR_SQL_SOZDIZIMI": "SQL komutunda yazım hatası var. Aynı anda yalnızca tek bir komut çalıştırılır.",
+  "BTN_PLAN": "Plan (Ctrl+L)",
+  "MSG_PLAN_BASLIK": "Sorgu planı:",
+  "MSG_PLAN_YOK": "Bu komut için sorgu planı yok (komut çalıştırılmadı).",
+  "MSG_PLAN_CALISTIRILMADI": "Komut çalıştırılmadı, yalnızca hazırlandı.",
+  "ERR_PLAN_TEK_KOMUT": "Plan için tek bir komut seçin.",
+  "ERR_PLAN_ALINAMADI": "Sorgu planı alınamadı."
 }
