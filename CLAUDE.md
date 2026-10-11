@@ -175,6 +175,8 @@ Bu bir "boş zamanda yavaş yavaş" projesidir, acele yoktur. **Her aşama bitin
 - [ ] `uSonucGrid.pas` altı eklenti
 - [ ] Parça parça sonuç çekme
 - [ ] Sorgu planını gösterme
+- [ ] `Ctrl+Boşluk` otomatik tamamlama (anahtar kelime, veri tipi, nesne adları)
+- [ ] Çoklu komut çalıştırma: seçili kısım (içinde birden fazla komut varsa sırayla)
 
 ### Aşama 3: Yönetim Özellikleri
 - [ ] `uDDL.pas`: tablo, view, prosedür, trigger için `CREATE` script üretimi (referans: `isql -x` çıktısı)
