@@ -1,6 +1,6 @@
 ﻿program SorguTest;
 
-{ Asama 2b Adim 4: uSorgu testleri (komut satiri). Once veritabanisiz kontroller
+{ Asama 2b Adim 4 + 2c Adim 2: uSorgu testleri (komut satiri). Once veritabanisiz kontroller
   (KomutlaraBol, TehlikeliSorguUyarisi, KomutTuruBul, TabloAdiniBul), sonra GECICI bir
   veritabaninda SorguCalistir, hata cumleleri, sorgu plani ve BetikCalistir denenir.
   Gecici tablolar SORGUTEST_T ve SORGUTEST_C'dir, sonunda DROP edilir. Gercek veriye dokunmaz.
@@ -14,6 +14,7 @@
 
 uses
   System.SysUtils, System.Classes, System.Generics.Collections, Data.DB,
+  FireDAC.Stan.Error, FireDAC.Comp.Client, FireDAC.Phys.FB,
   uDil, uBaglanti, uSorgu;
 
 var
@@ -155,6 +156,93 @@ begin
   BirakDene('DROP TABLE SORGUTEST_T', Yaz);
 end;
 
+{ Hata sirasindaki Firebird hata kodlari ve cumle: "[kod:tur ...] cumle". Adim 2 olcumu icin. }
+function KodluHata(const Sql: string): string;
+var
+  i: Integer;
+begin
+  Result := 'hata yok';
+  try
+    SorguCalistir(Bag, Sql).Free;
+  except
+    on E: Exception do
+    begin
+      Result := '';
+      if E is EFDDBEngineException then
+        for i := 0 to EFDDBEngineException(E).ErrorCount - 1 do
+          Result := Result + '[' + IntToStr(EFDDBEngineException(E).Errors[i].ErrorCode) + ':' +
+            IntToStr(Ord(EFDDBEngineException(E).Errors[i].Kind)) + ']';
+      Result := Result + ' ' + HataMetniniCevir(E);
+    end;
+  end;
+end;
+
+procedure KilitTablosuKur;
+begin
+  BirakDene('DROP TABLE SORGUTEST_K', False);
+  SorguCalistir(Bag, 'CREATE TABLE SORGUTEST_K (ID INTEGER NOT NULL PRIMARY KEY, YAZI VARCHAR(40))').Free;
+  SorguCalistir(Bag,
+    'EXECUTE BLOCK AS DECLARE I INTEGER = 1; BEGIN WHILE (I <= 1200) DO BEGIN ' +
+    'INSERT INTO SORGUTEST_K VALUES (:I, ''satir '' || :I); I = I + 1; END END').Free;
+end;
+
+{ Adim 2: acik SELECT sonucu tabloyu kilitliyor mu? Olcum (5.0.4 gomulu): acik SELECT varken DROP
+  "object ... is in use" ile reddedilir; ALTER ADD, CREATE INDEX ve DML gecer. Hata listesinde
+  isc_obj_in_use kodu yoktur, bu yuzden cumle mesaj metninden secilir (bkz. HataMetniniCevir). }
+procedure KilitTestleri;
+var
+  A, S: TSorguSonucu;
+  Kayitlar: TList<TKomutKaydi>;
+  Gelen: string;
+begin
+  Cikti.Add('--- Acik SELECT ve nesne kilidi (Adim 2) ---');
+  KilitTablosuKur;
+  A := SorguCalistir(Bag, 'select * from SORGUTEST_K order by ID');
+  Gelen := KodluHata('drop table SORGUTEST_K');
+  Cikti.Add('      A acik, drop table: ' + Gelen);
+  Kontrol('acik SELECT varken DROP: nesne kullanimda cumlesi', Pos(T('ERR_NESNE_KULLANIMDA'), Gelen) > 0);
+  Kontrol('acik SELECT varken DROP: kayit kilidi cumlesi DEGIL', Pos(T('ERR_KILIT'), Gelen) = 0);
+  Kontrol('acik SELECT varken ALTER ADD gecer', KodluHata('alter table SORGUTEST_K add C integer') = 'hata yok');
+  Kontrol('acik SELECT varken CREATE INDEX gecer',
+    KodluHata('create index SORGUTEST_K_I on SORGUTEST_K (YAZI)') = 'hata yok');
+  Kontrol('acik SELECT varken INSERT gecer',
+    KodluHata('insert into SORGUTEST_K (ID, YAZI) values (5000, ''x'')') = 'hata yok');
+  Kontrol('acik SELECT varken UPDATE gecer', KodluHata('update SORGUTEST_K set YAZI = ''y'' where ID = 1') = 'hata yok');
+  Kontrol('acik SELECT varken DELETE gecer', KodluHata('delete from SORGUTEST_K where ID = 5000') = 'hata yok');
+  A.Free;
+  Kontrol('sonuc birakilinca DROP gecer', KodluHata('drop table SORGUTEST_K') = 'hata yok');
+
+  Kayitlar := TList<TKomutKaydi>.Create;
+  try
+    KilitTablosuKur;
+    S := BetikCalistir(Bag, KomutlaraBol('select * from SORGUTEST_K; drop table SORGUTEST_K'), Kayitlar);
+    Kontrol('betik select; drop: 2 komut da calisti', (Kayitlar.Count = 2) and (Kayitlar[1].Durum = kdCalisti));
+    Kontrol('betik select; drop: onceki sonuc kapatildi kaydi', (Kayitlar.Count = 2) and Kayitlar[1].OncekiSonucKapandi);
+    Kontrol('betik select; drop: izgarada tutulan sonuc yok', S = nil);
+    S.Free;
+
+    KilitTablosuKur;
+    Kayitlar.Clear;
+    S := BetikCalistir(Bag, KomutlaraBol('select * from SORGUTEST_K; ' +
+      'insert into SORGUTEST_K (ID, YAZI) values (6000, ''x''); update SORGUTEST_K set YAZI = ''z'' where ID = 6000; ' +
+      'delete from SORGUTEST_K where ID = 6000'), Kayitlar);
+    Kontrol('betik select + DML: 4 komut calisti', (Kayitlar.Count = 4) and (Kayitlar[3].Durum = kdCalisti));
+    Kontrol('betik select + DML: sonuc izgarada kalir, kapatma yok', (S <> nil) and
+      not Kayitlar[1].OncekiSonucKapandi and not Kayitlar[2].OncekiSonucKapandi and not Kayitlar[3].OncekiSonucKapandi);
+    S.Free;
+
+    Kayitlar.Clear;
+    S := BetikCalistir(Bag, KomutlaraBol('select * from SORGUTEST_K; alter table SORGUTEST_K add D integer; ' +
+      'select * from SORGUTEST_K'), Kayitlar);
+    Kontrol('betik select; alter; select: kapatma sadece 2. komutta', (Kayitlar.Count = 3) and
+      Kayitlar[1].OncekiSonucKapandi and not Kayitlar[2].OncekiSonucKapandi and (S <> nil));
+    S.Free;
+  finally
+    Kayitlar.Free;
+  end;
+  BirakDene('DROP TABLE SORGUTEST_K', False);
+end;
+
 procedure VeritabaniTestleri;
 var
   S: TSorguSonucu;
@@ -271,7 +359,36 @@ begin
     Kayitlar.Free;
   end;
 
+  KilitTestleri;
   Temizle(True);
+end;
+
+{ Gomulu kipte (sunucu bos) veritabani dosyasi yoksa olusturur; boylece gecici bir test
+  veritabani icin elle hazirlik gerekmez. Sunucu doluysa hicbir sey yapmaz. }
+procedure GeciciVeritabaniOlustur(const Tanim: TBaglantiTanimi);
+var
+  Surucu: TFDPhysFBDriverLink;
+  Baglanti: TFDConnection;
+begin
+  if (Tanim.Sunucu <> '') or FileExists(Tanim.VeritabaniYolu) then
+    Exit;
+  Surucu := TFDPhysFBDriverLink.Create(nil);
+  Baglanti := TFDConnection.Create(nil);
+  try
+    Surucu.VendorLib := ExtractFilePath(ParamStr(0)) + 'istemci\fbclient.dll';
+    Baglanti.DriverName := 'FB';
+    Baglanti.LoginPrompt := False;
+    Baglanti.Params.Values['Database'] := Tanim.VeritabaniYolu;
+    Baglanti.Params.Values['User_Name'] := Tanim.Kullanici;
+    Baglanti.Params.Values['Password'] := Tanim.Sifre;
+    Baglanti.Params.Values['OpenMode'] := 'Create';
+    Baglanti.Params.Values['CharacterSet'] := Tanim.KarakterSeti;
+    Baglanti.Open;
+    Baglanti.Close;
+  finally
+    Baglanti.Free;
+    Surucu.Free;
+  end;
 end;
 
 var
@@ -292,6 +409,7 @@ begin
         Tanim.Kullanici := Ortam('FBTEST_KULLANICI', 'SYSDBA');
         Tanim.Sifre := Ortam('FBTEST_SIFRE', '');
         Tanim.KarakterSeti := VARSAYILAN_KARAKTER_SETI;
+        GeciciVeritabaniOlustur(Tanim);
         Bag := FbBaglan(Tanim);
         VeritabaniTestleri;
       end

@@ -37,7 +37,7 @@ Sunucular çalışıyor (3050 = 2.5.9, 3051 = 5.0.4, `Aşama 1b` raporuyla aynı
 
 - 2.5.9 ve 5.0.4-sunucu ölçümleri (yukarıdaki sebep).
 - Aşama 2'nin elle deneme listesinin (ASAMA2_RAPOR.md Bölüm 4) arayüz kısmı: ben arayüzü tıklayarak denemedim (yalnızca programın açıldığını gördüm). Madde 1-13'ü siz Windows'ta deneyebilirsiniz; sonuçlarda bir şey bozuk çıkarsa bana yazın.
-- Adım 1-4 başlamadı.
+- (Bu bölüm Adım 0 bitince yazıldı; Adım 1-4 sonradan tamamlandı, bkz. aşağıdaki toplu durum.)
 
 ## 5. Sizden istenenler
 
@@ -56,7 +56,7 @@ Sunucular çalışıyor (3050 = 2.5.9, 3051 = 5.0.4, `Aşama 1b` raporuyla aynı
    ```
    (Port 3051 ve 5.0.4 test veritabanı yoluyla ikinci kez.)
 2. Başlık sıralamasında (madde 3.2) yukarıdaki (a)/(b) kararı.
-3. Adım 1'e (sorgu planı) geçmem için onay.
+3. (Bu madde Adım 0 bitince yazıldı; Adım 1 ve sonrası tamamlandı, bkz. toplu durum.)
 
 ---
 
