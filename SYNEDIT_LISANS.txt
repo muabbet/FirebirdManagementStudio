@@ -1,0 +1,12 @@
+SynEdit (TurboPack SynEdit) - lisans bildirimi / license notice
+
+Bu program, SQL editoru icin SynEdit bilesenini icerir (derlenmis .exe icine gomuludur).
+This program includes the SynEdit component for its SQL editor (compiled into the .exe).
+
+SynEdit is distributed under the Mozilla Public License, Version 1.1 (MPL 1.1).
+Full license text: http://www.mozilla.org/MPL/MPL-1.1.html
+
+Source code of SynEdit (TurboPack SynEdit): https://github.com/TurboPack/SynEdit
+Original code: mwEdit by Martin Waldenburg (C) 1998; Unicode translation by Mael Horz;
+other contributors are listed in SynEdit's Contributors.txt.
+SynEdit is used here unmodified, "AS IS", without warranty of any kind.
