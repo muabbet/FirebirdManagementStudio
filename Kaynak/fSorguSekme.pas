@@ -276,9 +276,14 @@ begin
   try
     FSonuc := BetikCalistir(Bag, Komutlar, Kayitlar);
     Metin := '';
+    { Hata varsa hata satiri (ve Ayrinti) kutunun en ustunde olur; sonra durma notu, sonra oncekiler. }
+    if (Kayitlar.Count > 0) and (Kayitlar.Last.Durum = kdHata) then
+      Metin := KayitSatiri(Kayitlar.Count, Kayitlar.Last) + sLineBreak +
+        TF('MSG_KOMUT_DURDU', [Length(Komutlar) - Kayitlar.Count]) + sLineBreak;
     for i := 0 to Kayitlar.Count - 1 do
-      Metin := Metin + KayitSatiri(i + 1, Kayitlar[i]) + sLineBreak;
-    if (Kayitlar.Count > 0) and (Kayitlar.Last.Durum in [kdDurdu, kdHata]) then
+      if not ((i = Kayitlar.Count - 1) and (Kayitlar[i].Durum = kdHata)) then
+        Metin := Metin + KayitSatiri(i + 1, Kayitlar[i]) + sLineBreak;
+    if (Kayitlar.Count > 0) and (Kayitlar.Last.Durum = kdDurdu) then
       Metin := Metin + TF('MSG_KOMUT_DURDU', [Length(Komutlar) - Kayitlar.Count]) + sLineBreak;
     MesajYaz(Metin + T('MSG_COKLU_ONAY_NOTU'));
   finally

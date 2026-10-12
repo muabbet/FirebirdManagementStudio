@@ -6,7 +6,7 @@ Dal: `asama2c` (`asama2b` üzerinden açıldı, `main`'e yazılmadı). `Derle.ba
 
 - `fSorguSekme.pas`: mesaj yazan her yer tek yardımcıdan geçiyor: `MesajYaz(const Metin)` (metni yazar, kutuyu **en üste** kaydırır: `EM_LINESCROLL`). Hata, plan, tek komut, çoklu komut, "boş sorgu", "bağlantı yok", "vazgeçildi" hepsi bunu kullanıyor. `HataYaz` ve çoklu komut artık metni birleştirip tek seferde yazıyor (satır satır `Lines.Add` kalmadı).
 - `fSorguSekme.dfm`: kutu 80 → 115 px; kutunun üstüne `BolucuMesaj` (TSplitter, olay yok) eklendi, kutu elle yeniden boyutlanabilir.
-- Çoklu komut sırası değişmedi: başarılı satırlar, hata satırı, "Ayrıntı", "Hatadan sonraki N komut çalıştırılmadı", sonda otomatik onay notu. Yalnızca kaydırma düzeltildi (görev metnindeki "yalnızca kaydırmayı düzeltmek yeterli olabilir" yolu).
+- Çoklu komut sırası (sahibin isteğiyle değişti): hata varsa hata satırı ve "Ayrıntı" kutunun ilk satırları, sonra "Hatadan sonraki N komut çalıştırılmadı", sonra başarılı satırlar, en sonda otomatik onay notu. ROLLBACK durması eski sırada.
 - **Arayüzde denemedim.** Kodu derledim, ama uzun/hatalı betiği programın penceresinde çalıştırıp ilk satırı görmedim (masaüstü otomasyonuyla bağlantı penceresini sürmedim). Elle deneme listesi aşağıda. Not: 115 px yaklaşık 7 satır; ortada hata olan çok uzun betikte hata satırı kutunun altında kalabilir, o zaman kaydırma çubuğu/ayırıcı kullanılır. İsterseniz hata satırını her zaman en üste koyarız (karar sizin).
 
 ## Adım 2: Açık SELECT sonucu tabloyu kilitliyor
