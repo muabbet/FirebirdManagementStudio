@@ -121,9 +121,9 @@ Gerçek ve **karmaşık** bir test veritabanında (en az: bileşik PK, FK zincir
 
 # Aşama 3b: Veri dışa aktarma
 
-**Önce sahibine sor (3b'ye başlamadan):** "Excel" ne demek? Ek bileşen yasak olduğu için gerçek `.xlsx` yazmak makul sürede kendi kodumuzla zor. Öneri: **yalnızca CSV** (UTF-8 BOM'lu, ayraç kullanıcı ortamına göre `;` veya `,`, Excel'de çift tıkla açılır). `.xlsx` istenirse ayrıca karar verilir. Sahibi cevap verene kadar `.xlsx` yazma.
+**Karar (sahibi verdi): yalnızca CSV.** Ek bileşen yasak olduğu için `.xlsx` yazılmaz. CSV UTF-8 BOM'lu olur, ayraç kullanıcı ortamına göre `;` veya `,` seçilir, Excel'de çift tıkla açılır. `.xlsx` istenirse ayrıca karar verilir.
 
-## Kapsam (CSV varsayılırsa)
+## Kapsam
 
 - Sonuç ızgarasındaki (sorgu sonucu veya tablo verisi) **tüm** satırlar dışa aktarılır, yalnızca ekrandaki 500 satır değil. Parça parça çekme mantığı `uSorgu.pas`'te, dışa aktarma da yeni küçük `uAktar.pas` içinde olsun; formda iş yok. Büyük sonuçta bellekte biriktirme, satır satır dosyaya yaz.
 - İlerleme ve iptal: uzun sürerse kullanıcı görür (satır sayısı), durdurabilir. Donma yok (Aşama 2'deki gibi, ana iş parçacığı kilitlenmesin; nasıl yapıldığına bak, aynı yöntemi kullan).
