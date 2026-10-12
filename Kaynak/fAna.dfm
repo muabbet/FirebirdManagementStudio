@@ -9,8 +9,10 @@ object frmAna: TfrmAna
   Font.Height = -13
   Font.Name = 'Segoe UI'
   Font.Style = []
+  KeyPreview = True
   Position = poScreenCenter
   OnCreate = FormCreate
+  OnKeyDown = FormKeyDown
   OnDestroy = FormDestroy
   object pnlUst: TPanel
     Left = 0
@@ -79,26 +81,26 @@ object frmAna: TfrmAna
         ImageIndex = 2
         OnClick = btnYenileClick
       end
-      object btnYeniKlasor: TToolButton
+      object btnYeniSorgu: TToolButton
+        Left = 180
+        Top = 0
+        AutoSize = True
+        ImageIndex = 6
+        OnClick = btnYeniSorguClick
+      end
+      object btnCalistir: TToolButton
         Left = 240
         Top = 0
         AutoSize = True
-        ImageIndex = 8
-        OnClick = btnYeniKlasorClick
+        ImageIndex = 11
+        OnClick = btnCalistirClick
       end
-      object btnKlonla: TToolButton
+      object btnPlan: TToolButton
         Left = 300
         Top = 0
         AutoSize = True
-        ImageIndex = 9
-        OnClick = btnKlonlaClick
-      end
-      object btnKaldir: TToolButton
-        Left = 360
-        Top = 0
-        AutoSize = True
-        ImageIndex = 10
-        OnClick = btnKaldirClick
+        ImageIndex = 12
+        OnClick = btnPlanClick
       end
     end
   end
@@ -160,6 +162,7 @@ object frmAna: TfrmAna
       Images = vilIkonlar
       PopupMenu = pmSekme
       TabOrder = 0
+      OnChange = pcCalismaChange
     end
     object bolAlt: TSplitter
       Left = 0

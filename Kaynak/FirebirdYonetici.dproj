@@ -42,7 +42,7 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
         <SanitizedProjectName>FirebirdYonetici</SanitizedProjectName>
-        <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;$(DCC_Namespace)</DCC_Namespace>
+        <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
         <DCC_ExeOutput>..\bin\$(Platform)\$(Config)</DCC_ExeOutput>
         <DCC_DcuOutput>..\obj\$(Platform)\$(Config)</DCC_DcuOutput>
         <DCC_UnitSearchPath>$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
@@ -93,6 +93,15 @@
             <Form>TabloSekme</Form>
             <FormType>dfm</FormType>
             <DesignClass>TFrame</DesignClass>
+        </DCCReference>
+        <DCCReference Include="fSorguSekme.pas">
+            <Form>SorguSekme</Form>
+            <FormType>dfm</FormType>
+            <DesignClass>TFrame</DesignClass>
+        </DCCReference>
+        <DCCReference Include="fMetinGoster.pas">
+            <Form>frmMetinGoster</Form>
+            <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="fMetinSor.pas">
             <Form>frmMetinSor</Form>

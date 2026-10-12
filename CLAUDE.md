@@ -170,11 +170,13 @@ Bu bir "boş zamanda yavaş yavaş" projesidir, acele yoktur. **Her aşama bitin
 **Bitiş ölçütü:** İki veritabanına aynı anda bağlanıp ikisinden de tablo açabiliyorum, klasörler program kapanıp açılınca korunuyor.
 
 ### Aşama 2: SQL Editörü
-- [ ] `uEditor.pas` (SynEdit sarmalayıcı), SQL renklendirme, çoklu sekme
-- [ ] Sorgu çalıştırma (`F5`), sonuç ızgarası, hata gösterimi (anlaşılır cümle + Ayrıntı)
-- [ ] `uSonucGrid.pas` altı eklenti
-- [ ] Parça parça sonuç çekme
-- [ ] Sorgu planını gösterme
+- [x] `uEditor.pas` (SynEdit sarmalayıcı), SQL renklendirme, çoklu sekme
+- [x] Sorgu çalıştırma (`F5`), sonuç ızgarası, hata gösterimi (anlaşılır cümle + Ayrıntı)
+- [x] `uSonucGrid.pas` altı eklenti
+- [x] Parça parça sonuç çekme
+- [x] Sorgu planını gösterme
+- [x] `Ctrl+Boşluk` otomatik tamamlama (anahtar kelime, veri tipi, nesne adları)
+- [x] Çoklu komut çalıştırma: seçili kısım (içinde birden fazla komut varsa sırayla)
 
 ### Aşama 3: Yönetim Özellikleri
 - [ ] `uDDL.pas`: tablo, view, prosedür, trigger için `CREATE` script üretimi (referans: `isql -x` çıktısı)
