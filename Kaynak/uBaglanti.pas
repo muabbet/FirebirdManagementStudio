@@ -624,6 +624,8 @@ const
   GDS_DEADLOCK = 335544336;
   GDS_UPDATE_CONFLICT = 335544451;
   GDS_LOCK_TIMEOUT = 335544510;
+  GDS_TOKEN_UNKNOWN = 335544634;
+  GDS_OBJ_IN_USE = 335544453;
 
 { Firebird hata koduna bakar. Taninan bir kod varsa cumleyi verir. }
 function KodundanCevir(Hata: EFDDBEngineException; out Cevap: string): Boolean;
@@ -632,7 +634,36 @@ var
 begin
   Result := True;
   for i := 0 to Hata.ErrorCount - 1 do
+  begin
+    { SQL komutu hatalari: FireDAC bunlari surumden bagimsiz siniflandirir. }
+    case Hata.Errors[i].Kind of
+      ekUKViolated:
+        begin
+          Cevap := T('ERR_SQL_BENZERSIZ');
+          Exit;
+        end;
+      ekFKViolated:
+        begin
+          Cevap := T('ERR_SQL_YABANCI_ANAHTAR');
+          Exit;
+        end;
+      ekObjNotExists:
+        begin
+          Cevap := T('ERR_SQL_NESNE_YOK');
+          Exit;
+        end;
+    end;
     case Hata.Errors[i].ErrorCode of
+      GDS_TOKEN_UNKNOWN:
+        begin
+          Cevap := T('ERR_SQL_SOZDIZIMI');
+          Exit;
+        end;
+      GDS_OBJ_IN_USE:
+        begin
+          Cevap := T('ERR_NESNE_KULLANIMDA');
+          Exit;
+        end;
       GDS_LOGIN:
         begin
           Cevap := T('ERR_SIFRE');
@@ -659,6 +690,7 @@ begin
           Exit;
         end;
     end;
+  end;
   Result := False;
 end;
 
@@ -675,12 +707,19 @@ begin
     Result := T('ERR_SUNUCU')
   else if Iceriyor(HamMesaj, 'i/o error') or Iceriyor(HamMesaj, 'unavailable database') then
     Result := T('ERR_VERITABANI')
+  else if Iceriyor(HamMesaj, 'token unknown') or Iceriyor(HamMesaj, 'sql error code = -104') then
+    Result := T('ERR_SQL_SOZDIZIMI')
   else
     Result := T('ERR_GENEL');
 end;
 
+{ Nesne baska bir sonuc tarafindan kullaniliyorsa FireDAC hata listesinde isc_obj_in_use kodu
+  gelmez (olcum: 5.0.4'te ilk kod 335544351 veya 335544345 olur), "object ... is in use" yalnizca
+  mesaj metnindedir. Bu yuzden once metne bakilir; yoksa kayit kilidi cumlesi yaniltici olurdu. }
 function HataMetniniCevir(Hata: Exception): string;
 begin
+  if Iceriyor(Hata.Message, '" is in use') then
+    Exit(T('ERR_NESNE_KULLANIMDA'));
   if (Hata is EFDDBEngineException) and KodundanCevir(EFDDBEngineException(Hata), Result) then
     Exit;
   Result := MetindenCevir(Hata.Message);

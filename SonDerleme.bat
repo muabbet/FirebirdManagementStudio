@@ -21,6 +21,8 @@ if errorlevel 1 goto :diller_hata
 xcopy /Y /I /Q "%KOK%Ikonlar\*.png" "%CIKTI%\Ikonlar\" >nul
 if errorlevel 1 goto :ikonlar_hata
 if exist "%KOK%anahtar_kelimeler.txt" copy /Y "%KOK%anahtar_kelimeler.txt" "%CIKTI%\" >nul
+if exist "%KOK%SYNEDIT_LISANS.txt" copy /Y "%KOK%SYNEDIT_LISANS.txt" "%CIKTI%\" >nul
+if exist "%KOK%LISANSLAR.md" copy /Y "%KOK%LISANSLAR.md" "%CIKTI%\" >nul
 
 rem Acik tema (Windows10 VCL stili) RAD Studio kurulumundan alinir.
 if not defined BDSCOMMONDIR goto :vsf_degisken_yok

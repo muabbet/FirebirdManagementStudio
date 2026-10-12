@@ -7,7 +7,7 @@ interface
 uses
   System.SysUtils, System.Classes, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
   Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids,
-  uDil, uBaglanti, uMetadata, uSorgu;
+  uDil, uBaglanti, uMetadata, uSorgu, uSonucGrid;
 
 type
   TTabloSekme = class(TFrame)
@@ -20,6 +20,8 @@ type
     gridVeri: TDBGrid;
     dsKolonlar: TDataSource;
     dsVeri: TDataSource;
+  private
+    FVeriGrid: TSonucGrid;
   public
     BaglantiAd: string;
     TabloAdi: string;
@@ -37,6 +39,8 @@ begin
   TabloAdi := Tablo;
   dsKolonlar.DataSet := KolonTablosuOlustur(Bag, Tablo, Self);
   dsVeri.DataSet := TabloVerisiSorgusu(Bag, Tablo, ILK_SATIR_SAYISI, Self);
+  FVeriGrid := TSonucGrid.Create(gridVeri);
+  FVeriGrid.YeniSonuc;
   YazilariYenile;
 end;
 

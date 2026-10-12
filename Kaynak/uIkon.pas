@@ -22,15 +22,18 @@ const
   IKON_KLASOR = 8;
   IKON_KLONLA = 9;
   IKON_COP = 10;
+  IKON_SORGU = 6;
+  IKON_CALISTIR = 11;
+  IKON_PLAN = 12;
 
 procedure IkonlariYukle(Koleksiyon: TImageCollection; Liste: TVirtualImageList);
 
 implementation
 
 const
-  IKON_DOSYALARI: array[0..10] of string = (
+  IKON_DOSYALARI: array[0..12] of string = (
     'plug', 'plug-off', 'refresh', 'database', 'table', 'eye', 'code',
-    'list-numbers', 'folder', 'copy', 'trash');
+    'list-numbers', 'folder', 'copy', 'trash', 'player-play', 'list-tree');
 
 procedure IkonlariYukle(Koleksiyon: TImageCollection; Liste: TVirtualImageList);
 var
