@@ -78,6 +78,15 @@ begin
   end;
 end;
 
+{ Dugme genisligi yaziya gore uzar (Almanca yazilar kesilmesin). }
+procedure DugmeyiYaziyaUydur(Pencere: TForm; Dugme: TButton);
+begin
+  Pencere.Canvas.Font.Assign(Pencere.Font);
+  Dugme.Width := Dugme.Constraints.MinWidth;
+  if Pencere.Canvas.TextWidth(Dugme.Caption) + 32 > Dugme.Width then
+    Dugme.Width := Pencere.Canvas.TextWidth(Dugme.Caption) + 32;
+end;
+
 procedure TfrmMetadataCikar.YazilariYaz;
 begin
   Caption := T('MD_BASLIK') + ' - ' + FBag.Tanim.Ad;
@@ -93,6 +102,9 @@ begin
   btnCikar.Caption := T('MD_CIKAR');
   btnKapat.Caption := T('BTN_KAPAT');
   dlgKaydet.Filter := T('MD_DOSYA_FILTRE');
+  DugmeyiYaziyaUydur(Self, btnGozat);
+  DugmeyiYaziyaUydur(Self, btnCikar);
+  DugmeyiYaziyaUydur(Self, btnKapat);
 end;
 
 procedure TfrmMetadataCikar.HedefDegisti(Sender: TObject);
