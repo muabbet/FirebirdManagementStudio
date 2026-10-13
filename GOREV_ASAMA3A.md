@@ -69,7 +69,7 @@ IBExpert'teki *Tools > Extract Metadata* karşılığı. Tek nesne değil, **bü
 ### İstenen davranış
 
 - **Tek yol:** Ağaçta bağlı bir veritabanına sağ tık > **"Metadata çıkar"**. Araç çubuğuna düğme ekleme.
-- **Menü sınırı sorunu (sahibine sor):** Bağlantı düğümünün menüsünde şu an altı seçenek var (Bağlan, Kes, Düzenle, Kaldır, Klonla, Yenile); yenisi yedinci olur (CLAUDE.md Bölüm 8: en fazla 5-6). Klonla ve Kayıttan Kaldır zaten araç çubuğunda var. Öneri: menüden **Klonla**yı çıkarmak (araç çubuğundaki düğme kalır). Kararı sahibi versin; sormadan menüden bir şey kaldırma.
+- **Menü sınırı (sahibi karar verdi):** Bağlantı düğümünün menüsünde şu an altı seçenek var (Bağlan, Kes, Düzenle, Kaldır, Klonla, Yenile); "Metadata çıkar" yedinci olurdu (CLAUDE.md Bölüm 8: en fazla 5-6). **Sahibi kararı: sağ tık menüsünden "Klonla" çıkarılır** (`miKlonla` ve `miKlonlaClick`; `pmNesnePopup` içindeki `miKlonla.Visible` satırı, dil anahtarı varsa başka yerde kullanılmıyorsa dosyada kalabilir). Araç çubuğundaki Klonla düğmesi **kalır**, `YeniBaglanti(...)` çağrısı ve işlevi aynen durur. Silinen yordamları dosyadan atma yerine kodu kaldır (dosya silme kuralı yalnızca dosyalar içindir); `.dfm` ve `.pas` birlikte tutarlı kalsın, derle. Menüde sonuç: Bağlan, Kes, Düzenle, Kaldır, Yenile, Metadata çıkar (altı). Raporda belirt.
 - Küçük bir pencere açılır (`fMetadataCikar`; form ince, iş `uDDL.pas`'te):
   - **Hedef:** iki seçenek: *Dosyaya kaydet* (dosya seçtirilir) veya *Panoya kopyala*. Varsayılan dosya. Yeni sorgu sekmesinde açmak ayrıca istenmedi; yine de çok küçük iş çıkarsa sahibine öner.
   - **Seçenekler** (IBExpert *General Options* ekranı gibi):
