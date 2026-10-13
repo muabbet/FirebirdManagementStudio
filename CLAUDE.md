@@ -190,6 +190,18 @@ Bu bir "boş zamanda yavaş yavaş" projesidir, acele yoktur. **Her aşama bitin
 - [ ] Şema farkı bulma (iki veritabanını karşılaştırma)
 - [ ] Toplu güncelleme (onay ve önizleme ile)
 
+### Aşama 5: PostgreSQL (küçük kapsam, sahibinin ihtiyacı: pgAdmin'e hızlı alternatif)
+Aşama 3 ve 4 bitmeden başlanmaz. Yalnızca bağlan, gez, SQL çalıştır. Script üretme ve yönetim özellikleri bu aşamada yok.
+- [ ] Hazırlık: sürüme/motora bağlı kodu `uMetadata.pas` içinde motor seçimi arkasına almak (Firebird davranışı değişmeden, mevcut testler geçmeli)
+- [ ] FireDAC PostgreSQL sürücüsü ile bağlantı (`libpq.dll` 32/64 bit uyumu ve sürümü belgelenir), şifre DPAPI ile
+- [ ] Ağaçta Tablolar, View'lar, Prosedür/Fonksiyonlar, Sequence'lar dalları (`pg_catalog` / `information_schema`)
+- [ ] Tabloya çift tıklayınca kolonlar ve ilk satırlar
+- [ ] SQL editörü ve sonuç ızgarası PostgreSQL'de çalışır (F5, çoklu komut, hata cümleleri tr/en/de)
+- [ ] Sorgu planı (`EXPLAIN`)
+- [ ] PostgreSQL anahtar kelime/tip listesi ayrı metin dosyasında
+
+**Bitiş ölçütü:** pgAdmin'in yavaş açıldığı bir sunucuya bağlanıp tabloları görebiliyor, SQL ve script çalıştırabiliyorum.
+
 ---
 
 ## 12. Ajan İçin Çalışma Kuralları
