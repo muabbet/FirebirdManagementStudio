@@ -31,16 +31,15 @@ object frmMetadataCikar: TfrmMetadataCikar
     object edtDosya: TEdit
       Left = 36
       Top = 52
-      Width = 380
+      Width = 340
       Height = 25
       TabOrder = 1
     end
     object btnGozat: TButton
-      Left = 424
+      Left = 384
       Top = 50
       Width = 92
       Height = 29
-      AutoSize = True
       Constraints.MinWidth = 92
       TabOrder = 2
       OnClick = btnGozatClick
@@ -127,7 +126,6 @@ object frmMetadataCikar: TfrmMetadataCikar
       Margins.Right = 8
       Margins.Bottom = 10
       Align = alRight
-      AutoSize = True
       Cancel = True
       Constraints.MinWidth = 80
       TabOrder = 1
@@ -144,7 +142,6 @@ object frmMetadataCikar: TfrmMetadataCikar
       Margins.Right = 4
       Margins.Bottom = 10
       Align = alRight
-      AutoSize = True
       Constraints.MinWidth = 80
       Default = True
       TabOrder = 0
