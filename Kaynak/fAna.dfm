@@ -214,11 +214,11 @@ object frmAna: TfrmAna
     object miYenile: TMenuItem
       OnClick = miYenileClick
     end
+    object miMetadataCikar: TMenuItem
+      OnClick = miMetadataCikarClick
+    end
     object miDuzenle: TMenuItem
       OnClick = miDuzenleClick
-    end
-    object miKlonla: TMenuItem
-      OnClick = miKlonlaClick
     end
     object miKaldir: TMenuItem
       OnClick = miKaldirClick

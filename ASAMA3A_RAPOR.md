@@ -1,7 +1,7 @@
 # Aşama 3a Raporu
 
 Dal: `asama3a` (`main`'den açıldı, `main`'e yazılmadı). `Derle.bat` (Win64 Release) hatasız derlendi.
-**Şu an yalnızca Adım 1 bitti.** Adım 2 (Metadata çıkar) ve 3b sahibinin onayını bekliyor, başlanmadı.
+**Adım 1 onaylandı, Adım 2 bitti (aşağıda); 3b sahibinin onayını bekliyor, başlanmadı.**
 
 ---
 
@@ -95,3 +95,93 @@ bin\Win64\Release\DDLTest.exe
 ## Yapılmayanlar
 
 `CLAUDE.md` Aşama 3 kutuları işaretlenmedi. Adım 2 ("Metadata çıkar", "Klonla" menüden çıkarma) ve 3b'ye geçilmedi, onayınızı bekliyorum.
+
+---
+
+# Adım 2: Tüm veritabanının metadata'sını çıkar ("Metadata çıkar")
+
+Adım 1 sahibi tarafından onaylandı (2026-10-13). Bu bölüm Adım 2'yi anlatır; 3b'ye geçilmedi.
+
+## Ne yapıldı
+
+- **Menü:** Bağlantı düğümü sağ tık menüsünden **Klonla çıkarıldı** (`miKlonla`, `miKlonlaClick`, görünürlük ve başlık satırları silindi; `YeniBaglanti(KlonAd)` işlevi dosyada duruyor). Yerine **"Metadata çıkar"** geldi, yalnızca bağlı bağlantıda görünür. Menü (bağlıyken): Bağlan, Bağlantıyı Kes, Düzenle, Kayıttan Kaldır, Yenile, Metadata çıkar = **altı**. Araç çubuğuna düğme eklenmedi.
+  - **Sahibine soru:** Görevde "araç çubuğundaki Klonla düğmesi kalır" yazıyor, ama araç çubuğunda böyle bir düğme **yok** (Yeni Bağlantı, Bağlan, Yenile, Yeni Sorgu, Çalıştır, Plan). Bu yüzden şu an bağlantı klonlamanın arayüzde yolu kalmadı. İsterseniz araç çubuğuna "Klonla" düğmesi eklerim, ya da böyle kalsın.
+- **Pencere:** `fMetadataCikar.pas/.dfm` (yeni, ince form). Hedef: *Dosyaya kaydet* (varsayılan, "Seç..." ile) veya *Panoya kopyala*; üç kutu (CREATE DATABASE, CONNECT, şifre) **varsayılan kapalı**; şifre kutusu ilk ikisi kapalıyken pasif; işaretlenince kırmızı kalın uyarı ("şifre script içinde düz metin olarak görünecek"). Şifre kayıtlı bağlantıdan (DPAPI) gelir. Sıra tek ve varsayılandır (nesne türü kutusu yok).
+  - Dosya zaten varsa **üzerine yazma onayı** (dosya adı ve son değişiklik tarihi yazılı, `OnayIste`). Dosyaya **akış** olarak yazılır (`TStreamWriter`), bellekte tek metin tutulmaz. Panoya alınıyorsa 8 milyon karakterden büyük metin **kesilmez**, "pano için fazla büyük, dosyaya kaydedin" cümlesi çıkar, pencere açık kalır.
+  - İlerleme: "Tablolar: 12 / 117" gibi yazılır, pencere `ProcessMessages` ile donmaz, **İptal** düğmesi çalışır. İptalde yarım dosya silinmez, sonuç alanına "dosyada yalnızca yarım içerik var (dosya silinmedi)" yazılır.
+  - Bitişte sonuç alanına özet ve **uyarılar** (atlanan nesneler) yazılır.
+- **`uDDL.MetadataCikar`** (yeni, `TCikarici` sınıfı; iş burada). Adım 1'deki üreticileri çağırır (kolon, kısıt, indeks, tetikleyici metinleri ortak). Sıra (boş veritabanında hatasız çalışsın diye):
+  1. `SET NAMES UTF8;`, (seçilmişse) `CREATE DATABASE` (sayfa boyutu ve varsayılan karakter seti veritabanından) / `CONNECT`
+  2. Roller, exception'lar, generator'lar (değerleriyle `SET GENERATOR`), domain'ler
+  3. Tablolar **yalnız kolonlarıyla** (geçici tablo `ON COMMIT ...`, dış tablo `EXTERNAL FILE` dahil)
+  4. Prosedürler **parametreli iskelet** olarak: çıkış parametreli olanda gövde `SUSPEND;`, diğerinde `EXIT;` (isql -x de böyle; boş gövdeli olunca bu prosedürü çağıran view kurulamıyor, ilk denemede "invalid request BLR" hatası aldım ve düzelttim)
+  5. View'lar **bağımlılık sırasıyla** (bağımlılık `uMetadata.ViewAdlariSirali` içinde `RDB$DEPENDENCIES`'ten okunur; çözülemeyen/döngü olursa sona yazılır ve uyarı verilir)
+  6. `PRIMARY KEY`/`UNIQUE`, sonra `FOREIGN KEY`, sonra `CHECK` (hepsi `ALTER TABLE ADD`)
+  7. İndeksler
+  8. Tetikleyiciler (tablo, view ve **veritabanı** tetikleyicileri: `ON CONNECT` vb.)
+  9. Prosedür gövdeleri (`ALTER PROCEDURE`)
+  10. Yetkiler (`GRANT`; aynı kişiye aynı nesnedeki yetkiler tek satırda; sütun bazlı `UPDATE (a, b)`, `WITH GRANT OPTION`, rol üyeliği `WITH ADMIN OPTION`, `EXECUTE`, 3.0+ `USAGE`)
+  11. Açıklamalar (`COMMENT ON`: veritabanı, tablo, view, kolon, prosedür, parametre, tetikleyici, domain, generator/sequence, exception, rol, indeks)
+  - `SET TERM` sarmalayıcıları dengeli (prosedür başlıkları, tetikleyiciler, gövdeler ayrı bloklar).
+  - **Okuma UTF-8 bağlantıyla** yapılır: bağlantı UTF8 değilse program metadata için ayrı, kısa ömürlü bir UTF8 bağlantı açar (açılamazsa verilen bağlantı kullanılır). Türkçe nesne adları ve açıklamalar bozulmuyor (testte doğrulandı).
+  - **Dosya kodlaması: UTF-8, BOM'suz.** Ölçtüm: BOM'lu dosyayı `isql -i` ilk komutta "Token unknown" diye reddediyor. Başlıkta `SET NAMES UTF8;` (dosya kodlamasına bağlı sabit `SCRIPT_KARAKTER_SETI`; nesnelerin karakter seti ve `DEFAULT CHARACTER SET` veritabanından okunur, kodda sabit değil).
+- **`uMetadata.pas`'e eklenenler** (sürüme bağlı okuma): `RolAdlari`, `IstisnalariOku`, `GeneratorAdlari`, `DomainleriOku`, `TabloAdlari`, `ProsedurAdlari`, `ViewAdlariSirali`, `YetkileriOku`, `AciklamalariOku`, `TabloOzellikleriniOku`, `DesteklenmeyenNesneSayisi`, tüm veritabanı tetikleyicileri (`TetikleyicileriOku(Bag, '')`), sayfa boyutu ve varsayılan karakter seti. `uDDL` hâlâ `RDB$` bilmiyor.
+- **Dil anahtarları:** 40 yeni anahtar (menü, pencere, aşama adları, ilerleme, uyarılar, onay, hata). Üç dosyada **180 anahtar, eksik 0, boş 0**; kodda kullanılan tüm `T('...')` anahtarları dil dosyasında var.
+- Proje dosyaları: `FirebirdYonetici.dpr` ve `.dproj`'a `fMetadataCikar` eklendi.
+
+## Ne test edildi (Firebird 5.0.4 gömülü, geçici veritabanları)
+
+`DDLTest` artık **144 kontrol, hata 0** (Adım 1'de 83'tü). Adım 2 senaryosu (karmaşık C veritabanı): roller; exception (Türkçe karakter ve tırnak); generator değerleri; domain (CHECK, DEFAULT, UTF8); bileşik PK/FK zinciri; UNIQUE; CHECK; Türkçe adlı tablo ve kolonlar ("Küçük Tablo", "Şehir Adı", "İlçe"); ifade indeksi; birbirini çağıran prosedürler; **alfabetik sırası bağımlılığın tersi olan view zinciri (V_Z → V_Y → V_X)**; prosedür çağıran view; view ve veritabanı tetikleyicisi; geçici tablolar; identity; yetkiler (kullanıcı, PUBLIC, rol, prosedür, sütun bazlı, GRANT/ADMIN OPTION, USAGE); tüm nesne türlerinde `COMMENT ON` (çok satırlı ve tırnaklı).
+1. Çıkarma tamamlandı, ilerleme bildirimi geldi, uyarı yok.
+2. Sıra (rol < exception < generator < domain < tablo < prosedür başlığı < view < PK < FK < CHECK < indeks < tetikleyici < gövde < yetki < açıklama), view bağımlılık sırası, SET TERM dengesi, sistem adlı (`INTEG_`) kısıtın ve sahip yetkilerinin yazılmaması.
+3. **Boş D veritabanında** çıkan script uygulamanın kendi çalıştırıcısıyla (F5 mantığı, `KomutlaraBol` + `BetikCalistir`) çalıştı: **60 komut, hata 0**.
+4. D'den tekrar metadata çıkarıldı ve ilk çıktıyla **satır satır karşılaştırıldı: aynı** (194 satır).
+5. **Şifre:** kutu kapalıyken çıktıda `PASSWORD` sözcüğü ve şifre metni (`GizliSifre123`) **hiç geçmiyor** (metin araması). CREATE DATABASE+CONNECT açık, şifre kapalıyken de geçmiyor. Şifre açıkken iki yerde (`CREATE DATABASE`, `CONNECT`) geçiyor. CREATE DATABASE/CONNECT kapalıyken şifre kutusu işaretli gelse bile hiçbir şey yazılmıyor.
+6. **İptal:** 8. ilerleme çağrısında iptal edilince `False` döner, yazılan kısım yarım kalır ve sona ulaşmaz.
+7. Dosyaya akış: BOM yok, içerik metinle aynı (Türkçe karakterler UTF-8 gidiş-dönüş).
+
+**`isql` ile (5.0.4 `isql -i`, boş yeni veritabanı):** C veritabanının script'i (CREATE DATABASE satırıyla) ve **gerçek bir veritabanının kopyası** (`SYS_DATABASE - Kopya.FDB`, 6,8 MB, 1017 satırlık script) **0 hatalı komutla** çalıştı. Gerçek dosyalara dokunmadım: kopyayı bu oturumun geçici klasörüne kopyalayıp onu okudum (kaynak dosya değişmedi). Çıkarma 294 ms sürdü.
+**Gerçek kopyada gidiş-dönüş:** isql ile kurulan veritabanından tekrar çıkarma, ilkiyle **1021 satırın 1018'i aynı**; 3 fark exception mesajlarında (aşağıda "Bilinen sınırlar"). Gerçek kopyada 1 uyarı çıktı ("script'i üretilemeyen N nesne").
+
+Mevcut testler: `SorguTest` 80/80, `BaglantiDosyasiTest` 52/52, `MetadataTest` çıkış kodu 0. Program açılışı denendi (hatasız açıldı/kapandı).
+
+## `isql -x` ile fark listesi (aynı C veritabanı)
+
+Adım 1'dekilere (biçim, `SET GENERATOR`, computed kolon, identity biçimi, `INCREMENT BY`) ek olarak:
+1. isql rolleri ve exception'ları sonda yazar; biz başta (generator/tablo/yetkilerden önce gelmeleri gerekir, başta olması daha güvenli).
+2. isql domain `CHECK`'ini sonradan `ALTER DOMAIN ... ADD CONSTRAINT CHECK` ile yazar; biz `CREATE DOMAIN` içinde.
+3. isql `CHECK` kısıtlarını ve tetikleyicileri prosedür gövdelerinden sonra yazar; biz spesifikasyondaki sıra: kısıtlar < indeksler < tetikleyiciler < gövdeler.
+4. `GRANT ROL TO USER x` (biz) – `GRANT ROL TO x` (isql); ikisi de geçerli.
+5. `COMMENT ON PROCEDURE PARAMETER` her ikisinde aynı (ilk denemede `COMMENT ON PARAMETER` yazmıştım, isql biçimine çevirdim; 2.5'te geçerli olan budur).
+6. isql dosyayı sistem karakter setinde yazar (Türkçe karakterler bozuk), biz UTF-8 + `SET NAMES UTF8`.
+7. isql generator değerini yazmıyor, biz yazıyoruz.
+
+## Bilinen sınırlar ve önemli notlar
+
+- **Exception mesajı karakter seti:** Firebird exception mesajını bağlantı karakter setiyle **dönüştürmeden** saklar. Gerçek kopyada mesaj WIN1254 baytlarıyla duruyor; script `SET NAMES UTF8` ile `isql`'de çalıştırılınca yeni veritabanında UTF-8 baytlarıyla duruyor, program okuyunca bozuk görünebilir (kopyada 3 exception). Programın kendi çalıştırıcısıyla (WIN1254 bağlantı) bayt aynı kalıyor. Öneri: script'i uygulamada çalıştırmak, ya da `SET NAMES` satırını kendi bağlantı karakter setinize çevirmek. Kodla çözmek istenirse karar sizin.
+- Script'i üretilmeyen nesneler (uyarıyla sayısı bildirilir): fonksiyonlar (UDF ve PSQL `CREATE FUNCTION`), paketler, kullanıcı collation'ları, blob filtreleri, DDL tetikleyicileri. Ayrıca `CREATE USER` (3d), `GRANTED BY`, `ARRAY` kolonlar, `TYPE OF` parametreler bu sürümde yok.
+- Programın kendi çalıştırıcısı `CREATE DATABASE` satırını çalıştıramaz; CREATE DATABASE'li script'i `isql` ile çalıştırın. `CONNECT` ve `SET NAMES` satırlarını çalıştırıcı atlıyor.
+- Başlangıç değeri (initial value) ve identity'nin güncel değeri yazılmaz (Adım 1'deki gibi).
+- **Firebird 2.5.9, 3.0, 4.0 sunucuda denenmedi.** 2.5'te özellikle bakılacaklar: `COMMENT ON VIEW`/`INDEX` sözdizimi, `RDB$ROLES`/`RDB$EXCEPTIONS` tablolarında `RDB$SYSTEM_FLAG` sütunu, `RDB$USER_PRIVILEGES` nesne türü kodları. (`RDB$USER = RDB$GRANTOR` ve `RDB$GRANTOR is not null` kuralı 5.0'da doğrulandı.)
+- **Arayüzü elle denemedim.** Pencere derlendi, program hatasız açılıp kapandı, ama menü > pencere > çıkarma akışını ve Almanca yazıların kesilip kesilmediğini ekranda görmedim. Aşağıdaki liste bu yüzden önemli.
+- Çok büyük veritabanında (binlerce nesne) süre ve bellek ölçülmedi (en büyük deneme 1017 satır / 294 ms). Çıkarma ana iş parçacığında çalışır; pencere donmasın diye `ProcessMessages` kullanılır.
+
+## Sahibinin elle deneme listesi (Adım 2)
+
+1. Bağlı bir veritabanında bağlantıya sağ tık: menüde yalnız Bağlan, Bağlantıyı Kes, Düzenle, Kayıttan Kaldır, Yenile, **Metadata çıkar** olmalı (Klonla yok).
+2. **Metadata çıkar**: pencere açılıyor mu? Üç kutu kapalı mı, şifre kutusu pasif mi? CREATE DATABASE'i işaretleyince şifre kutusu açılıyor mu, şifreyi işaretleyince kırmızı uyarı çıkıyor mu?
+3. Dosyaya kaydet (yeni dosya): sonuç alanında özet var mı? Aynı dosyaya tekrar: üzerine yazma onayı dosya adı ve tarihle çıkıyor mu, "Hayır" dosyaya dokunmuyor mu?
+4. Büyük bir veritabanında ilerleme yazısı akıyor mu, pencere donmuyor mu? **İptal** ile durdurun: sonuç alanında "yarım içerik" cümlesi var mı, dosya duruyor mu?
+5. Panoya kopyala, Not Defteri'ne yapıştırın.
+6. Çıkan dosyayı boş bir veritabanında F5 ile (CREATE DATABASE kutusu kapalı) çalıştırın; hatasızsa aynı veritabanından tekrar çıkarıp iki dosyayı karşılaştırın (Notepad++ Compare).
+7. Aynısını `isql -i dosya.sql` ile deneyin (CREATE DATABASE + şifre kutusu açık; dosyada şifreyi görün; işiniz bitince dosyayı güvenli yere taşıyın).
+8. Almanca ve İngilizceye geçip pencere yazılarının kesilmediğini görün.
+9. Türkçe karakterli nesne adı, açıklama ve exception mesajı olan bir veritabanında deneyin (exception için yukarıdaki nota bakın).
+
+## Sunucu testi için komutlar (sahibi çalıştırır)
+
+Adım 1'deki komutlar aynen geçerli (`DDLTest.exe` artık Adım 2'yi de içeriyor; 2.5.9'da 3.0+ özellikler otomatik atlanır). İsteğe bağlı gerçek veritabanı **kopyası** için `set FBTEST_KOPYA=C:\...\kopya.fdb` (yalnız gömülü kip, 5.0.4 istemcisiyle açılabilen kopya; sadece okur, `FBTEST_SCRIPTLER` klasörüne `kopya.sql` yazar).
+
+## Yapılmayanlar
+
+`CLAUDE.md` Aşama 3 kutuları işaretlenmedi. 3b'ye geçilmedi.
