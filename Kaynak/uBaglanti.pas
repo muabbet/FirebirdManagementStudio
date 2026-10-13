@@ -42,6 +42,8 @@ type
   TAcikBaglanti = class
     Tanim: TBaglantiTanimi;
     Surum: string;
+    { Veritabaninin SQL dialecti (1 veya 3); sorgu baglantisinin dialecti degil }
+    Dialect: Integer;
     Baglanti: TFDConnection;
     destructor Destroy; override;
   end;
@@ -582,6 +584,13 @@ begin
     Bag.Tanim := Tanim;
     Bag.Surum := VarToStr(Yeni.ExecSQLScalar(
       'SELECT RDB$GET_CONTEXT(''SYSTEM'', ''ENGINE_VERSION'') FROM RDB$DATABASE'));
+    Bag.Dialect := VARSAYILAN_DIALECT;
+    try
+      Bag.Dialect := StrToIntDef(VarToStr(Yeni.ExecSQLScalar('SELECT MON$SQL_DIALECT FROM MON$DATABASE')),
+        VARSAYILAN_DIALECT);
+    except
+      { Eski surumlerde MON$ tablolari yok; dialect 3 varsayilir. }
+    end;
   except
     Yeni.Free;
     raise;
