@@ -20,6 +20,7 @@
   "AGAC_GENERATORLER": "Generatoren",
 
   "MENU_AC": "Öffnen (Spalten und erste Zeilen)",
+  "MENU_SCRIPT_URET": "Skript erzeugen",
   "MENU_YENILE": "Aktualisieren",
   "MENU_DUZENLE": "Bearbeiten",
   "MENU_KLONLA": "Klonen",
@@ -40,6 +41,7 @@
   "MSG_KESILDI": "Verbindung getrennt: %s",
   "MSG_AGAC_YENILENDI": "%s: Objektliste aktualisiert.",
   "MSG_TABLO_ACILDI": "Tabelle %s geöffnet (%s). Es werden höchstens %d Zeilen angezeigt.",
+  "MSG_SCRIPT_URETILDI": "Das CREATE-Skript für %s wurde in einem neuen Tab geöffnet. Mit F5 ausführen.",
   "MSG_KAYIT_KALDIRILDI": "Die Registrierung von '%s' wurde aufgehoben. Die Datenbank wurde nicht verändert.",
   "MSG_KLASOR_KALDIRILDI": "Der Ordner '%s' wurde entfernt. Seine Verbindungen liegen jetzt auf der obersten Ebene.",
 
@@ -132,6 +134,10 @@
   "MSG_PLAN_CALISTIRILMADI": "Der Befehl wurde nicht ausgeführt, sondern nur vorbereitet.",
   "ERR_PLAN_TEK_KOMUT": "Wählen Sie für den Plan einen einzelnen Befehl aus.",
   "ERR_PLAN_ALINAMADI": "Der Abfrageplan konnte nicht abgerufen werden.",
+  "ERR_DDL_NESNE_YOK": "'%s' wurde in der Datenbank nicht gefunden (möglicherweise gelöscht oder umbenannt). Baum aktualisieren und erneut versuchen.",
+  "ERR_DDL_KAYNAK_YOK": "Der Quelltext von '%s' ist in der Datenbank nicht gespeichert, daher konnte kein Skript erzeugt werden.",
+  "ERR_DDL_TIP_BILINMIYOR": "Unbekannter Datentyp (Code %d). Das Skript konnte nicht erzeugt werden.",
+  "ERR_DDL_ALINAMADI": "Das Skript konnte nicht erzeugt werden.",
   "MSG_KOMUT_SATIRI_SECIM": "%d) Abfrage ausgeführt (%d ms), Ergebnis in der Tabelle.",
   "MSG_KOMUT_SATIRI_DEGISTI": "%d) %d Zeilen betroffen (%d ms).",
   "MSG_KOMUT_SATIRI_TAMAM": "%d) fertig (%d ms).",

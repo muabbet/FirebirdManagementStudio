@@ -202,6 +202,9 @@ object frmAna: TfrmAna
     object miAc: TMenuItem
       OnClick = miAcClick
     end
+    object miScriptUret: TMenuItem
+      OnClick = miScriptUretClick
+    end
     object miBaglan: TMenuItem
       OnClick = miBaglanClick
     end

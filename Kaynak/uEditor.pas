@@ -20,7 +20,7 @@ interface
 uses
   System.SysUtils, System.Classes, System.Generics.Collections, Vcl.Controls, Vcl.Graphics,
   SynEdit, SynHighlighterSQL, SynCompletionProposal,
-  uSorgu;
+  uSorgu, uMetadata;
 
 type
   { Tablo adini verir, kolon adlarini Kolonlar'a ekler. Tablo yoksa bos birakir. }
@@ -49,6 +49,8 @@ type
     { Secili yazi varsa sadece onu, yoksa editordeki tum yaziyi verir (F5 bunu calistirir). }
     function CalistirilacakMetin: string;
     procedure OdakVer;
+    { Editorun tum yazisini degistirir (calistirmaz). }
+    procedure MetinYaz(const Metin: string);
     { Dosya: anahtar_kelimeler.txt yolu. Surum: sunucu surumu ("5.0.4"); bos ise tum kelimeler. }
     procedure AnahtarKelimeleriYukle(const Dosya, Surum: string);
     { Tablo, view, prosedur, generator adlarini oneri listesine koyar. }
@@ -113,32 +115,14 @@ begin
     FEdit.SetFocus;
 end;
 
-{ Satir basina bir kelime. '#FB3' gibi baslik, sonraki kelimelerin o surumde ve sonrasinda
-  gecerli oldugunu gosterir; diger '#' satirlari yorumdur. }
 procedure TSqlEditor.AnahtarKelimeleriYukle(const Dosya, Surum: string);
-var
-  Satirlar: TStringList;
-  Satir: string;
-  Sunucu, Bolum: Integer;
 begin
-  FAnahtarKelimeler.Clear;
-  if not FileExists(Dosya) then
-    Exit;
-  Sunucu := StrToIntDef(Copy(Surum, 1, Pos('.', Surum) - 1), 99);
-  Bolum := 0;
-  Satirlar := TStringList.Create;
-  try
-    Satirlar.LoadFromFile(Dosya, TEncoding.UTF8);
-    for Satir in Satirlar do
-    begin
-      if (Length(Trim(Satir)) = 4) and (Copy(Trim(Satir), 1, 3) = '#FB') then
-        Bolum := StrToIntDef(Copy(Trim(Satir), 4, 1), Bolum)
-      else if (Trim(Satir) <> '') and (Trim(Satir)[1] <> '#') and (Bolum <= Sunucu) then
-        FAnahtarKelimeler.Add(Trim(Satir));
-    end;
-  finally
-    Satirlar.Free;
-  end;
+  AnahtarKelimeleriOku(Dosya, Surum, FAnahtarKelimeler);
+end;
+
+procedure TSqlEditor.MetinYaz(const Metin: string);
+begin
+  FEdit.Text := Metin;
 end;
 
 procedure TSqlEditor.NesneAdlariniVer(Liste: TStrings);

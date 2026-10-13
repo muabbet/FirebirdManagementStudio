@@ -9,11 +9,112 @@ unit uMetadata;
 interface
 
 uses
-  System.SysUtils, System.Classes, Data.DB,
+  System.SysUtils, System.Classes, System.StrUtils, System.Generics.Collections, Data.DB,
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error,
   FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Comp.DataSet,
   FireDAC.Comp.Client,
   uDil, uBaglanti;
+
+type
+  { Nesne bulunamadi veya kaynak metni kayitli degil: mesaj kullaniciya oldugu gibi gosterilir. }
+  EMetadataHatasi = class(Exception);
+
+  { Script uretmek icin okunan sade kayitlar. Sistem tablolarini (RDB$) sadece bu unit bilir;
+    uDDL bu kayitlardan metin uretir. }
+  TKolonBilgisi = record
+    Ad: string;
+    { Domain kullaniyorsa domain adi, degilse bos }
+    Domain: string;
+    { 'VARCHAR(50) CHARACTER SET UTF8' gibi. Domain veya hesaplanan kolonda bos. }
+    Tip: string;
+    { Hesaplanan kolonda '(A + B)' gibi ifade, degilse bos }
+    Hesaplanan: string;
+    { 'DEFAULT 0' gibi, yoksa bos }
+    Varsayilan: string;
+    Collate: string;
+    BosOlmaz: Boolean;
+    { Kimlik (IDENTITY) kolonu: yalniz Firebird 3.0 ve ustu }
+    Kimlik: Boolean;
+    KimlikHep: Boolean;
+    KimlikBaslangic: Int64;
+    KimlikArtis: Int64;
+  end;
+
+  TKisitTuru = (ktBirincil, ktBenzersiz, ktYabanci, ktCheck);
+
+  TKisitBilgisi = record
+    { Sistem verdiyse (INTEG_n) bos }
+    Ad: string;
+    Tur: TKisitTuru;
+    Kolonlar: TArray<string>;
+    { Kullanici adli ozel indeks kullaniyorsa adi, degilse bos }
+    IndeksAdi: string;
+    HedefTablo: string;
+    HedefKolonlar: TArray<string>;
+    { 'CASCADE', 'SET NULL', 'SET DEFAULT'; varsayilan ise bos }
+    GuncelleKurali: string;
+    SilKurali: string;
+    { 'CHECK (...)' }
+    CheckMetni: string;
+  end;
+
+  TIndeksBilgisi = record
+    Ad: string;
+    Benzersiz: Boolean;
+    Azalan: Boolean;
+    Pasif: Boolean;
+    Kolonlar: TArray<string>;
+    { Ifade indeksinde '(UPPER(AD))' gibi, degilse bos }
+    Ifade: string;
+    { Kismi indeks kosulu (Firebird 5.0), yoksa bos }
+    Kosul: string;
+  end;
+
+  TTetikleyiciBilgisi = record
+    Ad: string;
+    { 'BEFORE' veya 'AFTER' }
+    Zaman: string;
+    { 'INSERT OR UPDATE' gibi }
+    Olaylar: string;
+    Sira: Integer;
+    Aktif: Boolean;
+    { Veritabaninda kayitli metin (genelde 'AS' ile baslar) }
+    Kaynak: string;
+  end;
+
+  TTabloBilgisi = record
+    Kolonlar: TArray<TKolonBilgisi>;
+    Kisitlar: TArray<TKisitBilgisi>;
+    Indeksler: TArray<TIndeksBilgisi>;
+    Tetikleyiciler: TArray<TTetikleyiciBilgisi>;
+  end;
+
+  TViewBilgisi = record
+    Kolonlar: TArray<string>;
+    Kaynak: string;
+    Tetikleyiciler: TArray<TTetikleyiciBilgisi>;
+  end;
+
+  TParametreBilgisi = record
+    Ad: string;
+    Domain: string;
+    Tip: string;
+    Varsayilan: string;
+    BosOlmaz: Boolean;
+  end;
+
+  TProsedurBilgisi = record
+    Girdiler: TArray<TParametreBilgisi>;
+    Ciktilar: TArray<TParametreBilgisi>;
+    { 'AS'tan sonraki govde (DECLARE ... BEGIN ... END) }
+    Kaynak: string;
+  end;
+
+  TGeneratorBilgisi = record
+    Deger: Int64;
+    { Firebird 3.0 ve ustunde ayarlanabilir; oncesinde hep 1 }
+    Artis: Int64;
+  end;
 
 procedure TablolariGetir(Bag: TAcikBaglanti; Hedef: TStrings);
 procedure ViewlariGetir(Bag: TAcikBaglanti; Hedef: TStrings);
@@ -21,6 +122,14 @@ procedure ProsedurleriGetir(Bag: TAcikBaglanti; Hedef: TStrings);
 procedure GeneratorleriGetir(Bag: TAcikBaglanti; Hedef: TStrings);
 function KolonTablosuOlustur(Bag: TAcikBaglanti; const Tablo: string; Sahip: TComponent): TFDMemTable;
 procedure KolonTablosuYazilariniYenile(Tablo: TDataSet);
+
+{ Script uretimi icin okuma. Nesne yoksa veya govde metni kayitli degilse EMetadataHatasi verir. }
+function TabloBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TTabloBilgisi;
+function ViewBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TViewBilgisi;
+function ProsedurBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TProsedurBilgisi;
+function GeneratorBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TGeneratorBilgisi;
+{ anahtar_kelimeler.txt dosyasindan, Surum ("5.0.4") icin gecerli kelimeleri okur. }
+procedure AnahtarKelimeleriOku(const Dosya, Surum: string; Hedef: TStrings);
 
 implementation
 
@@ -184,6 +293,563 @@ begin
     Tablo.First;
   finally
     Tablo.EnableControls;
+  end;
+end;
+
+{ ---------- Script uretimi icin okuma (RDB$ sistem tablolari) ---------- }
+
+function HamTirnak(const Ad: string): string;
+begin
+  Result := '"' + StringReplace(Ad, '"', '""', [rfReplaceAll]) + '"';
+end;
+
+{ Firebird ana surum numarasi: "5.0.4" icin 5. }
+function SurumNo(Bag: TAcikBaglanti): Integer;
+begin
+  Result := StrToIntDef(Copy(Bag.Surum, 1, Pos('.', Bag.Surum) - 1), 0);
+end;
+
+{ Sorguyu acar (tum satirlar cekilir). Tek ':' parametresi varsa Parametre ona yazilir. }
+function SorguAc(Bag: TAcikBaglanti; const Sql, Parametre: string): TFDQuery;
+begin
+  Result := TFDQuery.Create(nil);
+  try
+    Result.Connection := Bag.Baglanti;
+    Result.FetchOptions.Mode := fmAll;
+    Result.SQL.Text := Sql;
+    if Parametre <> '' then
+      Result.Params[0].AsString := Parametre;
+    Result.Open;
+  except
+    Result.Free;
+    raise;
+  end;
+end;
+
+{ Ilk kolonun ilk satiri; satir yoksa veya bos ise ''. }
+function TekDeger(Bag: TAcikBaglanti; const Sql, Parametre: string): string;
+var
+  Sorgu: TFDQuery;
+begin
+  Sorgu := SorguAc(Bag, Sql, Parametre);
+  try
+    if Sorgu.Eof then
+      Result := ''
+    else
+      Result := Trim(Sorgu.Fields[0].AsString);
+  finally
+    Sorgu.Free;
+  end;
+end;
+
+{ Ilk kolonun tum satirlari }
+function SutunListesi(Bag: TAcikBaglanti; const Sql, Parametre: string): TArray<string>;
+var
+  Sorgu: TFDQuery;
+  Liste: TList<string>;
+begin
+  Liste := TList<string>.Create;
+  Sorgu := SorguAc(Bag, Sql, Parametre);
+  try
+    while not Sorgu.Eof do
+    begin
+      Liste.Add(Trim(Sorgu.Fields[0].AsString));
+      Sorgu.Next;
+    end;
+    Result := Liste.ToArray;
+  finally
+    Sorgu.Free;
+    Liste.Free;
+  end;
+end;
+
+procedure NesneVarMi(Bag: TAcikBaglanti; const Sql, Ad: string);
+begin
+  if TekDeger(Bag, Sql, Ad) = '' then
+    raise EMetadataHatasi.Create(TF('ERR_DDL_NESNE_YOK', [Ad]));
+end;
+
+function SayiTipi(const Ad: string; VarsayilanHassasiyet, AltTip, Hassasiyet, Olcek: Integer): string;
+begin
+  if (AltTip = 0) and (Olcek = 0) then
+    Exit(Ad);
+  if Hassasiyet = 0 then
+    Hassasiyet := VarsayilanHassasiyet;
+  if AltTip = 2 then
+    Result := 'DECIMAL'
+  else
+    Result := 'NUMERIC';
+  Result := Result + '(' + IntToStr(Hassasiyet) + ', ' + IntToStr(Olcek) + ')';
+end;
+
+{ Sorgudaki TIP, ALT_TIP, UZUNLUK, OLCEK, HASSASIYET, KARAKTER_UZ, BLOB_PARCA, CS_ADI alanlarindan
+  tip yazisini uretir. Karakter seti sadece veritabaninin varsayilanindan farkliysa yazilir (isql -x gibi). }
+function TipMetniUret(Sorgu: TFDQuery; const VarsayilanCS: string): string;
+var
+  Tip, AltTip, Hassasiyet, Olcek, Boy, Parca: Integer;
+  CS: string;
+begin
+  Tip := Sorgu.FieldByName('TIP').AsInteger;
+  AltTip := Sorgu.FieldByName('ALT_TIP').AsInteger;
+  Hassasiyet := Sorgu.FieldByName('HASSASIYET').AsInteger;
+  Olcek := -Sorgu.FieldByName('OLCEK').AsInteger;
+  CS := Trim(Sorgu.FieldByName('CS_ADI').AsString);
+  if (CS <> '') and (CS <> VarsayilanCS) then
+    CS := ' CHARACTER SET ' + CS
+  else
+    CS := '';
+  case Tip of
+    7: Result := SayiTipi('SMALLINT', 4, AltTip, Hassasiyet, Olcek);
+    8: Result := SayiTipi('INTEGER', 9, AltTip, Hassasiyet, Olcek);
+    16: Result := SayiTipi('BIGINT', 18, AltTip, Hassasiyet, Olcek);
+    26: Result := SayiTipi('INT128', 38, AltTip, Hassasiyet, Olcek);
+    10: Result := 'FLOAT';
+    27: Result := 'DOUBLE PRECISION';
+    12: Result := 'DATE';
+    13: Result := 'TIME';
+    35: Result := 'TIMESTAMP';
+    23: Result := 'BOOLEAN';
+    24: Result := 'DECFLOAT(16)';
+    25: Result := 'DECFLOAT(34)';
+    28: Result := 'TIME WITH TIME ZONE';
+    29: Result := 'TIMESTAMP WITH TIME ZONE';
+    14, 37:
+      begin
+        Boy := Sorgu.FieldByName('KARAKTER_UZ').AsInteger;
+        if Boy = 0 then
+          Boy := Sorgu.FieldByName('UZUNLUK').AsInteger;
+        if Tip = 14 then
+          Result := 'CHAR'
+        else
+          Result := 'VARCHAR';
+        Result := Result + '(' + IntToStr(Boy) + ')' + CS;
+      end;
+    261:
+      begin
+        Parca := Sorgu.FieldByName('BLOB_PARCA').AsInteger;
+        Result := 'BLOB SUB_TYPE ' + IntToStr(AltTip);
+        if (Parca <> 0) and (Parca <> 80) then
+          Result := Result + ' SEGMENT SIZE ' + IntToStr(Parca);
+        if AltTip = 1 then
+          Result := Result + CS;
+      end;
+  else
+    raise EMetadataHatasi.Create(TF('ERR_DDL_TIP_BILINMIYOR', [Tip]));
+  end;
+end;
+
+function VarsayilanMetni(const Ham: string): string;
+var
+  Metin: string;
+begin
+  Metin := Trim(Ham);
+  if Metin = '' then
+    Result := ''
+  else if Metin[1] = '=' then
+    Result := 'DEFAULT ' + Trim(Copy(Metin, 2, MaxInt))
+  else if StartsText('DEFAULT', Metin) then
+    Result := Metin
+  else
+    Result := 'DEFAULT ' + Metin;
+end;
+
+{ Hesaplanan kolon / ifade indeksi kaynagi: her zaman parantezle baslayan ifade olarak verilir. }
+function IfadeMetni(const Ham: string): string;
+var
+  Metin: string;
+begin
+  Metin := Trim(Ham);
+  if StartsText('COMPUTED', Metin) and (Pos('(', Metin) > 0) then
+    Metin := Copy(Metin, Pos('(', Metin), MaxInt);
+  if (Metin <> '') and (Metin[1] <> '(') then
+    Metin := '(' + Metin + ')';
+  Result := Metin;
+end;
+
+function VeritabaniKarakterSeti(Bag: TAcikBaglanti): string;
+begin
+  Result := TekDeger(Bag, 'select rdb$character_set_name from rdb$database', '');
+  if Result = '' then
+    Result := 'NONE';
+end;
+
+function KolonlariOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TKolonBilgisi>;
+var
+  Sorgu: TFDQuery;
+  Liste: TList<TKolonBilgisi>;
+  Kolon: TKolonBilgisi;
+  Sql, KimlikAlanlari, KimlikBaglantisi, VarsayilanCS, Kaynak: string;
+  RfSira, FSira: Integer;
+begin
+  VarsayilanCS := VeritabaniKarakterSeti(Bag);
+  KimlikAlanlari := '';
+  KimlikBaglantisi := '';
+  if SurumNo(Bag) >= 3 then
+  begin
+    KimlikAlanlari := ', rf.rdb$identity_type as KIMLIK, g.rdb$initial_value as KIMLIK_BASLANGIC, ' +
+      'g.rdb$generator_increment as KIMLIK_ARTIS';
+    KimlikBaglantisi := 'left join rdb$generators g on g.rdb$generator_name = rf.rdb$generator_name ';
+  end;
+  Sql := 'select rf.rdb$field_name as AD, rf.rdb$field_source as KAYNAK, rf.rdb$null_flag as RF_BOS_OLMAZ, ' +
+    'rf.rdb$default_source as RF_VARSAYILAN, rf.rdb$collation_id as RF_COLL, f.rdb$collation_id as F_COLL, ' +
+    'f.rdb$field_type as TIP, f.rdb$field_sub_type as ALT_TIP, f.rdb$field_length as UZUNLUK, ' +
+    'f.rdb$field_scale as OLCEK, f.rdb$field_precision as HASSASIYET, f.rdb$character_length as KARAKTER_UZ, ' +
+    'f.rdb$segment_length as BLOB_PARCA, f.rdb$computed_source as HESAPLANAN, ' +
+    'cs.rdb$character_set_name as CS_ADI, co.rdb$collation_name as COLL_ADI' + KimlikAlanlari + ' ' +
+    'from rdb$relation_fields rf ' +
+    'join rdb$fields f on f.rdb$field_name = rf.rdb$field_source ' +
+    'left join rdb$character_sets cs on cs.rdb$character_set_id = f.rdb$character_set_id ' +
+    'left join rdb$collations co on co.rdb$character_set_id = f.rdb$character_set_id ' +
+    'and co.rdb$collation_id = coalesce(rf.rdb$collation_id, f.rdb$collation_id) ' + KimlikBaglantisi +
+    'where rf.rdb$relation_name = :T order by rf.rdb$field_position';
+  Liste := TList<TKolonBilgisi>.Create;
+  Sorgu := SorguAc(Bag, Sql, Tablo);
+  try
+    while not Sorgu.Eof do
+    begin
+      Kolon := Default(TKolonBilgisi);
+      Kolon.Ad := Trim(Sorgu.FieldByName('AD').AsString);
+      Kaynak := Trim(Sorgu.FieldByName('KAYNAK').AsString);
+      Kolon.BosOlmaz := Sorgu.FieldByName('RF_BOS_OLMAZ').AsInteger = 1;
+      Kolon.Varsayilan := VarsayilanMetni(Sorgu.FieldByName('RF_VARSAYILAN').AsString);
+      RfSira := Sorgu.FieldByName('RF_COLL').AsInteger;
+      FSira := Sorgu.FieldByName('F_COLL').AsInteger;
+      if Trim(Sorgu.FieldByName('HESAPLANAN').AsString) <> '' then
+        Kolon.Hesaplanan := IfadeMetni(Sorgu.FieldByName('HESAPLANAN').AsString)
+      else if not StartsText('RDB$', Kaynak) then
+      begin
+        Kolon.Domain := Kaynak;
+        { Domainin kendi collation'indan farkli bir collation sadece kolonda verilmisse yazilir. }
+        if (not Sorgu.FieldByName('RF_COLL').IsNull) and (RfSira <> FSira) then
+          Kolon.Collate := Trim(Sorgu.FieldByName('COLL_ADI').AsString);
+      end
+      else
+      begin
+        Kolon.Tip := TipMetniUret(Sorgu, VarsayilanCS);
+        if Sorgu.FieldByName('RF_COLL').IsNull then
+          RfSira := FSira;
+        if RfSira > 0 then
+          Kolon.Collate := Trim(Sorgu.FieldByName('COLL_ADI').AsString);
+      end;
+      if (Sorgu.FindField('KIMLIK') <> nil) and (not Sorgu.FieldByName('KIMLIK').IsNull) then
+      begin
+        Kolon.Kimlik := True;
+        Kolon.KimlikHep := Sorgu.FieldByName('KIMLIK').AsInteger = 0;
+        Kolon.KimlikBaslangic := Sorgu.FieldByName('KIMLIK_BASLANGIC').AsLargeInt;
+        Kolon.KimlikArtis := Sorgu.FieldByName('KIMLIK_ARTIS').AsLargeInt;
+      end;
+      Liste.Add(Kolon);
+      Sorgu.Next;
+    end;
+    Result := Liste.ToArray;
+  finally
+    Sorgu.Free;
+    Liste.Free;
+  end;
+end;
+
+function IndeksKolonlari(Bag: TAcikBaglanti; const Indeks: string): TArray<string>;
+begin
+  Result := SutunListesi(Bag, 'select rdb$field_name from rdb$index_segments ' +
+    'where rdb$index_name = :I order by rdb$field_position', Indeks);
+end;
+
+function KisitlariOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TKisitBilgisi>;
+var
+  Sorgu: TFDQuery;
+  Liste: TList<TKisitBilgisi>;
+  Kisit: TKisitBilgisi;
+  Ad, Tur, Indeks, Hedef, HedefIndeks: string;
+begin
+  Liste := TList<TKisitBilgisi>.Create;
+  Sorgu := SorguAc(Bag, 'select rc.rdb$constraint_name as AD, rc.rdb$constraint_type as TUR, ' +
+    'rc.rdb$index_name as INDEKS, rf.rdb$const_name_uq as HEDEF, rf.rdb$update_rule as GUNCELLE, ' +
+    'rf.rdb$delete_rule as SIL ' +
+    'from rdb$relation_constraints rc ' +
+    'left join rdb$ref_constraints rf on rf.rdb$constraint_name = rc.rdb$constraint_name ' +
+    'where rc.rdb$relation_name = :T ' +
+    'and rc.rdb$constraint_type in (''PRIMARY KEY'', ''UNIQUE'', ''FOREIGN KEY'', ''CHECK'') ' +
+    'order by case rc.rdb$constraint_type when ''PRIMARY KEY'' then 0 when ''UNIQUE'' then 1 ' +
+    'when ''FOREIGN KEY'' then 2 else 3 end, rc.rdb$constraint_name', Tablo);
+  try
+    while not Sorgu.Eof do
+    begin
+      Kisit := Default(TKisitBilgisi);
+      Ad := Trim(Sorgu.FieldByName('AD').AsString);
+      Tur := Trim(Sorgu.FieldByName('TUR').AsString);
+      Indeks := Trim(Sorgu.FieldByName('INDEKS').AsString);
+      if not StartsText('INTEG_', Ad) then
+        Kisit.Ad := Ad;
+      if (Indeks <> '') and (Indeks <> Ad) and not StartsText('RDB$', Indeks) then
+        Kisit.IndeksAdi := Indeks;
+      if Tur = 'CHECK' then
+      begin
+        Kisit.Tur := ktCheck;
+        Kisit.CheckMetni := TekDeger(Bag, 'select first 1 t.rdb$trigger_source from rdb$check_constraints cc ' +
+          'join rdb$triggers t on t.rdb$trigger_name = cc.rdb$trigger_name ' +
+          'where cc.rdb$constraint_name = :C', Ad);
+        if not StartsText('CHECK', Kisit.CheckMetni) then
+          Kisit.CheckMetni := 'CHECK ' + Kisit.CheckMetni;
+      end
+      else
+      begin
+        Kisit.Kolonlar := IndeksKolonlari(Bag, Indeks);
+        if Tur = 'PRIMARY KEY' then
+          Kisit.Tur := ktBirincil
+        else if Tur = 'UNIQUE' then
+          Kisit.Tur := ktBenzersiz
+        else
+        begin
+          Kisit.Tur := ktYabanci;
+          Hedef := Trim(Sorgu.FieldByName('HEDEF').AsString);
+          Kisit.HedefTablo := TekDeger(Bag, 'select rdb$relation_name from rdb$relation_constraints ' +
+            'where rdb$constraint_name = :C', Hedef);
+          HedefIndeks := TekDeger(Bag, 'select rdb$index_name from rdb$relation_constraints ' +
+            'where rdb$constraint_name = :C', Hedef);
+          Kisit.HedefKolonlar := IndeksKolonlari(Bag, HedefIndeks);
+          Kisit.GuncelleKurali := Trim(Sorgu.FieldByName('GUNCELLE').AsString);
+          Kisit.SilKurali := Trim(Sorgu.FieldByName('SIL').AsString);
+          if (Kisit.GuncelleKurali = 'RESTRICT') or (Kisit.GuncelleKurali = 'NO ACTION') then
+            Kisit.GuncelleKurali := '';
+          if (Kisit.SilKurali = 'RESTRICT') or (Kisit.SilKurali = 'NO ACTION') then
+            Kisit.SilKurali := '';
+        end;
+      end;
+      Liste.Add(Kisit);
+      Sorgu.Next;
+    end;
+    Result := Liste.ToArray;
+  finally
+    Sorgu.Free;
+    Liste.Free;
+  end;
+end;
+
+{ Kisit (PK, UNIQUE, FK) indeksleri atlanir; onlar kisitla birlikte kurulur. }
+function IndeksleriOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TIndeksBilgisi>;
+var
+  Sorgu: TFDQuery;
+  Liste: TList<TIndeksBilgisi>;
+  Indeks: TIndeksBilgisi;
+  KosulAlani: string;
+begin
+  KosulAlani := '';
+  if SurumNo(Bag) >= 5 then
+    KosulAlani := ', i.rdb$condition_source as KOSUL';
+  Liste := TList<TIndeksBilgisi>.Create;
+  Sorgu := SorguAc(Bag, 'select i.rdb$index_name as AD, i.rdb$unique_flag as BENZERSIZ, ' +
+    'i.rdb$index_type as TUR, i.rdb$index_inactive as PASIF, i.rdb$expression_source as IFADE' +
+    KosulAlani + ' from rdb$indices i where i.rdb$relation_name = :T ' +
+    'and not exists (select 1 from rdb$relation_constraints rc where rc.rdb$index_name = i.rdb$index_name) ' +
+    'order by i.rdb$index_name', Tablo);
+  try
+    while not Sorgu.Eof do
+    begin
+      Indeks := Default(TIndeksBilgisi);
+      Indeks.Ad := Trim(Sorgu.FieldByName('AD').AsString);
+      Indeks.Benzersiz := Sorgu.FieldByName('BENZERSIZ').AsInteger = 1;
+      Indeks.Azalan := Sorgu.FieldByName('TUR').AsInteger = 1;
+      Indeks.Pasif := Sorgu.FieldByName('PASIF').AsInteger = 1;
+      if Trim(Sorgu.FieldByName('IFADE').AsString) <> '' then
+        Indeks.Ifade := IfadeMetni(Sorgu.FieldByName('IFADE').AsString)
+      else
+        Indeks.Kolonlar := IndeksKolonlari(Bag, Indeks.Ad);
+      if (Sorgu.FindField('KOSUL') <> nil) and (Trim(Sorgu.FieldByName('KOSUL').AsString) <> '') then
+      begin
+        Indeks.Kosul := Trim(Sorgu.FieldByName('KOSUL').AsString);
+        if not StartsText('WHERE', Indeks.Kosul) then
+          Indeks.Kosul := 'WHERE ' + Indeks.Kosul;
+      end;
+      Liste.Add(Indeks);
+      Sorgu.Next;
+    end;
+    Result := Liste.ToArray;
+  finally
+    Sorgu.Free;
+    Liste.Free;
+  end;
+end;
+
+{ Tablo veya view'a bagli kullanici tetikleyicileri (CHECK tetikleyicileri sistem bayrakli oldugu icin gelmez). }
+function TetikleyicileriOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TTetikleyiciBilgisi>;
+var
+  Sorgu: TFDQuery;
+  Liste: TList<TTetikleyiciBilgisi>;
+  Tetik: TTetikleyiciBilgisi;
+  Tip, Olay, i: Integer;
+begin
+  Liste := TList<TTetikleyiciBilgisi>.Create;
+  Sorgu := SorguAc(Bag, 'select rdb$trigger_name as AD, rdb$trigger_type as TUR, rdb$trigger_sequence as SIRA, ' +
+    'rdb$trigger_inactive as PASIF, rdb$trigger_source as KAYNAK from rdb$triggers ' +
+    'where rdb$relation_name = :T and coalesce(rdb$system_flag, 0) = 0 ' +
+    'order by rdb$trigger_sequence, rdb$trigger_name', Tablo);
+  try
+    while not Sorgu.Eof do
+    begin
+      Tetik := Default(TTetikleyiciBilgisi);
+      Tetik.Ad := Trim(Sorgu.FieldByName('AD').AsString);
+      Tetik.Sira := Sorgu.FieldByName('SIRA').AsInteger;
+      Tetik.Aktif := Sorgu.FieldByName('PASIF').AsInteger <> 1;
+      Tetik.Kaynak := Sorgu.FieldByName('KAYNAK').AsString;
+      if Trim(Tetik.Kaynak) = '' then
+        raise EMetadataHatasi.Create(TF('ERR_DDL_KAYNAK_YOK', [Tetik.Ad]));
+      { Tip: tek sayi, 1 = BEFORE INSERT, 2 = AFTER INSERT, 3 = BEFORE UPDATE ... Birden cok olayda
+        ((Tip + 1) sagdan ikiser bit) en fazla uc olay tutar: 1 INSERT, 2 UPDATE, 3 DELETE. }
+      Tip := Sorgu.FieldByName('TUR').AsInteger;
+      if Odd(Tip) then
+        Tetik.Zaman := 'BEFORE'
+      else
+        Tetik.Zaman := 'AFTER';
+      for i := 0 to 2 do
+      begin
+        Olay := ((Tip + 1) shr (1 + i * 2)) and 3;
+        if Olay = 0 then
+          Continue;
+        if Tetik.Olaylar <> '' then
+          Tetik.Olaylar := Tetik.Olaylar + ' OR ';
+        case Olay of
+          1: Tetik.Olaylar := Tetik.Olaylar + 'INSERT';
+          2: Tetik.Olaylar := Tetik.Olaylar + 'UPDATE';
+        else
+          Tetik.Olaylar := Tetik.Olaylar + 'DELETE';
+        end;
+      end;
+      Liste.Add(Tetik);
+      Sorgu.Next;
+    end;
+    Result := Liste.ToArray;
+  finally
+    Sorgu.Free;
+    Liste.Free;
+  end;
+end;
+
+function TabloBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TTabloBilgisi;
+begin
+  NesneVarMi(Bag, 'select rdb$relation_name from rdb$relations where rdb$relation_name = :N ' +
+    'and rdb$view_blr is null', Ad);
+  Result.Kolonlar := KolonlariOku(Bag, Ad);
+  Result.Kisitlar := KisitlariOku(Bag, Ad);
+  Result.Indeksler := IndeksleriOku(Bag, Ad);
+  Result.Tetikleyiciler := TetikleyicileriOku(Bag, Ad);
+end;
+
+function ViewBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TViewBilgisi;
+begin
+  NesneVarMi(Bag, 'select rdb$relation_name from rdb$relations where rdb$relation_name = :N ' +
+    'and rdb$view_blr is not null', Ad);
+  Result.Kaynak := TekDeger(Bag, 'select rdb$view_source from rdb$relations where rdb$relation_name = :N', Ad);
+  if Result.Kaynak = '' then
+    raise EMetadataHatasi.Create(TF('ERR_DDL_KAYNAK_YOK', [Ad]));
+  Result.Kolonlar := SutunListesi(Bag, 'select rdb$field_name from rdb$relation_fields ' +
+    'where rdb$relation_name = :N order by rdb$field_position', Ad);
+  Result.Tetikleyiciler := TetikleyicileriOku(Bag, Ad);
+end;
+
+function ParametreleriOku(Bag: TAcikBaglanti; const Prosedur: string; Girdi: Boolean): TArray<TParametreBilgisi>;
+var
+  Sorgu: TFDQuery;
+  Liste: TList<TParametreBilgisi>;
+  Param: TParametreBilgisi;
+  Sql, Kaynak, VarsayilanCS, ParcaAlani, PaketSarti: string;
+  Surum: Integer;
+begin
+  Surum := SurumNo(Bag);
+  VarsayilanCS := VeritabaniKarakterSeti(Bag);
+  ParcaAlani := '';
+  PaketSarti := '';
+  if Surum >= 3 then
+  begin
+    ParcaAlani := ', p.rdb$null_flag as BOS_OLMAZ, p.rdb$default_source as VARSAYILAN';
+    PaketSarti := ' and p.rdb$package_name is null';
+  end;
+  Sql := 'select p.rdb$parameter_name as AD, p.rdb$field_source as KAYNAK' + ParcaAlani + ', ' +
+    'f.rdb$field_type as TIP, f.rdb$field_sub_type as ALT_TIP, f.rdb$field_length as UZUNLUK, ' +
+    'f.rdb$field_scale as OLCEK, f.rdb$field_precision as HASSASIYET, f.rdb$character_length as KARAKTER_UZ, ' +
+    'f.rdb$segment_length as BLOB_PARCA, cs.rdb$character_set_name as CS_ADI ' +
+    'from rdb$procedure_parameters p ' +
+    'join rdb$fields f on f.rdb$field_name = p.rdb$field_source ' +
+    'left join rdb$character_sets cs on cs.rdb$character_set_id = f.rdb$character_set_id ' +
+    'where p.rdb$procedure_name = :P and p.rdb$parameter_type = ' + IfThen(Girdi, '0', '1') + PaketSarti +
+    ' order by p.rdb$parameter_number';
+  Liste := TList<TParametreBilgisi>.Create;
+  Sorgu := SorguAc(Bag, Sql, Prosedur);
+  try
+    while not Sorgu.Eof do
+    begin
+      Param := Default(TParametreBilgisi);
+      Param.Ad := Trim(Sorgu.FieldByName('AD').AsString);
+      Kaynak := Trim(Sorgu.FieldByName('KAYNAK').AsString);
+      if StartsText('RDB$', Kaynak) then
+        Param.Tip := TipMetniUret(Sorgu, VarsayilanCS)
+      else
+        Param.Domain := Kaynak;
+      if Sorgu.FindField('BOS_OLMAZ') <> nil then
+      begin
+        Param.BosOlmaz := Sorgu.FieldByName('BOS_OLMAZ').AsInteger = 1;
+        Param.Varsayilan := VarsayilanMetni(Sorgu.FieldByName('VARSAYILAN').AsString);
+      end;
+      Liste.Add(Param);
+      Sorgu.Next;
+    end;
+    Result := Liste.ToArray;
+  finally
+    Sorgu.Free;
+    Liste.Free;
+  end;
+end;
+
+function ProsedurBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TProsedurBilgisi;
+var
+  PaketSarti: string;
+begin
+  PaketSarti := '';
+  if SurumNo(Bag) >= 3 then
+    PaketSarti := ' and rdb$package_name is null';
+  NesneVarMi(Bag, 'select rdb$procedure_name from rdb$procedures where rdb$procedure_name = :N' + PaketSarti, Ad);
+  Result.Kaynak := TekDeger(Bag, 'select rdb$procedure_source from rdb$procedures ' +
+    'where rdb$procedure_name = :N' + PaketSarti, Ad);
+  if Result.Kaynak = '' then
+    raise EMetadataHatasi.Create(TF('ERR_DDL_KAYNAK_YOK', [Ad]));
+  Result.Girdiler := ParametreleriOku(Bag, Ad, True);
+  Result.Ciktilar := ParametreleriOku(Bag, Ad, False);
+end;
+
+function GeneratorBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TGeneratorBilgisi;
+begin
+  NesneVarMi(Bag, 'select rdb$generator_name from rdb$generators where rdb$generator_name = :N', Ad);
+  Result.Deger := StrToInt64Def(TekDeger(Bag, 'select gen_id(' + HamTirnak(Ad) + ', 0) from rdb$database', ''), 0);
+  Result.Artis := 1;
+  if SurumNo(Bag) >= 3 then
+    Result.Artis := StrToInt64Def(TekDeger(Bag, 'select rdb$generator_increment from rdb$generators ' +
+      'where rdb$generator_name = :N', Ad), 1);
+end;
+
+{ Satir basina bir kelime. '#FB3' gibi baslik, sonraki kelimelerin o surumde ve sonrasinda
+  gecerli oldugunu gosterir; diger '#' satirlari yorumdur. }
+procedure AnahtarKelimeleriOku(const Dosya, Surum: string; Hedef: TStrings);
+var
+  Satirlar: TStringList;
+  Satir: string;
+  Sunucu, Bolum: Integer;
+begin
+  Hedef.Clear;
+  if not FileExists(Dosya) then
+    Exit;
+  Sunucu := StrToIntDef(Copy(Surum, 1, Pos('.', Surum) - 1), 99);
+  Bolum := 0;
+  Satirlar := TStringList.Create;
+  try
+    Satirlar.LoadFromFile(Dosya, TEncoding.UTF8);
+    for Satir in Satirlar do
+    begin
+      if (Length(Trim(Satir)) = 4) and (Copy(Trim(Satir), 1, 3) = '#FB') then
+        Bolum := StrToIntDef(Copy(Trim(Satir), 4, 1), Bolum)
+      else if (Trim(Satir) <> '') and (Trim(Satir)[1] <> '#') and (Bolum <= Sunucu) then
+        Hedef.Add(Trim(Satir));
+    end;
+  finally
+    Satirlar.Free;
   end;
 end;
 

@@ -14,7 +14,7 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.ComCtrls, Vcl.ToolWin, Vcl.ExtCtrls, Vcl.StdCtrls,
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
-  uDil, uIkon, uOnay, uBaglanti, uMetadata, uSorgu, fBaglanti, fMetinSor,
+  uDil, uIkon, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor,
   fTabloSekme, fSorguSekme;
 
 type
@@ -51,6 +51,7 @@ type
     vilIkonlar: TVirtualImageList;
     pmNesne: TPopupMenu;
     miAc: TMenuItem;
+    miScriptUret: TMenuItem;
     miBaglan: TMenuItem;
     miKes: TMenuItem;
     miYenile: TMenuItem;
@@ -82,6 +83,7 @@ type
     procedure tvNesnelerDragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure pmNesnePopup(Sender: TObject);
     procedure miAcClick(Sender: TObject);
+    procedure miScriptUretClick(Sender: TObject);
     procedure miBaglanClick(Sender: TObject);
     procedure miKesClick(Sender: TObject);
     procedure miYenileClick(Sender: TObject);
@@ -133,7 +135,8 @@ type
     procedure TabloAc(Dugme: TTreeNode);
     function SorguSekmeAl(Sayfa: TTabSheet): TSorguSekme;
     function AktifSorguSekmesi: TSorguSekme;
-    procedure YeniSorgu;
+    procedure YeniSorgu(const Metin: string = '');
+    procedure ScriptAc(Dugme: TTreeNode);
     procedure SorguyuCalistir;
     procedure PlaniGoster;
   end;
@@ -203,6 +206,7 @@ begin
   btnCalistir.Caption := T('BTN_CALISTIR');
   btnPlan.Caption := T('BTN_PLAN');
   miAc.Caption := T('MENU_AC');
+  miScriptUret.Caption := T('MENU_SCRIPT_URET');
   miBaglan.Caption := T('BTN_BAGLAN');
   miKes.Caption := T('BTN_KES');
   miYenile.Caption := T('MENU_YENILE');
@@ -758,8 +762,8 @@ begin
     Result := SorguSekmeAl(pcCalisma.ActivePage);
 end;
 
-{ Secili (acik) baglanti icin yeni bir sorgu sekmesi acar. }
-procedure TfrmAna.YeniSorgu;
+{ Secili (acik) baglanti icin yeni bir sorgu sekmesi acar. Metin doluysa editore yazilir (calistirilmaz). }
+procedure TfrmAna.YeniSorgu(const Metin: string);
 var
   Dugme: TTreeNode;
   Bag: TAcikBaglanti;
@@ -783,10 +787,49 @@ begin
   Sekme.Parent := Sayfa;
   Sekme.Align := alClient;
   Sekme.Hazirla(FSorguNo, Bag.Tanim.Ad);
+  if Metin <> '' then
+    Sekme.MetinYaz(Metin);
   Sayfa.Caption := Sekme.Baslik;
   pcCalisma.ActivePage := Sayfa;
   Sekme.EditoreOdaklan;
   DurumuGuncelle;
+end;
+
+{ Secili nesnenin CREATE script'ini yeni bir sorgu sekmesinde acar (calistirmaz). }
+procedure TfrmAna.ScriptAc(Dugme: TTreeNode);
+var
+  Oge: TAgacOgesi;
+  Bag: TAcikBaglanti;
+  Tur: TNesneTuru;
+  Script: string;
+begin
+  Oge := OgeAl(Dugme);
+  Bag := FbAcikBaglanti(Oge.BaglantiAd);
+  if Bag = nil then
+    Exit;
+  case Oge.DalNo of
+    DAL_TABLO: Tur := ntTablo;
+    DAL_VIEW: Tur := ntView;
+    DAL_PROSEDUR: Tur := ntProsedur;
+  else
+    Tur := ntGenerator;
+  end;
+  try
+    Script := ScriptUret(Bag, Tur, Oge.Ad);
+  except
+    on E: EMetadataHatasi do
+    begin
+      HataYaz(E.Message, '');
+      Exit;
+    end;
+    on E: Exception do
+    begin
+      HataYaz(T('ERR_DDL_ALINAMADI') + ' ' + HataMetniniCevir(E), E.Message);
+      Exit;
+    end;
+  end;
+  YeniSorgu(Script);
+  MesajYaz(TF('MSG_SCRIPT_URETILDI', [Oge.Ad]));
 end;
 
 procedure TfrmAna.SorguyuCalistir;
@@ -1056,6 +1099,7 @@ begin
   miKaldir.Visible := (not Bos) and (Tur = atBaglanti);
   miKlonla.Visible := (not Bos) and (Tur = atBaglanti);
   miAc.Visible := (not Bos) and (Tur = atNesne) and (OgeAl(Dugme).DalNo = DAL_TABLO);
+  miScriptUret.Visible := (not Bos) and (Tur = atNesne);
   miYenile.Visible := (not Bos) and (Tur <> atKlasor) and Acik;
   miBaglan.Enabled := not Acik;
   miKes.Enabled := Acik;
@@ -1065,6 +1109,12 @@ procedure TfrmAna.miAcClick(Sender: TObject);
 begin
   if tvNesneler.Selected <> nil then
     TabloAc(tvNesneler.Selected);
+end;
+
+procedure TfrmAna.miScriptUretClick(Sender: TObject);
+begin
+  if tvNesneler.Selected <> nil then
+    ScriptAc(tvNesneler.Selected);
 end;
 
 procedure TfrmAna.miBaglanClick(Sender: TObject);
