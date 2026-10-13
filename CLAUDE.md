@@ -192,6 +192,8 @@ Bu bir "boş zamanda yavaş yavaş" projesidir, acele yoktur. **Her aşama bitin
 
 ### Aşama 5: PostgreSQL (küçük kapsam, sahibinin ihtiyacı: pgAdmin'e hızlı alternatif)
 Aşama 3 ve 4 bitmeden başlanmaz. Yalnızca bağlan, gez, SQL çalıştır. Script üretme ve yönetim özellikleri bu aşamada yok.
+
+**Bulgu (sahibi ölçtü, 2026-10-13):** Windows Server'da pgAdmin 4 (PostgreSQL 18 ile gelen sürüm) 2 dk 44 sn'de açılıyordu. Neden Windows Defender'ın gerçek zamanlı taramasıydı: pgAdmin'in kurulum klasörü ve `%APPDATA%\pgadmin` klasörü Defender dışlamasına eklenince açılış 30 sn'ye (ikinci açılış 25 sn) düştü. Log önce yalnızca tek uyarı satırı içeriyordu, ilk log satırı açılıştan 77 sn sonra yazılmıştı (Python sunucusu geç ayağa kalkıyordu). Bu aşamanın çıkış nedeni pgAdmin yavaşlığı olduğundan, kendi aracımız da bu ortamda ölçülmeli: açılış süresi Defender dışlamasıyla ve dışlamasız karşılaştırılır, yavaşsa README'ye "program klasörünü Defender dışlamasına ekleyin" notu konur.
 - [ ] Hazırlık: sürüme/motora bağlı kodu `uMetadata.pas` içinde motor seçimi arkasına almak (Firebird davranışı değişmeden, mevcut testler geçmeli)
 - [ ] FireDAC PostgreSQL sürücüsü ile bağlantı (`libpq.dll` 32/64 bit uyumu ve sürümü belgelenir), şifre DPAPI ile
 - [ ] Ağaçta Tablolar, View'lar, Prosedür/Fonksiyonlar, Sequence'lar dalları (`pg_catalog` / `information_schema`)
