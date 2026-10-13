@@ -966,6 +966,9 @@ var
   Sayfa: Integer;
 begin
   Yazici.WriteLine('SET NAMES ' + SCRIPT_KARAKTER_SETI + ';');
+  { Dialect 1 veritabaninda DATE ve NUMERIC dialect 3'tekinden farkli anlam tasir; isql komutu olarak yazilir. }
+  if Bag.Dialect <> 3 then
+    Yazici.WriteLine('SET SQL DIALECT ' + IntToStr(Bag.Dialect) + ';');
   Yazici.WriteLine('');
   Kimlik := ' USER ' + YaziSabiti(Bag.Tanim.Kullanici);
   if Sec.SifreYaz then

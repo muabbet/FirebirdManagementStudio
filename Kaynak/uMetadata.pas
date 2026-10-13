@@ -455,7 +455,7 @@ end;
 
 { Sorgudaki TIP, ALT_TIP, UZUNLUK, OLCEK, HASSASIYET, KARAKTER_UZ, BLOB_PARCA, CS_ADI alanlarindan
   tip yazisini uretir. Karakter seti sadece veritabaninin varsayilanindan farkliysa yazilir (isql -x gibi). }
-function TipMetniUret(Sorgu: TFDQuery; const VarsayilanCS: string): string;
+function TipMetniUret(Sorgu: TFDQuery; const VarsayilanCS: string; Dialect: Integer): string;
 var
   Tip, AltTip, Hassasiyet, Olcek, Boy, Parca: Integer;
   CS: string;
@@ -475,10 +475,18 @@ begin
     16: Result := SayiTipi('BIGINT', 18, AltTip, Hassasiyet, Olcek);
     26: Result := SayiTipi('INT128', 38, AltTip, Hassasiyet, Olcek);
     10: Result := 'FLOAT';
-    27: Result := 'DOUBLE PRECISION';
+    { Dialect 1 veritabaninda NUMERIC/DECIMAL sayilar DOUBLE olarak saklanir (olcekli); araclar NUMERIC(p, s) yazar. }
+    27: if Dialect = 1 then
+          Result := SayiTipi('DOUBLE PRECISION', 15, AltTip, Hassasiyet, Olcek)
+        else
+          Result := 'DOUBLE PRECISION';
     12: Result := 'DATE';
     13: Result := 'TIME';
-    35: Result := 'TIMESTAMP';
+    { Dialect 1'de DATE tipi tarih+saat tutar ve DATE diye yazilir (TIMESTAMP degil). }
+    35: if Dialect = 1 then
+          Result := 'DATE'
+        else
+          Result := 'TIMESTAMP';
     23: Result := 'BOOLEAN';
     24: Result := 'DECFLOAT(16)';
     25: Result := 'DECFLOAT(34)';
@@ -596,7 +604,7 @@ begin
       end
       else
       begin
-        Kolon.Tip := TipMetniUret(Sorgu, VarsayilanCS);
+        Kolon.Tip := TipMetniUret(Sorgu, VarsayilanCS, Bag.Dialect);
         if Sorgu.FieldByName('RF_COLL').IsNull then
           RfSira := FSira;
         if RfSira > 0 then
@@ -890,7 +898,7 @@ begin
       Param.Ad := Trim(Sorgu.FieldByName('AD').AsString);
       Kaynak := Trim(Sorgu.FieldByName('KAYNAK').AsString);
       if StartsText('RDB$', Kaynak) then
-        Param.Tip := TipMetniUret(Sorgu, VarsayilanCS)
+        Param.Tip := TipMetniUret(Sorgu, VarsayilanCS, Bag.Dialect)
       else
         Param.Domain := Kaynak;
       if Sorgu.FindField('BOS_OLMAZ') <> nil then
@@ -1038,7 +1046,7 @@ begin
     begin
       Alan := Default(TDomainBilgisi);
       Alan.Ad := Trim(Sorgu.FieldByName('AD').AsString);
-      Alan.Tip := TipMetniUret(Sorgu, VarsayilanCS);
+      Alan.Tip := TipMetniUret(Sorgu, VarsayilanCS, Bag.Dialect);
       Alan.Varsayilan := VarsayilanMetni(Sorgu.FieldByName('VARSAYILAN').AsString);
       Alan.BosOlmaz := Sorgu.FieldByName('BOS_OLMAZ').AsInteger = 1;
       Alan.Kontrol := Trim(Sorgu.FieldByName('KONTROL').AsString);
