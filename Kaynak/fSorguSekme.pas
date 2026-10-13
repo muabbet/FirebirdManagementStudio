@@ -46,6 +46,7 @@ type
     procedure Calistir;
     procedure PlanGoster;
     procedure EditoreOdaklan;
+    procedure MetinYaz(const Metin: string);
     function Baslik: string;
     procedure YazilariYenile;
   end;
@@ -136,6 +137,11 @@ end;
 procedure TSorguSekme.EditoreOdaklan;
 begin
   FEditor.OdakVer;
+end;
+
+procedure TSorguSekme.MetinYaz(const Metin: string);
+begin
+  FEditor.MetinYaz(Metin);
 end;
 
 procedure TSorguSekme.YazilariYenile;
