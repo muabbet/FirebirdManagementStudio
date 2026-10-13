@@ -151,21 +151,21 @@ Yeni Firebird sürümleri çıkınca güncellemek kolay olmalı.
 Bu bir "boş zamanda yavaş yavaş" projesidir, acele yoktur. **Her aşama bitince sahibinden onay alınmadan sonrakine geçilmez.** Her aşamanın sonunda kısa bir rapor yazılır.
 
 ### Aşama 1: İskelet ve Ağaç
-- [ ] Proje yapısı ve unit'lerin boş iskeletleri
-- [ ] `uDil.pas` ve `tr.json`, `en.json`, `de.json` (başlangıç anahtarlarıyla)
-- [ ] Ana form: sol ağaç, sağ sekmeler, alt sonuç alanı, üst araç çubuğu
-- [ ] Bağlantı penceresi (sunucu, veritabanı yolu, kullanıcı, şifre), kayıtlı bağlantılar JSON'da, şifreler DPAPI ile
-- [ ] Bağlanınca sürüm algılama
-- [ ] Ağaçta Tablolar, View'lar, Prosedürler, Generator'lar dallarının doldurulması
-- [ ] Tabloya çift tıklayınca kolonları ve ilk satırları gösterme
-- [ ] VCL Style teması ve ikon seti
+- [x] Proje yapısı ve unit'lerin boş iskeletleri
+- [x] `uDil.pas` ve `tr.json`, `en.json`, `de.json` (başlangıç anahtarlarıyla)
+- [x] Ana form: sol ağaç, sağ sekmeler, alt sonuç alanı, üst araç çubuğu
+- [x] Bağlantı penceresi (sunucu, veritabanı yolu, kullanıcı, şifre), kayıtlı bağlantılar JSON'da, şifreler DPAPI ile
+- [x] Bağlanınca sürüm algılama
+- [x] Ağaçta Tablolar, View'lar, Prosedürler, Generator'lar dallarının doldurulması
+- [x] Tabloya çift tıklayınca kolonları ve ilk satırları gösterme
+- [x] VCL Style teması ve ikon seti
 
 **Bitiş ölçütü:** Gerçek bir Firebird veritabanına bağlanıp ağacı görebiliyor, bir tabloyu açabiliyorum. Dil değiştirince yazılar anında değişiyor.
 
 ### Aşama 1b: Çoklu bağlantı ağacı
-- [ ] Kayıtlı bağlantılar ağaçta görünür ve aynı anda birden fazla bağlantı açık kalabilir
-- [ ] Klasörler, sürükle-bırak ve "Kayıttan Kaldır"
-- [ ] Şifresi kayıtlı olmayan bağlantıda şifre sorma penceresi
+- [x] Kayıtlı bağlantılar ağaçta görünür ve aynı anda birden fazla bağlantı açık kalabilir
+- [x] Klasörler, sürükle-bırak ve "Kayıttan Kaldır"
+- [x] Şifresi kayıtlı olmayan bağlantıda şifre sorma penceresi
 
 **Bitiş ölçütü:** İki veritabanına aynı anda bağlanıp ikisinden de tablo açabiliyorum, klasörler program kapanıp açılınca korunuyor.
 
