@@ -72,10 +72,14 @@ type
 
   TTetikleyiciBilgisi = record
     Ad: string;
-    { 'BEFORE' veya 'AFTER' }
+    { Bagli oldugu tablo/view; veritabani tetikleyicisinde (ON CONNECT gibi) bos }
+    Tablo: string;
+    { 'BEFORE' veya 'AFTER'; veritabani tetikleyicisinde bos }
     Zaman: string;
-    { 'INSERT OR UPDATE' gibi }
+    { 'INSERT OR UPDATE' gibi; veritabani tetikleyicisinde 'ON CONNECT' gibi }
     Olaylar: string;
+    { DDL tetikleyicisi gibi desteklenmeyen tur: script uretilmez }
+    Desteklenmiyor: Boolean;
     Sira: Integer;
     Aktif: Boolean;
     { Veritabaninda kayitli metin (genelde 'AS' ile baslar) }
@@ -83,6 +87,10 @@ type
   end;
 
   TTabloBilgisi = record
+    { Gecici tablo (3.0+): 0 degil, 1 = ON COMMIT PRESERVE ROWS, 2 = ON COMMIT DELETE ROWS }
+    GeciciTur: Integer;
+    { Dis tablo ise dosya yolu, degilse bos }
+    DisDosya: string;
     Kolonlar: TArray<TKolonBilgisi>;
     Kisitlar: TArray<TKisitBilgisi>;
     Indeksler: TArray<TIndeksBilgisi>;
@@ -116,6 +124,45 @@ type
     Artis: Int64;
   end;
 
+  TIstisnaBilgisi = record
+    Ad: string;
+    Mesaj: string;
+  end;
+
+  TDomainBilgisi = record
+    Ad: string;
+    Tip: string;
+    Varsayilan: string;
+    BosOlmaz: Boolean;
+    { 'CHECK (VALUE > 0)' gibi, yoksa bos }
+    Kontrol: string;
+    Collate: string;
+  end;
+
+  { Bir yetki satiri. Yetki: S select, I insert, D delete, U update, R references, X execute,
+    M rol uyeligi, G usage. KullaniciTuru: 8 kullanici, 13 rol, 5 prosedur, 2 tetikleyici, 1 view.
+    NesneTuru: 0 tablo/view, 5 prosedur, 13 rol, 7 exception, 14 generator.
+    SecenekVar: 0 yok, 1 GRANT OPTION, 2 ADMIN OPTION. }
+  TYetkiBilgisi = record
+    Kullanici: string;
+    KullaniciTuru: Integer;
+    Yetki: string;
+    SecenekVar: Integer;
+    Nesne: string;
+    NesneTuru: Integer;
+    Alan: string;
+  end;
+
+  { Bir nesnenin aciklamasi (COMMENT ON). Tur: 'TABLE', 'VIEW', 'COLUMN', 'PROCEDURE', 'PROCEDURE PARAMETER',
+    'TRIGGER', 'SEQUENCE' (2.5'te 'GENERATOR'), 'EXCEPTION', 'DOMAIN', 'INDEX', 'ROLE', 'DATABASE'.
+    Ad1: nesne adi; Ad2: kolon/parametre adi (yoksa bos). }
+  TAciklamaBilgisi = record
+    Tur: string;
+    Ad1: string;
+    Ad2: string;
+    Metin: string;
+  end;
+
 procedure TablolariGetir(Bag: TAcikBaglanti; Hedef: TStrings);
 procedure ViewlariGetir(Bag: TAcikBaglanti; Hedef: TStrings);
 procedure ProsedurleriGetir(Bag: TAcikBaglanti; Hedef: TStrings);
@@ -125,9 +172,33 @@ procedure KolonTablosuYazilariniYenile(Tablo: TDataSet);
 
 { Script uretimi icin okuma. Nesne yoksa veya govde metni kayitli degilse EMetadataHatasi verir. }
 function TabloBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TTabloBilgisi;
+procedure TabloOzellikleriniOku(Bag: TAcikBaglanti; const Ad: string; var Bilgi: TTabloBilgisi);
 function ViewBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TViewBilgisi;
 function ProsedurBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TProsedurBilgisi;
 function GeneratorBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TGeneratorBilgisi;
+{ Tek tablonun parcalari (TabloBilgisiOku bunlari birlestirir). }
+function KolonlariOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TKolonBilgisi>;
+function KisitlariOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TKisitBilgisi>;
+function IndeksleriOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TIndeksBilgisi>;
+{ Tablo bos ise veritabanindaki TUM kullanici tetikleyicileri (veritabani tetikleyicileri dahil). }
+function TetikleyicileriOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TTetikleyiciBilgisi>;
+{ Tum veritabani icin (Metadata cikar). Sistem nesneleri gelmez. }
+function RolAdlari(Bag: TAcikBaglanti): TArray<string>;
+function IstisnalariOku(Bag: TAcikBaglanti): TArray<TIstisnaBilgisi>;
+function GeneratorAdlari(Bag: TAcikBaglanti): TArray<string>;
+function DomainleriOku(Bag: TAcikBaglanti): TArray<TDomainBilgisi>;
+function TabloAdlari(Bag: TAcikBaglanti): TArray<string>;
+function ProsedurAdlari(Bag: TAcikBaglanti): TArray<string>;
+{ View adlari, birbirine bagimliligina gore (once bagimlilik olmayanlar). Sirada cozulemeyenler
+  (dongu) sona eklenir ve Dongu'ye de yazilir. }
+function ViewAdlariSirali(Bag: TAcikBaglanti; out Dongu: TArray<string>): TArray<string>;
+function YetkileriOku(Bag: TAcikBaglanti): TArray<TYetkiBilgisi>;
+function AciklamalariOku(Bag: TAcikBaglanti): TArray<TAciklamaBilgisi>;
+{ Bu surumde script'i uretilmeyen nesnelerin sayisi: fonksiyon (UDF ve PSQL), paket, kullanici collation'i, blob filtresi. }
+function DesteklenmeyenNesneSayisi(Bag: TAcikBaglanti): Integer;
+{ CREATE DATABASE icin: sayfa boyutu ve varsayilan karakter seti ('' = NONE). }
+function VeritabaniSayfaBoyutu(Bag: TAcikBaglanti): Integer;
+function VeritabaniVarsayilanKarakterSeti(Bag: TAcikBaglanti): string;
 { anahtar_kelimeler.txt dosyasindan, Surum ("5.0.4") icin gecerli kelimeleri okur. }
 procedure AnahtarKelimeleriOku(const Dosya, Surum: string; Hedef: TStrings);
 
@@ -670,48 +741,73 @@ begin
   end;
 end;
 
-{ Tablo veya view'a bagli kullanici tetikleyicileri (CHECK tetikleyicileri sistem bayrakli oldugu icin gelmez). }
+{ Kullanici tetikleyicileri (CHECK tetikleyicileri sistem bayrakli oldugu icin gelmez).
+  Tablo doluysa o tablo/view'unkiler, bos ise veritabanindaki hepsi. }
 function TetikleyicileriOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TTetikleyiciBilgisi>;
 var
   Sorgu: TFDQuery;
   Liste: TList<TTetikleyiciBilgisi>;
   Tetik: TTetikleyiciBilgisi;
   Tip, Olay, i: Integer;
+  Sart: string;
 begin
+  Sart := '';
+  if Tablo <> '' then
+    Sart := ' and rdb$relation_name = :T';
   Liste := TList<TTetikleyiciBilgisi>.Create;
-  Sorgu := SorguAc(Bag, 'select rdb$trigger_name as AD, rdb$trigger_type as TUR, rdb$trigger_sequence as SIRA, ' +
-    'rdb$trigger_inactive as PASIF, rdb$trigger_source as KAYNAK from rdb$triggers ' +
-    'where rdb$relation_name = :T and coalesce(rdb$system_flag, 0) = 0 ' +
-    'order by rdb$trigger_sequence, rdb$trigger_name', Tablo);
+  Sorgu := SorguAc(Bag, 'select rdb$trigger_name as AD, rdb$relation_name as TABLO, rdb$trigger_type as TUR, ' +
+    'rdb$trigger_sequence as SIRA, rdb$trigger_inactive as PASIF, rdb$trigger_source as KAYNAK ' +
+    'from rdb$triggers where coalesce(rdb$system_flag, 0) = 0' + Sart + ' ' +
+    'order by rdb$relation_name, rdb$trigger_sequence, rdb$trigger_name', Tablo);
   try
     while not Sorgu.Eof do
     begin
       Tetik := Default(TTetikleyiciBilgisi);
       Tetik.Ad := Trim(Sorgu.FieldByName('AD').AsString);
+      Tetik.Tablo := Trim(Sorgu.FieldByName('TABLO').AsString);
       Tetik.Sira := Sorgu.FieldByName('SIRA').AsInteger;
       Tetik.Aktif := Sorgu.FieldByName('PASIF').AsInteger <> 1;
       Tetik.Kaynak := Sorgu.FieldByName('KAYNAK').AsString;
-      if Trim(Tetik.Kaynak) = '' then
+      if (Tablo <> '') and (Trim(Tetik.Kaynak) = '') then
         raise EMetadataHatasi.Create(TF('ERR_DDL_KAYNAK_YOK', [Tetik.Ad]));
-      { Tip: tek sayi, 1 = BEFORE INSERT, 2 = AFTER INSERT, 3 = BEFORE UPDATE ... Birden cok olayda
-        ((Tip + 1) sagdan ikiser bit) en fazla uc olay tutar: 1 INSERT, 2 UPDATE, 3 DELETE. }
       Tip := Sorgu.FieldByName('TUR').AsInteger;
-      if Odd(Tip) then
-        Tetik.Zaman := 'BEFORE'
-      else
-        Tetik.Zaman := 'AFTER';
-      for i := 0 to 2 do
+      if (Tip and 16384) <> 0 then
+        { DDL tetikleyicisi: bu surumde script uretilmez. }
+        Tetik.Desteklenmiyor := True
+      else if (Tip and 8192) <> 0 then
       begin
-        Olay := ((Tip + 1) shr (1 + i * 2)) and 3;
-        if Olay = 0 then
-          Continue;
-        if Tetik.Olaylar <> '' then
-          Tetik.Olaylar := Tetik.Olaylar + ' OR ';
-        case Olay of
-          1: Tetik.Olaylar := Tetik.Olaylar + 'INSERT';
-          2: Tetik.Olaylar := Tetik.Olaylar + 'UPDATE';
+        { Veritabani tetikleyicisi: 8192 + 0 CONNECT, 1 DISCONNECT, 2 TRANSACTION START, 3 COMMIT, 4 ROLLBACK }
+        case Tip - 8192 of
+          0: Tetik.Olaylar := 'ON CONNECT';
+          1: Tetik.Olaylar := 'ON DISCONNECT';
+          2: Tetik.Olaylar := 'ON TRANSACTION START';
+          3: Tetik.Olaylar := 'ON TRANSACTION COMMIT';
+          4: Tetik.Olaylar := 'ON TRANSACTION ROLLBACK';
         else
-          Tetik.Olaylar := Tetik.Olaylar + 'DELETE';
+          Tetik.Desteklenmiyor := True;
+        end;
+      end
+      else
+      begin
+        { Tablo tetikleyicisi. Tip: tek sayi, 1 = BEFORE INSERT, 2 = AFTER INSERT, 3 = BEFORE UPDATE ...
+          Birden cok olayda ((Tip + 1) sagdan ikiser bit) en fazla uc olay tutar: 1 INSERT, 2 UPDATE, 3 DELETE. }
+        if Odd(Tip) then
+          Tetik.Zaman := 'BEFORE'
+        else
+          Tetik.Zaman := 'AFTER';
+        for i := 0 to 2 do
+        begin
+          Olay := ((Tip + 1) shr (1 + i * 2)) and 3;
+          if Olay = 0 then
+            Continue;
+          if Tetik.Olaylar <> '' then
+            Tetik.Olaylar := Tetik.Olaylar + ' OR ';
+          case Olay of
+            1: Tetik.Olaylar := Tetik.Olaylar + 'INSERT';
+            2: Tetik.Olaylar := Tetik.Olaylar + 'UPDATE';
+          else
+            Tetik.Olaylar := Tetik.Olaylar + 'DELETE';
+          end;
         end;
       end;
       Liste.Add(Tetik);
@@ -724,10 +820,23 @@ begin
   end;
 end;
 
+{ Tablonun gecici/dis tablo ozelliklerini Bilgi'ye yazar (kolon ve kisitlara dokunmaz). }
+procedure TabloOzellikleriniOku(Bag: TAcikBaglanti; const Ad: string; var Bilgi: TTabloBilgisi);
+begin
+  Bilgi.GeciciTur := 0;
+  if SurumNo(Bag) >= 3 then
+    case StrToIntDef(TekDeger(Bag, 'select rdb$relation_type from rdb$relations where rdb$relation_name = :N', Ad), 0) of
+      4: Bilgi.GeciciTur := 1;
+      5: Bilgi.GeciciTur := 2;
+    end;
+  Bilgi.DisDosya := TekDeger(Bag, 'select rdb$external_file from rdb$relations where rdb$relation_name = :N', Ad);
+end;
+
 function TabloBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TTabloBilgisi;
 begin
   NesneVarMi(Bag, 'select rdb$relation_name from rdb$relations where rdb$relation_name = :N ' +
     'and rdb$view_blr is null', Ad);
+  TabloOzellikleriniOku(Bag, Ad, Result);
   Result.Kolonlar := KolonlariOku(Bag, Ad);
   Result.Kisitlar := KisitlariOku(Bag, Ad);
   Result.Indeksler := IndeksleriOku(Bag, Ad);
@@ -850,6 +959,309 @@ begin
     end;
   finally
     Satirlar.Free;
+  end;
+end;
+
+{ ---------- Tum veritabani icin okuma (Metadata cikar) ---------- }
+
+function VeritabaniSayfaBoyutu(Bag: TAcikBaglanti): Integer;
+begin
+  Result := StrToIntDef(TekDeger(Bag, 'select mon$page_size from mon$database', ''), 0);
+end;
+
+function VeritabaniVarsayilanKarakterSeti(Bag: TAcikBaglanti): string;
+begin
+  Result := VeritabaniKarakterSeti(Bag);
+  if Result = 'NONE' then
+    Result := '';
+end;
+
+function RolAdlari(Bag: TAcikBaglanti): TArray<string>;
+begin
+  Result := SutunListesi(Bag, 'select rdb$role_name from rdb$roles where coalesce(rdb$system_flag, 0) = 0 ' +
+    'order by rdb$role_name', '');
+end;
+
+function IstisnalariOku(Bag: TAcikBaglanti): TArray<TIstisnaBilgisi>;
+var
+  Sorgu: TFDQuery;
+  Liste: TList<TIstisnaBilgisi>;
+  Istisna: TIstisnaBilgisi;
+begin
+  Liste := TList<TIstisnaBilgisi>.Create;
+  Sorgu := SorguAc(Bag, 'select rdb$exception_name as AD, rdb$message as MESAJ from rdb$exceptions ' +
+    'where coalesce(rdb$system_flag, 0) = 0 order by rdb$exception_name', '');
+  try
+    while not Sorgu.Eof do
+    begin
+      Istisna.Ad := Trim(Sorgu.FieldByName('AD').AsString);
+      Istisna.Mesaj := Sorgu.FieldByName('MESAJ').AsString;
+      Liste.Add(Istisna);
+      Sorgu.Next;
+    end;
+    Result := Liste.ToArray;
+  finally
+    Sorgu.Free;
+    Liste.Free;
+  end;
+end;
+
+function GeneratorAdlari(Bag: TAcikBaglanti): TArray<string>;
+begin
+  Result := SutunListesi(Bag, 'select rdb$generator_name from rdb$generators ' +
+    'where coalesce(rdb$system_flag, 0) = 0 order by rdb$generator_name', '');
+end;
+
+function DomainleriOku(Bag: TAcikBaglanti): TArray<TDomainBilgisi>;
+var
+  Sorgu: TFDQuery;
+  Liste: TList<TDomainBilgisi>;
+  Alan: TDomainBilgisi;
+  VarsayilanCS: string;
+begin
+  VarsayilanCS := VeritabaniKarakterSeti(Bag);
+  Liste := TList<TDomainBilgisi>.Create;
+  Sorgu := SorguAc(Bag, 'select f.rdb$field_name as AD, f.rdb$null_flag as BOS_OLMAZ, ' +
+    'f.rdb$default_source as VARSAYILAN, f.rdb$validation_source as KONTROL, ' +
+    'f.rdb$field_type as TIP, f.rdb$field_sub_type as ALT_TIP, f.rdb$field_length as UZUNLUK, ' +
+    'f.rdb$field_scale as OLCEK, f.rdb$field_precision as HASSASIYET, f.rdb$character_length as KARAKTER_UZ, ' +
+    'f.rdb$segment_length as BLOB_PARCA, f.rdb$collation_id as F_COLL, ' +
+    'cs.rdb$character_set_name as CS_ADI, co.rdb$collation_name as COLL_ADI ' +
+    'from rdb$fields f ' +
+    'left join rdb$character_sets cs on cs.rdb$character_set_id = f.rdb$character_set_id ' +
+    'left join rdb$collations co on co.rdb$character_set_id = f.rdb$character_set_id ' +
+    'and co.rdb$collation_id = f.rdb$collation_id ' +
+    'where f.rdb$field_name not starting with ''RDB$'' and coalesce(f.rdb$system_flag, 0) = 0 ' +
+    'order by f.rdb$field_name', '');
+  try
+    while not Sorgu.Eof do
+    begin
+      Alan := Default(TDomainBilgisi);
+      Alan.Ad := Trim(Sorgu.FieldByName('AD').AsString);
+      Alan.Tip := TipMetniUret(Sorgu, VarsayilanCS);
+      Alan.Varsayilan := VarsayilanMetni(Sorgu.FieldByName('VARSAYILAN').AsString);
+      Alan.BosOlmaz := Sorgu.FieldByName('BOS_OLMAZ').AsInteger = 1;
+      Alan.Kontrol := Trim(Sorgu.FieldByName('KONTROL').AsString);
+      if (Alan.Kontrol <> '') and not StartsText('CHECK', Alan.Kontrol) then
+        Alan.Kontrol := 'CHECK ' + Alan.Kontrol;
+      if Sorgu.FieldByName('F_COLL').AsInteger > 0 then
+        Alan.Collate := Trim(Sorgu.FieldByName('COLL_ADI').AsString);
+      Liste.Add(Alan);
+      Sorgu.Next;
+    end;
+    Result := Liste.ToArray;
+  finally
+    Sorgu.Free;
+    Liste.Free;
+  end;
+end;
+
+function TabloAdlari(Bag: TAcikBaglanti): TArray<string>;
+begin
+  Result := SutunListesi(Bag, 'select rdb$relation_name from rdb$relations ' +
+    'where rdb$view_blr is null and coalesce(rdb$system_flag, 0) = 0 order by rdb$relation_name', '');
+end;
+
+function ProsedurAdlari(Bag: TAcikBaglanti): TArray<string>;
+var
+  PaketSarti: string;
+begin
+  PaketSarti := '';
+  if SurumNo(Bag) >= 3 then
+    PaketSarti := ' and rdb$package_name is null';
+  Result := SutunListesi(Bag, 'select rdb$procedure_name from rdb$procedures ' +
+    'where coalesce(rdb$system_flag, 0) = 0' + PaketSarti + ' order by rdb$procedure_name', '');
+end;
+
+function ViewAdlariSirali(Bag: TAcikBaglanti; out Dongu: TArray<string>): TArray<string>;
+var
+  Adlar: TArray<string>;
+  Bagimlilar: TDictionary<string, TList<string>>;
+  Bitenler: TDictionary<string, Boolean>;
+  Kalan, Sirali, Sonraki: TList<string>;
+  Sorgu: TFDQuery;
+  Ad, Bagimli, Hedef: string;
+  Hazir, Ilerledi: Boolean;
+begin
+  Adlar := SutunListesi(Bag, 'select rdb$relation_name from rdb$relations ' +
+    'where rdb$view_blr is not null and coalesce(rdb$system_flag, 0) = 0 order by rdb$relation_name', '');
+  Bagimlilar := TObjectDictionary<string, TList<string>>.Create([doOwnsValues]);
+  Bitenler := TDictionary<string, Boolean>.Create;
+  Kalan := TList<string>.Create;
+  Sirali := TList<string>.Create;
+  Sonraki := TList<string>.Create;
+  try
+    for Ad in Adlar do
+    begin
+      Bagimlilar.Add(Ad, TList<string>.Create);
+      Kalan.Add(Ad);
+    end;
+    { Sadece view'in baska bir VIEW'a bagimliligi onemli; tablo ve prosedurler once kurulur. }
+    Sorgu := SorguAc(Bag, 'select distinct rdb$dependent_name as AD, rdb$depended_on_name as HEDEF ' +
+      'from rdb$dependencies where rdb$dependent_type = 1 and rdb$depended_on_type in (0, 1)', '');
+    try
+      while not Sorgu.Eof do
+      begin
+        Ad := Trim(Sorgu.FieldByName('AD').AsString);
+        Hedef := Trim(Sorgu.FieldByName('HEDEF').AsString);
+        if Bagimlilar.ContainsKey(Ad) and Bagimlilar.ContainsKey(Hedef) and (Ad <> Hedef) then
+          Bagimlilar[Ad].Add(Hedef);
+        Sorgu.Next;
+      end;
+    finally
+      Sorgu.Free;
+    end;
+    repeat
+      Ilerledi := False;
+      Sonraki.Clear;
+      for Ad in Kalan do
+      begin
+        Hazir := True;
+        for Bagimli in Bagimlilar[Ad] do
+          if not Bitenler.ContainsKey(Bagimli) then
+            Hazir := False;
+        if Hazir then
+        begin
+          Sirali.Add(Ad);
+          Bitenler.Add(Ad, True);
+          Ilerledi := True;
+        end
+        else
+          Sonraki.Add(Ad);
+      end;
+      Kalan.Clear;
+      Kalan.AddRange(Sonraki);
+    until (not Ilerledi) or (Kalan.Count = 0);
+    Dongu := Kalan.ToArray;
+    Sirali.AddRange(Kalan);
+    Result := Sirali.ToArray;
+  finally
+    Sonraki.Free;
+    Sirali.Free;
+    Kalan.Free;
+    Bitenler.Free;
+    Bagimlilar.Free;
+  end;
+end;
+
+function YetkileriOku(Bag: TAcikBaglanti): TArray<TYetkiBilgisi>;
+var
+  Sorgu: TFDQuery;
+  Liste: TList<TYetkiBilgisi>;
+  Yetki: TYetkiBilgisi;
+begin
+  Liste := TList<TYetkiBilgisi>.Create;
+  { Nesne sahibinin kendi (otomatik) yetkileri (kullanici = veren) ve sistem nesneleri atlanir. }
+  Sorgu := SorguAc(Bag, 'select rdb$user as KULLANICI, rdb$user_type as KULLANICI_TURU, rdb$privilege as YETKI, ' +
+    'rdb$grant_option as SECENEK, rdb$relation_name as NESNE, rdb$object_type as NESNE_TURU, rdb$field_name as ALAN ' +
+    'from rdb$user_privileges ' +
+    'where rdb$grantor is not null and rdb$user <> rdb$grantor and rdb$object_type in (0, 5, 7, 13, 14) ' +
+    'and rdb$relation_name not starting with ''RDB$'' and rdb$relation_name not starting with ''MON$'' ' +
+    'and rdb$relation_name not starting with ''SEC$'' ' +
+    'order by rdb$relation_name, rdb$object_type, rdb$user_type, rdb$user, rdb$grant_option, ' +
+    'rdb$privilege, rdb$field_name', '');
+  try
+    while not Sorgu.Eof do
+    begin
+      Yetki.Kullanici := Trim(Sorgu.FieldByName('KULLANICI').AsString);
+      Yetki.KullaniciTuru := Sorgu.FieldByName('KULLANICI_TURU').AsInteger;
+      Yetki.Yetki := Trim(Sorgu.FieldByName('YETKI').AsString);
+      Yetki.SecenekVar := Sorgu.FieldByName('SECENEK').AsInteger;
+      Yetki.Nesne := Trim(Sorgu.FieldByName('NESNE').AsString);
+      Yetki.NesneTuru := Sorgu.FieldByName('NESNE_TURU').AsInteger;
+      Yetki.Alan := Trim(Sorgu.FieldByName('ALAN').AsString);
+      Liste.Add(Yetki);
+      Sorgu.Next;
+    end;
+    Result := Liste.ToArray;
+  finally
+    Sorgu.Free;
+    Liste.Free;
+  end;
+end;
+
+function DesteklenmeyenNesneSayisi(Bag: TAcikBaglanti): Integer;
+begin
+  Result := StrToIntDef(TekDeger(Bag, 'select count(*) from rdb$functions where coalesce(rdb$system_flag, 0) = 0', ''), 0) +
+    StrToIntDef(TekDeger(Bag, 'select count(*) from rdb$filters', ''), 0) +
+    StrToIntDef(TekDeger(Bag, 'select count(*) from rdb$collations where coalesce(rdb$system_flag, 0) = 0', ''), 0);
+  if SurumNo(Bag) >= 3 then
+    Result := Result + StrToIntDef(TekDeger(Bag, 'select count(*) from rdb$packages where coalesce(rdb$system_flag, 0) = 0', ''), 0);
+end;
+
+function AciklamalariOku(Bag: TAcikBaglanti): TArray<TAciklamaBilgisi>;
+var
+  Liste: TList<TAciklamaBilgisi>;
+
+  { Sorgu AD1 (ve varsa AD2) ile METIN alanlarini vermeli. }
+  procedure Topla(const Tur, Sql: string);
+  var
+    Sorgu: TFDQuery;
+    Kayit: TAciklamaBilgisi;
+  begin
+    Sorgu := SorguAc(Bag, Sql, '');
+    try
+      while not Sorgu.Eof do
+      begin
+        Kayit := Default(TAciklamaBilgisi);
+        Kayit.Tur := Tur;
+        if Sorgu.FindField('AD1') <> nil then
+          Kayit.Ad1 := Trim(Sorgu.FieldByName('AD1').AsString);
+        if Sorgu.FindField('AD2') <> nil then
+          Kayit.Ad2 := Trim(Sorgu.FieldByName('AD2').AsString);
+        Kayit.Metin := Sorgu.FieldByName('METIN').AsString;
+        if Kayit.Metin <> '' then
+          Liste.Add(Kayit);
+        Sorgu.Next;
+      end;
+    finally
+      Sorgu.Free;
+    end;
+  end;
+
+var
+  PaketSarti, GeneratorTuru: string;
+begin
+  PaketSarti := '';
+  GeneratorTuru := 'GENERATOR';
+  if SurumNo(Bag) >= 3 then
+  begin
+    PaketSarti := ' and rdb$package_name is null';
+    GeneratorTuru := 'SEQUENCE';
+  end;
+  Liste := TList<TAciklamaBilgisi>.Create;
+  try
+    Topla('DATABASE', 'select rdb$description as METIN from rdb$database where rdb$description is not null');
+    Topla('ROLE', 'select rdb$role_name as AD1, rdb$description as METIN from rdb$roles ' +
+      'where coalesce(rdb$system_flag, 0) = 0 and rdb$description is not null order by 1');
+    Topla('EXCEPTION', 'select rdb$exception_name as AD1, rdb$description as METIN from rdb$exceptions ' +
+      'where coalesce(rdb$system_flag, 0) = 0 and rdb$description is not null order by 1');
+    Topla(GeneratorTuru, 'select rdb$generator_name as AD1, rdb$description as METIN from rdb$generators ' +
+      'where coalesce(rdb$system_flag, 0) = 0 and rdb$description is not null order by 1');
+    Topla('DOMAIN', 'select rdb$field_name as AD1, rdb$description as METIN from rdb$fields ' +
+      'where rdb$field_name not starting with ''RDB$'' and coalesce(rdb$system_flag, 0) = 0 ' +
+      'and rdb$description is not null order by 1');
+    Topla('TABLE', 'select rdb$relation_name as AD1, rdb$description as METIN from rdb$relations ' +
+      'where rdb$view_blr is null and coalesce(rdb$system_flag, 0) = 0 and rdb$description is not null order by 1');
+    Topla('VIEW', 'select rdb$relation_name as AD1, rdb$description as METIN from rdb$relations ' +
+      'where rdb$view_blr is not null and coalesce(rdb$system_flag, 0) = 0 and rdb$description is not null order by 1');
+    Topla('COLUMN', 'select rf.rdb$relation_name as AD1, rf.rdb$field_name as AD2, rf.rdb$description as METIN ' +
+      'from rdb$relation_fields rf join rdb$relations r on r.rdb$relation_name = rf.rdb$relation_name ' +
+      'where coalesce(r.rdb$system_flag, 0) = 0 and rf.rdb$description is not null ' +
+      'order by rf.rdb$relation_name, rf.rdb$field_position');
+    Topla('INDEX', 'select rdb$index_name as AD1, rdb$description as METIN from rdb$indices ' +
+      'where rdb$index_name not starting with ''RDB$'' and coalesce(rdb$system_flag, 0) = 0 ' +
+      'and rdb$description is not null order by 1');
+    Topla('PROCEDURE', 'select rdb$procedure_name as AD1, rdb$description as METIN from rdb$procedures ' +
+      'where coalesce(rdb$system_flag, 0) = 0' + PaketSarti + ' and rdb$description is not null order by 1');
+    Topla('PROCEDURE PARAMETER', 'select rdb$procedure_name as AD1, rdb$parameter_name as AD2, rdb$description as METIN ' +
+      'from rdb$procedure_parameters where rdb$description is not null' + PaketSarti +
+      ' order by rdb$procedure_name, rdb$parameter_type, rdb$parameter_number');
+    Topla('TRIGGER', 'select rdb$trigger_name as AD1, rdb$description as METIN from rdb$triggers ' +
+      'where coalesce(rdb$system_flag, 0) = 0 and rdb$description is not null order by 1');
+    Result := Liste.ToArray;
+  finally
+    Liste.Free;
   end;
 end;
 

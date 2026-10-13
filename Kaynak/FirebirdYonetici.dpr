@@ -22,6 +22,7 @@ uses
   fSorguSekme in 'fSorguSekme.pas' {SorguSekme: TFrame},
   fMetinGoster in 'fMetinGoster.pas' {frmMetinGoster},
   fMetinSor in 'fMetinSor.pas' {frmMetinSor},
+  fMetadataCikar in 'fMetadataCikar.pas' {frmMetadataCikar},
   fBaglanti in 'fBaglanti.pas' {frmBaglanti},
   fAna in 'fAna.pas' {frmAna};
 

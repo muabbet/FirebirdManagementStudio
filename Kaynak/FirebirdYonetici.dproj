@@ -107,6 +107,10 @@
             <Form>frmMetinSor</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="fMetadataCikar.pas">
+            <Form>frmMetadataCikar</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <DCCReference Include="fBaglanti.pas">
             <Form>frmBaglanti</Form>
             <FormType>dfm</FormType>
