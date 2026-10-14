@@ -11,7 +11,7 @@ unit uDDL;
 interface
 
 uses
-  System.Classes, uBaglanti;
+  System.SysUtils, System.Classes, uBaglanti;
 
 type
   TNesneTuru = (ntTablo, ntView, ntProsedur, ntGenerator);
@@ -26,9 +26,14 @@ type
   { Uzun surerken sik sik cagrilir: Aciklama "Tablolar: 12 / 117" gibi. Iptal True yapilirsa cikarma durur. }
   TCikarIlerlemesi = procedure(const Aciklama: string; var Iptal: Boolean) of object;
 
-{ SET NAMES ile yazilan script'in dosya kodlamasi UTF-8'dir (BOM'suz). }
-const
-  SCRIPT_KARAKTER_SETI = 'UTF8';
+{ Script'in basina SET NAMES ile yazilan karakter seti: veritabaninin varsayilani (ornek WIN1254), o NONE ise
+  baglantinin karakter seti; kod sayfasi bilinmiyorsa UTF8. Dosya da bu karakter setinin kodlamasiyla yazilir
+  (IBExpert gibi), boylece script ayni karakter setli veritabanina uygulanirken metin ve exception mesajlari
+  ayni baytlarla kalir. }
+function ScriptKarakterSeti(Bag: TAcikBaglanti): string;
+
+{ Script dosyasi/akisi icin kodlama (BOM'suz). Cagiran Free eder. }
+function ScriptKodlamasiOlustur(Bag: TAcikBaglanti): TEncoding;
 
 { Nesnenin CREATE script'ini verir. Nesne yoksa veya govde metni kayitli degilse
   EMetadataHatasi (uMetadata) verir; mesaji kullaniciya gosterilir. }
@@ -43,11 +48,67 @@ function MetadataCikar(Bag: TAcikBaglanti; const Secenekler: TCikarSecenekleri; 
 implementation
 
 uses
-  System.SysUtils, System.StrUtils, System.Generics.Collections, uDil, uMetadata;
+  System.StrUtils, System.Generics.Collections, uDil, uMetadata;
 
 var
   { Script uretirken kurulur: tirnak gerektiren (anahtar kelime) adlari bilmek icin. }
   GAnahtarKelimeler: TStringList;
+
+const
+  { Metadata okunurken kullanilan baglanti karakter seti (nesne adlari ve metinler bozulmasin). }
+  OKUMA_KARAKTER_SETI = 'UTF8';
+
+{ Firebird karakter seti adindan Windows kod sayfasi; UTF8 ve bilinmeyenler icin 0. }
+function KodSayfasi(const Ad: string): Integer;
+var
+  No: Integer;
+begin
+  Result := 0;
+  if (Length(Ad) = 7) and SameText(Copy(Ad, 1, 3), 'WIN') then
+  begin
+    No := StrToIntDef(Copy(Ad, 4, 4), 0);
+    if (No >= 1250) and (No <= 1258) then
+      Result := No;
+  end
+  else if SameText(Copy(Ad, 1, 7), 'ISO8859') then
+  begin
+    No := StrToIntDef(Copy(Ad, 9, 2), 0);
+    if (No >= 1) and (No <= 9) then
+      Result := 28590 + No
+    else if No = 13 then
+      Result := 28603;
+  end
+  else if SameText(Ad, 'DOS437') then
+    Result := 437
+  else if SameText(Ad, 'DOS850') then
+    Result := 850
+  else if SameText(Ad, 'DOS852') then
+    Result := 852
+  else if SameText(Ad, 'DOS857') then
+    Result := 857
+  else if SameText(Ad, 'DOS866') then
+    Result := 866;
+end;
+
+function ScriptKarakterSeti(Bag: TAcikBaglanti): string;
+begin
+  Result := UpperCase(VeritabaniVarsayilanKarakterSeti(Bag));
+  if Result = '' then
+    Result := UpperCase(Bag.Tanim.KarakterSeti);
+  if KodSayfasi(Result) = 0 then
+    Result := 'UTF8';
+end;
+
+function ScriptKodlamasiOlustur(Bag: TAcikBaglanti): TEncoding;
+var
+  KodSayfasiNo: Integer;
+begin
+  KodSayfasiNo := KodSayfasi(ScriptKarakterSeti(Bag));
+  if KodSayfasiNo = 0 then
+    Result := TUTF8Encoding.Create(False)
+  else
+    Result := TEncoding.GetEncoding(KodSayfasiNo);
+end;
 
 procedure AnahtarKelimeleriKur(const Surum: string);
 begin
@@ -965,7 +1026,7 @@ var
   Kimlik, Komut, KarakterSeti: string;
   Sayfa: Integer;
 begin
-  Yazici.WriteLine('SET NAMES ' + SCRIPT_KARAKTER_SETI + ';');
+  Yazici.WriteLine('SET NAMES ' + ScriptKarakterSeti(Bag) + ';');
   { Dialect 1 veritabaninda DATE ve NUMERIC dialect 3'tekinden farkli anlam tasir; isql komutu olarak yazilir. }
   if Bag.Dialect <> 3 then
     Yazici.WriteLine('SET SQL DIALECT ' + IntToStr(Bag.Dialect) + ';');
@@ -1000,11 +1061,11 @@ var
 begin
   Kendi := False;
   Result := Bag;
-  if SameText(Bag.Tanim.KarakterSeti, SCRIPT_KARAKTER_SETI) then
+  if SameText(Bag.Tanim.KarakterSeti, OKUMA_KARAKTER_SETI) then
     Exit;
   Tanim := Bag.Tanim;
   Tanim.Ad := Bag.Tanim.Ad + ' (metadata)';
-  Tanim.KarakterSeti := SCRIPT_KARAKTER_SETI;
+  Tanim.KarakterSeti := OKUMA_KARAKTER_SETI;
   try
     Result := FbBaglan(Tanim);
     Kendi := True;

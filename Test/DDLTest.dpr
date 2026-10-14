@@ -32,6 +32,8 @@ var
   BagA, BagB, BagC, BagD: TAcikBaglanti;
   SurumNo: Integer;
   ScriptKlasoru: string;
+  { Script dosyalarinin kodlamasi (uDDL.ScriptKodlamasiOlustur; BagA ile kurulur) }
+  GKodlama: TEncoding;
 
 function Ortam(const Ad, Varsayilan: string): string;
 begin
@@ -291,7 +293,7 @@ end;
 procedure ScriptYaz(const Dosya, Metin: string);
 begin
   if ScriptKlasoru <> '' then
-    TFile.WriteAllText(TPath.Combine(ScriptKlasoru, Dosya), Metin, TEncoding.UTF8);
+    TFile.WriteAllText(TPath.Combine(ScriptKlasoru, Dosya), Metin, GKodlama);
 end;
 
 function Icerir(const Metin, Parca: string): Boolean;
@@ -676,7 +678,9 @@ begin
     Cikti.Add('      cikti uzunlugu: ' + IntToStr(Length(Ilk)) + ' karakter, ' + IntToStr(Say(Ilk, sLineBreak)) + ' satir');
 
     { Sira }
-    Kontrol('SET NAMES UTF8 ilk satir', Pos('SET NAMES UTF8;', Ilk) = 1);
+    Kontrol('SET NAMES veritabaninin karakter seti (WIN1254) ilk satir', Pos('SET NAMES WIN1254;', Ilk) = 1);
+    Kontrol('script karakter seti WIN1254, kod sayfasi 1254', (ScriptKarakterSeti(BagC) = 'WIN1254') and
+      (GKodlama.CodePage = 1254));
     Kontrol('sira: rol < exception < generator < domain < tablo',
       (Pos('CREATE ROLE', Ilk) < Pos('CREATE EXCEPTION', Ilk)) and
       (Pos('CREATE EXCEPTION', Ilk) < Pos('CREATE SEQUENCE', Ilk)) and
@@ -766,7 +770,7 @@ begin
 
     { Dosyaya akis: UTF-8, BOM yok, icerik ayni }
     Dosya := TPath.Combine(TPath.GetTempPath, 'ddltest_cikti.sql');
-    Kodlama := TUTF8Encoding.Create(False);
+    Kodlama := ScriptKodlamasiOlustur(BagC);
     try
       Yazici := TStreamWriter.Create(Dosya, False, Kodlama);
       try
@@ -779,7 +783,9 @@ begin
     end;
     Baytlar := TFile.ReadAllBytes(Dosya);
     Kontrol('dosya BOM''suz', (Length(Baytlar) > 3) and not ((Baytlar[0] = $EF) and (Baytlar[1] = $BB) and (Baytlar[2] = $BF)));
-    Kontrol('dosya icerigi metinle ayni (Turkce karakterler UTF-8 gidis-donus)', TFile.ReadAllText(Dosya, TEncoding.UTF8) = Ilk);
+    Kontrol('dosya Turkce harfleri tek baytla yazdi (WIN1254: i-noktasiz = 0xFD)', Say(TEncoding.GetEncoding(1254).GetString(Baytlar), #$0131) > 0);
+    Kontrol('dosya icerigi metinle ayni (Turkce karakterler WIN1254 gidis-donus)',
+      TFile.ReadAllText(Dosya, TEncoding.GetEncoding(1254)) = Ilk);
     { Gidis-donus: cikan script bos veritabaninda calismali ve ayni yapi yeniden cikarilabilmeli }
     Kontrol('D (bos): cikan script hatasiz calisti', BetigiCalistir(BagD, 'cikan script', Ilk) = 0);
     Kontrol('D: ayni yapi tekrar cikarildi', MetinCikar(BagD, Sec, Uyarilar, Olcum, Ikinci));
@@ -878,6 +884,7 @@ begin
       GeciciVeritabaniOlustur(TanimA);
       GeciciVeritabaniOlustur(TanimB);
       BagA := FbBaglan(TanimA);
+      GKodlama := ScriptKodlamasiOlustur(BagA);
       BagB := FbBaglan(TanimB);
       SurumNo := StrToIntDef(Copy(BagA.Surum, 1, Pos('.', BagA.Surum) - 1), 0);
       Cikti.Add('--- Surum ' + BagA.Surum + ', A: ' + TanimA.VeritabaniYolu + ', B: ' + TanimB.VeritabaniYolu + ' ---');

@@ -111,7 +111,7 @@ Adım 1 sahibi tarafından onaylandı (2026-10-13). Bu bölüm Adım 2'yi anlat�
   - İlerleme: "Tablolar: 12 / 117" gibi yazılır, pencere `ProcessMessages` ile donmaz, **İptal** düğmesi çalışır. İptalde yarım dosya silinmez, sonuç alanına "dosyada yalnızca yarım içerik var (dosya silinmedi)" yazılır.
   - Bitişte sonuç alanına özet ve **uyarılar** (atlanan nesneler) yazılır.
 - **`uDDL.MetadataCikar`** (yeni, `TCikarici` sınıfı; iş burada). Adım 1'deki üreticileri çağırır (kolon, kısıt, indeks, tetikleyici metinleri ortak). Sıra (boş veritabanında hatasız çalışsın diye):
-  1. `SET NAMES UTF8;`, (seçilmişse) `CREATE DATABASE` (sayfa boyutu ve varsayılan karakter seti veritabanından) / `CONNECT`
+  1. `SET NAMES <veritabanÄ±nÄ±n karakter seti>;` (Ã¶rn. `WIN1254`), (varsa) `SET SQL DIALECT 1;`, (seÃ§ilmiÅŸse) `CREATE DATABASE` (sayfa boyutu ve varsayÄ±lan karakter seti veritabanÄ±ndan) / `CONNECT`
   2. Roller, exception'lar, generator'lar (değerleriyle `SET GENERATOR`), domain'ler
   3. Tablolar **yalnız kolonlarıyla** (geçici tablo `ON COMMIT ...`, dış tablo `EXTERNAL FILE` dahil)
   4. Prosedürler **parametreli iskelet** olarak: çıkış parametreli olanda gövde `SUSPEND;`, diğerinde `EXIT;` (isql -x de böyle; boş gövdeli olunca bu prosedürü çağıran view kurulamıyor, ilk denemede "invalid request BLR" hatası aldım ve düzelttim)
@@ -185,3 +185,9 @@ Adım 1'deki komutlar aynen geçerli (`DDLTest.exe` artık Adım 2'yi de içeriy
 ## Yapılmayanlar
 
 `CLAUDE.md` Aşama 3 kutuları işaretlenmedi. 3b'ye geçilmedi.
+
+## Güncelleme (2026-10-14): sahibinin IBExpert karşılaştırması
+
+- **Dialect 1:** Sahibinin 2.5.9 veritabanı dialect 1 (IBExpert `DATE` ve `NUMERIC(15,2)` yazıyordu, biz `TIMESTAMP` ve `DOUBLE PRECISION`). Düzeltildi: bağlanınca `MON$DATABASE.MON$SQL_DIALECT` okunur (`TAcikBaglanti.Dialect`); dialect 1 ise başa `SET SQL DIALECT 1;` yazılır, `DATE` ve `NUMERIC(p, s)` yazılır. Sahibinin yeni çıktısında TIMESTAMP 0, DATE 133, NUMERIC 44, DOUBLE 423: IBExpert'le aynı. FireDAC 5.0'da dialect 1 veritabanına bağlanamadığı için (SET BIND hatası) bu dalı yerelde çalıştıramadım, sahibinin gerçek veritabanında doğrulandı.
+- **Karakter seti:** `SET NAMES UTF8` yerine veritabanının karakter seti kullanılıyor (yukarıda). DDLTest 147 kontrol, hata 0.
+- IBExpert ile karşılaştırmada tetikleyici, indeks, kısıt, view, prosedür gövdesi, exception ve tablo sayıları aynı; kalan fark yalnız `NUMERIC(15,2)` / `NUMERIC(15, 2)` yazım biçimi ve `SET GENERATOR ... TO 0` satırlarının atlanması.
