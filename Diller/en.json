@@ -192,5 +192,6 @@
   "MD_UYARI_VIEW_DONGU": "The dependencies between these views could not be resolved; they are written last in the script: %s",
   "MD_UYARI_TETIK_DESTEK": "The trigger '%s' is of an unsupported kind (e.g. a DDL trigger) and was not written to the script.",
   "MD_UYARI_YETKI_ATLANDI": "A privilege on '%s' was granted to an unsupported kind of user and was not written.",
-  "MD_UYARI_ATLANAN": "%d object(s) in the database could not be scripted (function/UDF, package, user collation or blob filter). They were not written; add them by hand."
+  "MD_UYARI_ATLANAN": "%d object(s) in the database could not be scripted (function/UDF, package, user collation or blob filter). They were not written; add them by hand.",
+  "BTN_KLONLA": "Clone"
 }

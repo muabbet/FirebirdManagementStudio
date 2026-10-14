@@ -33,6 +33,7 @@ type
     pnlUst: TPanel;
     tbAna: TToolBar;
     btnYeniBaglanti: TToolButton;
+    btnKlonla: TToolButton;
     btnBaglan: TToolButton;
     btnYenile: TToolButton;
     btnYeniSorgu: TToolButton;
@@ -68,6 +69,7 @@ type
     procedure pcCalismaChange(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure btnYeniBaglantiClick(Sender: TObject);
+    procedure btnKlonlaClick(Sender: TObject);
     procedure btnBaglanClick(Sender: TObject);
     procedure btnYeniSorguClick(Sender: TObject);
     procedure btnCalistirClick(Sender: TObject);
@@ -202,6 +204,7 @@ var
 begin
   Caption := T('APP_BASLIK');
   btnYeniBaglanti.Caption := T('BTN_YENI_BAGLANTI');
+  btnKlonla.Caption := T('BTN_KLONLA');
   btnYenile.Caption := T('BTN_YENILE');
   btnYeniSorgu.Caption := T('BTN_YENI_SORGU');
   btnCalistir.Caption := T('BTN_CALISTIR');
@@ -283,6 +286,8 @@ begin
     btnBaglan.ImageIndex := IKON_KES;
   end;
   btnBaglan.Enabled := Dugme <> nil;
+  { Klonla: yalniz dogrudan bir baglanti dugumu secili iken (klasor, tablo vb. degil). }
+  btnKlonla.Enabled := (tvNesneler.Selected <> nil) and (OgeAl(tvNesneler.Selected).Tur = atBaglanti);
   btnYenile.Enabled := Bag <> nil;
   btnYeniSorgu.Enabled := Bag <> nil;
   btnCalistir.Enabled := AktifSorguSekmesi <> nil;
@@ -930,6 +935,12 @@ begin
 end;
 
 { ---------- Dugme ve menu olaylari ---------- }
+
+procedure TfrmAna.btnKlonlaClick(Sender: TObject);
+begin
+  if SeciliBaglantiDugmesi <> nil then
+    YeniBaglanti(OgeAl(SeciliBaglantiDugmesi).BaglantiAd);
+end;
 
 procedure TfrmAna.btnYeniBaglantiClick(Sender: TObject);
 begin

@@ -67,8 +67,15 @@ object frmAna: TfrmAna
         ImageIndex = 3
         OnClick = btnYeniBaglantiClick
       end
-      object btnBaglan: TToolButton
+      object btnKlonla: TToolButton
         Left = 60
+        Top = 0
+        AutoSize = True
+        ImageIndex = 9
+        OnClick = btnKlonlaClick
+      end
+      object btnBaglan: TToolButton
+        Left = 120
         Top = 0
         AutoSize = True
         ImageIndex = 0

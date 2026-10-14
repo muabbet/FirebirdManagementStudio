@@ -192,5 +192,6 @@
   "MD_UYARI_VIEW_DONGU": "Şu view'ların birbirine bağlılığı çözülemedi, script'te sonda yazıldı: %s",
   "MD_UYARI_TETIK_DESTEK": "'%s' tetikleyicisi desteklenmeyen türde (DDL tetikleyicisi vb.), script'e yazılmadı.",
   "MD_UYARI_YETKI_ATLANDI": "'%s' üzerindeki bir yetki desteklenmeyen bir kullanıcı türüne verilmiş, yazılmadı.",
-  "MD_UYARI_ATLANAN": "Veritabanında script'i üretilemeyen %d nesne var (fonksiyon/UDF, paket, kullanıcı collation'ı veya blob filtresi). Bunlar yazılmadı; elle eklemeniz gerekir."
+  "MD_UYARI_ATLANAN": "Veritabanında script'i üretilemeyen %d nesne var (fonksiyon/UDF, paket, kullanıcı collation'ı veya blob filtresi). Bunlar yazılmadı; elle eklemeniz gerekir.",
+  "BTN_KLONLA": "Klonla"
 }
