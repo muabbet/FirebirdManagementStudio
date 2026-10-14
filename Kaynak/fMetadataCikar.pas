@@ -208,7 +208,7 @@ begin
   if FileExists(Dosya) and not OnayIste(TF('ONAY_UZERINE_YAZ', [Dosya, DateTimeToStr(TFile.GetLastWriteTime(Dosya))])) then
     Exit;
   Uyarilar := TStringList.Create;
-  Kodlama := TUTF8Encoding.Create(False);
+  Kodlama := ScriptKodlamasiOlustur(FBag);
   try
     CalisiyorAyarla(True);
     try
