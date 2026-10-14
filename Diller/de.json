@@ -192,5 +192,6 @@
   "MD_UYARI_VIEW_DONGU": "Die Abhängigkeiten zwischen diesen Views konnten nicht aufgelöst werden; sie stehen am Ende des Skripts: %s",
   "MD_UYARI_TETIK_DESTEK": "Der Trigger '%s' ist von einer nicht unterstützten Art (z. B. DDL-Trigger) und wurde nicht ins Skript geschrieben.",
   "MD_UYARI_YETKI_ATLANDI": "Eine Berechtigung auf '%s' wurde einem nicht unterstützten Benutzertyp erteilt und nicht geschrieben.",
-  "MD_UYARI_ATLANAN": "In der Datenbank gibt es %d Objekt(e), für die kein Skript erzeugt werden konnte (Funktion/UDF, Package, Benutzer-Collation oder Blob-Filter). Sie wurden nicht geschrieben; bitte von Hand ergänzen."
+  "MD_UYARI_ATLANAN": "In der Datenbank gibt es %d Objekt(e), für die kein Skript erzeugt werden konnte (Funktion/UDF, Package, Benutzer-Collation oder Blob-Filter). Sie wurden nicht geschrieben; bitte von Hand ergänzen.",
+  "BTN_KLONLA": "Klonen"
 }

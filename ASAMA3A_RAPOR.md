@@ -1,7 +1,7 @@
 # Aşama 3a Raporu
 
 Dal: `asama3a` (`main`'den açıldı, `main`'e yazılmadı). `Derle.bat` (Win64 Release) hatasız derlendi.
-**Adım 1 onaylandı, Adım 2 bitti (aşağıda); 3b sahibinin onayını bekliyor, başlanmadı.**
+**Adım 1 onaylandı, Adım 2 bitti (aşağıda); 3b sahibinin onayını bekliyor, başlanmadı.** Sahibinin incelemesinden sonra küçük düzeltme yapıldı: araç çubuğuna **Klonla düğmesi eklendi** (Klonla menüden çıkarılmıştı, araç çubuğunda böyle bir düğme hiç yoktu: görev belgesi hatası), rapor metni düzeltildi. Ayrıntı en altta "Düzeltme" bölümünde.
 
 ---
 
@@ -94,7 +94,7 @@ bin\Win64\Release\DDLTest.exe
 
 ## Yapılmayanlar
 
-`CLAUDE.md` Aşama 3 kutuları işaretlenmedi. Adım 2 ("Metadata çıkar", "Klonla" menüden çıkarma) ve 3b'ye geçilmedi, onayınızı bekliyorum.
+`CLAUDE.md` Aşama 3 kutuları işaretlenmedi. 3b'ye geçilmedi. Klonla düğmesi daha sonra araç çubuğuna eklendi (aşağıdaki "Düzeltme" bölümü).
 
 ---
 
@@ -105,13 +105,13 @@ Adım 1 sahibi tarafından onaylandı (2026-10-13). Bu bölüm Adım 2'yi anlat�
 ## Ne yapıldı
 
 - **Menü:** Bağlantı düğümü sağ tık menüsünden **Klonla çıkarıldı** (`miKlonla`, `miKlonlaClick`, görünürlük ve başlık satırları silindi; `YeniBaglanti(KlonAd)` işlevi dosyada duruyor). Yerine **"Metadata çıkar"** geldi, yalnızca bağlı bağlantıda görünür. Menü (bağlıyken): Bağlan, Bağlantıyı Kes, Düzenle, Kayıttan Kaldır, Yenile, Metadata çıkar = **altı**. Araç çubuğuna düğme eklenmedi.
-  - **Sahibine soru:** Görevde "araç çubuğundaki Klonla düğmesi kalır" yazıyor, ama araç çubuğunda böyle bir düğme **yok** (Yeni Bağlantı, Bağlan, Yenile, Yeni Sorgu, Çalıştır, Plan). Bu yüzden şu an bağlantı klonlamanın arayüzde yolu kalmadı. İsterseniz araç çubuğuna "Klonla" düğmesi eklerim, ya da böyle kalsın.
+  - ~~Sahibine soru: araç çubuğunda Klonla düğmesi yok~~ **Çözüldü: araç çubuğuna eklendi** (aşağıdaki "Düzeltme" bölümü). Görev belgesindeki "araç çubuğundaki düğme kalır" cümlesi bir belge hatasıydı (böyle bir düğme hiç yoktu); sahibinin kararıyla düğme yeni eklendi.
 - **Pencere:** `fMetadataCikar.pas/.dfm` (yeni, ince form). Hedef: *Dosyaya kaydet* (varsayılan, "Seç..." ile) veya *Panoya kopyala*; üç kutu (CREATE DATABASE, CONNECT, şifre) **varsayılan kapalı**; şifre kutusu ilk ikisi kapalıyken pasif; işaretlenince kırmızı kalın uyarı ("şifre script içinde düz metin olarak görünecek"). Şifre kayıtlı bağlantıdan (DPAPI) gelir. Sıra tek ve varsayılandır (nesne türü kutusu yok).
   - Dosya zaten varsa **üzerine yazma onayı** (dosya adı ve son değişiklik tarihi yazılı, `OnayIste`). Dosyaya **akış** olarak yazılır (`TStreamWriter`), bellekte tek metin tutulmaz. Panoya alınıyorsa 8 milyon karakterden büyük metin **kesilmez**, "pano için fazla büyük, dosyaya kaydedin" cümlesi çıkar, pencere açık kalır.
   - İlerleme: "Tablolar: 12 / 117" gibi yazılır, pencere `ProcessMessages` ile donmaz, **İptal** düğmesi çalışır. İptalde yarım dosya silinmez, sonuç alanına "dosyada yalnızca yarım içerik var (dosya silinmedi)" yazılır.
   - Bitişte sonuç alanına özet ve **uyarılar** (atlanan nesneler) yazılır.
 - **`uDDL.MetadataCikar`** (yeni, `TCikarici` sınıfı; iş burada). Adım 1'deki üreticileri çağırır (kolon, kısıt, indeks, tetikleyici metinleri ortak). Sıra (boş veritabanında hatasız çalışsın diye):
-  1. `SET NAMES <veritabanÄ±nÄ±n karakter seti>;` (Ã¶rn. `WIN1254`), (varsa) `SET SQL DIALECT 1;`, (seÃ§ilmiÅŸse) `CREATE DATABASE` (sayfa boyutu ve varsayÄ±lan karakter seti veritabanÄ±ndan) / `CONNECT`
+  1. `SET NAMES <veritabanının karakter seti>;` (örn. `WIN1254`), (varsa) `SET SQL DIALECT 1;`, (seçilmişse) `CREATE DATABASE` (sayfa boyutu ve varsayılan karakter seti veritabanından) / `CONNECT`
   2. Roller, exception'lar, generator'lar (değerleriyle `SET GENERATOR`), domain'ler
   3. Tablolar **yalnız kolonlarıyla** (geçici tablo `ON COMMIT ...`, dış tablo `EXTERNAL FILE` dahil)
   4. Prosedürler **parametreli iskelet** olarak: çıkış parametreli olanda gövde `SUSPEND;`, diğerinde `EXIT;` (isql -x de böyle; boş gövdeli olunca bu prosedürü çağıran view kurulamıyor, ilk denemede "invalid request BLR" hatası aldım ve düzelttim)
@@ -124,7 +124,7 @@ Adım 1 sahibi tarafından onaylandı (2026-10-13). Bu bölüm Adım 2'yi anlat�
   11. Açıklamalar (`COMMENT ON`: veritabanı, tablo, view, kolon, prosedür, parametre, tetikleyici, domain, generator/sequence, exception, rol, indeks)
   - `SET TERM` sarmalayıcıları dengeli (prosedür başlıkları, tetikleyiciler, gövdeler ayrı bloklar).
   - **Okuma UTF-8 bağlantıyla** yapılır: bağlantı UTF8 değilse program metadata için ayrı, kısa ömürlü bir UTF8 bağlantı açar (açılamazsa verilen bağlantı kullanılır). Türkçe nesne adları ve açıklamalar bozulmuyor (testte doğrulandı).
-  - **Dosya kodlaması: UTF-8, BOM'suz.** Ölçtüm: BOM'lu dosyayı `isql -i` ilk komutta "Token unknown" diye reddediyor. Başlıkta `SET NAMES UTF8;` (dosya kodlamasına bağlı sabit `SCRIPT_KARAKTER_SETI`; nesnelerin karakter seti ve `DEFAULT CHARACTER SET` veritabanından okunur, kodda sabit değil).
+  - **Dosya kodlaması veritabanının varsayılan karakter setine göre belirlenir** (örn. WIN1254; veritabanı varsayılanı `NONE` ise bağlantının karakter seti; kod sayfası bilinmiyorsa UTF8) ve başlıkta `SET NAMES <o karakter seti>;` yazılır (IBExpert gibi). Okuma hâlâ UTF8 bağlantıyla yapılır; dosyaya yazarken metin veritabanının karakter setine çevrilir. BOM yok kuralı doğru kalır: ölçtüm, BOM'lu dosyayı `isql -i` ilk komutta "Token unknown" diye reddediyor. Kodda sabit karakter seti yok (UTF8 yalnızca metadata'yı okuyan iç bağlantıda); nesnelerin karakter seti ve `DEFAULT CHARACTER SET` veritabanından okunur.
 - **`uMetadata.pas`'e eklenenler** (sürüme bağlı okuma): `RolAdlari`, `IstisnalariOku`, `GeneratorAdlari`, `DomainleriOku`, `TabloAdlari`, `ProsedurAdlari`, `ViewAdlariSirali`, `YetkileriOku`, `AciklamalariOku`, `TabloOzellikleriniOku`, `DesteklenmeyenNesneSayisi`, tüm veritabanı tetikleyicileri (`TetikleyicileriOku(Bag, '')`), sayfa boyutu ve varsayılan karakter seti. `uDDL` hâlâ `RDB$` bilmiyor.
 - **Dil anahtarları:** 40 yeni anahtar (menü, pencere, aşama adları, ilerleme, uyarılar, onay, hata). Üç dosyada **180 anahtar, eksik 0, boş 0**; kodda kullanılan tüm `T('...')` anahtarları dil dosyasında var.
 - Proje dosyaları: `FirebirdYonetici.dpr` ve `.dproj`'a `fMetadataCikar` eklendi.
@@ -153,12 +153,14 @@ Adım 1'dekilere (biçim, `SET GENERATOR`, computed kolon, identity biçimi, `IN
 3. isql `CHECK` kısıtlarını ve tetikleyicileri prosedür gövdelerinden sonra yazar; biz spesifikasyondaki sıra: kısıtlar < indeksler < tetikleyiciler < gövdeler.
 4. `GRANT ROL TO USER x` (biz) – `GRANT ROL TO x` (isql); ikisi de geçerli.
 5. `COMMENT ON PROCEDURE PARAMETER` her ikisinde aynı (ilk denemede `COMMENT ON PARAMETER` yazmıştım, isql biçimine çevirdim; 2.5'te geçerli olan budur).
-6. isql dosyayı sistem karakter setinde yazar (Türkçe karakterler bozuk), biz UTF-8 + `SET NAMES UTF8`.
+6. isql dosyayı sistem karakter setinde yazar (Türkçe karakterler bozuk görünebilir); biz veritabanının karakter setinde ve `SET NAMES <o karakter seti>` ile yazıyoruz.
 7. isql generator değerini yazmıyor, biz yazıyoruz.
 
 ## Bilinen sınırlar ve önemli notlar
 
-- **Exception mesajı karakter seti:** Firebird exception mesajını bağlantı karakter setiyle **dönüştürmeden** saklar. Gerçek kopyada mesaj WIN1254 baytlarıyla duruyor; script `SET NAMES UTF8` ile `isql`'de çalıştırılınca yeni veritabanında UTF-8 baytlarıyla duruyor, program okuyunca bozuk görünebilir (kopyada 3 exception). Programın kendi çalıştırıcısıyla (WIN1254 bağlantı) bayt aynı kalıyor. Öneri: script'i uygulamada çalıştırmak, ya da `SET NAMES` satırını kendi bağlantı karakter setinize çevirmek. Kodla çözmek istenirse karar sizin.
+- **Exception mesajı karakter seti (çözüldü):** Firebird exception mesajını bağlantı karakter setiyle dönüştürmeden saklar. Dosya ilk sürümde UTF-8 idi ve `isql` ile çalıştırınca gerçek kopyada 3 exception mesajı farklı baytlarla kuruluyordu. Dosya artık veritabanının karakter setinde ve `SET NAMES` o karakter setiyle yazıldığı için gerçek kopyada isql ile kurulup tekrar çıkarılan metadata ilkiyle 1021 satırın 1021'inde aynı (fark 0).
+- **Karakter setinde olmayan harf:** Dosya veritabanının karakter setine (örn. WIN1254) çevrilerek yazıldığı için, o karakter setinin dışında kalan bir harf (örn. WIN1254'te Kiril harfi) dosyada `?` olarak yazılabilir; program uyarı vermez. Bilinen sınır.
+- **Mevcut dosyanın boşaltılması:** Dosyaya yazarken var olan dosya, üzerine yazma onayı verildikten sonra çıkarma başlamadan boşaltılır (`TStreamWriter` dosyayı yeniden oluşturur). Çıkarma ortasında hata veya iptal olursa dosyada eski içerik kalmaz (yarım içerik ya da boş). Sahibi şimdilik kabul etti, kod değişmeyecek.
 - Script'i üretilmeyen nesneler (uyarıyla sayısı bildirilir): fonksiyonlar (UDF ve PSQL `CREATE FUNCTION`), paketler, kullanıcı collation'ları, blob filtreleri, DDL tetikleyicileri. Ayrıca `CREATE USER` (3d), `GRANTED BY`, `ARRAY` kolonlar, `TYPE OF` parametreler bu sürümde yok.
 - Programın kendi çalıştırıcısı `CREATE DATABASE` satırını çalıştıramaz; CREATE DATABASE'li script'i `isql` ile çalıştırın. `CONNECT` ve `SET NAMES` satırlarını çalıştırıcı atlıyor.
 - Başlangıç değeri (initial value) ve identity'nin güncel değeri yazılmaz (Adım 1'deki gibi).
@@ -191,3 +193,17 @@ Adım 1'deki komutlar aynen geçerli (`DDLTest.exe` artık Adım 2'yi de içeriy
 - **Dialect 1:** Sahibinin 2.5.9 veritabanı dialect 1 (IBExpert `DATE` ve `NUMERIC(15,2)` yazıyordu, biz `TIMESTAMP` ve `DOUBLE PRECISION`). Düzeltildi: bağlanınca `MON$DATABASE.MON$SQL_DIALECT` okunur (`TAcikBaglanti.Dialect`); dialect 1 ise başa `SET SQL DIALECT 1;` yazılır, `DATE` ve `NUMERIC(p, s)` yazılır. Sahibinin yeni çıktısında TIMESTAMP 0, DATE 133, NUMERIC 44, DOUBLE 423: IBExpert'le aynı. FireDAC 5.0'da dialect 1 veritabanına bağlanamadığı için (SET BIND hatası) bu dalı yerelde çalıştıramadım, sahibinin gerçek veritabanında doğrulandı.
 - **Karakter seti:** `SET NAMES UTF8` yerine veritabanının karakter seti kullanılıyor (yukarıda). DDLTest 147 kontrol, hata 0.
 - IBExpert ile karşılaştırmada tetikleyici, indeks, kısıt, view, prosedür gövdesi, exception ve tablo sayıları aynı; kalan fark yalnız `NUMERIC(15,2)` / `NUMERIC(15, 2)` yazım biçimi ve `SET GENERATOR ... TO 0` satırlarının atlanması.
+
+## Düzeltme (2026-10-14)
+
+`GOREV_ASAMA3A_DUZELTME.md` uygulandı (aynı dal, `main` birleştirildi, başka kod değişikliği yok).
+
+- **Klonla düğmesi:** `fAna.dfm`/`fAna.pas`'e `btnKlonla` eklendi, `btnYeniBaglanti`'dan hemen sonra (Yeni Bağlantı, Klonla, Bağlan, Yenile, Yeni Sorgu, Çalıştır, Plan). Simge `IKON_KLONLA`, `OnClick` → `btnKlonlaClick` → `YeniBaglanti(OgeAl(SeciliBaglantiDugmesi).BaglantiAd)` (seçim yoksa hiçbir şey yapmaz). Etkinlik, mevcut düğme güncellemesinin yapıldığı yordamda: yalnız **doğrudan bir bağlantı düğümü** seçiliyken etkin (klasör, dal, tablo vb. seçiliyken ve seçim yokken pasif; bağlantının açık olması şart değil). Başlık `T('BTN_KLONLA')` (yeni anahtar: tr "Klonla", en "Clone", de "Klonen"), dil değişiminde güncellenir; düğmeler `AutoSize` olduğu için genişlik yazıya göre uzar. `miKlonla` ile ilgili kalıntı kod/olay kalmadığı kontrol edildi (`MENU_KLONLA` anahtarı dil dosyalarında duruyor, zararsız).
+- **Düğme sayısı:** araç çubuğunda artık **yedi** düğme var (CLAUDE.md Bölüm 8'in 5-6 sınırının üstünde; sahibi bilerek kabul etti). Dar pencerede araç çubuğunun taşıyıp taşımadığını **denemedim**.
+- **Rapor metni:** bozuk karakterli satır düzeltildi (başka bozuk karakter kalmadı: `Ã`, `Ä`, `Å` araması 0); Adım 2'deki "UTF-8, BOM'suz / `SET NAMES UTF8`" ve "isql ... UTF-8" cümleleri veritabanının karakter setine göre güncellendi; exception mesajı notu "çözüldü" diye düzeltildi; "Bilinen sınırlar"a iki madde eklendi (karakter setinde olmayan harf `?` olabilir; mevcut dosya onaydan sonra çıkarma başlamadan boşaltılır, hata/iptalde eski içerik kalmaz); "Sahibine soru" çözüldü diye işaretlendi; başa ve "Yapılmayanlar"a Klonla notu eklendi.
+
+**Test (bu düzeltmeden sonra, gömülü 5.0.4):** `DDLTest` 146 kontrol, hata 0; `SorguTest` 80/80; `BaglantiDosyasiTest` 52/52; `MetadataTest` çıkış kodu 0. `Derle.bat` hatasız. Dil dosyaları: üçünde **181 anahtar**, eksik 0, `BTN_KLONLA` üçünde dolu. Program açılıp kapandı (form ve olay bağları yükleniyor).
+
+**Denemedim:** Klonla düğmesinin ağaçta seçime göre etkin/pasif olması, tıklayınca bağlantı penceresinin mevcut tanımla açılması, Almanca "Klonen" başlığının görünümü, dar pencerede araç çubuğu. Bunlar sahibinin elle denemesinde bakılacak.
+
+`CLAUDE.md` kutuları işaretlenmedi, 3b'ye geçilmedi.
