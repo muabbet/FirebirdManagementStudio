@@ -67,8 +67,15 @@ object frmAna: TfrmAna
         ImageIndex = 3
         OnClick = btnYeniBaglantiClick
       end
-      object btnBaglan: TToolButton
+      object btnKlonla: TToolButton
         Left = 60
+        Top = 0
+        AutoSize = True
+        ImageIndex = 9
+        OnClick = btnKlonlaClick
+      end
+      object btnBaglan: TToolButton
+        Left = 120
         Top = 0
         AutoSize = True
         ImageIndex = 0
@@ -202,6 +209,9 @@ object frmAna: TfrmAna
     object miAc: TMenuItem
       OnClick = miAcClick
     end
+    object miScriptUret: TMenuItem
+      OnClick = miScriptUretClick
+    end
     object miBaglan: TMenuItem
       OnClick = miBaglanClick
     end
@@ -211,11 +221,11 @@ object frmAna: TfrmAna
     object miYenile: TMenuItem
       OnClick = miYenileClick
     end
+    object miMetadataCikar: TMenuItem
+      OnClick = miMetadataCikarClick
+    end
     object miDuzenle: TMenuItem
       OnClick = miDuzenleClick
-    end
-    object miKlonla: TMenuItem
-      OnClick = miKlonlaClick
     end
     object miKaldir: TMenuItem
       OnClick = miKaldirClick
