@@ -6,13 +6,32 @@ interface
 
 uses
   System.SysUtils, System.Classes, Vcl.Controls, Vcl.Forms, Vcl.StdCtrls,
-  Vcl.Dialogs,
+  Vcl.Dialogs, Vcl.Graphics,
   uDil;
 
 function OnayIste(const Soru: string): Boolean;
 procedure UyariGoster(const Metin: string);
 
+{ Dugme genisligi yaziya gore uzar (Almanca yazilar kesilmesin); en az Constraints.MinWidth. }
+procedure DugmeyiYaziyaUydur(Dugme: TButton);
+
 implementation
+
+procedure DugmeyiYaziyaUydur(Dugme: TButton);
+var
+  Tuval: TControlCanvas;
+begin
+  Tuval := TControlCanvas.Create;
+  try
+    Tuval.Control := Dugme;
+    Tuval.Font.Assign(Dugme.Font);
+    Dugme.Width := Dugme.Constraints.MinWidth;
+    if Tuval.TextWidth(Dugme.Caption) + 32 > Dugme.Width then
+      Dugme.Width := Tuval.TextWidth(Dugme.Caption) + 32;
+  finally
+    Tuval.Free;
+  end;
+end;
 
 procedure DugmeYazilariniYaz(Pencere: TForm);
 var

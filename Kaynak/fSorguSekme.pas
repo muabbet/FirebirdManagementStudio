@@ -11,19 +11,22 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes, System.Generics.Collections, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
   Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids,
   FireDAC.Comp.Client,
-  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uSonucGrid;
+  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uSonucGrid, fCsvAktar;
 
 type
   TSorguSekme = class(TFrame)
     pnlEditor: TPanel;
     Bolucu: TSplitter;
     pnlSonuc: TPanel;
+    pnlSonucBaslik: TPanel;
     lblSonuc: TLabel;
+    btnDisaAktar: TButton;
     BolucuMesaj: TSplitter;
     memMesaj: TMemo;
     gridSonuc: TDBGrid;
     dsSonuc: TDataSource;
     procedure dsSonucDataChange(Sender: TObject; Field: TField);
+    procedure btnDisaAktarClick(Sender: TObject);
   private
     FEditor: TSqlEditor;
     FGrid: TSonucGrid;
@@ -41,6 +44,8 @@ type
   public
     BaglantiAd: string;
     No: Integer;
+    { Disa aktarma ozeti buraya (ana pencerenin sonuc alani) yazilir; ana pencere atar. }
+    AnaSonuc: TStrings;
     destructor Destroy; override;
     procedure Hazirla(SekmeNo: Integer; const Baglanti: string);
     procedure Calistir;
@@ -146,6 +151,8 @@ end;
 
 procedure TSorguSekme.YazilariYenile;
 begin
+  btnDisaAktar.Caption := T('AKTAR_DUGME');
+  DugmeyiYaziyaUydur(btnDisaAktar);
   SatirSayisiniYaz;
 end;
 
@@ -160,6 +167,8 @@ procedure TSorguSekme.SatirSayisiniYaz;
 var
   Sayi: Integer;
 begin
+  { Disa aktar dugmesi yalnizca satir donduren bir sonuc varken etkin. }
+  btnDisaAktar.Enabled := (FSonuc <> nil) and FSonuc.SatirVar;
   if (FSonuc = nil) or not FSonuc.SatirVar then
   begin
     lblSonuc.Caption := T('LBL_SONUC');
@@ -175,6 +184,20 @@ end;
 procedure TSorguSekme.dsSonucDataChange(Sender: TObject; Field: TField);
 begin
   SatirSayisiniYaz;
+end;
+
+{ Dugme: ekrandaki sonucu uretan SELECT'i yeniden calistirip TUM satirlari CSV'ye yazar (bkz. uAktar). }
+procedure TSorguSekme.btnDisaAktarClick(Sender: TObject);
+var
+  Bag: TAcikBaglanti;
+begin
+  Bag := FbAcikBaglanti(BaglantiAd);
+  if Bag = nil then
+  begin
+    MesajYaz(TF('ERR_SORGU_BAGLANTI_YOK', [BaglantiAd]));
+    Exit;
+  end;
+  CsvPenceresiniGoster(Bag, FSonuc.Sorgu.SQL.Text, T('AKTAR_AD_SORGU'), AnaSonuc);
 end;
 
 { Mesaj kutusuna yazar ve kutuyu en uste kaydirir (ilk satir, ornegin hata, gorunsun). }

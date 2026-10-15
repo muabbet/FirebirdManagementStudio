@@ -193,5 +193,22 @@
   "MD_UYARI_TETIK_DESTEK": "The trigger '%s' is of an unsupported kind (e.g. a DDL trigger) and was not written to the script.",
   "MD_UYARI_YETKI_ATLANDI": "A privilege on '%s' was granted to an unsupported kind of user and was not written.",
   "MD_UYARI_ATLANAN": "%d object(s) in the database could not be scripted (function/UDF, package, user collation or blob filter). They were not written; add them by hand.",
-  "BTN_KLONLA": "Clone"
+  "BTN_KLONLA": "Clone",
+
+  "AKTAR_DUGME": "Export",
+  "AKTAR_AD_SORGU": "query",
+  "AKTAR_BASLIK": "Export to CSV",
+  "AKTAR_DOSYA": "Target file:",
+  "AKTAR_SEC": "Browse...",
+  "AKTAR_BASLAT": "Start",
+  "AKTAR_FILTRE": "CSV files (*.csv)|*.csv",
+  "AKTAR_ILERLEME": "%s rows written",
+  "AKTAR_BITTI": "Exported to CSV: %s (%s rows, %s s).",
+  "AKTAR_IPTAL": "Cancelled. The file contains only %s rows (the file was not deleted): %s",
+  "AKTAR_UYARI_BLOB": "BLOB columns were skipped (cells left empty): %s",
+  "AKTAR_UYARI_EXCEL": "Excel cannot open that many rows: Excel shows at most %d data rows. The file was written anyway.",
+  "ERR_AKTAR_DOSYA_BOS": "Enter or choose a file name.",
+  "ERR_AKTAR_DOSYA": "The file could not be written. This happens if the folder does not exist, the disk is full, or the file is open in another program (for example Excel).",
+  "ERR_AKTAR_YAPILAMADI": "The export failed.",
+  "ERR_SALT_OKUNUR": "The export runs read-only; this command was stopped because it tried to change data. No data was changed."
 }

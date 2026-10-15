@@ -193,5 +193,22 @@
   "MD_UYARI_TETIK_DESTEK": "'%s' tetikleyicisi desteklenmeyen türde (DDL tetikleyicisi vb.), script'e yazılmadı.",
   "MD_UYARI_YETKI_ATLANDI": "'%s' üzerindeki bir yetki desteklenmeyen bir kullanıcı türüne verilmiş, yazılmadı.",
   "MD_UYARI_ATLANAN": "Veritabanında script'i üretilemeyen %d nesne var (fonksiyon/UDF, paket, kullanıcı collation'ı veya blob filtresi). Bunlar yazılmadı; elle eklemeniz gerekir.",
-  "BTN_KLONLA": "Klonla"
+  "BTN_KLONLA": "Klonla",
+
+  "AKTAR_DUGME": "Dışa aktar",
+  "AKTAR_AD_SORGU": "sorgu",
+  "AKTAR_BASLIK": "CSV'ye aktar",
+  "AKTAR_DOSYA": "Hedef dosya:",
+  "AKTAR_SEC": "Seç...",
+  "AKTAR_BASLAT": "Başlat",
+  "AKTAR_FILTRE": "CSV dosyaları (*.csv)|*.csv",
+  "AKTAR_ILERLEME": "%s satır yazıldı",
+  "AKTAR_BITTI": "CSV'ye aktarıldı: %s (%s satır, %s sn).",
+  "AKTAR_IPTAL": "İptal edildi. Dosyada yalnızca %s satır var (dosya silinmedi): %s",
+  "AKTAR_UYARI_BLOB": "BLOB alanları atlandı (hücreler boş bırakıldı): %s",
+  "AKTAR_UYARI_EXCEL": "Excel bu kadar satırı açamaz: Excel en fazla %d veri satırı gösterir. Dosya yine de yazıldı.",
+  "ERR_AKTAR_DOSYA_BOS": "Bir dosya adı girin veya seçin.",
+  "ERR_AKTAR_DOSYA": "Dosya yazılamadı. Klasör yoksa, disk doluysa veya dosya başka bir programda (örneğin Excel'de) açıksa bu hata çıkar.",
+  "ERR_AKTAR_YAPILAMADI": "Dışa aktarma yapılamadı.",
+  "ERR_SALT_OKUNUR": "Dışa aktarma salt okunur çalışır; bu komut veri değiştirmeye çalıştığı için durduruldu. Hiçbir veri değişmedi."
 }

@@ -56,6 +56,9 @@ type
     OncekiSonucKapandi: Boolean;
   end;
 
+{ Tablonun TUM satirlarini okuyan komut (CSV disa aktarma bunu yeniden calistirir). }
+function TabloTumSatirlarSorgusu(const Tablo: string): string;
+
 function TabloVerisiSorgusu(Bag: TAcikBaglanti; const Tablo: string; SatirSayisi: Integer;
   Sahip: TComponent): TFDQuery;
 
@@ -452,6 +455,11 @@ begin
     if Kayit.Durum in [kdDurdu, kdHata] then
       Break;
   end;
+end;
+
+function TabloTumSatirlarSorgusu(const Tablo: string): string;
+begin
+  Result := 'SELECT * FROM ' + TirnakliAd(Tablo);
 end;
 
 { Sorgu, Sahip ile birlikte yok olur. Sorgu salt okunurdur. }

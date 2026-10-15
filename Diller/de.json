@@ -193,5 +193,22 @@
   "MD_UYARI_TETIK_DESTEK": "Der Trigger '%s' ist von einer nicht unterstützten Art (z. B. DDL-Trigger) und wurde nicht ins Skript geschrieben.",
   "MD_UYARI_YETKI_ATLANDI": "Eine Berechtigung auf '%s' wurde einem nicht unterstützten Benutzertyp erteilt und nicht geschrieben.",
   "MD_UYARI_ATLANAN": "In der Datenbank gibt es %d Objekt(e), für die kein Skript erzeugt werden konnte (Funktion/UDF, Package, Benutzer-Collation oder Blob-Filter). Sie wurden nicht geschrieben; bitte von Hand ergänzen.",
-  "BTN_KLONLA": "Klonen"
+  "BTN_KLONLA": "Klonen",
+
+  "AKTAR_DUGME": "Exportieren",
+  "AKTAR_AD_SORGU": "abfrage",
+  "AKTAR_BASLIK": "Als CSV exportieren",
+  "AKTAR_DOSYA": "Zieldatei:",
+  "AKTAR_SEC": "Durchsuchen...",
+  "AKTAR_BASLAT": "Starten",
+  "AKTAR_FILTRE": "CSV-Dateien (*.csv)|*.csv",
+  "AKTAR_ILERLEME": "%s Zeilen geschrieben",
+  "AKTAR_BITTI": "Als CSV exportiert: %s (%s Zeilen, %s s).",
+  "AKTAR_IPTAL": "Abgebrochen. Die Datei enthält nur %s Zeilen (die Datei wurde nicht gelöscht): %s",
+  "AKTAR_UYARI_BLOB": "BLOB-Spalten wurden übersprungen (Zellen bleiben leer): %s",
+  "AKTAR_UYARI_EXCEL": "Excel kann so viele Zeilen nicht öffnen: Excel zeigt höchstens %d Datenzeilen an. Die Datei wurde trotzdem geschrieben.",
+  "ERR_AKTAR_DOSYA_BOS": "Geben Sie einen Dateinamen ein oder wählen Sie einen aus.",
+  "ERR_AKTAR_DOSYA": "Die Datei konnte nicht geschrieben werden. Das passiert, wenn der Ordner nicht existiert, der Datenträger voll ist oder die Datei in einem anderen Programm (zum Beispiel Excel) geöffnet ist.",
+  "ERR_AKTAR_YAPILAMADI": "Der Export ist fehlgeschlagen.",
+  "ERR_SALT_OKUNUR": "Der Export läuft schreibgeschützt; dieser Befehl wurde gestoppt, weil er Daten ändern wollte. Es wurden keine Daten geändert."
 }

@@ -29,19 +29,45 @@ object SorguSekme: TSorguSekme
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 1
-    object lblSonuc: TLabel
-      AlignWithMargins = True
-      Left = 8
-      Top = 4
-      Width = 704
-      Height = 17
-      Margins.Left = 8
-      Margins.Top = 4
-      Margins.Right = 8
-      Margins.Bottom = 2
+    object pnlSonucBaslik: TPanel
+      Left = 0
+      Top = 0
+      Width = 720
+      Height = 29
       Align = alTop
-      Font.Style = [fsBold]
-      ParentFont = False
+      BevelOuter = bvNone
+      TabOrder = 2
+      object lblSonuc: TLabel
+        AlignWithMargins = True
+        Left = 8
+        Top = 0
+        Width = 600
+        Height = 29
+        Margins.Left = 8
+        Margins.Top = 0
+        Margins.Right = 8
+        Margins.Bottom = 0
+        Align = alClient
+        AutoSize = False
+        Font.Style = [fsBold]
+        ParentFont = False
+        Layout = tlCenter
+      end
+      object btnDisaAktar: TButton
+        AlignWithMargins = True
+        Left = 620
+        Top = 2
+        Width = 92
+        Height = 25
+        Margins.Top = 2
+        Margins.Right = 8
+        Margins.Bottom = 2
+        Align = alRight
+        Constraints.MinWidth = 92
+        Enabled = False
+        TabOrder = 0
+        OnClick = btnDisaAktarClick
+      end
     end
     object BolucuMesaj: TSplitter
       Left = 0

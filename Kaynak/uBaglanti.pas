@@ -635,6 +635,7 @@ const
   GDS_LOCK_TIMEOUT = 335544510;
   GDS_TOKEN_UNKNOWN = 335544634;
   GDS_OBJ_IN_USE = 335544453;
+  GDS_READ_ONLY_TRANS = 335544361;
 
 { Firebird hata koduna bakar. Taninan bir kod varsa cumleyi verir. }
 function KodundanCevir(Hata: EFDDBEngineException; out Cevap: string): Boolean;
@@ -671,6 +672,11 @@ begin
       GDS_OBJ_IN_USE:
         begin
           Cevap := T('ERR_NESNE_KULLANIMDA');
+          Exit;
+        end;
+      GDS_READ_ONLY_TRANS:
+        begin
+          Cevap := T('ERR_SALT_OKUNUR');
           Exit;
         end;
       GDS_LOGIN:

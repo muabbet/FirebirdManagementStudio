@@ -792,6 +792,7 @@ begin
   Sekme := TSorguSekme.Create(Sayfa);
   Sekme.Parent := Sayfa;
   Sekme.Align := alClient;
+  Sekme.AnaSonuc := memSonuc.Lines;
   Sekme.Hazirla(FSorguNo, Bag.Tanim.Ad);
   if Metin <> '' then
     Sekme.MetinYaz(Metin);
@@ -919,6 +920,7 @@ begin
   Sekme := TTabloSekme.Create(Sayfa);
   Sekme.Parent := Sayfa;
   Sekme.Align := alClient;
+  Sekme.AnaSonuc := memSonuc.Lines;
   try
     Sekme.Yukle(Bag, Oge.Ad);
   except
