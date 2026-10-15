@@ -27,6 +27,8 @@ Ayrıntılı görev belgesi: **`GOREV_ASAMA3A.md`** (ajan o dosyayla çalışır
 
 # Aşama 3b: Veri dışa aktarma
 
+Ayrıntılı görev belgesi: **`GOREV_ASAMA3B.md`** (ajan o dosyayla çalışır). Aşağıdaki özet geçerlidir; ayrıntı ve kararlar (yeniden çalıştırma, salt okunur transaction, metin BLOB'ları yazılır, ikili BLOB atlanır) o belgede.
+
 **Karar (sahibi verdi): yalnızca CSV.** Ek bileşen yasak olduğu için `.xlsx` yazılmaz. CSV UTF-8 BOM'lu olur, ayraç kullanıcı ortamına göre `;` veya `,` seçilir, Excel'de çift tıkla açılır. `.xlsx` istenirse ayrıca karar verilir.
 
 ## Kapsam
