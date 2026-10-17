@@ -224,6 +224,9 @@ object frmAna: TfrmAna
     object miMetadataCikar: TMenuItem
       OnClick = miMetadataCikarClick
     end
+    object miYedek: TMenuItem
+      OnClick = miYedekClick
+    end
     object miDuzenle: TMenuItem
       OnClick = miDuzenleClick
     end

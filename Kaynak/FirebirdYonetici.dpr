@@ -19,12 +19,14 @@ uses
   uEditor in 'uEditor.pas',
   uDDL in 'uDDL.pas',
   uAktar in 'uAktar.pas',
+  uYedek in 'uYedek.pas',
   fTabloSekme in 'fTabloSekme.pas' {TabloSekme: TFrame},
   fSorguSekme in 'fSorguSekme.pas' {SorguSekme: TFrame},
   fMetinGoster in 'fMetinGoster.pas' {frmMetinGoster},
   fMetinSor in 'fMetinSor.pas' {frmMetinSor},
   fMetadataCikar in 'fMetadataCikar.pas' {frmMetadataCikar},
   fCsvAktar in 'fCsvAktar.pas' {frmCsvAktar},
+  fYedek in 'fYedek.pas' {frmYedek},
   fBaglanti in 'fBaglanti.pas' {frmBaglanti},
   fAna in 'fAna.pas' {frmAna};
 

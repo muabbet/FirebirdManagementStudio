@@ -90,6 +90,7 @@
         <DCCReference Include="uEditor.pas"/>
         <DCCReference Include="uDDL.pas"/>
         <DCCReference Include="uAktar.pas"/>
+        <DCCReference Include="uYedek.pas"/>
         <DCCReference Include="fTabloSekme.pas">
             <Form>TabloSekme</Form>
             <FormType>dfm</FormType>
@@ -114,6 +115,10 @@
         </DCCReference>
         <DCCReference Include="fCsvAktar.pas">
             <Form>frmCsvAktar</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="fYedek.pas">
+            <Form>frmYedek</Form>
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="fBaglanti.pas">

@@ -45,6 +45,8 @@ Ayrıntılı görev belgesi: **`GOREV_ASAMA3B.md`** (ajan o dosyayla çalışır
 
 # Aşama 3c: Yedek/geri yükleme (`gbak`)
 
+Ayrıntılı görev belgesi: **`GOREV_ASAMA3C.md`** (ajan o dosyayla çalışır). Aşağıdaki özet geçerlidir; ayrıntı ve kararlar (istemci tarafı gbak, yalnızca yeni dosyaya geri yükleme `-c`, `-r` yok, `.yarim` geçici yedek dosyası, tek sağ tık maddesi) o belgede.
+
 Yeni unit: `uYedek.pas`. `gbak.exe`'yi **kendi çağırır** (Windows'a bağlı kısım bu unit'in arkasında).
 
 ## Kapsam
