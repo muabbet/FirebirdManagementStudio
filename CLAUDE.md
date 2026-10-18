@@ -181,7 +181,7 @@ Bu bir "boş zamanda yavaş yavaş" projesidir, acele yoktur. **Her aşama bitin
 ### Aşama 3: Yönetim Özellikleri
 - [x] `uDDL.pas`: tablo, view, prosedür, trigger için `CREATE` script üretimi (referans: `isql -x` çıktısı)
 - [x] Tüm veritabanının metadata çıkarımı (IBExpert "Extract Metadata" gibi: dosyaya veya panoya, hepsi birden, seçenekler: CREATE DATABASE, CONNECT, şifre)
-- [ ] Veri dışa aktarma (yalnızca CSV; Excel'de açılır, `.xlsx` yazılmaz)
+- [x] Veri dışa aktarma (yalnızca CSV; Excel'de açılır, `.xlsx` yazılmaz)
 - [ ] Yedek/geri yükleme (`gbak` çağırma)
 - [ ] Kullanıcı ve yetki yönetimi
 
