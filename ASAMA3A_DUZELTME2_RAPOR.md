@@ -16,8 +16,8 @@
 - Paketli prosedürler (3.0+) zaten `PaketSarti` ile dışarıda.
 
 ## Test
-- `Test\DDLTestDerle.bat` ile derlendi; gömülü kipte `DDLTest.exe`: **Hata sayısı: 0** (OK satır sayısı çalıştırma sonunda 146 doğrulaması için aşağıdaki komutla da bakılabilir).
-- **Firebird 2.5.9 sunucu kipi çalıştırılmadı** (şifre bende yok). "2.5.9'da çalışıyor" denemez: gömülü kipte bozulmadı, 2.5.9'u sahibi deneyecek. Beklenen: 128/0 değil, önceki 2 HATA gitmeli (126 OK + "D (bos)" ve "gidis-donus" kontrolleri OK olmalı).
+- `Test\DDLTestDerle.bat` ile derlendi; gömülü kipte `DDLTest.exe`: **146 OK, Hata sayısı: 0**.
+- **Firebird 2.5.9 sunucu kipi çalıştırılmadı** (şifre bende yok). "2.5.9'da çalışıyor" denemez: gömülü kipte bozulmadı, 2.5.9'u sahibi deneyecek. Beklenen: önceki 2 HATA (D (bos) ve gidis-donus kontrolleri) gitmeli.
 
 ## Sahibine: 2.5.9'da deneme (PowerShell)
 ```powershell
