@@ -112,7 +112,7 @@ Standart **TDBGrid** kullanılacak, aşağıdaki altı özellik kendi kodumuzla 
 - **Sol panel:** Kayıtlı bağlantılar (klasörlere konabilir, aynı anda birden fazlası açık olabilir). Bağlı bir bağlantının altında dört dal: Tablolar, View'lar, Prosedürler, Generator'lar.
 - **Sağ üst:** Sekmeli çalışma alanı. Her açılan şey (sorgu, tablo verisi, tablo yapısı) kendi sekmesinde açılır.
 - **Sağ alt:** Sonuç alanı. Sorgu sonucu veya hata mesajı burada görünür.
-- **Üstte:** En fazla 5-6 düğmeli **tek** araç çubuğu (Bağlan, Yeni Sorgu, Çalıştır, Yenile gibi). İkinci çubuk ve iç içe menü yok.
+- **Üstte (karar 2026-10-18):** Kendi çizdiğimiz, üçüncü parti bileşensiz **gruplu şerit (ribbon)**: büyük ikon üstte, yazı altta, her grubun altında grup adı (Bağlantı, Sorgu, Yönetim). Tek sekme, açılır menü ve iç içe menü yok, bir iş için tek düğme. Ayrıntı: `GOREV_ASAMA3R.md`.
 - **Sağ tık menüsü:** Bir nesnede en fazla 5-6 seçenek ("İlk 100 satırı göster", "Yapıyı göster", "Script üret" gibi).
 - **İlk sürümde ayar penceresi yok.** Makul varsayılanlar kullanılır, ayarlar sonra eklenir (dil seçimi hariç).
 - **Görsel:** Açık ve temiz VCL Style teması, nesne ağacında tutarlı küçük ikon seti (tablo, view, prosedür vb. için ayrı), cömert boşluklar ve okunaklı yazı boyutu.
