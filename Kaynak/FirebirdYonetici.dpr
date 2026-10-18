@@ -11,6 +11,7 @@ uses
   Vcl.Styles,
   uDil in 'uDil.pas',
   uIkon in 'uIkon.pas',
+  uSerit in 'uSerit.pas',
   uOnay in 'uOnay.pas',
   uBaglanti in 'uBaglanti.pas',
   uMetadata in 'uMetadata.pas',
