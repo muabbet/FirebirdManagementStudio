@@ -5,7 +5,7 @@ Bu projede kullanılan harici bileşenler ve dosyalar:
 | Parça | Ne için | Lisans | Kaynak |
 |---|---|---|---|
 | **Tabler Icons** 3.49.0 | Araç çubuğu ve nesne ağacı ikonları (`Ikonlar\*.png`, kaynak SVG'ler `Ikonlar\svg\`) | MIT, Telif: 2020-2026 Paweł Kuna. Lisans metni: `Ikonlar\svg\LICENSE_tabler.txt` | https://github.com/tabler/tabler-icons |
-| **Firebird istemcisi** (`fbclient.dll` 5.0.4, 64 bit ve yan dosyaları) | Veritabanı bağlantısı | Initial Developer's Public License (IDPL), bkz. derlemede `istemci\IDPLicense.txt` | https://firebirdsql.org |
+| **Firebird istemcisi** (`fbclient.dll` 5.0.4, 64 bit, `gbak.exe` ve yan dosyaları) | Veritabanı bağlantısı, yedekle / geri yükle (`gbak.exe`) | Initial Developer's Public License (IDPL), bkz. derlemede `istemci\IDPLicense.txt` | https://firebirdsql.org |
 | **SynEdit** (TurboPack) | SQL editörü (`uEditor.pas`), SQL renklendirme | Mozilla Public License 1.1 (MPL 1.1) ile çift lisans. Yerel kopyadaki kaynak dosya başlıkları: MPL 1.1 **veya** GNU GPL sürüm 2 ya da üstü. GitHub'daki güncel `LICENSE` dosyası: MPL 1.1 **veya** GNU LGPL sürüm 2.1 ya da üstü. Telif: dosya başlıklarına göre Martin Waldenburg (mwEdit, 1998), Maël Hörz (Unicode çevirisi) ve `Contributors.txt` içindeki katkıda bulunanlar. Sürüm: readme'ye göre "10.4 Sydney" (VER340). Kaynak depoya konmaz | https://github.com/TurboPack/SynEdit (derleyen kişi kaynağı kütüphane yoluna ekler) |
 | **FireDAC** | Veritabanı erişimi | RAD Studio ile birlikte gelir (Embarcadero) | RAD Studio 12 |
 | **VCL Style "Windows10"** (`Windows10.vsf`) | Açık tema | RAD Studio ile birlikte gelir (Embarcadero). Depoda yer almaz, derleme sırasında RAD Studio kurulumundan kopyalanır | RAD Studio 12 |

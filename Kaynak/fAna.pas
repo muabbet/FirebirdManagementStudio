@@ -14,7 +14,7 @@ uses
   Vcl.Controls, Vcl.Forms, Vcl.ComCtrls, Vcl.ToolWin, Vcl.ExtCtrls, Vcl.StdCtrls,
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
-  uDil, uIkon, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar,
+  uDil, uIkon, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
   fTabloSekme, fSorguSekme;
 
 type
@@ -59,6 +59,7 @@ type
     miDuzenle: TMenuItem;
     miKaldir: TMenuItem;
     miMetadataCikar: TMenuItem;
+    miYedek: TMenuItem;
     miKlasorAdi: TMenuItem;
     miKlasorKaldir: TMenuItem;
     miYeniKlasor: TMenuItem;
@@ -92,6 +93,7 @@ type
     procedure miDuzenleClick(Sender: TObject);
     procedure miKaldirClick(Sender: TObject);
     procedure miMetadataCikarClick(Sender: TObject);
+    procedure miYedekClick(Sender: TObject);
     procedure miKlasorAdiClick(Sender: TObject);
     procedure miKlasorKaldirClick(Sender: TObject);
     procedure miYeniKlasorClick(Sender: TObject);
@@ -140,6 +142,7 @@ type
     procedure YeniSorgu(const Metin: string = '');
     procedure ScriptAc(Dugme: TTreeNode);
     procedure MetadataCikarAc(Dugme: TTreeNode);
+    procedure YedekPenceresiAc(Dugme: TTreeNode);
     procedure SorguyuCalistir;
     procedure PlaniGoster;
   end;
@@ -217,6 +220,7 @@ begin
   miDuzenle.Caption := T('MENU_DUZENLE');
   miKaldir.Caption := T('MENU_KAYITTAN_KALDIR');
   miMetadataCikar.Caption := T('MENU_METADATA_CIKAR');
+  miYedek.Caption := T('MENU_YEDEK');
   miKlasorAdi.Caption := T('MENU_KLASOR_ADLANDIR');
   miKlasorKaldir.Caption := T('MENU_KLASOR_KALDIR');
   miYeniKlasor.Caption := T('BTN_YENI_KLASOR');
@@ -859,6 +863,40 @@ begin
   end;
 end;
 
+{ Yedek/geri yukleme penceresini acar; baglanti acik olmak zorunda degil. Sifre kayitli degilse sorulur (kaydedilmez). }
+procedure TfrmAna.YedekPenceresiAc(Dugme: TTreeNode);
+var
+  Ad, Sifre, Satir: string;
+  Tanim: TBaglantiTanimi;
+  Bag: TAcikBaglanti;
+  Sonuc: TStringList;
+begin
+  Ad := OgeAl(Dugme).BaglantiAd;
+  Bag := FbAcikBaglanti(Ad);
+  if Bag <> nil then
+    Tanim := Bag.Tanim
+  else if not KayitliBaglantiBul(Ad, Tanim) then
+  begin
+    HataYaz(TF('ERR_KAYIT_YOK', [Ad]), '');
+    Exit;
+  end;
+  if Tanim.Sifre = '' then
+  begin
+    Sifre := '';
+    if not MetinSor(T('SIFRE_BASLIK'), TF('SIFRE_ISTEK', [Ad]), Sifre, True) then
+      Exit;
+    Tanim.Sifre := Sifre;
+  end;
+  Sonuc := TStringList.Create;
+  try
+    YedekPenceresiniGoster(Tanim, Sonuc);
+    for Satir in Sonuc do
+      MesajYaz(Satir);
+  finally
+    Sonuc.Free;
+  end;
+end;
+
 procedure TfrmAna.SorguyuCalistir;
 begin
   if AktifSorguSekmesi <> nil then
@@ -1132,6 +1170,7 @@ begin
   miDuzenle.Visible := (not Bos) and (Tur = atBaglanti);
   miKaldir.Visible := (not Bos) and (Tur = atBaglanti);
   miMetadataCikar.Visible := (not Bos) and (Tur = atBaglanti) and Acik;
+  miYedek.Visible := (not Bos) and (Tur = atBaglanti);
   miAc.Visible := (not Bos) and (Tur = atNesne) and (OgeAl(Dugme).DalNo = DAL_TABLO);
   miScriptUret.Visible := (not Bos) and (Tur = atNesne);
   miYenile.Visible := (not Bos) and (Tur <> atKlasor) and Acik;
@@ -1191,6 +1230,12 @@ procedure TfrmAna.miMetadataCikarClick(Sender: TObject);
 begin
   if SeciliBaglantiDugmesi <> nil then
     MetadataCikarAc(SeciliBaglantiDugmesi);
+end;
+
+procedure TfrmAna.miYedekClick(Sender: TObject);
+begin
+  if SeciliBaglantiDugmesi <> nil then
+    YedekPenceresiAc(SeciliBaglantiDugmesi);
 end;
 
 procedure TfrmAna.miKlasorAdiClick(Sender: TObject);

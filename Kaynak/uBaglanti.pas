@@ -73,6 +73,10 @@ function FbBaglan(const Tanim: TBaglantiTanimi): TAcikBaglanti;
 procedure FbBaglantiyiKes(Bag: TAcikBaglanti);
 function FbAcikBaglanti(const Ad: string): TAcikBaglanti;
 function FbIslemAcikMi(Bag: TAcikBaglanti): Boolean;
+{ Sunucu bos, localhost ve 127.0.0.1 ayni yerel makine sayilir. }
+function YerelSunucuMu(const Sunucu: string): Boolean;
+{ Ayni sunucudaki ayni veritabani yolu acik bir baglantida kullaniliyorsa o baglantinin adini verir, yoksa bos. }
+function FbYoluAcikBaglantidaMi(const Sunucu, Yol: string): string;
 
 function HataMetniniCevir(Hata: Exception): string;
 
@@ -608,6 +612,25 @@ end;
 function FbIslemAcikMi(Bag: TAcikBaglanti): Boolean;
 begin
   Result := (Bag <> nil) and Bag.Baglanti.Connected and Bag.Baglanti.InTransaction;
+end;
+
+function YerelSunucuMu(const Sunucu: string): Boolean;
+begin
+  Result := (Sunucu = '') or SameText(Sunucu, 'localhost') or (Sunucu = '127.0.0.1');
+end;
+
+function FbYoluAcikBaglantidaMi(const Sunucu, Yol: string): string;
+var
+  Bag: TAcikBaglanti;
+  AyniSunucu: Boolean;
+begin
+  Result := '';
+  for Bag in GAcikBaglantilar do
+  begin
+    AyniSunucu := SameText(Bag.Tanim.Sunucu, Sunucu) or (YerelSunucuMu(Bag.Tanim.Sunucu) and YerelSunucuMu(Sunucu));
+    if AyniSunucu and SameText(Bag.Tanim.VeritabaniYolu, Yol) then
+      Exit(Bag.Tanim.Ad);
+  end;
 end;
 
 { ---------- Anlasilir hata cumleleri ---------- }
