@@ -66,3 +66,20 @@ Bu çalışma klasöründe (git worktree) `msbuild`, `Kaynak\Manifest.res` dosya
 6. Üzerine gelince ve basılı tutunca düğme geri bildirimi; pasif düğme tıklanmasın.
 7. Yedekle / Geri yükle ve Metadata çıkar düğmeleri sağ tık menüsündeki maddelerle aynı pencereyi açsın.
 8. Mümkünse ekran ölçeğini 125%'e alıp dene (ikon netliği, şerit genişliği).
+
+---
+
+## Ek: grup adları sekme oldu (sahibinin isteği)
+
+**Ne değişti** (`Kaynak/uSerit.pas`, `Test/SeritTest.dpr`; `fAna` değişmedi):
+- Üstte ince sekme satırı: Bağlantı | Sorgu | Yönetim (yazılar `GRUP_*` anahtarlarından, dil değişince yenilenir). Seçili sekmenin altında `clHighlight` renginde kalın çizgi, üzerine gelince `StyleServices` sıcak zemin.
+- Yalnızca seçili sekmenin düğmeleri görünür. Gizli sekmenin düğmeleri yerinde durur, `DurumuGuncelle` hepsini eskisi gibi günceller (`Enabled` korunuyor). F5 ve Ctrl+L `FormKeyDown`'da, sekmeden bağımsız.
+- Açılış sekmesi Bağlantı; seçim `TSerit` yaşadıkça (program açıkken, dil değişse de) korunur, diske yazılmaz, kendiliğinden sekme değişmez.
+- Grup adı etiketi ve gruplar arası dikey çizgi kaldırıldı; şerit yüksekliği 102 → 110 px (sekme satırı eklendi, etiket çıktı; `pnlUst.Height` zaten `FSerit.Yukseklik` ile ayarlanıyor).
+- Yöntem seçimi: `TPageControl` yerine kendi küçük sekme çizimimiz ve mevcut düğmeleri tutan grup panelleri (yalnız `Visible` değişiyor). Neden: düğmeler taşınmıyor, `fAna`'ya hiç dokunmak gerekmedi, tek bileşen sınıfı (`TSeritSekmesi`) ve ~40 satır ekledi; `TPageControl` sayfa/stil/yükseklik davranışlarını ayrıca yönetmeyi gerektirirdi.
+
+**Genişlik** (en geniş sekme, 100% ölçek): tr 298 px, en 311 px, de 302 px; dil kutusu için kalan 910 px'e rahatça sığıyor (önceki 765-816 px'e karşılık).
+
+**Denenenler:** `SeritTest` üç dilde her sekme için PNG + ölçüm, hata 0: sekme değişince doğru sayıda ve doğru düğmeler görünür (4/3/2), gizli sekmede `Enabled` korunuyor, pasif düğme tıklanmıyor. PNG'leri gözle inceledim. `Derle.bat` hatasız; DDLTest, AktarTest, YedekTest (gömülü 5.0.4) geçti.
+
+**Denemedim:** gerçek arayüzde fareyle sekme tıklama, sekme seçiliyken bağlantı/sorgu işlemleri, çalışma anında dil değişimi, 125% ölçek. Bunlar sahibinde.

@@ -29,7 +29,7 @@ end;
 var
   Cikti: TStringList;
   Hatalar: Integer;
-  Klasor, Dosya: string;
+  Klasor: string;
   Dinleyici: TDinleyici;
 
 procedure Kontrol(const Ad: string; Sonuc: Boolean);
@@ -62,6 +62,28 @@ begin
   Dugme.Perform(WM_LBUTTONUP, 0, MakeLong(5, 5));
 end;
 
+procedure EkranGoruntusuYaz(Form: TForm; const Dosya: string);
+var
+  Resim: TBitmap;
+  Png: TPngImage;
+begin
+  Resim := TBitmap.Create;
+  Png := TPngImage.Create;
+  try
+    Resim.SetSize(Form.Width, Form.Height);
+    Form.Update;
+    Sleep(200);
+    Application.ProcessMessages;
+    BitBlt(Resim.Canvas.Handle, 0, 0, Form.Width, Form.Height, GetDC(0), Form.Left, Form.Top, SRCCOPY);
+    Png.Assign(Resim);
+    Png.SaveToFile(Dosya);
+    Cikti.Add('Ekran goruntusu: ' + Dosya);
+  finally
+    Png.Free;
+    Resim.Free;
+  end;
+end;
+
 procedure DilDene(const Kod: string);
 var
   Form: TForm;
@@ -69,10 +91,9 @@ var
   Koleksiyon: TImageCollection;
   Liste: TVirtualImageList;
   Serit: TSerit;
-  Kes, Yedek, Calistir: TSeritDugmesi;
-  Resim: TBitmap;
-  Png: TPngImage;
-  Genislik: Integer;
+  Dugmeler: array[0..8] of TSeritDugmesi;
+  GrupNo: array[0..8] of Integer;
+  i, Sekme, Gorunen, Beklenen: Integer;
 begin
   DilYukle(Kod);
   Form := TForm.CreateNew(Application);
@@ -80,7 +101,7 @@ begin
   Form.Font.Height := -13;
   Form.BorderStyle := bsSingle;
   Form.ClientWidth := 1100;
-  Form.ClientHeight := 300;
+  Form.ClientHeight := 200;
   Form.Position := poDesigned;
   Form.Left := 20;
   Form.Top := 20;
@@ -94,50 +115,59 @@ begin
   Liste.ImageCollection := Koleksiyon;
   IkonlariYukle(Koleksiyon, Liste);
   Serit := TSerit.Create(Ust, Koleksiyon, Form.CurrentPPI);
-  Serit.Ekle('GRUP_BAGLANTI', 'BTN_YENI_BAGLANTI', IKON_VERITABANI, Dinleyici.Tikla);
-  Serit.Ekle('GRUP_BAGLANTI', 'BTN_KLONLA', IKON_KLONLA, Dinleyici.Tikla).Enabled := False;
-  Kes := Serit.Ekle('GRUP_BAGLANTI', 'BTN_BAGLAN', IKON_BAGLAN, Dinleyici.Tikla);
-  Serit.Ekle('GRUP_BAGLANTI', 'BTN_YENILE', IKON_YENILE, Dinleyici.Tikla);
-  Serit.Ekle('GRUP_SORGU', 'BTN_YENI_SORGU', IKON_SORGU, Dinleyici.Tikla);
-  Calistir := Serit.Ekle('GRUP_SORGU', 'BTN_CALISTIR', IKON_CALISTIR, Dinleyici.Tikla);
-  Serit.Ekle('GRUP_SORGU', 'BTN_PLAN', IKON_PLAN, Dinleyici.Tikla);
-  Serit.Ekle('GRUP_YONETIM', 'MENU_METADATA_CIKAR', IKON_METADATA, Dinleyici.Tikla);
-  Yedek := Serit.Ekle('GRUP_YONETIM', 'MENU_YEDEK', IKON_YEDEK, Dinleyici.Tikla);
-  Calistir.Enabled := False;
+  Dugmeler[0] := Serit.Ekle('GRUP_BAGLANTI', 'BTN_YENI_BAGLANTI', IKON_VERITABANI, Dinleyici.Tikla);
+  Dugmeler[1] := Serit.Ekle('GRUP_BAGLANTI', 'BTN_KLONLA', IKON_KLONLA, Dinleyici.Tikla);
+  Dugmeler[2] := Serit.Ekle('GRUP_BAGLANTI', 'BTN_BAGLAN', IKON_BAGLAN, Dinleyici.Tikla);
+  Dugmeler[3] := Serit.Ekle('GRUP_BAGLANTI', 'BTN_YENILE', IKON_YENILE, Dinleyici.Tikla);
+  Dugmeler[4] := Serit.Ekle('GRUP_SORGU', 'BTN_YENI_SORGU', IKON_SORGU, Dinleyici.Tikla);
+  Dugmeler[5] := Serit.Ekle('GRUP_SORGU', 'BTN_CALISTIR', IKON_CALISTIR, Dinleyici.Tikla);
+  Dugmeler[6] := Serit.Ekle('GRUP_SORGU', 'BTN_PLAN', IKON_PLAN, Dinleyici.Tikla);
+  Dugmeler[7] := Serit.Ekle('GRUP_YONETIM', 'MENU_METADATA_CIKAR', IKON_METADATA, Dinleyici.Tikla);
+  Dugmeler[8] := Serit.Ekle('GRUP_YONETIM', 'MENU_YEDEK', IKON_YEDEK, Dinleyici.Tikla);
+  for i := 0 to 8 do
+    GrupNo[i] := ord(i >= 4) + ord(i >= 7);
+  Dugmeler[1].Enabled := False;
+  Dugmeler[5].Enabled := False;
   Serit.YazilariYenile;
   Ust.Height := Serit.Yukseklik;
   { Bagla/Kes dugmesinin en uzun hali de sigmali. }
-  Kes.Ayarla('BTN_KES', IKON_KES);
-  Genislik := Serit.Genislik;
-  Cikti.Add(Format('[%s] serit genisligi %d px, yuksekligi %d px (kullanilabilir yaklasik %d)',
-    [Kod, Genislik, Serit.Yukseklik, Form.ClientWidth - 190]));
-  Kontrol(Kod + ': serit dil kutusunun soluna sigiyor', Genislik <= Form.ClientWidth - 190);
-  Kontrol(Kod + ': dugme yuksekligi ayni', Kes.Height = Yedek.Height);
-
+  Dugmeler[2].Ayarla('BTN_KES', IKON_KES);
+  Cikti.Add(Format('[%s] serit genisligi (en genis sekme) %d px, yuksekligi %d px (kullanilabilir yaklasik %d)',
+    [Kod, Serit.Genislik, Serit.Yukseklik, Form.ClientWidth - 190]));
+  Kontrol(Kod + ': serit dil kutusunun soluna sigiyor', Serit.Genislik <= Form.ClientWidth - 190);
+  Kontrol(Kod + ': dugme yuksekligi ayni', Dugmeler[2].Height = Dugmeler[8].Height);
   Form.Show;
   Application.ProcessMessages;
-  { Pasif dugmeye (Klonla) ve aktif dugmeye gercek tiklama simulasyonu. }
+
+  { Pasif dugmeye (Klonla) ve aktif dugmeye gercek tiklama simulasyonu (Bag. sekmesi acik). }
   Dinleyici.Sayac := 0;
-  Tikla(Yedek);
-  Tikla(Calistir);
+  Tikla(Dugmeler[0]);
+  Tikla(Dugmeler[1]);
   Kontrol(Kod + ': aktif dugme tiklaninca OnClick calisir, pasif dugme calismaz', Dinleyici.Sayac = 1);
 
-  Resim := TBitmap.Create;
-  Png := TPngImage.Create;
-  try
-    Resim.SetSize(Form.Width, Form.Height);
-    Form.Update;
-    Sleep(300);
+  for Sekme := 0 to 2 do
+  begin
+    Serit.SekmeSec(Sekme);
     Application.ProcessMessages;
-    BitBlt(Resim.Canvas.Handle, 0, 0, Form.Width, Form.Height, GetDC(0), Form.Left, Form.Top, SRCCOPY);
-    Png.Assign(Resim);
-    Dosya := TPath.Combine(Klasor, 'seritTest_' + Kod + '.png');
-    Png.SaveToFile(Dosya);
-    Cikti.Add('Ekran goruntusu: ' + Dosya);
-  finally
-    Png.Free;
-    Resim.Free;
+    Gorunen := 0;
+    Beklenen := 0;
+    for i := 0 to 8 do
+    begin
+      if Dugmeler[i].Parent.Visible then
+        Inc(Gorunen);
+      if GrupNo[i] = Sekme then
+        Inc(Beklenen);
+      Kontrol(Format('%s: sekme %d, dugme %d %s', [Kod, Sekme, i, 'gorunurluk dogru']),
+        Dugmeler[i].Parent.Visible = (GrupNo[i] = Sekme));
+    end;
+    Kontrol(Format('%s: sekme %d, %d dugme gorunur (beklenen %d)', [Kod, Sekme, Gorunen, Beklenen]),
+      Gorunen = Beklenen);
+    { Gizli sekmenin dugmelerinin Enabled durumu degismez. }
+    Kontrol(Kod + ': Enabled durumu sekme degisince korunur',
+      (not Dugmeler[1].Enabled) and (not Dugmeler[5].Enabled) and Dugmeler[0].Enabled and Dugmeler[8].Enabled);
+    EkranGoruntusuYaz(Form, TPath.Combine(Klasor, Format('seritTest_%s_%d.png', [Kod, Sekme])));
   end;
+  Serit.SekmeSec(0);
   Form.Release;
   Application.ProcessMessages;
   Serit.Free;

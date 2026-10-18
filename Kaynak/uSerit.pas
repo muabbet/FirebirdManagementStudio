@@ -1,9 +1,10 @@
-{ uSerit.pas - Ust sasedeki gruplu serit (ribbon). Ucuncu parti bilesen yok, yalniz standart VCL.
+{ uSerit.pas - Ust sasedeki sekmeli serit (ribbon). Ucuncu parti bilesen yok, yalniz standart VCL.
 
-  Serit gruplardan, grup da dugmelerden olusur: buyuk ikon ustte, yazi altta,
-  grubun adi grubun altinda. Dugmenin genisligi yaziya gore uzar; cok uzun yazi
-  iki satira bolunur. Dugmeler ve gruplar fAna.pas'ta Ekle ile siralanir, o
-  siralama seridin tam tanimidir.
+  Ustte sekme satiri (her grup bir sekme), altinda secili sekmenin dugmeleri:
+  buyuk ikon ustte, yazi altta. Dugmenin genisligi yaziya gore uzar; cok uzun
+  yazi iki satira bolunur. Dugmeler ve gruplar fAna.pas'ta Ekle ile siralanir, o
+  siralama seridin tam tanimidir. Gizli sekmenin dugmeleri de vardir; Enabled
+  durumlari fAna.DurumuGuncelle'den aynen guncellenir.
 
   Renkler StyleServices'ten gelir (VCL Style). Yazilar T(...) ile, dil
   degisince YazilariYenile ile yeniden yazilir. }
@@ -50,12 +51,29 @@ type
     property OnBoyutDegisti: TNotifyEvent read FBoyutDegisti write FBoyutDegisti;
   end;
 
-  { Bir grup: kendi paneli, dugmeleri, adi ve sagindaki ince cizgi. }
+  { Sekme satirindaki tek sekme: yazi, secili ise altinda vurgu cizgisi. OnClick'i TSerit'e baglidir. }
+  TSeritSekmesi = class(TGraphicControl)
+  private
+    FSecili: Boolean;
+    FUzerinde: Boolean;
+    FBosluk: Integer;
+    FCizgiKalinligi: Integer;
+    procedure SeciliAyarla(Deger: Boolean);
+    procedure CMMouseEnter(var Mesaj: TMessage); message CM_MOUSEENTER;
+    procedure CMMouseLeave(var Mesaj: TMessage); message CM_MOUSELEAVE;
+  protected
+    procedure Paint; override;
+  public
+    constructor Create(AOwner: TComponent; PPI: Integer); reintroduce;
+    procedure YaziyiYaz(const Yazi: string);
+    property Secili: Boolean read FSecili write SeciliAyarla;
+  end;
+
+  { Bir grup = bir sekme: sekme satirindaki yazisi, kendi paneli ve dugmeleri. }
   TSeritGrubu = class
     Anahtar: string;
     Panel: TPanel;
-    Etiket: TLabel;
-    Cizgi: TBevel;
+    Sekme: TSeritSekmesi;
     Dugmeler: TList<TSeritDugmesi>;
   end;
 
@@ -66,9 +84,12 @@ type
     FGruplar: TObjectList<TSeritGrubu>;
     FPPI: Integer;
     FYukseklik: Integer;
+    FGenislik: Integer;
+    FSeciliSekme: Integer;
     function Olcekle(Deger: Integer): Integer;
     function GrupBul(const Anahtar: string): TSeritGrubu;
     procedure DugmeBoyutuDegisti(Sender: TObject);
+    procedure SekmeTiklandi(Sender: TObject);
   public
     { Kap: seridin konacagi panel (formda yer ayirir). Koleksiyon: 32 px'e yakin PNG ikonlar. }
     constructor Create(Ust: TWinControl; Koleksiyon: TImageCollection; PPI: Integer);
@@ -79,6 +100,8 @@ type
     { Butun yazilari secili dilden yazar ve seridi yeniden dizer. }
     procedure YazilariYenile;
     procedure Duzenle;
+    { Sekme secer (0 = ilk grup). Varsayilan ilk sekme; program acik kaldikca secim korunur. }
+    procedure SekmeSec(No: Integer);
     function Genislik: Integer;
     property Yukseklik: Integer read FYukseklik;
   end;
@@ -90,8 +113,6 @@ const
   IKON_BOYU = 32;
   YAZI_GENISLIGI = 100;
   DUGME_ARASI = 2;
-  GRUP_ADI_YUKSEKLIGI = 20;
-  CIZGI_GENISLIGI = 2;
 
 { ---------- TSeritDugmesi ---------- }
 
@@ -266,6 +287,72 @@ begin
   DurumuSifirla;
 end;
 
+{ ---------- TSeritSekmesi ---------- }
+
+constructor TSeritSekmesi.Create(AOwner: TComponent; PPI: Integer);
+begin
+  inherited Create(AOwner);
+  FBosluk := MulDiv(KENAR, PPI, 96);
+  FCizgiKalinligi := MulDiv(3, PPI, 96);
+  Cursor := crHandPoint;
+end;
+
+procedure TSeritSekmesi.SeciliAyarla(Deger: Boolean);
+begin
+  if FSecili <> Deger then
+  begin
+    FSecili := Deger;
+    Invalidate;
+  end;
+end;
+
+{ Yaziyi yazar, genisligi yaziya gore ayarlar. }
+procedure TSeritSekmesi.YaziyiYaz(const Yazi: string);
+begin
+  Caption := Yazi;
+  Canvas.Font.Assign(Font);
+  Width := Canvas.TextWidth(Yazi) + 3 * FBosluk;
+  Height := Canvas.TextHeight('Ag') + FBosluk + FCizgiKalinligi;
+  Invalidate;
+end;
+
+procedure TSeritSekmesi.Paint;
+var
+  Servis: TCustomStyleServices;
+  Alan: TRect;
+begin
+  Servis := StyleServices(Self);
+  if FUzerinde and not FSecili then
+    Servis.DrawElement(Canvas.Handle, Servis.GetElementDetails(tbPushButtonHot), ClientRect);
+  Canvas.Font.Assign(Font);
+  Canvas.Font.Color := Servis.GetSystemColor(clWindowText);
+  Canvas.Brush.Style := bsClear;
+  SetBkMode(Canvas.Handle, TRANSPARENT);
+  Alan := Rect(0, FBosluk div 4, Width, Height - FCizgiKalinligi);
+  DrawText(Canvas.Handle, PChar(Caption), -1, Alan, DT_CENTER or DT_VCENTER or DT_SINGLELINE or DT_NOPREFIX);
+  { Secili sekmenin altinda vurgu rengiyle kalin cizgi. }
+  if FSecili then
+  begin
+    Canvas.Brush.Color := Servis.GetSystemColor(clHighlight);
+    Canvas.Brush.Style := bsSolid;
+    Canvas.FillRect(Rect(FBosluk div 2, Height - FCizgiKalinligi, Width - FBosluk div 2, Height));
+  end;
+end;
+
+procedure TSeritSekmesi.CMMouseEnter(var Mesaj: TMessage);
+begin
+  inherited;
+  FUzerinde := True;
+  Invalidate;
+end;
+
+procedure TSeritSekmesi.CMMouseLeave(var Mesaj: TMessage);
+begin
+  inherited;
+  FUzerinde := False;
+  Invalidate;
+end;
+
 { ---------- TSerit ---------- }
 
 constructor TSerit.Create(Ust: TWinControl; Koleksiyon: TImageCollection; PPI: Integer);
@@ -319,21 +406,10 @@ begin
     Grup.Panel.Parent := FKap;
     Grup.Panel.BevelOuter := bvNone;
     Grup.Panel.ShowCaption := False;
-    Grup.Etiket := TLabel.Create(Grup.Panel);
-    Grup.Etiket.Parent := Grup.Panel;
-    Grup.Etiket.Align := alBottom;
-    Grup.Etiket.AutoSize := False;
-    Grup.Etiket.Alignment := taCenter;
-    Grup.Etiket.Layout := tlCenter;
-    Grup.Etiket.Height := Olcekle(GRUP_ADI_YUKSEKLIGI);
-    { Grup adi kucuk ve gri; rengi stilden gelir, stil yazi rengini ezmesin. }
-    Grup.Etiket.StyleElements := [seClient, seBorder];
-    Grup.Etiket.Font.Color := StyleServices(Grup.Etiket).GetSystemColor(clGrayText);
-    Grup.Etiket.Font.Height := Round(Grup.Etiket.Font.Height * 0.85);
-    Grup.Cizgi := TBevel.Create(FKap);
-    Grup.Cizgi.Parent := FKap;
-    Grup.Cizgi.Shape := bsLeftLine;
-    Grup.Cizgi.Width := Olcekle(CIZGI_GENISLIGI);
+    Grup.Sekme := TSeritSekmesi.Create(FKap, FPPI);
+    Grup.Sekme.Parent := FKap;
+    Grup.Sekme.Tag := FGruplar.Count;
+    Grup.Sekme.OnClick := SekmeTiklandi;
     FGruplar.Add(Grup);
   end;
   Result := TSeritDugmesi.Create(Grup.Panel, FKoleksiyon, FPPI);
@@ -349,6 +425,26 @@ begin
   Duzenle;
 end;
 
+procedure TSerit.SekmeTiklandi(Sender: TObject);
+begin
+  SekmeSec(TComponent(Sender).Tag);
+end;
+
+{ Yalniz secili sekmenin dugmeleri gorunur. Gizli dugmelerin Enabled durumu degismez. }
+procedure TSerit.SekmeSec(No: Integer);
+var
+  i: Integer;
+begin
+  if (No < 0) or (No >= FGruplar.Count) then
+    Exit;
+  FSeciliSekme := No;
+  for i := 0 to FGruplar.Count - 1 do
+  begin
+    FGruplar[i].Panel.Visible := i = FSeciliSekme;
+    FGruplar[i].Sekme.Secili := i = FSeciliSekme;
+  end;
+end;
+
 procedure TSerit.YazilariYenile;
 var
   Grup: TSeritGrubu;
@@ -356,65 +452,54 @@ var
 begin
   for Grup in FGruplar do
   begin
-    Grup.Etiket.Caption := T(Grup.Anahtar);
+    Grup.Sekme.YaziyiYaz(T(Grup.Anahtar));
     for Dugme in Grup.Dugmeler do
       Dugme.YazilariYenile;
   end;
   Duzenle;
 end;
 
-{ Gruplari soldan saga dizer. Grup, dugmelerinin toplam genisligi kadar (grup adi
-  daha genisse onun kadar) yer kaplar; dugmeler grubun ortasinda durur. }
+{ Ustte sekme satiri, altinda secili grubun dugmeleri. Her grup kendi panelinde,
+  hepsi ayni yerde ust uste durur; yalniz secili olan gorunur. }
 procedure TSerit.Duzenle;
 var
   Grup: TSeritGrubu;
   Dugme: TSeritDugmesi;
-  Olcu: TBitmap;
-  X, DugmeX, DugmeGenisligi, AdGenisligi, GrupGenisligi, DugmeYuksekligi, Bosluk: Integer;
+  X, DugmeGenisligi, DugmeYuksekligi, SekmeYuksekligi, Bosluk: Integer;
 begin
   Bosluk := Olcekle(KENAR);
   DugmeYuksekligi := 0;
+  SekmeYuksekligi := 0;
   for Grup in FGruplar do
+  begin
+    SekmeYuksekligi := Max(SekmeYuksekligi, Grup.Sekme.Height);
     for Dugme in Grup.Dugmeler do
       DugmeYuksekligi := Max(DugmeYuksekligi, Dugme.Height);
-  FYukseklik := DugmeYuksekligi + Olcekle(GRUP_ADI_YUKSEKLIGI) + Bosluk div 2;
-  Olcu := TBitmap.Create;
+  end;
+  FYukseklik := SekmeYuksekligi + DugmeYuksekligi + Bosluk div 2;
+  FGenislik := 0;
   X := Bosluk div 2;
   for Grup in FGruplar do
   begin
+    Grup.Sekme.SetBounds(X, 0, Grup.Sekme.Width, SekmeYuksekligi);
+    Inc(X, Grup.Sekme.Width);
     DugmeGenisligi := 0;
     for Dugme in Grup.Dugmeler do
-      Inc(DugmeGenisligi, Dugme.Width + Olcekle(DUGME_ARASI));
-    Olcu.Canvas.Font.Assign(Grup.Etiket.Font);
-    AdGenisligi := Olcu.Canvas.TextWidth(Grup.Etiket.Caption) + 2 * Bosluk;
-    GrupGenisligi := Max(DugmeGenisligi, AdGenisligi);
-    Grup.Panel.SetBounds(X, 0, GrupGenisligi, FYukseklik);
-    DugmeX := (GrupGenisligi - DugmeGenisligi) div 2;
-    for Dugme in Grup.Dugmeler do
     begin
-      Dugme.SetBounds(DugmeX, Bosluk div 4, Dugme.Width, Dugme.Height);
-      Inc(DugmeX, Dugme.Width + Olcekle(DUGME_ARASI));
+      Dugme.SetBounds(DugmeGenisligi, Bosluk div 4, Dugme.Width, Dugme.Height);
+      Inc(DugmeGenisligi, Dugme.Width + Olcekle(DUGME_ARASI));
     end;
-    Inc(X, GrupGenisligi);
-    Grup.Cizgi.SetBounds(X, Bosluk div 2, Olcekle(CIZGI_GENISLIGI), FYukseklik - Bosluk);
-    Inc(X, Olcekle(CIZGI_GENISLIGI) + Bosluk div 2);
-    { Son grubun sagindaki cizgi gerekmez. }
-    Grup.Cizgi.Visible := Grup <> FGruplar.Last;
+    Grup.Panel.SetBounds(Bosluk div 2, SekmeYuksekligi, DugmeGenisligi, DugmeYuksekligi + Bosluk div 2);
+    FGenislik := Max(FGenislik, Grup.Panel.Left + DugmeGenisligi);
   end;
-  Olcu.Free;
+  FGenislik := Max(FGenislik, X);
+  SekmeSec(FSeciliSekme);
 end;
 
-{ Seridin istedigi toplam genislik (pencere bundan darsa serit kesilir). }
+{ Seridin en genis halinin genisligi (en genis sekme ya da sekme satiri). }
 function TSerit.Genislik: Integer;
-var
-  Grup: TSeritGrubu;
 begin
-  Result := 0;
-  if FGruplar.Count > 0 then
-  begin
-    Grup := FGruplar.Last;
-    Result := Grup.Panel.Left + Grup.Panel.Width;
-  end;
+  Result := FGenislik;
 end;
 
 end.
