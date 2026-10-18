@@ -182,7 +182,7 @@ Bu bir "boş zamanda yavaş yavaş" projesidir, acele yoktur. **Her aşama bitin
 - [x] `uDDL.pas`: tablo, view, prosedür, trigger için `CREATE` script üretimi (referans: `isql -x` çıktısı)
 - [x] Tüm veritabanının metadata çıkarımı (IBExpert "Extract Metadata" gibi: dosyaya veya panoya, hepsi birden, seçenekler: CREATE DATABASE, CONNECT, şifre)
 - [x] Veri dışa aktarma (yalnızca CSV; Excel'de açılır, `.xlsx` yazılmaz)
-- [ ] Yedek/geri yükleme (`gbak` çağırma)
+- [x] Yedek/geri yükleme (`gbak` çağırma)
 - [ ] Kullanıcı ve yetki yönetimi
 
 ### Aşama 4: Çoklu Veritabanı (sahibinin özel ihtiyacı)
