@@ -979,6 +979,9 @@ begin
     if FIptal then
       Exit;
     Hedef := Liste[i].Tur;
+    { Firebird 2.5 'PROCEDURE PARAMETER' bilmez; 'PARAMETER' 2.5, 3.0, 4.0 ve 5.0'in hepsinde gecerli. }
+    if Hedef = 'PROCEDURE PARAMETER' then
+      Hedef := 'PARAMETER';
     if Liste[i].Ad1 <> '' then
       Hedef := Hedef + ' ' + AdYaz(Liste[i].Ad1);
     if Liste[i].Ad2 <> '' then
