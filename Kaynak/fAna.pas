@@ -11,10 +11,10 @@ interface
 
 uses
   Winapi.Windows, System.SysUtils, System.Classes, System.Generics.Collections,
-  Vcl.Controls, Vcl.Forms, Vcl.ComCtrls, Vcl.ToolWin, Vcl.ExtCtrls, Vcl.StdCtrls,
+  Vcl.Controls, Vcl.Forms, Vcl.ComCtrls, Vcl.ExtCtrls, Vcl.StdCtrls,
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
-  uDil, uIkon, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
+  uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
   fTabloSekme, fSorguSekme;
 
 type
@@ -31,14 +31,6 @@ type
 
   TfrmAna = class(TForm)
     pnlUst: TPanel;
-    tbAna: TToolBar;
-    btnYeniBaglanti: TToolButton;
-    btnKlonla: TToolButton;
-    btnBaglan: TToolButton;
-    btnYenile: TToolButton;
-    btnYeniSorgu: TToolButton;
-    btnCalistir: TToolButton;
-    btnPlan: TToolButton;
     pnlDil: TPanel;
     cmbDil: TComboBox;
     stbDurum: TStatusBar;
@@ -75,6 +67,8 @@ type
     procedure btnYeniSorguClick(Sender: TObject);
     procedure btnCalistirClick(Sender: TObject);
     procedure btnPlanClick(Sender: TObject);
+    procedure btnMetadataClick(Sender: TObject);
+    procedure btnYedekClick(Sender: TObject);
     procedure btnYenileClick(Sender: TObject);
     procedure cmbDilChange(Sender: TObject);
     procedure tvNesnelerChange(Sender: TObject; Node: TTreeNode);
@@ -99,10 +93,22 @@ type
     procedure miYeniKlasorClick(Sender: TObject);
     procedure miSekmeKapatClick(Sender: TObject);
   private
+    icSerit: TImageCollection;
+    FSerit: TSerit;
+    btnYeniBaglanti: TSeritDugmesi;
+    btnKlonla: TSeritDugmesi;
+    btnBaglan: TSeritDugmesi;
+    btnYenile: TSeritDugmesi;
+    btnYeniSorgu: TSeritDugmesi;
+    btnCalistir: TSeritDugmesi;
+    btnPlan: TSeritDugmesi;
+    btnMetadata: TSeritDugmesi;
+    btnYedek: TSeritDugmesi;
     FDilKodlari: TArray<string>;
     FOgeler: TObjectList<TAgacOgesi>;
     FSurukleNode: TTreeNode;
     FSorguNo: Integer;
+    procedure SeritKur;
     procedure YazilariYenile;
     procedure DilListesiniDoldur;
     procedure DurumuGuncelle;
@@ -168,6 +174,7 @@ begin
   FOgeler := TObjectList<TAgacOgesi>.Create(True);
   DilYukle(SonKullanilanDil);
   IkonlariYukle(icIkonlar, vilIkonlar);
+  SeritKur;
   DilListesiniDoldur;
   AgaciKur;
   YazilariYenile;
@@ -179,7 +186,27 @@ end;
 
 procedure TfrmAna.FormDestroy(Sender: TObject);
 begin
+  FSerit.Free;
   FOgeler.Free;
+end;
+
+{ Ustteki serit: gruplar ve dugmeler soldan saga bu siraya gore dizilir. Dugmenin
+  yazisi ve ikonu uSerit'te, isi asagidaki btn...Click yordamlarindadir. }
+procedure TfrmAna.SeritKur;
+begin
+  { Serit kendi ikon koleksiyonunu kullanir (agacinkine dokunmaz). }
+  icSerit := TImageCollection.Create(Self);
+  IkonlariKoleksiyonaYukle(icSerit);
+  FSerit := TSerit.Create(pnlUst, icSerit, CurrentPPI);
+  btnYeniBaglanti := FSerit.Ekle('GRUP_BAGLANTI', 'BTN_YENI_BAGLANTI', IKON_VERITABANI, btnYeniBaglantiClick);
+  btnKlonla := FSerit.Ekle('GRUP_BAGLANTI', 'BTN_KLONLA', IKON_KLONLA, btnKlonlaClick);
+  btnBaglan := FSerit.Ekle('GRUP_BAGLANTI', 'BTN_BAGLAN', IKON_BAGLAN, btnBaglanClick);
+  btnYenile := FSerit.Ekle('GRUP_BAGLANTI', 'BTN_YENILE', IKON_YENILE, btnYenileClick);
+  btnYeniSorgu := FSerit.Ekle('GRUP_SORGU', 'BTN_YENI_SORGU', IKON_SORGU, btnYeniSorguClick);
+  btnCalistir := FSerit.Ekle('GRUP_SORGU', 'BTN_CALISTIR', IKON_CALISTIR, btnCalistirClick);
+  btnPlan := FSerit.Ekle('GRUP_SORGU', 'BTN_PLAN', IKON_PLAN, btnPlanClick);
+  btnMetadata := FSerit.Ekle('GRUP_YONETIM', 'MENU_METADATA_CIKAR', IKON_METADATA, btnMetadataClick);
+  btnYedek := FSerit.Ekle('GRUP_YONETIM', 'MENU_YEDEK', IKON_YEDEK, btnYedekClick);
 end;
 
 procedure TfrmAna.DilListesiniDoldur;
@@ -206,12 +233,8 @@ var
   SorguSekme: TSorguSekme;
 begin
   Caption := T('APP_BASLIK');
-  btnYeniBaglanti.Caption := T('BTN_YENI_BAGLANTI');
-  btnKlonla.Caption := T('BTN_KLONLA');
-  btnYenile.Caption := T('BTN_YENILE');
-  btnYeniSorgu.Caption := T('BTN_YENI_SORGU');
-  btnCalistir.Caption := T('BTN_CALISTIR');
-  btnPlan.Caption := T('BTN_PLAN');
+  FSerit.YazilariYenile;
+  pnlUst.Height := FSerit.Yukseklik;
   miAc.Caption := T('MENU_AC');
   miScriptUret.Caption := T('MENU_SCRIPT_URET');
   miBaglan.Caption := T('BTN_BAGLAN');
@@ -280,15 +303,9 @@ begin
   end;
   { Bagla/Kes tek dugme: yazisi ve ikonu secili baglantinin durumuna gore degisir. }
   if Bag = nil then
-  begin
-    btnBaglan.Caption := T('BTN_BAGLAN');
-    btnBaglan.ImageIndex := IKON_BAGLAN;
-  end
+    btnBaglan.Ayarla('BTN_BAGLAN', IKON_BAGLAN)
   else
-  begin
-    btnBaglan.Caption := T('BTN_KES');
-    btnBaglan.ImageIndex := IKON_KES;
-  end;
+    btnBaglan.Ayarla('BTN_KES', IKON_KES);
   btnBaglan.Enabled := Dugme <> nil;
   { Klonla: yalniz dogrudan bir baglanti dugumu secili iken (klasor, tablo vb. degil). }
   btnKlonla.Enabled := (tvNesneler.Selected <> nil) and (OgeAl(tvNesneler.Selected).Tur = atBaglanti);
@@ -296,6 +313,8 @@ begin
   btnYeniSorgu.Enabled := Bag <> nil;
   btnCalistir.Enabled := AktifSorguSekmesi <> nil;
   btnPlan.Enabled := AktifSorguSekmesi <> nil;
+  btnMetadata.Enabled := Bag <> nil;
+  btnYedek.Enabled := Dugme <> nil;
 end;
 
 procedure TfrmAna.MesajYaz(const Metin: string);
@@ -1018,6 +1037,18 @@ end;
 procedure TfrmAna.btnPlanClick(Sender: TObject);
 begin
   PlaniGoster;
+end;
+
+procedure TfrmAna.btnMetadataClick(Sender: TObject);
+begin
+  if SeciliBaglantiDugmesi <> nil then
+    MetadataCikarAc(SeciliBaglantiDugmesi);
+end;
+
+procedure TfrmAna.btnYedekClick(Sender: TObject);
+begin
+  if SeciliBaglantiDugmesi <> nil then
+    YedekPenceresiAc(SeciliBaglantiDugmesi);
 end;
 
 { F5: aktif sekme bir sorgu sekmesiyse calistirir. Ctrl+L: komutun planini gosterir. }

@@ -25,17 +25,24 @@ const
   IKON_SORGU = 6;
   IKON_CALISTIR = 11;
   IKON_PLAN = 12;
+  IKON_METADATA = 13;
+  { Yedek icin ayri ikon yok; gecici olarak klasor ikonu (rapora yazildi). }
+  IKON_YEDEK = IKON_KLASOR;
 
+procedure IkonlariKoleksiyonaYukle(Koleksiyon: TImageCollection);
 procedure IkonlariYukle(Koleksiyon: TImageCollection; Liste: TVirtualImageList);
 
 implementation
 
 const
-  IKON_DOSYALARI: array[0..12] of string = (
+  IKON_DOSYALARI: array[0..13] of string = (
     'plug', 'plug-off', 'refresh', 'database', 'table', 'eye', 'code',
-    'list-numbers', 'folder', 'copy', 'trash', 'player-play', 'list-tree');
+    'list-numbers', 'folder', 'copy', 'trash', 'player-play', 'list-tree',
+    'file-plus');
 
-procedure IkonlariYukle(Koleksiyon: TImageCollection; Liste: TVirtualImageList);
+{ PNG dosyalarini koleksiyona sirayla ekler. Serit kendi koleksiyonunu kullanir:
+  agacin ortak koleksiyonuna baska boyutta cizim yapmak agac ikonlarini bozuyor. }
+procedure IkonlariKoleksiyonaYukle(Koleksiyon: TImageCollection);
 var
   Klasor, Dosya, Ad: string;
 begin
@@ -48,6 +55,11 @@ begin
     else
       raise Exception.Create(TF('ERR_IKON_YOK', [Dosya]));
   end;
+end;
+
+procedure IkonlariYukle(Koleksiyon: TImageCollection; Liste: TVirtualImageList);
+begin
+  IkonlariKoleksiyonaYukle(Koleksiyon);
   { Sanal ikon listesi, koleksiyona sonradan eklenenleri bu sekilde alir. }
   Liste.ColorDepth := cd32Bit;
   Liste.Masked := False;

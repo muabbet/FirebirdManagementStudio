@@ -18,7 +18,7 @@ object frmAna: TfrmAna
     Left = 0
     Top = 0
     Width = 1100
-    Height = 44
+    Height = 104
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
@@ -26,7 +26,7 @@ object frmAna: TfrmAna
       Left = 910
       Top = 0
       Width = 190
-      Height = 44
+      Height = 104
       Align = alRight
       BevelOuter = bvNone
       TabOrder = 1
@@ -45,69 +45,6 @@ object frmAna: TfrmAna
         ShowHint = True
         TabOrder = 0
         OnChange = cmbDilChange
-      end
-    end
-    object tbAna: TToolBar
-      Left = 0
-      Top = 0
-      Width = 910
-      Height = 44
-      Align = alClient
-      ButtonHeight = 38
-      ButtonWidth = 60
-      EdgeBorders = []
-      Images = vilIkonlar
-      List = True
-      ShowCaptions = True
-      TabOrder = 0
-      object btnYeniBaglanti: TToolButton
-        Left = 0
-        Top = 0
-        AutoSize = True
-        ImageIndex = 3
-        OnClick = btnYeniBaglantiClick
-      end
-      object btnKlonla: TToolButton
-        Left = 60
-        Top = 0
-        AutoSize = True
-        ImageIndex = 9
-        OnClick = btnKlonlaClick
-      end
-      object btnBaglan: TToolButton
-        Left = 120
-        Top = 0
-        AutoSize = True
-        ImageIndex = 0
-        OnClick = btnBaglanClick
-      end
-      object btnYenile: TToolButton
-        Left = 120
-        Top = 0
-        AutoSize = True
-        ImageIndex = 2
-        OnClick = btnYenileClick
-      end
-      object btnYeniSorgu: TToolButton
-        Left = 180
-        Top = 0
-        AutoSize = True
-        ImageIndex = 6
-        OnClick = btnYeniSorguClick
-      end
-      object btnCalistir: TToolButton
-        Left = 240
-        Top = 0
-        AutoSize = True
-        ImageIndex = 11
-        OnClick = btnCalistirClick
-      end
-      object btnPlan: TToolButton
-        Left = 300
-        Top = 0
-        AutoSize = True
-        ImageIndex = 12
-        OnClick = btnPlanClick
       end
     end
   end
@@ -129,9 +66,9 @@ object frmAna: TfrmAna
   end
   object tvNesneler: TTreeView
     Left = 0
-    Top = 44
+    Top = 104
     Width = 270
-    Height = 637
+    Height = 577
     Align = alLeft
     HideSelection = False
     Images = vilIkonlar
@@ -148,15 +85,15 @@ object frmAna: TfrmAna
   end
   object bolSol: TSplitter
     Left = 270
-    Top = 44
+    Top = 104
     Width = 5
-    Height = 637
+    Height = 577
   end
   object pnlSag: TPanel
     Left = 275
-    Top = 44
+    Top = 104
     Width = 825
-    Height = 637
+    Height = 577
     Align = alClient
     BevelOuter = bvNone
     TabOrder = 2

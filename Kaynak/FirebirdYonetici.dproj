@@ -82,6 +82,7 @@
         </RcCompile>
         <DCCReference Include="uDil.pas"/>
         <DCCReference Include="uIkon.pas"/>
+        <DCCReference Include="uSerit.pas"/>
         <DCCReference Include="uOnay.pas"/>
         <DCCReference Include="uBaglanti.pas"/>
         <DCCReference Include="uMetadata.pas"/>
