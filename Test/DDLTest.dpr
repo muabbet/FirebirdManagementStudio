@@ -64,6 +64,13 @@ begin
     Surucu.VendorLib := ExtractFilePath(ParamStr(0)) + 'istemci\fbclient.dll';
     Baglanti.DriverName := 'FB';
     Baglanti.LoginPrompt := False;
+    { Sunucu doluysa veritabani SUNUCUDA olusur (FbBaglan ile ayni parametreler); bos ise gomulu motor. }
+    if Tanim.Sunucu <> '' then
+    begin
+      Baglanti.Params.Values['Server'] := Tanim.Sunucu;
+      Baglanti.Params.Values['Port'] := IntToStr(Tanim.Port);
+      Baglanti.Params.Values['Protocol'] := 'TCPIP';
+    end;
     Baglanti.Params.Values['Database'] := Tanim.VeritabaniYolu;
     Baglanti.Params.Values['User_Name'] := Tanim.Kullanici;
     Baglanti.Params.Values['Password'] := Tanim.Sifre;
