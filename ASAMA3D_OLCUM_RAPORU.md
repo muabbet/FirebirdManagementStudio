@@ -114,10 +114,10 @@ Sürüm farkı olan her şey (`SEC$USERS` var/yok, `ALTER CURRENT USER`, `ACTIVE
 
 Dosyalar: `Test\KullaniciOlcum.dpr`, `Test\KullaniciOlcumDerle.bat`. Varsayılan yalnızca okur; `FBTEST_YAZMA=1` yazma bölümünü açar (yalnızca yerel 3052/3053 veya kendi gömülü geçici veritabanı). Şifre hiçbir yere yazılmaz. `CREATE/ALTER/DROP USER, GRANT, REVOKE` yalnızca yazma bölümünde ve korumalı çalışır.
 
-Derleme (zaten derlendi; `bin\Win64\Release` dışarıda tutulan klasördür):
+Derleme (zaten derlendi; exe, git dışında tutulan `binWin64Release` içinde, bu çalışma ağacında):
 
 ```powershell
-cd C:\Baris\Kodlar\FirebirdYonetici\Test
+cd C:BarisKodlarFirebirdYonetici.claudeworktreesNruffled-benz-959342Test
 .\KullaniciOlcumDerle.bat
 ```
 
@@ -133,7 +133,7 @@ $env:FBTEST_YOL = "C:\...\VAR_OLAN_VERITABANI.FDB"
 $env:FBTEST_KULLANICI = "SYSDBA"
 $env:FBTEST_SIFRE = "SIFRENIZ"
 $env:FBTEST_CIKTI = "$env:TEMP\kullaniciolcum_25.txt"
-& "C:\Baris\Kodlar\FirebirdYonetici\bin\Win64\Release\KullaniciOlcum.exe"
+& "C:BarisKodlarFirebirdYonetici.claudeworktreesNruffled-benz-959342binWin64ReleaseKullaniciOlcum.exe"
 ```
 
 (3051 için `FBTEST_PORT = "3051"`, çıktı `kullaniciolcum_50.txt`.) `FBTEST_YAZMA` **verilmeyin**.
@@ -149,7 +149,7 @@ $env:FBTEST_KULLANICI = "SYSDBA"
 $env:FBTEST_SIFRE = "SIFRENIZ"
 $env:FBTEST_YAZMA = "1"
 $env:FBTEST_CIKTI = "$env:TEMP\kullaniciolcum_30.txt"
-& "C:\Baris\Kodlar\FirebirdYonetici\bin\Win64\Release\KullaniciOlcum.exe"
+& "C:BarisKodlarFirebirdYonetici.claudeworktreesNruffled-benz-959342binWin64ReleaseKullaniciOlcum.exe"
 ```
 
 (3053 için `FBTEST_PORT = "3053"`, çıktı `kullaniciolcum_40.txt`.) Yazma, `FBY_TEST` / `FBY_SVC` kullanıcılarını, `FBY_OLCUM_T` tablosunu, `FBY_ROL` ve `FBY_SYSROL` rollerini oluşturur ve sonunda siler (yarım kalırsa bir sonraki çalıştırmada temizler).
