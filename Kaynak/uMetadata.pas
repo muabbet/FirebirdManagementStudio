@@ -9,10 +9,10 @@ unit uMetadata;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.StrUtils, System.Generics.Collections, Data.DB,
+  System.SysUtils, System.Classes, System.StrUtils, System.Variants, System.Generics.Collections, Data.DB,
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error,
   FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Comp.DataSet,
-  FireDAC.Comp.Client,
+  FireDAC.Comp.Client, FireDAC.Phys.IBBase, FireDAC.Phys.IBWrapper,
   uDil, uBaglanti;
 
 type
@@ -162,6 +162,36 @@ type
     Ad2: string;
     Metin: string;
   end;
+
+  { Sunucunun bir kullanicisi (kullanicilar veritabanina degil sunucuya aittir). BilgiVar: Yonetici ve Aktif
+    degerleri okunabildi mi (2.5 Services listesinde yoktur; orada False, iki alan da anlamsiz). }
+  TKullaniciBilgisi = record
+    Ad: string;
+    Isim: string;
+    OrtaAd: string;
+    Soyad: string;
+    Yonetici: Boolean;
+    Aktif: Boolean;
+    BilgiVar: Boolean;
+  end;
+
+  TKendiSifreKomutu = (skAlterUser, skAlterCurrentUser);
+
+  { Kullanici yonetiminde sunucu surumune gore ne var: form yalniz bunlara bakar, surum numarasi bilmez. }
+  TKullaniciYetenekleri = record
+    { False: gomulu baglanti, sunucu yok, kullanici yonetimi yok }
+    YonetimVar: Boolean;
+    { Liste SQL ile (SEC$USERS) mi, yoksa Services API ile mi (2.5) alinir }
+    ListeSql: Boolean;
+    { Listede yonetici ve aktif bilgisi gelir mi }
+    YoneticiOkunur: Boolean;
+    YoneticiAyarlanir: Boolean;
+    AktifPasif: Boolean;
+    KendiSifreKomutu: TKendiSifreKomutu;
+  end;
+
+function KullaniciYetenekleri(Bag: TAcikBaglanti): TKullaniciYetenekleri;
+function KullaniciListesiOku(Bag: TAcikBaglanti): TArray<TKullaniciBilgisi>;
 
 procedure TablolariGetir(Bag: TAcikBaglanti; Hedef: TStrings);
 procedure ViewlariGetir(Bag: TAcikBaglanti; Hedef: TStrings);
@@ -1271,6 +1301,96 @@ begin
   finally
     Liste.Free;
   end;
+end;
+
+{ ---------- Sunucu kullanicilari (salt okuma) ---------- }
+
+function KullaniciYetenekleri(Bag: TAcikBaglanti): TKullaniciYetenekleri;
+begin
+  Result.YonetimVar := Bag.Tanim.Sunucu <> '';
+  Result.ListeSql := SurumNo(Bag) >= 3;
+  Result.YoneticiOkunur := Result.ListeSql;
+  Result.YoneticiAyarlanir := Result.ListeSql;
+  Result.AktifPasif := Result.ListeSql;
+  if Result.ListeSql then
+    Result.KendiSifreKomutu := skAlterCurrentUser
+  else
+    Result.KendiSifreKomutu := skAlterUser;
+end;
+
+{ 3.0 ve ustu: SEC$USERS. Yonetici olmayan kullanici yalniz kendi satirini gorur. }
+function KullanicilariSqlOku(Bag: TAcikBaglanti): TArray<TKullaniciBilgisi>;
+var
+  Sorgu: TFDQuery;
+  Liste: TList<TKullaniciBilgisi>;
+  Kullanici: TKullaniciBilgisi;
+begin
+  Liste := TList<TKullaniciBilgisi>.Create;
+  Sorgu := SorguAc(Bag, 'select SEC$USER_NAME, SEC$FIRST_NAME, SEC$MIDDLE_NAME, SEC$LAST_NAME, SEC$ACTIVE, SEC$ADMIN ' +
+    'from SEC$USERS order by SEC$USER_NAME', '');
+  try
+    while not Sorgu.Eof do
+    begin
+      Kullanici.Ad := Trim(Sorgu.FieldByName('SEC$USER_NAME').AsString);
+      Kullanici.Isim := Trim(Sorgu.FieldByName('SEC$FIRST_NAME').AsString);
+      Kullanici.OrtaAd := Trim(Sorgu.FieldByName('SEC$MIDDLE_NAME').AsString);
+      Kullanici.Soyad := Trim(Sorgu.FieldByName('SEC$LAST_NAME').AsString);
+      Kullanici.Aktif := Sorgu.FieldByName('SEC$ACTIVE').AsBoolean;
+      Kullanici.Yonetici := Sorgu.FieldByName('SEC$ADMIN').AsBoolean;
+      Kullanici.BilgiVar := True;
+      Liste.Add(Kullanici);
+      Sorgu.Next;
+    end;
+    Result := Liste.ToArray;
+  finally
+    Sorgu.Free;
+    Liste.Free;
+  end;
+end;
+
+{ 2.5: SQL ile listeleme yok, yalniz Services API (gsec'in yolu). Ayni surucu baglantisi kullanilir. }
+function KullanicilariServisOku(Bag: TAcikBaglanti): TArray<TKullaniciBilgisi>;
+var
+  Guvenlik: TFDIBSecurity;
+  Liste: TList<TKullaniciBilgisi>;
+  Kullanici: TKullaniciBilgisi;
+  I: Integer;
+begin
+  Liste := TList<TKullaniciBilgisi>.Create;
+  Guvenlik := TFDIBSecurity.Create(nil);
+  try
+    Guvenlik.DriverLink := FbSurucu;
+    Guvenlik.Protocol := ipTCPIP;
+    Guvenlik.Host := Bag.Tanim.Sunucu;
+    Guvenlik.Port := Bag.Tanim.Port;
+    Guvenlik.UserName := Bag.Tanim.Kullanici;
+    Guvenlik.Password := Bag.Tanim.Sifre;
+    Guvenlik.DisplayUsers;
+    { Kolonlar (olcum): 0 kullanici, 2 ad, 3 orta ad, 4 soyad }
+    for I := 0 to Guvenlik.Users.Rows.Count - 1 do
+    begin
+      Kullanici := Default(TKullaniciBilgisi);
+      Kullanici.Ad := Trim(VarToStr(Guvenlik.Users.Rows[I].GetData(0)));
+      Kullanici.Isim := Trim(VarToStr(Guvenlik.Users.Rows[I].GetData(2)));
+      Kullanici.OrtaAd := Trim(VarToStr(Guvenlik.Users.Rows[I].GetData(3)));
+      Kullanici.Soyad := Trim(VarToStr(Guvenlik.Users.Rows[I].GetData(4)));
+      Liste.Add(Kullanici);
+    end;
+    Result := Liste.ToArray;
+  finally
+    Guvenlik.Free;
+    Liste.Free;
+  end;
+end;
+
+function KullaniciListesiOku(Bag: TAcikBaglanti): TArray<TKullaniciBilgisi>;
+begin
+  if Bag.Tanim.Sunucu = '' then
+    raise EMetadataHatasi.Create(T('ERR_KULLANICI_GOMULU'));
+  if KullaniciYetenekleri(Bag).ListeSql then
+    Result := KullanicilariSqlOku(Bag)
+  else
+    Result := KullanicilariServisOku(Bag);
 end;
 
 end.

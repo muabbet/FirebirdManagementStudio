@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme;
+  fTabloSekme, fSorguSekme, fKullanicilar;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -69,6 +69,7 @@ type
     procedure btnPlanClick(Sender: TObject);
     procedure btnMetadataClick(Sender: TObject);
     procedure btnYedekClick(Sender: TObject);
+    procedure btnKullanicilarClick(Sender: TObject);
     procedure btnYenileClick(Sender: TObject);
     procedure cmbDilChange(Sender: TObject);
     procedure tvNesnelerChange(Sender: TObject; Node: TTreeNode);
@@ -104,6 +105,7 @@ type
     btnPlan: TSeritDugmesi;
     btnMetadata: TSeritDugmesi;
     btnYedek: TSeritDugmesi;
+    btnKullanicilar: TSeritDugmesi;
     FDilKodlari: TArray<string>;
     FOgeler: TObjectList<TAgacOgesi>;
     FSurukleNode: TTreeNode;
@@ -143,6 +145,8 @@ type
     function SekmeAl(Sayfa: TTabSheet): TTabloSekme;
     procedure BaglantiSekmeleriniKapat(const BaglantiAd: string);
     procedure TabloAc(Dugme: TTreeNode);
+    function KullanicilarAl(Sayfa: TTabSheet): TKullanicilar;
+    procedure KullanicilarAc(Dugme: TTreeNode);
     function SorguSekmeAl(Sayfa: TTabSheet): TSorguSekme;
     function AktifSorguSekmesi: TSorguSekme;
     procedure YeniSorgu(const Metin: string = '');
@@ -207,6 +211,8 @@ begin
   btnPlan := FSerit.Ekle('GRUP_SORGU', 'BTN_PLAN', IKON_PLAN, btnPlanClick);
   btnMetadata := FSerit.Ekle('GRUP_YONETIM', 'MENU_METADATA_CIKAR', IKON_METADATA, btnMetadataClick);
   btnYedek := FSerit.Ekle('GRUP_YONETIM', 'MENU_YEDEK', IKON_YEDEK, btnYedekClick);
+  btnKullanicilar := FSerit.Ekle('GRUP_YONETIM', 'BTN_KULLANICILAR', IKON_KULLANICI, btnKullanicilarClick);
+  btnKullanicilar.ShowHint := True;
 end;
 
 procedure TfrmAna.DilListesiniDoldur;
@@ -231,6 +237,7 @@ var
   i: Integer;
   Sekme: TTabloSekme;
   SorguSekme: TSorguSekme;
+  KullaniciSekme: TKullanicilar;
 begin
   Caption := T('APP_BASLIK');
   FSerit.YazilariYenile;
@@ -255,6 +262,12 @@ begin
     Sekme := SekmeAl(pcCalisma.Pages[i]);
     if Sekme <> nil then
       Sekme.YazilariYenile;
+    KullaniciSekme := KullanicilarAl(pcCalisma.Pages[i]);
+    if KullaniciSekme <> nil then
+    begin
+      pcCalisma.Pages[i].Caption := TF('KUL_SEKME', [KullaniciSekme.BaglantiAd]);
+      KullaniciSekme.YazilariYenile;
+    end;
     SorguSekme := SorguSekmeAl(pcCalisma.Pages[i]);
     if SorguSekme <> nil then
     begin
@@ -315,6 +328,12 @@ begin
   btnPlan.Enabled := AktifSorguSekmesi <> nil;
   btnMetadata.Enabled := Bag <> nil;
   btnYedek.Enabled := Dugme <> nil;
+  { Kullanicilar: yalniz acik ve sunucu kipindeki baglantida; gomulu baglantida gerekce arac ipucunda. }
+  btnKullanicilar.Enabled := (Bag <> nil) and KullaniciYetenekleri(Bag).YonetimVar;
+  if (Bag <> nil) and not KullaniciYetenekleri(Bag).YonetimVar then
+    btnKullanicilar.Hint := T('ERR_KULLANICI_GOMULU')
+  else
+    btnKullanicilar.Hint := '';
 end;
 
 procedure TfrmAna.MesajYaz(const Metin: string);
@@ -784,6 +803,58 @@ begin
     Result := TSorguSekme(Sayfa.Controls[0]);
 end;
 
+function TfrmAna.KullanicilarAl(Sayfa: TTabSheet): TKullanicilar;
+begin
+  Result := nil;
+  if (Sayfa.ControlCount > 0) and (Sayfa.Controls[0] is TKullanicilar) then
+    Result := TKullanicilar(Sayfa.Controls[0]);
+end;
+
+{ Her baglanti icin tek "Kullanicilar" sekmesi: ikinci tiklamada mevcut sekme one gelir. }
+procedure TfrmAna.KullanicilarAc(Dugme: TTreeNode);
+var
+  Ad: string;
+  Bag: TAcikBaglanti;
+  Sayfa: TTabSheet;
+  Sekme: TKullanicilar;
+  i: Integer;
+begin
+  Ad := OgeAl(Dugme).BaglantiAd;
+  Bag := FbAcikBaglanti(Ad);
+  if Bag = nil then
+    Exit;
+  for i := 0 to pcCalisma.PageCount - 1 do
+  begin
+    Sekme := KullanicilarAl(pcCalisma.Pages[i]);
+    if (Sekme <> nil) and SameText(Sekme.BaglantiAd, Ad) then
+    begin
+      pcCalisma.ActivePage := pcCalisma.Pages[i];
+      Exit;
+    end;
+  end;
+  Sayfa := TTabSheet.Create(pcCalisma);
+  Sayfa.PageControl := pcCalisma;
+  Sayfa.Caption := TF('KUL_SEKME', [Ad]);
+  Sayfa.ImageIndex := IKON_KULLANICI;
+  Sekme := TKullanicilar.Create(Sayfa);
+  Sekme.Parent := Sayfa;
+  Sekme.Align := alClient;
+  Sekme.AnaSonuc := memSonuc.Lines;
+  try
+    Sekme.Yukle(Bag);
+  except
+    on E: Exception do
+    begin
+      Sayfa.Free;
+      HataYaz(T('ERR_KULLANICI_LISTE') + ' ' + HataMetniniCevir(E), E.Message);
+      Exit;
+    end;
+  end;
+  pcCalisma.ActivePage := Sayfa;
+  MesajYaz(TF('KUL_MSG_ACILDI', [Ad]));
+  DurumuGuncelle;
+end;
+
 function TfrmAna.AktifSorguSekmesi: TSorguSekme;
 begin
   Result := nil;
@@ -933,6 +1004,7 @@ var
   i: Integer;
   Sekme: TTabloSekme;
   SorguSekme: TSorguSekme;
+  KullaniciSekme: TKullanicilar;
 begin
   for i := pcCalisma.PageCount - 1 downto 0 do
   begin
@@ -943,7 +1015,13 @@ begin
     begin
       SorguSekme := SorguSekmeAl(pcCalisma.Pages[i]);
       if (SorguSekme <> nil) and SameText(SorguSekme.BaglantiAd, BaglantiAd) then
-        pcCalisma.Pages[i].Free;
+        pcCalisma.Pages[i].Free
+      else
+      begin
+        KullaniciSekme := KullanicilarAl(pcCalisma.Pages[i]);
+        if (KullaniciSekme <> nil) and SameText(KullaniciSekme.BaglantiAd, BaglantiAd) then
+          pcCalisma.Pages[i].Free;
+      end;
     end;
   end;
 end;
@@ -1049,6 +1127,12 @@ procedure TfrmAna.btnYedekClick(Sender: TObject);
 begin
   if SeciliBaglantiDugmesi <> nil then
     YedekPenceresiAc(SeciliBaglantiDugmesi);
+end;
+
+procedure TfrmAna.btnKullanicilarClick(Sender: TObject);
+begin
+  if SeciliBaglantiDugmesi <> nil then
+    KullanicilarAc(SeciliBaglantiDugmesi);
 end;
 
 { F5: aktif sekme bir sorgu sekmesiyse calistirir. Ctrl+L: komutun planini gosterir. }

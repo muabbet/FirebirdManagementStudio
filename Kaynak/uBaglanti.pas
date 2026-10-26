@@ -70,6 +70,8 @@ function BozukDosyaUyarisiAl: string;
 
 { Acik baglantilar }
 function FbBaglan(const Tanim: TBaglantiTanimi): TAcikBaglanti;
+{ Servis API'si (2.5 kullanici listesi) icin ayni surucu baglantisi; ikinci bir surucu acilmaz. }
+function FbSurucu: TFDPhysFBDriverLink;
 procedure FbBaglantiyiKes(Bag: TAcikBaglanti);
 function FbAcikBaglanti(const Ad: string): TAcikBaglanti;
 function FbIslemAcikMi(Bag: TAcikBaglanti): Boolean;
@@ -544,6 +546,12 @@ begin
   GSurucu.VendorLib := IstemciDosyasi;
 end;
 
+function FbSurucu: TFDPhysFBDriverLink;
+begin
+  SurucuyuHazirla;
+  Result := GSurucu;
+end;
+
 function FbAcikBaglanti(const Ad: string): TAcikBaglanti;
 var
   Bag: TAcikBaglanti;
@@ -659,6 +667,9 @@ const
   GDS_TOKEN_UNKNOWN = 335544634;
   GDS_OBJ_IN_USE = 335544453;
   GDS_READ_ONLY_TRANS = 335544361;
+  { Asama 3d olcumu (3.0.14 sunucu): "no permission for ... access" ve "record not found for user" }
+  GDS_YETKI_YOK = 335544352;
+  GDS_KULLANICI_YOK = 336723990;
 
 { Firebird hata koduna bakar. Taninan bir kod varsa cumleyi verir. }
 function KodundanCevir(Hata: EFDDBEngineException; out Cevap: string): Boolean;
@@ -700,6 +711,16 @@ begin
       GDS_READ_ONLY_TRANS:
         begin
           Cevap := T('ERR_SALT_OKUNUR');
+          Exit;
+        end;
+      GDS_YETKI_YOK:
+        begin
+          Cevap := T('ERR_YETKI_YOK');
+          Exit;
+        end;
+      GDS_KULLANICI_YOK:
+        begin
+          Cevap := T('ERR_KULLANICI_YOK');
           Exit;
         end;
       GDS_LOGIN:
@@ -758,6 +779,10 @@ function HataMetniniCevir(Hata: Exception): string;
 begin
   if Iceriyor(Hata.Message, '" is in use') then
     Exit(T('ERR_NESNE_KULLANIMDA'));
+  { Yonetici olmayan kullanici CREATE USER dener: ilk kod "add record error" (336723987), asil neden
+    guvenlik veritabani tablosuna (PLG$SRP_VIEW) yazma yetkisinin olmamasi; bu yuzden metne bakilir. }
+  if Iceriyor(Hata.Message, 'PLG$SRP') then
+    Exit(T('ERR_KULLANICI_YONETIM_YETKI'));
   if (Hata is EFDDBEngineException) and KodundanCevir(EFDDBEngineException(Hata), Result) then
     Exit;
   Result := MetindenCevir(Hata.Message);
