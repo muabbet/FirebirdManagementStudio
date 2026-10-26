@@ -75,3 +75,11 @@ $env:FBTEST_CIKTI = "$env:TEMP\kullanicitest_30.txt"
   6. Dil değişince sekme başlığı, sütunlar, menü ve "Evet/Hayır" değerleri yeni dile geçiyor mu?
   7. Kendi şifreni değiştirince "Kayıtlı bağlantı şifresi de güncellensin mi?" soruluyor mu?
   8. Ayrıntı düğmesi hata penceresinde ham mesajı açıyor mu?
+
+## 6. Moderatör sunucu testinden sonra düzeltmeler (3.0.14 ve 4.0.7: 71 kontrol, 3 hata)
+
+1. **"Kullanıcı zaten var" çevirisi:** hata `336723987` ("add record error") yetkisizlik hatasıyla aynı kodu taşıyor. Eşleme artık **metne** göre: `no permission` + `PLG$SRP_VIEW` → "yönetici olmalısınız"; `violation of PRIMARY or UNIQUE KEY` + `PLG$SRP` → "'X' adında bir kullanıcı zaten var" (ad, hata metnindeki `"PLG$USER_NAME" = '...'` değerinden alınır; bulunamazsa genel cümle `ERR_KULLANICI_VAR_GENEL`). Üç dilde. 2.5 için eşleme **eklenmedi** (metni ölçülmedi); test 2.5'te yalnızca ham mesajı ve çevirisini BILGI satırına yazar. Testte iki yeni kontrol (3.0 metni → doğru cümle; ad yoksa genel cümle) ve sunucuda "zaten var" çevirisinin "yönetici olmalısınız" OLMADIĞI kontrolü var.
+2. **Türkçe harfli şifre:** kararım **ASCII dışı şifreyi reddetmek** (`ERR_SIFRE_ASCII`, üç dilde; `uKullanici.SifreyiDogrula`, hem ekleme hem şifre değiştirmede). Neden: önerilen UTF8 yönetim bağlantısı denemesini yapamadım (sunucu şifresi bende yok), moderatörün ölçümü ise sorunu doğruladı, en sade çözüm reddetmek. Test güncellendi: Türkçe şifre reddedilir, eski şifre bozulmaz, zincir ASCII şifreyle (`SIFRE_OZEL`) devam eder. Kalan iki hatanın (kendi bağlantısı, yönetici bağlantısı) Türkçe şifrenin zincirleme sonucu olduğunu varsayıyorum; sunucuda yeniden koşulunca doğrulanacak. İleride UTF8 denemesi istenirse sade yol: kullanıcı yönetimi komutları için ayrı UTF8 bağlantısı.
+3. **`TSatirErisimi`:** `uSonucGrid.pas` ve başka yerde sağ tıkta satır seçme yolu yok, bu yüzden mevcut tek satırlık erişim kaldı (korunmuş `Row` özelliği, `TDBGrid.MouseCoord` ile satırı bulmanın standart yolu).
+
+Yerel `KullaniciTest`: 38 kontrol, 0 hata. Uygulama derleniyor. Sunucu testlerini moderatör yeniden çalıştıracak.

@@ -311,7 +311,21 @@ begin
   finally
     E.Free;
   end;
-  Ham := T('ERR_KULLANICI_YONETIM_YETKI') + T('ERR_YETKI_YOK') + T('ERR_KULLANICI_YOK') + T('ERR_KULLANICI_SYSDBA');
+  E := Exception.Create('add record error' + #13#10 + 'violation of PRIMARY or UNIQUE KEY constraint "INTEG_5" on table "PLG$SRP"' +
+    #13#10 + 'Problematic key value is ("PLG$USER_NAME" = ''FBY_X'')');
+  try
+    Kontrol('HataMetniniCevir: PLG$SRP tekrar kaydi -> "FBY_X zaten var" (yonetici olmali degil)',
+      HataMetniniCevir(E) = TF('ERR_KULLANICI_VAR', ['FBY_X']));
+  finally
+    E.Free;
+  end;
+  E := Exception.Create('add record error' + #13#10 + 'violation of PRIMARY or UNIQUE KEY constraint "INTEG_5" on table "PLG$SRP"');
+  try
+    Kontrol('HataMetniniCevir: ad bulunamazsa genel "zaten var" cumlesi', HataMetniniCevir(E) = T('ERR_KULLANICI_VAR_GENEL'));
+  finally
+    E.Free;
+  end;
+  Ham :=T('ERR_KULLANICI_YONETIM_YETKI') + T('ERR_YETKI_YOK') + T('ERR_KULLANICI_YOK') + T('ERR_KULLANICI_SYSDBA');
   Kontrol('Dil: yeni anahtarlar bulundu (anahtarin kendisi gorunmuyor)', Pos('ERR_', Ham) = 0);
 
   { Kayitli baglanti sifresi: kendi (gecici) veri klasorunde, gercek baglantilar.json'a dokunmaz }
@@ -425,7 +439,17 @@ begin
     Not_('BILGI: ayni ad sunucuda da eklendi?! (beklenmiyordu)');
   except
     on E: Exception do
-      Not_('BILGI (sunucunun gercek "zaten var" hatasi, ceviri icin raporlayin): ' + StringReplace(HataMetni(E), SIFRE_1, '***', [rfReplaceAll]));
+    begin
+      Not_('BILGI (sunucunun gercek "zaten var" hatasi): ' + StringReplace(HataMetni(E), SIFRE_1, '***', [rfReplaceAll]));
+      { 3.0+ metni olculdu (PLG$SRP); 2.5'in metni farkli olabilir, orada yalniz BILGI satiri yazilir. }
+      if Yetenek.ListeSql then
+      begin
+        Kontrol('Zaten-var hatasinin cevirisi "kullanici zaten var" (yonetici olmali DEGIL)',
+          HataMetniniCevir(E) = TF('ERR_KULLANICI_VAR', [TEST_KULLANICI]));
+      end
+      else
+        Not_('2.5: eslesme denenmedi; yukaridaki ham mesaji ve cevirisini rapora yazin: ' + TekSatir(HataMetniniCevir(E)));
+    end;
   end;
 
   { Kural ihlalleri sunucuya gitmeden reddedilir }
@@ -456,14 +480,12 @@ begin
     on E: Exception do
       Kontrol('Ozel karakterli sifre ayarlanamadi: ' + HataMetni(E), False);
   end;
-  try
-    SifreDegistir(Bag, TEST_KULLANICI, SIFRE_TURKCE, SIFRE_TURKCE);
-    Kontrol('Turkce harfli sifre: ayarlandi ve baglanilir (baglanti karakter seti ' + Bag.Tanim.KarakterSeti + ')',
-      BaglanirMi(TEST_KULLANICI, SIFRE_TURKCE));
-  except
-    on E: Exception do
-      Kontrol('Turkce harfli sifre ayarlanamadi: ' + HataMetni(E), False);
-  end;
+  { Olcum: Turkce harfli sifre ayarlanir ama o sifreyle baglanilamaz; bu yuzden ASCII disi sifre reddedilir ve eski sifre kalir. }
+  KuralReddi('Sifre: Turkce harfli sifre reddedilir (ASCII cumlesi)',
+    procedure begin SifreDegistir(Bag, TEST_KULLANICI, SIFRE_TURKCE, SIFRE_TURKCE); end, T('ERR_SIFRE_ASCII'));
+  KuralReddi('Ekle: Turkce harfli sifre reddedilir',
+    procedure begin KullaniciEkle(Bag, TEST_YASAK, SIFRE_TURKCE, SIFRE_TURKCE, '', '', False); end, T('ERR_SIFRE_ASCII'));
+  Kontrol('Reddedilen Turkce sifre eski sifreyi bozmadi', BaglanirMi(TEST_KULLANICI, SIFRE_OZEL));
   { Ozel karakterli ekleme }
   try
     KullaniciEkle(Bag, TEST_KULLANICI_B, SIFRE_OZEL, SIFRE_OZEL, 'O''Brien', 'a:b&c!d', False);
@@ -476,7 +498,7 @@ begin
   end;
 
   { Kendi sifresini degistir (baglanti kullanicisi = degistirilen kullanici) }
-  BagKendi := BaglanDene(TEST_KULLANICI, SIFRE_TURKCE, Hata);
+  BagKendi := BaglanDene(TEST_KULLANICI, SIFRE_OZEL, Hata);
   Kontrol('Kendi baglantisi acildi (' + TEST_KULLANICI + ')', BagKendi <> nil);
   if BagKendi <> nil then
   begin
@@ -485,7 +507,7 @@ begin
         SifreDegistir(BagKendi, TEST_KULLANICI, SIFRE_3, SIFRE_3);
         Kontrol('Kendi sifre (' + IfThen(Yetenek.KendiSifreKomutu = skAlterCurrentUser, 'ALTER CURRENT USER', 'ALTER USER kendi_adi') +
           '): yeni sifre baglanir', BaglanirMi(TEST_KULLANICI, SIFRE_3));
-        Kontrol('Kendi sifre: eski sifre baglanamaz', not BaglanirMi(TEST_KULLANICI, SIFRE_TURKCE));
+        Kontrol('Kendi sifre: eski sifre baglanamaz', not BaglanirMi(TEST_KULLANICI, SIFRE_OZEL));
         Kontrol('Kendi sifre: baglantinin bellekteki sifresi guncellendi', BagKendi.Tanim.Sifre = SIFRE_3);
       except
         on E: Exception do

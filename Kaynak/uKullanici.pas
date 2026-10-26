@@ -101,11 +101,18 @@ begin
 end;
 
 procedure SifreyiDogrula(const Sifre, SifreTekrar: string);
+var
+  Harf: Char;
 begin
   if Sifre = '' then
     raise EKullaniciKurali.Create(T('ERR_SIFRE_BOS'));
   if Sifre <> SifreTekrar then
     raise EKullaniciKurali.Create(T('ERR_SIFRE_FARKLI'));
+  { Olcum (3.0.14, 4.0.7): Turkce harfli sifre ayarlanir ama o sifreyle baglanilamaz (karakter seti uyumsuzlugu).
+    En sade cozum: ASCII disi karakter reddedilir. }
+  for Harf in Sifre do
+    if Ord(Harf) > 127 then
+      raise EKullaniciKurali.Create(T('ERR_SIFRE_ASCII'));
 end;
 
 procedure IsimiDogrula(const Isim, Soyad: string);

@@ -775,14 +775,32 @@ end;
 { Nesne baska bir sonuc tarafindan kullaniliyorsa FireDAC hata listesinde isc_obj_in_use kodu
   gelmez (olcum: 5.0.4'te ilk kod 335544351 veya 335544345 olur), "object ... is in use" yalnizca
   mesaj metnindedir. Bu yuzden once metne bakilir; yoksa kayit kilidi cumlesi yaniltici olurdu. }
+{ "Problematic key value is ("PLG$USER_NAME" = 'ADI')" metninden kullanici adini alir; bulunamazsa genel cumle. }
+function KullaniciVarCumlesi(const HamMesaj: string): string;
+var
+  Bas, Son: Integer;
+begin
+  Bas := Pos('"PLG$USER_NAME" = ''', HamMesaj);
+  if Bas > 0 then
+  begin
+    Bas := Bas + Length('"PLG$USER_NAME" = ''');
+    Son := Pos('''', Copy(HamMesaj, Bas, MaxInt));
+    if Son > 1 then
+      Exit(TF('ERR_KULLANICI_VAR', [Copy(HamMesaj, Bas, Son - 1)]));
+  end;
+  Result := T('ERR_KULLANICI_VAR_GENEL');
+end;
+
 function HataMetniniCevir(Hata: Exception): string;
 begin
   if Iceriyor(Hata.Message, '" is in use') then
     Exit(T('ERR_NESNE_KULLANIMDA'));
-  { Yonetici olmayan kullanici CREATE USER dener: ilk kod "add record error" (336723987), asil neden
-    guvenlik veritabani tablosuna (PLG$SRP_VIEW) yazma yetkisinin olmamasi; bu yuzden metne bakilir. }
-  if Iceriyor(Hata.Message, 'PLG$SRP') then
+  { CREATE USER hatalari (3.0+, olcum 3.0.14 ve 4.0.7): iki farkli neden ayni ilk kodu (336723987, "add record error")
+    tasir, bu yuzden kodla degil metinle ayrilir. 2.5'in metni farkli olabilir (sunucuda olculmedi). }
+  if Iceriyor(Hata.Message, 'no permission') and Iceriyor(Hata.Message, 'PLG$SRP_VIEW') then
     Exit(T('ERR_KULLANICI_YONETIM_YETKI'));
+  if Iceriyor(Hata.Message, 'violation of PRIMARY or UNIQUE KEY') and Iceriyor(Hata.Message, 'PLG$SRP') then
+    Exit(KullaniciVarCumlesi(Hata.Message));
   if (Hata is EFDDBEngineException) and KodundanCevir(EFDDBEngineException(Hata), Result) then
     Exit;
   Result := MetindenCevir(Hata.Message);

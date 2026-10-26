@@ -312,5 +312,7 @@
   "ERR_KULLANICI_KENDINI": "Sie sind gerade mit diesem Benutzer verbunden; Sie können Ihren eigenen Benutzer weder löschen noch deaktivieren.",
   "ERR_YETKI_YOK": "Sie haben für diesen Vorgang keine Berechtigung.",
   "ERR_KULLANICI_YOK": "Benutzer nicht gefunden (oder nur ein Administrator kann andere Benutzer sehen).",
-  "ERR_KULLANICI_YONETIM_YETKI": "Zur Benutzerverwaltung müssen Sie SYSDBA oder Administrator sein."
+  "ERR_KULLANICI_YONETIM_YETKI": "Zur Benutzerverwaltung müssen Sie SYSDBA oder Administrator sein.",
+  "ERR_KULLANICI_VAR_GENEL": "Ein Benutzer mit diesem Namen existiert bereits.",
+  "ERR_SIFRE_ASCII": "Das Passwort darf nur ASCII-Zeichen (englische Buchstaben, Ziffern und Zeichen) enthalten, keine Umlaute."
 }
