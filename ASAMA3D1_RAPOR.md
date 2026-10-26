@@ -83,3 +83,9 @@ $env:FBTEST_CIKTI = "$env:TEMP\kullanicitest_30.txt"
 3. **`TSatirErisimi`:** `uSonucGrid.pas` ve başka yerde sağ tıkta satır seçme yolu yok, bu yüzden mevcut tek satırlık erişim kaldı (korunmuş `Row` özelliği, `TDBGrid.MouseCoord` ile satırı bulmanın standart yolu).
 
 Yerel `KullaniciTest`: 38 kontrol, 0 hata. Uygulama derleniyor. Sunucu testlerini moderatör yeniden çalıştıracak.
+
+## 7. Üçüncü tur: 3.0'da yönetici bağlantısı ve bilinen sınırlar
+
+- **Test düzeltmesi:** 3.0.14'te SYSDBA olmayan, yönetici yapılmış kullanıcı kullanıcı yönetebilmek için `ROLE RDB$ADMIN` ile bağlanmak zorunda (moderatör teşhisi). Testte yönetici bağlantısı `RoleName=RDB$ADMIN` ile açılıyor (`BaglanRolle`; uygulamanın bağlantı tanımına rol alanı EKLENMEDİ). Sunucu sonucu moderatörün yeniden koşusuyla doğrulanacak (yerelde denenemedi).
+- **Karar: ASCII dışı şifre reddedilir** (Türkçe harf vb.). Neden: 3.0 ve 4.0 ölçümünde Türkçe harfli şifre ayarlanıyor ama o şifreyle bağlanılamıyor (karakter seti uyumsuzluğu); UTF8 yönetim bağlantısı denenmedi (sunucu şifresi yok). En sade çözüm reddetmek: `ERR_SIFRE_ASCII`, üç dilde.
+- **Bilinen sınırlar:** (1) Uygulama bağlantısı rol belirtmediği için, SYSDBA olmayan bir yönetici 3.0'da kullanıcı eklerse sunucu `PLG$SRP_VIEW` yetki hatası verir ve metinden SYSDBA-olmayan-yönetici ile gerçek yetkisizlik ayrılamadığından cümle "SYSDBA ya da yönetici olmalısınız" olarak kalır; çözüm SYSDBA ile bağlanmaktır (ileride bağlantıya rol alanı eklenebilir). (2) 2.5'te "zaten var" ham mesajı ölçülmedi, çevirisi yok (listeden önce kontrol edilir). (3) Yerel "gömülü" bağlantı bu makinede gerçek gömülü değil (bkz. bölüm 3).

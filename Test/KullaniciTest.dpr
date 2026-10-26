@@ -186,6 +186,45 @@ begin
   end;
 end;
 
+{ Yonetici (SYSDBA olmayan) kullanici icin RDB$ADMIN rolunu belirterek baglanir (uygulamanin baglanti tanimi rol alani
+  tasimaz, bu yuzden FbBaglan kullanilmaz; liste kaydina da eklenmez). Cagiran Free ile kapatir. }
+function BaglanRolle(const Kullanici, Sifre: string; out Hata: string): TAcikBaglanti;
+var
+  Yeni: TFDConnection;
+begin
+  Hata := '';
+  Result := nil;
+  Yeni := TFDConnection.Create(nil);
+  try
+    Yeni.DriverName := 'FB';
+    Yeni.LoginPrompt := False;
+    Yeni.Params.Values['Server'] := Tanim.Sunucu;
+    Yeni.Params.Values['Port'] := IntToStr(Tanim.Port);
+    Yeni.Params.Values['Protocol'] := 'TCPIP';
+    Yeni.Params.Values['Database'] := Tanim.VeritabaniYolu;
+    Yeni.Params.Values['User_Name'] := Kullanici;
+    Yeni.Params.Values['Password'] := Sifre;
+    Yeni.Params.Values['RoleName'] := 'RDB$ADMIN';
+    Yeni.Params.Values['CharacterSet'] := Tanim.KarakterSeti;
+    Yeni.Params.Values['Pooled'] := 'False';
+    FbSurucu;
+    Yeni.Open;
+    Result := TAcikBaglanti.Create;
+    Result.Baglanti := Yeni;
+    Result.Tanim := Tanim;
+    Result.Tanim.Kullanici := Kullanici;
+    Result.Tanim.Sifre := Sifre;
+    Result.Surum := Bag.Surum;
+  except
+    on E: Exception do
+    begin
+      Hata := HataMetni(E);
+      Result := nil;
+      Yeni.Free;
+    end;
+  end;
+end;
+
 function BaglanirMi(const Kullanici, Sifre: string): Boolean;
 var
   Hata: string;
@@ -553,9 +592,12 @@ begin
     try
       YoneticiAyarla(Bag, TEST_KULLANICI, True);
       Kontrol('Yonetici yapildi', ListedeBul(Bag, TEST_KULLANICI, K) and K.Yonetici);
-      { Yonetici baglantisiyla yeni kullanici eklenir ve SYSDBA olmadan silinir }
-      BagAdmin := BaglanDene(TEST_KULLANICI, SIFRE_3, Hata);
-      Kontrol('Yonetici olarak baglandi', BagAdmin <> nil);
+      { Yonetici baglantisiyla yeni kullanici eklenir ve SYSDBA olmadan silinir. 3.0.14'te SYSDBA olmayan yonetici
+        kullanici yonetebilmek icin ROLE RDB$ADMIN ile baglanmali (olcum); bu yuzden rolle baglanilir. }
+      BagAdmin := BaglanRolle(TEST_KULLANICI, SIFRE_3, Hata);
+      Kontrol('Yonetici olarak (RDB$ADMIN rolu ile) baglandi', BagAdmin <> nil);
+      if BagAdmin = nil then
+        Not_(Hata);
       if BagAdmin <> nil then
       begin
         try
@@ -572,7 +614,7 @@ begin
               Kontrol('Yonetici islemleri hatasi: ' + HataMetni(E), False);
           end;
         finally
-          FbBaglantiyiKes(BagAdmin);
+          BagAdmin.Free;
         end;
       end;
       YoneticiAyarla(Bag, TEST_KULLANICI, False);
