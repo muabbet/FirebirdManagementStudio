@@ -779,11 +779,18 @@ end;
 function KullaniciVarCumlesi(const HamMesaj: string): string;
 var
   Bas, Son: Integer;
+  Anahtar: string;
 begin
   Bas := Pos('"PLG$USER_NAME" = ''', HamMesaj);
+  Anahtar := '"PLG$USER_NAME" = ''';
+  if Bas = 0 then
+  begin
+    Bas := Pos('"RDB$USER_NAME" = ''', HamMesaj);
+    Anahtar := '"RDB$USER_NAME" = ''';
+  end;
   if Bas > 0 then
   begin
-    Bas := Bas + Length('"PLG$USER_NAME" = ''');
+    Bas := Bas + Length(Anahtar);
     Son := Pos('''', Copy(HamMesaj, Bas, MaxInt));
     if Son > 1 then
       Exit(TF('ERR_KULLANICI_VAR', [Copy(HamMesaj, Bas, Son - 1)]));
@@ -797,9 +804,12 @@ begin
     Exit(T('ERR_NESNE_KULLANIMDA'));
   { CREATE USER hatalari (3.0+, olcum 3.0.14 ve 4.0.7): iki farkli neden ayni ilk kodu (336723987, "add record error")
     tasir, bu yuzden kodla degil metinle ayrilir. 2.5'in metni farkli olabilir (sunucuda olculmedi). }
-  if Iceriyor(Hata.Message, 'no permission') and Iceriyor(Hata.Message, 'PLG$SRP_VIEW') then
+  { 3.0+: tablo PLG$SRP_VIEW / PLG$SRP; 2.5 (olcum 2.5.9): tablo USERS / RDB$USERS. }
+  if Iceriyor(Hata.Message, 'no permission') and
+    (Iceriyor(Hata.Message, 'PLG$SRP_VIEW') or Iceriyor(Hata.Message, 'to TABLE USERS')) then
     Exit(T('ERR_KULLANICI_YONETIM_YETKI'));
-  if Iceriyor(Hata.Message, 'violation of PRIMARY or UNIQUE KEY') and Iceriyor(Hata.Message, 'PLG$SRP') then
+  if Iceriyor(Hata.Message, 'violation of PRIMARY or UNIQUE KEY') and
+    (Iceriyor(Hata.Message, 'PLG$SRP') or Iceriyor(Hata.Message, 'RDB$USERS')) then
     Exit(KullaniciVarCumlesi(Hata.Message));
   if (Hata is EFDDBEngineException) and KodundanCevir(EFDDBEngineException(Hata), Result) then
     Exit;

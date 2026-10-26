@@ -314,5 +314,6 @@
   "ERR_KULLANICI_YOK": "Benutzer nicht gefunden (oder nur ein Administrator kann andere Benutzer sehen).",
   "ERR_KULLANICI_YONETIM_YETKI": "Zur Benutzerverwaltung müssen Sie SYSDBA oder Administrator sein.",
   "ERR_KULLANICI_VAR_GENEL": "Ein Benutzer mit diesem Namen existiert bereits.",
-  "ERR_SIFRE_ASCII": "Das Passwort darf nur ASCII-Zeichen (englische Buchstaben, Ziffern und Zeichen) enthalten, keine Umlaute."
+  "ERR_SIFRE_ASCII": "Das Passwort darf nur ASCII-Zeichen (englische Buchstaben, Ziffern und Zeichen) enthalten, keine Umlaute.",
+  "ERR_ISIM_ASCII_ESKI": "In Firebird 2.5 dürfen Vor- und Nachname nur ASCII-Zeichen (englische Buchstaben) enthalten, keine Umlaute."
 }

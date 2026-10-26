@@ -358,6 +358,24 @@ begin
   finally
     E.Free;
   end;
+  E := Exception.Create('add record error | violation of PRIMARY or UNIQUE KEY constraint "INTEG_2" on table "RDB$USERS" | Problematic key value is ("RDB$USER_NAME" = ''FBY_X'')');
+  try
+    Kontrol('HataMetniniCevir (2.5 metni): RDB$USERS tekrar kaydi -> "FBY_X zaten var"', HataMetniniCevir(E) = TF('ERR_KULLANICI_VAR', ['FBY_X']));
+  finally
+    E.Free;
+  end;
+  E := Exception.Create('add record error | no permission for insert/write access to TABLE USERS');
+  try
+    Kontrol('HataMetniniCevir (2.5 metni): TABLE USERS yetkisi -> yonetici olmali', HataMetniniCevir(E) = T('ERR_KULLANICI_YONETIM_YETKI'));
+  finally
+    E.Free;
+  end;
+  E := Exception.Create('find/delete record error | no permission for delete/write access to TABLE USERS');
+  try
+    Kontrol('HataMetniniCevir (2.5 metni): TABLE USERS silme yetkisi -> yonetici olmali', HataMetniniCevir(E) = T('ERR_KULLANICI_YONETIM_YETKI'));
+  finally
+    E.Free;
+  end;
   E := Exception.Create('add record error' + #13#10 + 'violation of PRIMARY or UNIQUE KEY constraint "INTEG_5" on table "PLG$SRP"');
   try
     Kontrol('HataMetniniCevir: ad bulunamazsa genel "zaten var" cumlesi', HataMetniniCevir(E) = T('ERR_KULLANICI_VAR_GENEL'));
@@ -458,9 +476,19 @@ begin
 
   { Ekle -> listede gorunur -> ilk sifreyle baglanir }
   try
-    KullaniciEkle(Bag, 'fby_test3d', SIFRE_1, SIFRE_1, ISIM_TURKCE, SOYAD_TURKCE, False);
+    if not Yetenek.ListeSql then
+    begin
+      { 2.5: Turkce harfli ad/soyad reddedilir (Services listesinde farkli gorunuyordu); ASCII ile devam edilir. }
+      KuralReddi('Ekle (2.5): Turkce harfli ad/soyad reddedilir', procedure begin KullaniciEkle(Bag, TEST_YASAK, 'a', 'a', ISIM_TURKCE, 'x', False); end, T('ERR_ISIM_ASCII_ESKI'));
+      KullaniciEkle(Bag, 'fby_test3d', SIFRE_1, SIFRE_1, 'Ayse', 'Yilmaz', False);
+    end
+    else
+      KullaniciEkle(Bag, 'fby_test3d', SIFRE_1, SIFRE_1, ISIM_TURKCE, SOYAD_TURKCE, False);
     Kontrol('Ekle: kullanici eklendi (ad kucuk harfle verildi, buyuk harfe cevrildi)', ListedeBul(Bag, TEST_KULLANICI, K));
-    Kontrol('Ekle: ad ve soyad (Turkce harfli) listede dogru', (K.Isim = ISIM_TURKCE) and (K.Soyad = SOYAD_TURKCE));
+    if Yetenek.ListeSql then
+      Kontrol('Ekle: ad ve soyad (Turkce harfli) listede dogru', (K.Isim = ISIM_TURKCE) and (K.Soyad = SOYAD_TURKCE))
+    else
+      Kontrol('Ekle (2.5): ASCII ad ve soyad listede dogru', (K.Isim = 'Ayse') and (K.Soyad = 'Yilmaz'));
     if Yetenek.YoneticiOkunur then
       Kontrol('Ekle: yonetici degil, aktif', (not K.Yonetici) and K.Aktif);
     Kontrol('Ekle: ilk sifreyle baglanir', BaglanirMi(TEST_KULLANICI, SIFRE_1));
@@ -481,13 +509,8 @@ begin
     begin
       Not_('BILGI (sunucunun gercek "zaten var" hatasi): ' + StringReplace(HataMetni(E), SIFRE_1, '***', [rfReplaceAll]));
       { 3.0+ metni olculdu (PLG$SRP); 2.5'in metni farkli olabilir, orada yalniz BILGI satiri yazilir. }
-      if Yetenek.ListeSql then
-      begin
-        Kontrol('Zaten-var hatasinin cevirisi "kullanici zaten var" (yonetici olmali DEGIL)',
-          HataMetniniCevir(E) = TF('ERR_KULLANICI_VAR', [TEST_KULLANICI]));
-      end
-      else
-        Not_('2.5: eslesme denenmedi; yukaridaki ham mesaji ve cevirisini rapora yazin: ' + TekSatir(HataMetniniCevir(E)));
+      Kontrol('Zaten-var hatasinin cevirisi "kullanici zaten var" (yonetici olmali veya Beklenmeyen DEGIL; 3.0, 4.0, 2.5)',
+        HataMetniniCevir(E) = TF('ERR_KULLANICI_VAR', [TEST_KULLANICI]));
     end;
   end;
 
@@ -559,13 +582,13 @@ begin
         KuralReddi('Kendini pasif yapamaz', procedure begin AktifAyarla(BagKendi, TEST_KULLANICI, False); end, T('ERR_KULLANICI_KENDINI'));
       Ham := SunucuReddi('Yonetici olmayan kullanici yeni kullanici ekleyemez (anlasilir cumle)',
         procedure begin KullaniciEkle(BagKendi, TEST_YASAK, 'x1234567', 'x1234567', '', '', False); end,
-        IfThen(Yetenek.ListeSql, T('ERR_KULLANICI_YONETIM_YETKI'), ''));
+        T('ERR_KULLANICI_YONETIM_YETKI'));
       Kontrol('Yetkisiz ekleme kullanici olusturmadi', not ListedeVarMi(Bag, TEST_YASAK));
       SunucuReddi('Yonetici olmayan kullanici baskasinin sifresini degistiremez (SYSDBA)',
         procedure begin SifreDegistir(BagKendi, 'SYSDBA', 'x1234567', 'x1234567'); end,
-        IfThen(Yetenek.ListeSql, T('ERR_KULLANICI_YOK'), ''));
+        T('ERR_KULLANICI_YOK'));
       SunucuReddi('Yonetici olmayan kullanici baska kullaniciyi silemez (' + TEST_KULLANICI_B + ')',
-        procedure begin KullaniciSil(BagKendi, TEST_KULLANICI_B); end, '');
+        procedure begin KullaniciSil(BagKendi, TEST_KULLANICI_B); end, T('ERR_KULLANICI_YONETIM_YETKI'));
       Kontrol('Yetkisiz silme ' + TEST_KULLANICI_B + ' kullanicisini silmedi', ListedeVarMi(Bag, TEST_KULLANICI_B));
       if Yetenek.ListeSql then
       begin

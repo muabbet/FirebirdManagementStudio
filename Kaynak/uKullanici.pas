@@ -115,8 +115,16 @@ begin
       raise EKullaniciKurali.Create(T('ERR_SIFRE_ASCII'));
 end;
 
-procedure IsimiDogrula(const Isim, Soyad: string);
+procedure IsimiDogrula(Bag: TAcikBaglanti; const Isim, Soyad: string);
+var
+  Harf: Char;
 begin
+  { Olcum (2.5.9): Turkce harfli ad/soyad 2.5'te Services listesinde farkli gorunuyor (karakter seti uyumsuzlugu;
+    yazma mi okuma mi tarafinda oldugu sunucu sifresi olmadan ayrilamadi). En sade cozum: 2.5'te ASCII disi reddedilir. }
+  if not KullaniciYetenekleri(Bag).ListeSql then
+    for Harf in Isim + Soyad do
+      if Ord(Harf) > 127 then
+        raise EKullaniciKurali.Create(T('ERR_ISIM_ASCII_ESKI'));
   if (Length(Isim) > ISIM_EN_UZUN) or (Length(Soyad) > ISIM_EN_UZUN) then
     raise EKullaniciKurali.Create(TF('ERR_KULLANICI_ISIM_UZUN', [ISIM_EN_UZUN]));
 end;
@@ -235,7 +243,7 @@ begin
   YonetimVarMi(Bag);
   Kullanici := KullaniciAdiniDogrula(Ad);
   SifreyiDogrula(Sifre, SifreTekrar);
-  IsimiDogrula(Trim(Isim), Trim(Soyad));
+  IsimiDogrula(Bag, Trim(Isim), Trim(Soyad));
   if Yonetici and not KullaniciYetenekleri(Bag).YoneticiAyarlanir then
     raise EKullaniciKurali.Create(T('ERR_KULLANICI_OZELLIK_YOK'));
   if KullaniciVarMi(Bag, Kullanici) then
@@ -286,7 +294,7 @@ begin
   Kullanici := KullaniciAdiniDogrula(Ad);
   if SysdbaMi(Kullanici) then
     raise EKullaniciKurali.Create(T('ERR_KULLANICI_SYSDBA'));
-  IsimiDogrula(Trim(Isim), Trim(Soyad));
+  IsimiDogrula(Bag, Trim(Isim), Trim(Soyad));
   Calistir(Bag, 'ALTER USER ' + Kullanici + ' FIRSTNAME ' + SqlMetni(Trim(Isim)) +
     ' LASTNAME ' + SqlMetni(Trim(Soyad)), '');
 end;
