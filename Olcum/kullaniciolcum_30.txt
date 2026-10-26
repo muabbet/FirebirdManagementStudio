@@ -1,0 +1,216 @@
+﻿KullaniciOlcum  2026-10-26 11:42:13
+Sunucu: 127.0.0.1:3052
+Veritabani: C:\Firebird\Firebird30\gecici.fdb
+Kullanici: SYSDBA  (sifre yazilmaz)
+Yazma bolumu: ACIK
+
+Surum: 3.0.14  (ana surum 3)
+
+=== OKUMA 0) Servis API ile kullanici listesi (FireDAC TFDIBSecurity) ===
+[CALISTI] Servis API kullanici listesi (TFDIBSecurity.DisplayUsers; kolonlar: kullanici | ad | ortaad | soyad | userid | groupid)
+          SYSDBA |  |  |  | 0 | 0
+          toplam satir: 1   (not: bu yolda "yonetici", "aktif/pasif", "eklenti" bilgisi yok)
+
+=== OKUMA 1) Kim baglandi, hangi yontemle ===
+[CALISTI] CURRENT_USER / CURRENT_ROLE
+          kolonlar: USER | ROLE
+          SYSDBA | NONE
+          toplam satir: 1
+[CALISTI] Veritabani sahibi (MON$DATABASE.MON$OWNER; 2.1+)
+          kolonlar: MON$OWNER
+          SYSDBA
+          toplam satir: 1
+[CALISTI] Guvenlik veritabani turu (MON$SEC_DATABASE; 3.0+)
+          kolonlar: MON$SEC_DATABASE
+          Default
+          toplam satir: 1
+[CALISTI] Dogrulama yontemi (MON$AUTH_METHOD; 3.0+)
+          kolonlar: MON$AUTH_METHOD
+          Srp
+          toplam satir: 1
+[CALISTI] Baglanti rolu bilgisi
+          kolonlar: MON$ROLE
+          NONE
+          toplam satir: 1
+
+=== OKUMA 2) Kullanici listesi: SQL yolu (SEC$USERS, 3.0+) ===
+[CALISTI] SEC$USERS (tum kolonlar)
+          kolonlar: SEC$USER_NAME | SEC$FIRST_NAME | SEC$MIDDLE_NAME | SEC$LAST_NAME | SEC$ACTIVE | SEC$ADMIN | SEC$DESCRIPTION | SEC$PLUGIN
+          SYSDBA | <NULL> | <NULL> | <NULL> | True | True | <NULL> | Srp
+          toplam satir: 1
+[CALISTI] SEC$USERS (secili kolonlar)
+          kolonlar: SEC$USER_NAME | SEC$FIRST_NAME | SEC$MIDDLE_NAME | SEC$LAST_NAME | SEC$ACTIVE | SEC$ADMIN | SEC$PLUGIN
+          SYSDBA | <NULL> | <NULL> | <NULL> | True | True | Srp
+          toplam satir: 1
+[CALISTI] SEC$USER_ATTRIBUTES (etiketler)
+          kolonlar: SEC$USER_NAME | SEC$KEY | SEC$VALUE | SEC$PLUGIN
+          toplam satir: 0
+[CALISTI] SEC$DB_CREATORS (veritabani olusturma yetkisi, 3.0+)
+          kolonlar: SEC$USER | SEC$USER_TYPE
+          toplam satir: 0
+[CALISTI] SEC$GLOBAL_AUTH_MAPPING (3.0+)
+          kolonlar: SEC$MAP_NAME | SEC$MAP_USING | SEC$MAP_PLUGIN | SEC$MAP_DB | SEC$MAP_FROM_TYPE | SEC$MAP_FROM | SEC$MAP_TO_TYPE | SEC$MAP_TO
+          toplam satir: 0
+
+=== OKUMA 3) Roller ===
+[CALISTI] RDB$ROLES
+          kolonlar: RDB$ROLE_NAME | RDB$OWNER_NAME | RDB$SYSTEM_FLAG
+          RDB$ADMIN | SYSDBA | 1
+          toplam satir: 1
+[HATA]    RDB$ROLES sistem ayricaliklari (4.0+) -> EIBNativeException: [FireDAC][Phys][FB]Dynamic SQL Error  | SQL error code = -206  | Column unknown  | RDB$SYSTEM_PRIVILEGES  | At line 1, column 78 [kod=335544569]  => cevirisi: Beklenmeyen bir hata oluştu.
+
+=== OKUMA 4) RDB$USER_PRIVILEGES ozeti ===
+[CALISTI] Kolonlar (bos sonuc kolon adlarini gosterir)
+          kolonlar: RDB$USER | RDB$GRANTOR | RDB$PRIVILEGE | RDB$GRANT_OPTION | RDB$RELATION_NAME | RDB$FIELD_NAME | RDB$USER_TYPE | RDB$OBJECT_TYPE
+          SYSDBA | <NULL> | G | 1 | RDB$VIEW_CONTEXT | <NULL> | 8 | 9
+          toplam satir: 1
+[CALISTI] Toplam kayit sayisi
+          kolonlar: COUNT
+          664
+          toplam satir: 1
+[CALISTI] Verilen kullanici/rol/nesne turu ve yetki harfi basina sayi
+          kolonlar: RDB$USER_TYPE | RDB$PRIVILEGE | COUNT
+          8 | D | 50
+          8 | G | 364
+          8 | I | 50
+          8 | R | 50
+          8 | S | 100
+          8 | U | 50
+          toplam satir: 6
+[CALISTI] Alici (kullanici/rol) basina yetki sayisi (yalniz kullanici ve rol: tur 8 ve 13)
+          kolonlar: RDB$USER | RDB$USER_TYPE | COUNT
+          SYSDBA | 8 | 614
+          PUBLIC | 8 | 50
+          toplam satir: 2
+[CALISTI] Rol uyelikleri (M)
+          kolonlar: RDB$USER | RDB$RELATION_NAME | RDB$GRANT_OPTION
+          toplam satir: 0
+[CALISTI] DDL yetkileri (C/L/O; 3.0+)
+          kolonlar: RDB$USER | RDB$PRIVILEGE | RDB$RELATION_NAME | RDB$OBJECT_TYPE
+          toplam satir: 0
+[CALISTI] PUBLIC icin verilenler
+          kolonlar: RDB$PRIVILEGE | COUNT
+          S | 50
+          toplam satir: 1
+[CALISTI] Tablo/gorunum yetkileri ornegi (ilk 15)
+          kolonlar: RDB$USER | RDB$PRIVILEGE | RDB$RELATION_NAME | RDB$FIELD_NAME | RDB$GRANT_OPTION
+          SYSDBA | S | MON$ATTACHMENTS | <NULL> | 1
+          SYSDBA | I | MON$ATTACHMENTS | <NULL> | 1
+          SYSDBA | U | MON$ATTACHMENTS | <NULL> | 1
+          SYSDBA | D | MON$ATTACHMENTS | <NULL> | 1
+          SYSDBA | R | MON$ATTACHMENTS | <NULL> | 1
+          PUBLIC | S | MON$ATTACHMENTS | <NULL> | 0
+          SYSDBA | S | MON$CALL_STACK | <NULL> | 1
+          SYSDBA | I | MON$CALL_STACK | <NULL> | 1
+          SYSDBA | U | MON$CALL_STACK | <NULL> | 1
+          SYSDBA | D | MON$CALL_STACK | <NULL> | 1
+          SYSDBA | R | MON$CALL_STACK | <NULL> | 1
+          PUBLIC | S | MON$CALL_STACK | <NULL> | 0
+          SYSDBA | S | MON$CONTEXT_VARIABLES | <NULL> | 1
+          SYSDBA | I | MON$CONTEXT_VARIABLES | <NULL> | 1
+          SYSDBA | U | MON$CONTEXT_VARIABLES | <NULL> | 1
+          toplam satir: 15
+
+=== YAZMA (yalniz test sunucusu / gecici veritabani; test kullanicisi FBY_TEST) ===
+
+--- Y1) Kullanici ekle (SQL) ---
+[CALISTI] CREATE USER (ad/soyad ile)   (CREATE USER FBY_TEST PASSWORD 'Ilk12345' FIRSTNAME 'Test' MIDDLENAME 'Orta' LASTNAME 'Kullanici')
+[CALISTI] Eklenen kullanici SEC$USERS'ta (3.0+)
+          kolonlar: SEC$USER_NAME | SEC$FIRST_NAME | SEC$MIDDLE_NAME | SEC$LAST_NAME | SEC$ACTIVE | SEC$ADMIN | SEC$DESCRIPTION | SEC$PLUGIN
+          FBY_TEST | Test | Orta | Kullanici | True | False | <NULL> | Srp
+          toplam satir: 1
+[CALISTI] Servis API kullanici listesi (ekleme sonrasi) (TFDIBSecurity.DisplayUsers; kolonlar: kullanici | ad | ortaad | soyad | userid | groupid)
+          SYSDBA |  |  |  | 0 | 0
+          FBY_TEST | Test | Orta | Kullanici | 0 | 0
+          toplam satir: 2   (not: bu yolda "yonetici", "aktif/pasif", "eklenti" bilgisi yok)
+[CALISTI] Yeni kullanici ilk sifresiyle baglanabiliyor mu -> baglandi, CURRENT_USER = FBY_TEST
+
+--- Y2) Yonetici (SYSDBA) baska kullanicinin sifresini degistirir ---
+[CALISTI] ALTER USER ... PASSWORD   (ALTER USER FBY_TEST PASSWORD 'Ikinci123')
+[HATA]    Eski sifre artik calismamali -> EIBNativeException: [FireDAC][Phys][FB]Your user name and password are not defined. Ask your database administrator to set up a Firebird login. [kod=335544472]  => cevirisi: Kullanıcı adı veya şifre yanlış.
+[CALISTI] Yeni sifre ile baglanti -> baglandi, CURRENT_USER = FBY_TEST
+
+--- Y3) Kullanici KENDI sifresini degistirir ---
+[CALISTI] ALTER CURRENT USER (3.0+)   (FBY_TEST olarak: ALTER CURRENT USER SET PASSWORD 'Ucuncu123')
+[CALISTI] ALTER CURRENT USER sonrasi: ucuncu sifre -> baglandi, CURRENT_USER = FBY_TEST
+[CALISTI] ALTER USER kendi adi (2.5 yolu)   (FBY_TEST olarak: ALTER USER FBY_TEST PASSWORD 'Ikinci123')
+[CALISTI] Sifre su an hangisi: ikinci sifre -> baglandi, CURRENT_USER = FBY_TEST
+[HATA]    Sifre su an hangisi: ucuncu sifre -> EIBNativeException: [FireDAC][Phys][FB]Your user name and password are not defined. Ask your database administrator to set up a Firebird login. [kod=335544472]  => cevirisi: Kullanıcı adı veya şifre yanlış.
+[HATA]    Siradan kullanici baska kullanicinin sifresini degistirmeye calisir   (FBY_TEST olarak: ALTER USER SYSDBA PASSWORD 'x1234567') -> EIBNativeException: [FireDAC][Phys][FB]record not found for user: SYSDBA [kod=336723990]  => cevirisi: Beklenmeyen bir hata oluştu.
+[HATA]    Siradan kullanici yeni kullanici eklemeye calisir   (FBY_TEST olarak: CREATE USER FBY_YASAK PASSWORD 'x1234567') -> EIBNativeException: [FireDAC][Phys][FB]add record error  | no permission for INSERT access to TABLE PLG$SRP_VIEW [kod=336723987]  => cevirisi: Beklenmeyen bir hata oluştu.
+
+--- Y4) Ad/soyad, yonetici (RDB$ADMIN) ve aktif/pasif ---
+[CALISTI] ALTER USER ad/soyad   (ALTER USER FBY_TEST FIRSTNAME 'Yeni' LASTNAME 'Soyad')
+[CALISTI] GRANT ADMIN ROLE   (ALTER USER FBY_TEST GRANT ADMIN ROLE)
+[CALISTI] Yonetici bayragi (SEC$ADMIN; 3.0+)
+          kolonlar: SEC$USER_NAME | SEC$FIRST_NAME | SEC$LAST_NAME | SEC$ADMIN | SEC$ACTIVE
+          FBY_TEST | Yeni | Soyad | True | True
+          toplam satir: 1
+[CALISTI] Servis API listesi (yonetici yapildiktan sonra) (TFDIBSecurity.DisplayUsers; kolonlar: kullanici | ad | ortaad | soyad | userid | groupid)
+          SYSDBA |  |  |  | 0 | 0
+          FBY_TEST | Yeni | Orta | Soyad | 0 | 0
+          toplam satir: 2   (not: bu yolda "yonetici", "aktif/pasif", "eklenti" bilgisi yok)
+[CALISTI] REVOKE ADMIN ROLE   (ALTER USER FBY_TEST REVOKE ADMIN ROLE)
+[CALISTI] INACTIVE (3.0+)   (ALTER USER FBY_TEST INACTIVE)
+[HATA]    Pasif kullanici baglanabilmeli mi (baglanamamali) -> EIBNativeException: [FireDAC][Phys][FB]Your user name and password are not defined. Ask your database administrator to set up a Firebird login. [kod=335544472]  => cevirisi: Kullanıcı adı veya şifre yanlış.
+[CALISTI] ACTIVE (3.0+)   (ALTER USER FBY_TEST ACTIVE)
+[CALISTI] TAGS (3.0+)   (ALTER USER FBY_TEST TAGS (DEPARTMAN = 'test'))
+[CALISTI] SEC$USER_ATTRIBUTES (etiket)
+          kolonlar: SEC$USER_NAME | SEC$KEY | SEC$VALUE | SEC$PLUGIN
+          FBY_TEST | DEPARTMAN | test | Srp
+          toplam satir: 1
+
+--- Y5) GRANT / REVOKE (tablo, rol) ---
+[CALISTI] Gecici tablo   (CREATE TABLE FBY_OLCUM_T (ID INTEGER NOT NULL PRIMARY KEY, A VARCHAR(10)))
+[CALISTI] GRANT SELECT, INSERT   (GRANT SELECT, INSERT ON FBY_OLCUM_T TO FBY_TEST)
+[CALISTI] GRANT UPDATE (A) sutun yetkisi   (GRANT UPDATE (A) ON FBY_OLCUM_T TO FBY_TEST)
+[CALISTI] RDB$USER_PRIVILEGES: tabloya verilenler
+          kolonlar: RDB$USER | RDB$PRIVILEGE | RDB$FIELD_NAME | RDB$GRANT_OPTION | RDB$GRANTOR
+          SYSDBA | S | <NULL> | 1 | SYSDBA
+          SYSDBA | I | <NULL> | 1 | SYSDBA
+          SYSDBA | U | <NULL> | 1 | SYSDBA
+          SYSDBA | D | <NULL> | 1 | SYSDBA
+          SYSDBA | R | <NULL> | 1 | SYSDBA
+          FBY_TEST | S | <NULL> | 0 | SYSDBA
+          FBY_TEST | I | <NULL> | 0 | SYSDBA
+          FBY_TEST | U | A | 0 | SYSDBA
+          toplam satir: 8
+[CALISTI] Yetkili kullanici INSERT yapar   (FBY_TEST olarak: INSERT INTO FBY_OLCUM_T VALUES (1, 'a'))
+[HATA]    Yetkisiz kullanici DELETE yapar (hata beklenir)   (FBY_TEST olarak: DELETE FROM FBY_OLCUM_T) -> EIBNativeException: [FireDAC][Phys][FB]no permission for DELETE access to TABLE FBY_OLCUM_T [kod=335544352]  => cevirisi: Beklenmeyen bir hata oluştu.
+[CALISTI] REVOKE INSERT   (REVOKE INSERT ON FBY_OLCUM_T FROM FBY_TEST)
+[HATA]    REVOKE sonrasi INSERT (hata beklenir)   (FBY_TEST olarak: INSERT INTO FBY_OLCUM_T VALUES (2, 'b')) -> EIBNativeException: [FireDAC][Phys][FB]no permission for INSERT access to TABLE FBY_OLCUM_T [kod=335544352]  => cevirisi: Beklenmeyen bir hata oluştu.
+[CALISTI] CREATE ROLE   (CREATE ROLE FBY_ROL)
+[CALISTI] GRANT SELECT -> rol   (GRANT SELECT ON FBY_OLCUM_T TO ROLE FBY_ROL)
+[CALISTI] GRANT rol -> kullanici   (GRANT FBY_ROL TO FBY_TEST)
+[CALISTI] Rol uyeligi (M) ve rol yetkisi
+          kolonlar: RDB$USER | RDB$USER_TYPE | RDB$PRIVILEGE | RDB$RELATION_NAME | RDB$GRANT_OPTION
+          FBY_TEST | 8 | S | FBY_OLCUM_T | 0
+          FBY_ROL | 13 | S | FBY_OLCUM_T | 0
+          FBY_TEST | 8 | U | FBY_OLCUM_T | 0
+          FBY_TEST | 8 | M | FBY_ROL | 0
+          toplam satir: 4
+[CALISTI] REVOKE rol <- kullanici   (REVOKE FBY_ROL FROM FBY_TEST)
+[CALISTI] REVOKE ALL   (REVOKE ALL ON FBY_OLCUM_T FROM FBY_TEST)
+
+--- Y6) Surume ozel: DDL yetkisi (3.0+), sistem ayricaligi (4.0+) ---
+[CALISTI] GRANT CREATE TABLE (DDL yetkisi)   (GRANT CREATE TABLE TO FBY_TEST)
+[CALISTI] DDL yetkisi kaydi (C harfi)
+          kolonlar: RDB$USER | RDB$PRIVILEGE | RDB$RELATION_NAME | RDB$OBJECT_TYPE
+          FBY_TEST | C | SQL$TABLES | 21
+          toplam satir: 1
+[CALISTI] REVOKE CREATE TABLE   (REVOKE CREATE TABLE FROM FBY_TEST)
+[HATA]    Sistem ayricalikli rol (4.0+)   (CREATE ROLE FBY_SYSROL SET SYSTEM PRIVILEGES TO USER_MANAGEMENT) -> EIBNativeException: [FireDAC][Phys][FB]Dynamic SQL Error  | SQL error code = -104  | Token unknown - line 1, column 24  | SET [kod=335544569]  => cevirisi: SQL komutunda yazım hatası var. Aynı anda yalnızca tek bir komut çalıştırılır.
+[HATA]    Rolun sistem ayricaliklari -> EIBNativeException: [FireDAC][Phys][FB]Dynamic SQL Error  | SQL error code = -206  | Column unknown  | RDB$SYSTEM_PRIVILEGES  | At line 1, column 34 [kod=335544569]  => cevirisi: Beklenmeyen bir hata oluştu.
+
+--- Y7) Servis API ile ekle/degistir/sil (FireDAC TFDIBSecurity) ---
+[CALISTI] Servis API: AddUser FBY_SVC
+[HATA]    Servis API yazma (AddUser/ModifyUser/DeleteUser) -> EIBNativeException: [FireDAC][Phys][FB]Your user name and password are not defined. Ask your database administrator to set up a Firebird login. [kod=335544472]  => cevirisi: Kullanıcı adı veya şifre yanlış.
+
+--- Y8) Silme ---
+[HATA]    DROP USER (yeniden; kullanici zaten silindiyse hata beklenir)   (DROP USER FBY_TEST) -> EIBNativeException: [FireDAC][Phys][FB]record not found for user: FBY_TEST [kod=336723990]  => cevirisi: Beklenmeyen bir hata oluştu.
+[CALISTI] Kullanici gitti mi (SEC$USERS)
+          kolonlar: SEC$USER_NAME
+          toplam satir: 0
+[CALISTI] Servis API listesi (silme sonrasi) (TFDIBSecurity.DisplayUsers; kolonlar: kullanici | ad | ortaad | soyad | userid | groupid)
+          SYSDBA |  |  |  | 0 | 0
+          toplam satir: 1   (not: bu yolda "yonetici", "aktif/pasif", "eklenti" bilgisi yok)

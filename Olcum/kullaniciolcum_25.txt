@@ -1,0 +1,91 @@
+﻿KullaniciOlcum  2026-10-26 11:53:28
+Sunucu: 127.0.0.1:3050
+Veritabani: C:\Baris\Kodlar\win32\CariFirebird\2024\DATABASE.FDB
+Kullanici: SYSDBA  (sifre yazilmaz)
+Yazma bolumu: KAPALI - FBTEST_YAZMA=1 verilmedi (varsayilan: yalniz okuma)
+
+Surum: 2.5.9  (ana surum 2)
+
+=== OKUMA 0) Servis API ile kullanici listesi (FireDAC TFDIBSecurity) ===
+[CALISTI] Servis API kullanici listesi (TFDIBSecurity.DisplayUsers; kolonlar: kullanici | ad | ortaad | soyad | userid | groupid)
+          SYSDBA | Sql | Server | Administrator | 0 | 0
+          toplam satir: 1   (not: bu yolda "yonetici", "aktif/pasif", "eklenti" bilgisi yok)
+
+=== OKUMA 1) Kim baglandi, hangi yontemle ===
+[CALISTI] CURRENT_USER / CURRENT_ROLE
+          kolonlar: USER | ROLE
+          SYSDBA | NONE
+          toplam satir: 1
+[HATA]    Veritabani sahibi (MON$DATABASE.MON$OWNER; 2.1+) -> EIBNativeException: [FireDAC][Phys][FB]Dynamic SQL Error  | SQL error code = -206  | Column unknown  | MON$OWNER  | At line 1, column 18 [kod=335544569]  => cevirisi: Beklenmeyen bir hata oluştu.
+[HATA]    Guvenlik veritabani turu (MON$SEC_DATABASE; 3.0+) -> EIBNativeException: [FireDAC][Phys][FB]Dynamic SQL Error  | SQL error code = -206  | Column unknown  | MON$SEC_DATABASE  | At line 1, column 25 [kod=335544569]  => cevirisi: Beklenmeyen bir hata oluştu.
+[HATA]    Dogrulama yontemi (MON$AUTH_METHOD; 3.0+) -> EIBNativeException: [FireDAC][Phys][FB]Dynamic SQL Error  | SQL error code = -206  | Column unknown  | MON$AUTH_METHOD  | At line 1, column 24 [kod=335544569]  => cevirisi: Beklenmeyen bir hata oluştu.
+[CALISTI] Baglanti rolu bilgisi
+          kolonlar: MON$ROLE
+          NONE
+          toplam satir: 1
+
+=== OKUMA 2) Kullanici listesi: SQL yolu (SEC$USERS, 3.0+) ===
+[HATA]    SEC$USERS (tum kolonlar) -> EIBNativeException: [FireDAC][Phys][FB]Dynamic SQL Error  | SQL error code = -204  | Table unknown  | SEC$USERS  | At line 1, column 15 [kod=335544569]  => cevirisi: Komutta adı geçen tablo, kolon veya başka bir nesne veritabanında bulunamadı.
+[HATA]    SEC$USERS (secili kolonlar) -> EIBNativeException: [FireDAC][Phys][FB]Dynamic SQL Error  | SQL error code = -204  | Table unknown  | SEC$USERS  | At line 1, column 110 [kod=335544569]  => cevirisi: Komutta adı geçen tablo, kolon veya başka bir nesne veritabanında bulunamadı.
+[HATA]    SEC$USER_ATTRIBUTES (etiketler) -> EIBNativeException: [FireDAC][Phys][FB]Dynamic SQL Error  | SQL error code = -204  | Table unknown  | SEC$USER_ATTRIBUTES  | At line 1, column 15 [kod=335544569]  => cevirisi: Komutta adı geçen tablo, kolon veya başka bir nesne veritabanında bulunamadı.
+[HATA]    SEC$DB_CREATORS (veritabani olusturma yetkisi, 3.0+) -> EIBNativeException: [FireDAC][Phys][FB]Dynamic SQL Error  | SQL error code = -204  | Table unknown  | SEC$DB_CREATORS  | At line 1, column 15 [kod=335544569]  => cevirisi: Komutta adı geçen tablo, kolon veya başka bir nesne veritabanında bulunamadı.
+[HATA]    SEC$GLOBAL_AUTH_MAPPING (3.0+) -> EIBNativeException: [FireDAC][Phys][FB]Dynamic SQL Error  | SQL error code = -204  | Table unknown  | SEC$GLOBAL_AUTH_MAPPING  | At line 1, column 15 [kod=335544569]  => cevirisi: Komutta adı geçen tablo, kolon veya başka bir nesne veritabanında bulunamadı.
+
+=== OKUMA 3) Roller ===
+[CALISTI] RDB$ROLES
+          kolonlar: RDB$ROLE_NAME | RDB$OWNER_NAME | RDB$SYSTEM_FLAG
+          RDB$ADMIN | SYSDBA | 4
+          toplam satir: 1
+[HATA]    RDB$ROLES sistem ayricaliklari (4.0+) -> EIBNativeException: [FireDAC][Phys][FB]Dynamic SQL Error  | SQL error code = -206  | Column unknown  | RDB$SYSTEM_PRIVILEGES  | At line 1, column 100 [kod=335544569]  => cevirisi: Beklenmeyen bir hata oluştu.
+
+=== OKUMA 4) RDB$USER_PRIVILEGES ozeti ===
+[CALISTI] Kolonlar (bos sonuc kolon adlarini gosterir)
+          kolonlar: RDB$USER | RDB$GRANTOR | RDB$PRIVILEGE | RDB$GRANT_OPTION | RDB$RELATION_NAME | RDB$FIELD_NAME | RDB$USER_TYPE | RDB$OBJECT_TYPE
+          SYSDBA | SYSDBA | S | 1 | RDB$ROLES | <NULL> | 8 | 0
+          toplam satir: 1
+[CALISTI] Toplam kayit sayisi
+          kolonlar: COUNT
+          313
+          toplam satir: 1
+[CALISTI] Verilen kullanici/rol/nesne turu ve yetki harfi basina sayi
+          kolonlar: RDB$USER_TYPE | RDB$PRIVILEGE | COUNT
+          8 | D | 58
+          8 | I | 58
+          8 | R | 58
+          8 | S | 61
+          8 | U | 58
+          8 | X | 20
+          toplam satir: 6
+[CALISTI] Alici (kullanici/rol) basina yetki sayisi (yalniz kullanici ve rol: tur 8 ve 13)
+          kolonlar: RDB$USER | RDB$USER_TYPE | COUNT
+          SYSDBA | 8 | 310
+          PUBLIC | 8 | 3
+          toplam satir: 2
+[CALISTI] Rol uyelikleri (M)
+          kolonlar: RDB$USER | RDB$RELATION_NAME | RDB$GRANT_OPTION
+          toplam satir: 0
+[CALISTI] DDL yetkileri (C/L/O; 3.0+)
+          kolonlar: RDB$USER | RDB$PRIVILEGE | RDB$RELATION_NAME | RDB$OBJECT_TYPE
+          toplam satir: 0
+[CALISTI] PUBLIC icin verilenler
+          kolonlar: RDB$PRIVILEGE | COUNT
+          S | 3
+          toplam satir: 1
+[CALISTI] Tablo/gorunum yetkileri ornegi (ilk 15)
+          kolonlar: RDB$USER | RDB$PRIVILEGE | RDB$RELATION_NAME | RDB$FIELD_NAME | RDB$GRANT_OPTION
+          SYSDBA | S | ALT | <NULL> | 1
+          SYSDBA | I | ALT | <NULL> | 1
+          SYSDBA | U | ALT | <NULL> | 1
+          SYSDBA | D | ALT | <NULL> | 1
+          SYSDBA | R | ALT | <NULL> | 1
+          SYSDBA | S | ANA | <NULL> | 1
+          SYSDBA | I | ANA | <NULL> | 1
+          SYSDBA | U | ANA | <NULL> | 1
+          SYSDBA | D | ANA | <NULL> | 1
+          SYSDBA | R | ANA | <NULL> | 1
+          SYSDBA | S | ANAFATURA | <NULL> | 1
+          SYSDBA | I | ANAFATURA | <NULL> | 1
+          SYSDBA | U | ANAFATURA | <NULL> | 1
+          SYSDBA | D | ANAFATURA | <NULL> | 1
+          SYSDBA | R | ANAFATURA | <NULL> | 1
+          toplam satir: 15

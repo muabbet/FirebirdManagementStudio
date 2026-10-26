@@ -1,0 +1,125 @@
+﻿KullaniciOlcum  2026-10-26 11:53:28
+Sunucu: 127.0.0.1:3051
+Veritabani: C:\Firebird\Firebird50\SYS_DATABASE.FDB
+Kullanici: SYSDBA  (sifre yazilmaz)
+Yazma bolumu: KAPALI - FBTEST_YAZMA=1 verilmedi (varsayilan: yalniz okuma)
+
+Surum: 5.0.4  (ana surum 5)
+
+=== OKUMA 0) Servis API ile kullanici listesi (FireDAC TFDIBSecurity) ===
+[CALISTI] Servis API kullanici listesi (TFDIBSecurity.DisplayUsers; kolonlar: kullanici | ad | ortaad | soyad | userid | groupid)
+          SYSDBA |  |  |  | 0 | 0
+          toplam satir: 1   (not: bu yolda "yonetici", "aktif/pasif", "eklenti" bilgisi yok)
+
+=== OKUMA 1) Kim baglandi, hangi yontemle ===
+[CALISTI] CURRENT_USER / CURRENT_ROLE
+          kolonlar: USER | ROLE
+          SYSDBA | NONE
+          toplam satir: 1
+[CALISTI] Veritabani sahibi (MON$DATABASE.MON$OWNER; 2.1+)
+          kolonlar: MON$OWNER
+          SYSDBA
+          toplam satir: 1
+[CALISTI] Guvenlik veritabani turu (MON$SEC_DATABASE; 3.0+)
+          kolonlar: MON$SEC_DATABASE
+          Default
+          toplam satir: 1
+[CALISTI] Dogrulama yontemi (MON$AUTH_METHOD; 3.0+)
+          kolonlar: MON$AUTH_METHOD
+          Srp256
+          toplam satir: 1
+[CALISTI] Baglanti rolu bilgisi
+          kolonlar: MON$ROLE
+          NONE
+          toplam satir: 1
+
+=== OKUMA 2) Kullanici listesi: SQL yolu (SEC$USERS, 3.0+) ===
+[CALISTI] SEC$USERS (tum kolonlar)
+          kolonlar: SEC$USER_NAME | SEC$FIRST_NAME | SEC$MIDDLE_NAME | SEC$LAST_NAME | SEC$ACTIVE | SEC$ADMIN | SEC$DESCRIPTION | SEC$PLUGIN
+          SYSDBA | <NULL> | <NULL> | <NULL> | True | True | <NULL> | Srp
+          toplam satir: 1
+[CALISTI] SEC$USERS (secili kolonlar)
+          kolonlar: SEC$USER_NAME | SEC$FIRST_NAME | SEC$MIDDLE_NAME | SEC$LAST_NAME | SEC$ACTIVE | SEC$ADMIN | SEC$PLUGIN
+          SYSDBA | <NULL> | <NULL> | <NULL> | True | True | Srp
+          toplam satir: 1
+[CALISTI] SEC$USER_ATTRIBUTES (etiketler)
+          kolonlar: SEC$USER_NAME | SEC$KEY | SEC$VALUE | SEC$PLUGIN
+          toplam satir: 0
+[CALISTI] SEC$DB_CREATORS (veritabani olusturma yetkisi, 3.0+)
+          kolonlar: SEC$USER | SEC$USER_TYPE
+          toplam satir: 0
+[CALISTI] SEC$GLOBAL_AUTH_MAPPING (3.0+)
+          kolonlar: SEC$MAP_NAME | SEC$MAP_USING | SEC$MAP_PLUGIN | SEC$MAP_DB | SEC$MAP_FROM_TYPE | SEC$MAP_FROM | SEC$MAP_TO_TYPE | SEC$MAP_TO | SEC$DESCRIPTION
+          toplam satir: 0
+
+=== OKUMA 3) Roller ===
+[CALISTI] RDB$ROLES
+          kolonlar: RDB$ROLE_NAME | RDB$OWNER_NAME | RDB$SYSTEM_FLAG
+          RDB$ADMIN | SYSDBA | 1
+          toplam satir: 1
+[CALISTI] RDB$ROLES sistem ayricaliklari (4.0+)
+          kolonlar: RDB$ROLE_NAME | HEX_ENCODE
+          RDB$ADMIN | FFFFFFFFFFFFFFFF
+          toplam satir: 1
+
+=== OKUMA 4) RDB$USER_PRIVILEGES ozeti ===
+[CALISTI] Kolonlar (bos sonuc kolon adlarini gosterir)
+          kolonlar: RDB$USER | RDB$GRANTOR | RDB$PRIVILEGE | RDB$GRANT_OPTION | RDB$RELATION_NAME | RDB$FIELD_NAME | RDB$USER_TYPE | RDB$OBJECT_TYPE
+          SYSDBA | <NULL> | S | 1 | RDB$PAGES | <NULL> | 8 | 0
+          toplam satir: 1
+[CALISTI] Toplam kayit sayisi
+          kolonlar: COUNT
+          1403
+          toplam satir: 1
+[CALISTI] Verilen kullanici/rol/nesne turu ve yetki harfi basina sayi
+          kolonlar: RDB$USER_TYPE | RDB$PRIVILEGE | COUNT
+          8 | D | 101
+          8 | G | 820
+          8 | I | 101
+          8 | M | 1
+          8 | R | 101
+          8 | S | 157
+          8 | U | 101
+          8 | X | 6
+          20 | D | 3
+          20 | I | 3
+          20 | R | 3
+          20 | S | 3
+          20 | U | 3
+          toplam satir: 13
+[CALISTI] Alici (kullanici/rol) basina yetki sayisi (yalniz kullanici ve rol: tur 8 ve 13)
+          kolonlar: RDB$USER | RDB$USER_TYPE | COUNT
+          SYSDBA | 8 | 937
+          PUBLIC | 8 | 451
+          toplam satir: 2
+[CALISTI] Rol uyelikleri (M)
+          kolonlar: RDB$USER | RDB$RELATION_NAME | RDB$GRANT_OPTION
+          SYSDBA | RDB$ADMIN | 2
+          toplam satir: 1
+[CALISTI] DDL yetkileri (C/L/O; 3.0+)
+          kolonlar: RDB$USER | RDB$PRIVILEGE | RDB$RELATION_NAME | RDB$OBJECT_TYPE
+          toplam satir: 0
+[CALISTI] PUBLIC icin verilenler
+          kolonlar: RDB$PRIVILEGE | COUNT
+          G | 392
+          S | 56
+          X | 3
+          toplam satir: 3
+[CALISTI] Tablo/gorunum yetkileri ornegi (ilk 15)
+          kolonlar: RDB$USER | RDB$PRIVILEGE | RDB$RELATION_NAME | RDB$FIELD_NAME | RDB$GRANT_OPTION
+          SYSDBA | S | BYN_BELDE | <NULL> | 1
+          SYSDBA | I | BYN_BELDE | <NULL> | 1
+          SYSDBA | U | BYN_BELDE | <NULL> | 1
+          SYSDBA | D | BYN_BELDE | <NULL> | 1
+          SYSDBA | R | BYN_BELDE | <NULL> | 1
+          SYSDBA | S | BYN_GIDYER | <NULL> | 1
+          SYSDBA | I | BYN_GIDYER | <NULL> | 1
+          SYSDBA | U | BYN_GIDYER | <NULL> | 1
+          SYSDBA | D | BYN_GIDYER | <NULL> | 1
+          SYSDBA | R | BYN_GIDYER | <NULL> | 1
+          SYSDBA | S | BYN_HALLER | <NULL> | 1
+          SYSDBA | I | BYN_HALLER | <NULL> | 1
+          SYSDBA | U | BYN_HALLER | <NULL> | 1
+          SYSDBA | D | BYN_HALLER | <NULL> | 1
+          SYSDBA | R | BYN_HALLER | <NULL> | 1
+          toplam satir: 15
