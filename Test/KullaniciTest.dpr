@@ -594,6 +594,10 @@ begin
       Kontrol('Yonetici yapildi', ListedeBul(Bag, TEST_KULLANICI, K) and K.Yonetici);
       { Yonetici baglantisiyla yeni kullanici eklenir ve SYSDBA olmadan silinir. 3.0.14'te SYSDBA olmayan yonetici
         kullanici yonetebilmek icin ROLE RDB$ADMIN ile baglanmali (olcum); bu yuzden rolle baglanilir. }
+      { Moderator isql ile dogruladi (3.0.14): ALTER USER..GRANT ADMIN ROLE yetmez; kullanici yonetimini yaptigi
+        VERITABANINDA ayrica GRANT RDB$ADMIN verilmeli ve ROLE RDB$ADMIN ile baglanilmali. Uygulama kodu bunu yapmaz
+        (SYSDBA ile kullanilir); yalniz test, SYSDBA olmayan yonetici yolunu dener. }
+      KomutHazirla(Bag, 'GRANT RDB$ADMIN TO ' + TEST_KULLANICI).ExecSQL;
       BagAdmin := BaglanRolle(TEST_KULLANICI, SIFRE_3, Hata);
       Kontrol('Yonetici olarak (RDB$ADMIN rolu ile) baglandi', BagAdmin <> nil);
       if BagAdmin = nil then
@@ -616,6 +620,10 @@ begin
         finally
           BagAdmin.Free;
         end;
+      end;
+      try
+        KomutHazirla(Bag, 'REVOKE RDB$ADMIN FROM ' + TEST_KULLANICI).ExecSQL;
+      except
       end;
       YoneticiAyarla(Bag, TEST_KULLANICI, False);
       Kontrol('Yonetici kaldirildi', ListedeBul(Bag, TEST_KULLANICI, K) and not K.Yonetici);
