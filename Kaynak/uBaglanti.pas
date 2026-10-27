@@ -70,6 +70,8 @@ function BozukDosyaUyarisiAl: string;
 
 { Acik baglantilar }
 function FbBaglan(const Tanim: TBaglantiTanimi): TAcikBaglanti;
+{ Servis API'si (2.5 kullanici listesi) icin ayni surucu baglantisi; ikinci bir surucu acilmaz. }
+function FbSurucu: TFDPhysFBDriverLink;
 procedure FbBaglantiyiKes(Bag: TAcikBaglanti);
 function FbAcikBaglanti(const Ad: string): TAcikBaglanti;
 function FbIslemAcikMi(Bag: TAcikBaglanti): Boolean;
@@ -544,6 +546,12 @@ begin
   GSurucu.VendorLib := IstemciDosyasi;
 end;
 
+function FbSurucu: TFDPhysFBDriverLink;
+begin
+  SurucuyuHazirla;
+  Result := GSurucu;
+end;
+
 function FbAcikBaglanti(const Ad: string): TAcikBaglanti;
 var
   Bag: TAcikBaglanti;
@@ -659,6 +667,9 @@ const
   GDS_TOKEN_UNKNOWN = 335544634;
   GDS_OBJ_IN_USE = 335544453;
   GDS_READ_ONLY_TRANS = 335544361;
+  { Asama 3d olcumu (3.0.14 sunucu): "no permission for ... access" ve "record not found for user" }
+  GDS_YETKI_YOK = 335544352;
+  GDS_KULLANICI_YOK = 336723990;
 
 { Firebird hata koduna bakar. Taninan bir kod varsa cumleyi verir. }
 function KodundanCevir(Hata: EFDDBEngineException; out Cevap: string): Boolean;
@@ -700,6 +711,16 @@ begin
       GDS_READ_ONLY_TRANS:
         begin
           Cevap := T('ERR_SALT_OKUNUR');
+          Exit;
+        end;
+      GDS_YETKI_YOK:
+        begin
+          Cevap := T('ERR_YETKI_YOK');
+          Exit;
+        end;
+      GDS_KULLANICI_YOK:
+        begin
+          Cevap := T('ERR_KULLANICI_YOK');
           Exit;
         end;
       GDS_LOGIN:
@@ -754,10 +775,42 @@ end;
 { Nesne baska bir sonuc tarafindan kullaniliyorsa FireDAC hata listesinde isc_obj_in_use kodu
   gelmez (olcum: 5.0.4'te ilk kod 335544351 veya 335544345 olur), "object ... is in use" yalnizca
   mesaj metnindedir. Bu yuzden once metne bakilir; yoksa kayit kilidi cumlesi yaniltici olurdu. }
+{ "Problematic key value is ("PLG$USER_NAME" = 'ADI')" metninden kullanici adini alir; bulunamazsa genel cumle. }
+function KullaniciVarCumlesi(const HamMesaj: string): string;
+var
+  Bas, Son: Integer;
+  Anahtar: string;
+begin
+  Bas := Pos('"PLG$USER_NAME" = ''', HamMesaj);
+  Anahtar := '"PLG$USER_NAME" = ''';
+  if Bas = 0 then
+  begin
+    Bas := Pos('"RDB$USER_NAME" = ''', HamMesaj);
+    Anahtar := '"RDB$USER_NAME" = ''';
+  end;
+  if Bas > 0 then
+  begin
+    Bas := Bas + Length(Anahtar);
+    Son := Pos('''', Copy(HamMesaj, Bas, MaxInt));
+    if Son > 1 then
+      Exit(TF('ERR_KULLANICI_VAR', [Copy(HamMesaj, Bas, Son - 1)]));
+  end;
+  Result := T('ERR_KULLANICI_VAR_GENEL');
+end;
+
 function HataMetniniCevir(Hata: Exception): string;
 begin
   if Iceriyor(Hata.Message, '" is in use') then
     Exit(T('ERR_NESNE_KULLANIMDA'));
+  { CREATE USER hatalari (3.0+, olcum 3.0.14 ve 4.0.7): iki farkli neden ayni ilk kodu (336723987, "add record error")
+    tasir, bu yuzden kodla degil metinle ayrilir. 2.5'in metni farkli olabilir (sunucuda olculmedi). }
+  { 3.0+: tablo PLG$SRP_VIEW / PLG$SRP; 2.5 (olcum 2.5.9): tablo USERS / RDB$USERS. }
+  if Iceriyor(Hata.Message, 'no permission') and
+    (Iceriyor(Hata.Message, 'PLG$SRP_VIEW') or Iceriyor(Hata.Message, 'to TABLE USERS')) then
+    Exit(T('ERR_KULLANICI_YONETIM_YETKI'));
+  if Iceriyor(Hata.Message, 'violation of PRIMARY or UNIQUE KEY') and
+    (Iceriyor(Hata.Message, 'PLG$SRP') or Iceriyor(Hata.Message, 'RDB$USERS')) then
+    Exit(KullaniciVarCumlesi(Hata.Message));
   if (Hata is EFDDBEngineException) and KodundanCevir(EFDDBEngineException(Hata), Result) then
     Exit;
   Result := MetindenCevir(Hata.Message);

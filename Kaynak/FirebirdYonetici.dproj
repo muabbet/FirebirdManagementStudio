@@ -92,6 +92,16 @@
         <DCCReference Include="uDDL.pas"/>
         <DCCReference Include="uAktar.pas"/>
         <DCCReference Include="uYedek.pas"/>
+        <DCCReference Include="uKullanici.pas"/>
+        <DCCReference Include="fKullanicilar.pas">
+            <Form>Kullanicilar</Form>
+            <FormType>dfm</FormType>
+            <DesignClass>TFrame</DesignClass>
+        </DCCReference>
+        <DCCReference Include="fKullaniciDuzenle.pas">
+            <Form>frmKullaniciDuzenle</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <DCCReference Include="fTabloSekme.pas">
             <Form>TabloSekme</Form>
             <FormType>dfm</FormType>

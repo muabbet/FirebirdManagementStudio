@@ -28,6 +28,8 @@ const
   IKON_METADATA = 13;
   { Yedek icin ayri ikon yok; gecici olarak klasor ikonu (rapora yazildi). }
   IKON_YEDEK = IKON_KLASOR;
+  { Kullanicilar icin ayri ikon yok (Ikonlar\svg icinde kullanici ikonu yok); gecici olarak liste ikonu (rapora yazildi). }
+  IKON_KULLANICI = IKON_GENERATOR;
 
 procedure IkonlariKoleksiyonaYukle(Koleksiyon: TImageCollection);
 procedure IkonlariYukle(Koleksiyon: TImageCollection; Liste: TVirtualImageList);
