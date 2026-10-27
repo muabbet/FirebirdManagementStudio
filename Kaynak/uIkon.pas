@@ -30,6 +30,8 @@ const
   IKON_YEDEK = IKON_KLASOR;
   { Kullanicilar icin ayri ikon yok (Ikonlar\svg icinde kullanici ikonu yok); gecici olarak liste ikonu (rapora yazildi). }
   IKON_KULLANICI = IKON_GENERATOR;
+  { Tetikleyici icin ayri ikon yok (Ikonlar\svg icinde uygun yok); gecici olarak "calistir" (oynat) ikonu (rapora yazildi). }
+  IKON_TETIKLEYICI = IKON_CALISTIR;
 
 procedure IkonlariKoleksiyonaYukle(Koleksiyon: TImageCollection);
 procedure IkonlariYukle(Koleksiyon: TImageCollection; Liste: TVirtualImageList);

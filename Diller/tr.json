@@ -337,5 +337,18 @@
   "ERR_PRS_BASLIK_YOK": "Metin 'CREATE OR ALTER PROCEDURE %s' ile başlamalı. Bu sekme yalnızca %s prosedürünü kaydeder.",
   "ERR_PRS_AD_DEGISTI": "Bu sekme %s prosedürünü düzenliyor, ama metinde %s adı yazıyor. Başka adla kaydetmek yeni bir prosedür oluştururdu; bu yüzden reddedildi. Adı geri değiştirin.",
   "ERR_NESNE_BAGIMLI": "Bu nesneyi başka nesneler (prosedür, tetikleyici, view vb.) kullanıyor; bu yüzden istenen değişiklik (silme veya parametre değiştirme gibi) yapılamıyor. Önce bu nesneyi kullanan nesneleri güncelleyin ya da kaldırın.",
-  "ERR_PRS_YEDEK_YAZILAMADI": "Eski tanım yedeklenemedi, bu yüzden kaydetme durduruldu. Veritabanında hiçbir şey değişmedi. Yedek klasörüne yazma iznini ve disk alanını kontrol edin."
+  "ERR_PRS_YEDEK_YAZILAMADI": "Eski tanım yedeklenemedi, bu yüzden kaydetme durduruldu. Veritabanında hiçbir şey değişmedi. Yedek klasörüne yazma iznini ve disk alanını kontrol edin.",
+  "AGAC_TETIKLEYICILER": "Trigger'lar",
+  "TRG_SEKME": "Trigger: %s (%s)",
+  "TRG_BILGI": "%s trigger'ını düzenliyorsunuz. Kaydet (Ctrl+S) değişikliği veritabanına uygular; eski hali önce bir dosyaya yedeklenir.",
+  "TRG_YEDEK_BASLIK": "Trigger yedeği (kaydetmeden önceki hali)",
+  "ONAY_TRG_KAYDET": "%s trigger'ı veritabanında değiştirilecek. Bu trigger tablonun ilgili işlemlerinde otomatik çalışır; yanlış bir trigger veriyi bozabilir. Eski hali bir dosyaya yedeklenir.\n\nDevam edilsin mi?",
+  "MSG_TRG_KAYDEDILDI": "%s trigger'ı kaydedildi (işlem onaylandı: commit).",
+  "ERR_TRG_KAYDEDILEMEDI": "%s trigger'ı kaydedilemedi.",
+  "MSG_TRG_GERI_ALINDI": "Değişiklik uygulanmadı; işlem geri alındı (rollback), trigger'ın eski hali duruyor.",
+  "MSG_TRG_ACILDI": "%s trigger'ı düzenleme sekmesinde açıldı. Kaydedilene kadar veritabanında hiçbir şey değişmez.",
+  "ERR_TRG_BASLIK_YOK": "Metin 'CREATE OR ALTER TRIGGER %s' ile başlamalı. Bu sekme yalnızca %s trigger'ını kaydeder.",
+  "ERR_TRG_AD_DEGISTI": "Bu sekme %s trigger'ını düzenliyor, ama metinde %s adı yazıyor. Başka adla kaydetmek yeni bir trigger oluştururdu; bu yüzden reddedildi. Adı geri değiştirin.",
+  "ERR_TRG_TABLO_DEGISTI": "%s trigger'ı şu an %s tablosuna bağlı, ama metinde %s yazıyor (- = tablosuz). Trigger'ın bağlı olduğu tablo değiştirilemez; kaydetme yapılmadı. Metindeki FOR kısmını eski haline getirin. Başka tabloya taşımak için yeni bir trigger oluşturup eskisini silin.",
+  "ERR_SALT_OKUNUR_KOLON": "Bu kolon bu trigger türünde değiştirilemez (salt okunur). NEW değerleri yalnızca BEFORE INSERT/UPDATE trigger'larında atanabilir."
 }

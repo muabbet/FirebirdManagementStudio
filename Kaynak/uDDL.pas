@@ -14,7 +14,7 @@ uses
   System.SysUtils, System.Classes, uBaglanti;
 
 type
-  TNesneTuru = (ntTablo, ntView, ntProsedur, ntGenerator);
+  TNesneTuru = (ntTablo, ntView, ntProsedur, ntGenerator, ntTetikleyici);
 
   { Metadata cikar: CREATE DATABASE / CONNECT ifadeleri ve sifre. Uc secenek de varsayilan KAPALI. }
   TCikarSecenekleri = record
@@ -42,6 +42,11 @@ function ScriptUret(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string): stri
 { Prosedurun duzenlenebilir tanimi: ScriptUret ile ayni metin, yalniz baslik CREATE OR ALTER PROCEDURE
   (Firebird 2.5-5.0). Ayni metin hem duzenleme sekmesinde acilir hem de eski tanim yedegi olarak yazilir. }
 function ProsedurDuzenleScripti(Bag: TAcikBaglanti; const Ad: string): string;
+
+{ Tetikleyicinin duzenlenebilir tanimi: ScriptUret(ntTetikleyici) ile ayni metin, yalniz baslik CREATE OR ALTER TRIGGER
+  (Firebird 2.5-5.0). Tablo, olay, POSITION ve ACTIVE/INACTIVE mevcut halinden gelir. DDL tetikleyicisinde
+  (script uretilmeyen tur) EMetadataHatasi. }
+function TetikleyiciDuzenleScripti(Bag: TAcikBaglanti; const Ad: string): string;
 
 { Tum veritabaninin yapisini (veri yok) Yazici'ya yazar; bos veritabaninda hatasiz calisacak sirada.
   Atlanan/sorunlu seyler Uyarilar'a (kullaniciya gosterilecek cumleler) yazilir. Iptal edilirse False
@@ -286,14 +291,19 @@ begin
 end;
 
 { Tablo tetikleyicisi: CREATE TRIGGER ad FOR tablo ...; veritabani tetikleyicisi (Tablo bos): ... ON CONNECT. }
-function TetikleyiciMetni(const Tetik: TTetikleyiciBilgisi): string;
+function TetikleyiciMetniFiil(const Tetik: TTetikleyiciBilgisi; const Fiil: string): string;
 begin
-  Result := 'CREATE TRIGGER ' + AdYaz(Tetik.Ad);
+  Result := Fiil + ' TRIGGER ' + AdYaz(Tetik.Ad);
   if Tetik.Tablo <> '' then
     Result := Result + ' FOR ' + AdYaz(Tetik.Tablo);
   Result := Result + ' ' + IfThen(Tetik.Aktif, 'ACTIVE', 'INACTIVE') + sLineBreak +
     Trim(Tetik.Zaman + ' ' + Tetik.Olaylar) + ' POSITION ' + IntToStr(Tetik.Sira) + sLineBreak +
     GovdeYaz(Tetik.Kaynak);
+end;
+
+function TetikleyiciMetni(const Tetik: TTetikleyiciBilgisi): string;
+begin
+  Result := TetikleyiciMetniFiil(Tetik, 'CREATE');
 end;
 
 { Tetikleyiciler tek SET TERM blogunda, bos ise hicbir sey eklenmez. }
@@ -442,6 +452,27 @@ begin
   end;
 end;
 
+{ ---------- Tetikleyici (tek) ---------- }
+
+{ Fiil: CREATE veya CREATE OR ALTER. Tablo tetikleyicisi, veritabani tetikleyicisi (ON CONNECT vb.) ve tablo
+  tetikleyicisi icin TetikleyiciMetniFiil ne uretiyorsa o; DDL tetikleyicisi desteklenmez. }
+function TetikleyiciScripti(Bag: TAcikBaglanti; const Ad, Fiil: string): string;
+var
+  Bilgi: TTetikleyiciBilgisi;
+  Komutlar: TStringList;
+begin
+  Bilgi := TetikleyiciBilgisiOku(Bag, Ad);
+  if Bilgi.Desteklenmiyor then
+    raise EMetadataHatasi.Create(TF('MD_UYARI_TETIK_DESTEK', [Ad]));
+  Komutlar := TStringList.Create;
+  try
+    Komutlar.Add(TetikleyiciMetniFiil(Bilgi, Fiil));
+    Result := TerimBlogu(Komutlar) + sLineBreak;
+  finally
+    Komutlar.Free;
+  end;
+end;
+
 { ---------- Generator ---------- }
 
 { Firebird 2.5'te de calisan CREATE SEQUENCE + SET GENERATOR kullanilir (surume gore degismez). }
@@ -468,6 +499,7 @@ begin
       ntTablo: Result := TabloScripti(Bag, Ad);
       ntView: Result := ViewScripti(Bag, Ad);
       ntProsedur: Result := ProsedurScripti(Bag, Ad, 'CREATE');
+      ntTetikleyici: Result := TetikleyiciScripti(Bag, Ad, 'CREATE');
     else
       Result := GeneratorScripti(Bag, Ad);
     end;
@@ -481,6 +513,16 @@ begin
   AnahtarKelimeleriKur(Bag.Surum);
   try
     Result := ProsedurScripti(Bag, Ad, 'CREATE OR ALTER');
+  finally
+    AnahtarKelimeleriBirak;
+  end;
+end;
+
+function TetikleyiciDuzenleScripti(Bag: TAcikBaglanti; const Ad: string): string;
+begin
+  AnahtarKelimeleriKur(Bag.Surum);
+  try
+    Result := TetikleyiciScripti(Bag, Ad, 'CREATE OR ALTER');
   finally
     AnahtarKelimeleriBirak;
   end;

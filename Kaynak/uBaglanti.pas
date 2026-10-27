@@ -776,6 +776,9 @@ begin
   { Olcum (2.5.9, DROP PROCEDURE): "cannot delete ... there are N dependencies". }
   else if Iceriyor(HamMesaj, 'dependencies') then
     Result := T('ERR_NESNE_BAGIMLI')
+  { Olcum (5.0.4, AFTER tetikleyicide NEW.KOLON atamasi): "attempted update of read-only column TABLO.KOLON". }
+  else if Iceriyor(HamMesaj, 'read-only column') then
+    Result := T('ERR_SALT_OKUNUR_KOLON')
   else
     Result := T('ERR_GENEL');
 end;
