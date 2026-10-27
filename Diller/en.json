@@ -337,5 +337,18 @@
   "ERR_PRS_BASLIK_YOK": "The text must start with 'CREATE OR ALTER PROCEDURE %s'. This tab only saves procedure %s.",
   "ERR_PRS_AD_DEGISTI": "This tab edits procedure %s, but the text uses the name %s. Saving under another name would create a new procedure, so it was refused. Change the name back.",
   "ERR_NESNE_BAGIMLI": "Other objects (procedures, triggers, views, etc.) use this object, so the requested change (such as deleting it or changing its parameters) is not possible. Update or remove the objects that use it first.",
-  "ERR_PRS_YEDEK_YAZILAMADI": "The old definition could not be backed up, so saving was stopped. Nothing was changed in the database. Check write permission and free disk space for the backup folder."
+  "ERR_PRS_YEDEK_YAZILAMADI": "The old definition could not be backed up, so saving was stopped. Nothing was changed in the database. Check write permission and free disk space for the backup folder.",
+  "AGAC_TETIKLEYICILER": "Triggers",
+  "TRG_SEKME": "Trigger: %s (%s)",
+  "TRG_BILGI": "You are editing trigger %s. Save (Ctrl+S) applies the change to the database; the old version is first backed up to a file.",
+  "TRG_YEDEK_BASLIK": "Trigger backup (version before saving)",
+  "ONAY_TRG_KAYDET": "Trigger %s will be changed in the database. This trigger runs automatically on the table's operations; a wrong trigger can corrupt data. The old version is backed up to a file.\n\nContinue?",
+  "MSG_TRG_KAYDEDILDI": "Trigger %s was saved (transaction committed).",
+  "ERR_TRG_KAYDEDILEMEDI": "Trigger %s could not be saved.",
+  "MSG_TRG_GERI_ALINDI": "The change was not applied; the transaction was rolled back and the old version of the trigger is still in place.",
+  "MSG_TRG_ACILDI": "Trigger %s was opened in an edit tab. Nothing changes in the database until you save.",
+  "ERR_TRG_BASLIK_YOK": "The text must start with 'CREATE OR ALTER TRIGGER %s'. This tab only saves trigger %s.",
+  "ERR_TRG_AD_DEGISTI": "This tab edits trigger %s, but the text uses the name %s. Saving under another name would create a new trigger, so it was refused. Change the name back.",
+  "ERR_TRG_TABLO_DEGISTI": "Trigger %s is currently attached to table %s, but the text says %s (- = no table). The table of a trigger cannot be changed; nothing was saved. Restore the FOR part of the text. To move it to another table, create a new trigger and drop the old one.",
+  "ERR_SALT_OKUNUR_KOLON": "This column cannot be changed in this kind of trigger (read-only). NEW values can only be assigned in BEFORE INSERT/UPDATE triggers."
 }

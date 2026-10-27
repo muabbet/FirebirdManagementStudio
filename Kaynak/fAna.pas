@@ -2,7 +2,7 @@
   Form sadece arayuzu bilir; is uBaglanti, uMetadata, uSorgu unit'lerindedir.
 
   Agac: kokte klasorler ve kayitli baglantilar durur. Baglanti acilinca altinda
-  dort dal (Tablolar, View'lar, Prosedurler, Generator'lar) dolar. Birden fazla
+  bes dal (Tablolar, View'lar, Prosedurler, Trigger'lar, Generator'lar) dolar. Birden fazla
   baglanti ayni anda acik olabilir. Her agac dugumunun Data alani bir
   TAgacOgesi'ni gosterir; dugumun ne oldugu orada yazar. }
 unit fAna;
@@ -11,7 +11,7 @@ interface
 
 uses
   Winapi.Windows, System.SysUtils, System.Classes, System.Generics.Collections,
-  Vcl.Controls, Vcl.Forms, Vcl.ComCtrls, Vcl.ExtCtrls, Vcl.StdCtrls,
+  Vcl.Controls, Vcl.Graphics, Vcl.Forms, Vcl.ComCtrls, Vcl.ExtCtrls, Vcl.StdCtrls,
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
@@ -27,6 +27,9 @@ type
     BaglantiAd: string;
     Ad: string;
     DalNo: Integer;
+    { Yalniz tetikleyici nesnesinde: pasif ise agacta soluk cizilir; DDL tetikleyicisinde script/duzenleme yok. }
+    Pasif: Boolean;
+    Duzenlenemez: Boolean;
   end;
 
   TfrmAna = class(TForm)
@@ -45,7 +48,7 @@ type
     pmNesne: TPopupMenu;
     miAc: TMenuItem;
     miScriptUret: TMenuItem;
-    miProsedurDuzenle: TMenuItem;
+    miNesneDuzenle: TMenuItem;
     miBaglan: TMenuItem;
     miKes: TMenuItem;
     miYenile: TMenuItem;
@@ -74,6 +77,8 @@ type
     procedure btnYenileClick(Sender: TObject);
     procedure cmbDilChange(Sender: TObject);
     procedure tvNesnelerChange(Sender: TObject; Node: TTreeNode);
+    procedure tvNesnelerCustomDrawItem(Sender: TCustomTreeView; Node: TTreeNode; State: TCustomDrawState;
+      var DefaultDraw: Boolean);
     procedure tvNesnelerDblClick(Sender: TObject);
     procedure tvNesnelerMouseDown(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
@@ -83,7 +88,7 @@ type
     procedure pmNesnePopup(Sender: TObject);
     procedure miAcClick(Sender: TObject);
     procedure miScriptUretClick(Sender: TObject);
-    procedure miProsedurDuzenleClick(Sender: TObject);
+    procedure miNesneDuzenleClick(Sender: TObject);
     procedure miBaglanClick(Sender: TObject);
     procedure miKesClick(Sender: TObject);
     procedure miYenileClick(Sender: TObject);
@@ -132,6 +137,7 @@ type
     procedure AgaciKur;
     procedure DallariDoldur(Dugme: TTreeNode; Bag: TAcikBaglanti);
     procedure DalDoldur(Dal: TTreeNode; Ikon: Integer; Liste: TStrings);
+    procedure TetikleyiciDaliDoldur(Dal: TTreeNode; const Liste: TArray<TTetikleyiciBilgisi>);
     procedure AgacYazilariniYenile;
     { baglanti islemleri }
     procedure BaglantiyiAc(Dugme: TTreeNode);
@@ -156,7 +162,7 @@ type
     procedure ScriptAc(Dugme: TTreeNode);
     function ProsedurSekmeAl(Sayfa: TTabSheet): TProsedurSekme;
     function AktifProsedurSekmesi: TProsedurSekme;
-    procedure ProsedurDuzenleAc(Dugme: TTreeNode);
+    procedure NesneDuzenleAc(Dugme: TTreeNode);
     procedure MetadataCikarAc(Dugme: TTreeNode);
     procedure YedekPenceresiAc(Dugme: TTreeNode);
     procedure SorguyuCalistir;
@@ -175,7 +181,8 @@ const
   DAL_TABLO = 0;
   DAL_VIEW = 1;
   DAL_PROSEDUR = 2;
-  DAL_GENERATOR = 3;
+  DAL_TETIKLEYICI = 3;
+  DAL_GENERATOR = 4;
 
 procedure TfrmAna.FormCreate(Sender: TObject);
 var
@@ -251,7 +258,7 @@ begin
   pnlUst.Height := FSerit.Yukseklik;
   miAc.Caption := T('MENU_AC');
   miScriptUret.Caption := T('MENU_SCRIPT_URET');
-  miProsedurDuzenle.Caption := T('MENU_PROSEDUR_DUZENLE');
+  miNesneDuzenle.Caption := T('MENU_PROSEDUR_DUZENLE');
   miBaglan.Caption := T('BTN_BAGLAN');
   miKes.Caption := T('BTN_KES');
   miYenile.Caption := T('MENU_YENILE');
@@ -502,18 +509,38 @@ begin
   end;
 end;
 
-{ Baglantinin altindaki dort dali sunucudan okuyup yeniden doldurur. }
+{ Tetikleyiciler: adin yaninda bagli oldugu tablo; veritabani ve DDL tetikleyicisinde tablo yerine tur (ON CONNECT, DDL).
+  Pasif olanlar agacta soluk cizilir (tvNesnelerCustomDrawItem). }
+procedure TfrmAna.TetikleyiciDaliDoldur(Dal: TTreeNode; const Liste: TArray<TTetikleyiciBilgisi>);
+var
+  Tetik: TTetikleyiciBilgisi;
+  Dugme: TTreeNode;
+  Yer: string;
+begin
+  for Tetik in Liste do
+  begin
+    Yer := Tetik.Tablo;
+    if Yer = '' then
+      Yer := Tetik.Olaylar;
+    Dugme := tvNesneler.Items.AddChild(Dal, Tetik.Ad + ' (' + Yer + ')');
+    OgeBagla(Dugme, IKON_TETIKLEYICI, atNesne, OgeAl(Dal).BaglantiAd, Tetik.Ad, OgeAl(Dal).DalNo);
+    OgeAl(Dugme).Pasif := not Tetik.Aktif;
+    OgeAl(Dugme).Duzenlenemez := Tetik.Desteklenmiyor;
+  end;
+end;
+
+{ Baglantinin altindaki bes dali sunucudan okuyup yeniden doldurur. }
 procedure TfrmAna.DallariDoldur(Dugme: TTreeNode; Bag: TAcikBaglanti);
 var
   Liste: TStringList;
-  Dallar: array[0..3] of TTreeNode;
+  Dallar: array[0..4] of TTreeNode;
   i: Integer;
 begin
   Liste := TStringList.Create;
   tvNesneler.Items.BeginUpdate;
   try
     Dugme.DeleteChildren;
-    for i := 0 to 3 do
+    for i := 0 to 4 do
     begin
       Dallar[i] := tvNesneler.Items.AddChild(Dugme, '');
       OgeBagla(Dallar[i], IKON_KLASOR, atDal, Bag.Tanim.Ad, '', i);
@@ -524,6 +551,7 @@ begin
     DalDoldur(Dallar[DAL_VIEW], IKON_VIEW, Liste);
     ProsedurleriGetir(Bag, Liste);
     DalDoldur(Dallar[DAL_PROSEDUR], IKON_PROSEDUR, Liste);
+    TetikleyiciDaliDoldur(Dallar[DAL_TETIKLEYICI], TetikleyicileriListele(Bag));
     GeneratorleriGetir(Bag, Liste);
     DalDoldur(Dallar[DAL_GENERATOR], IKON_GENERATOR, Liste);
     Dugme.Expand(False);
@@ -538,8 +566,8 @@ end;
 { Dal basliklarini secili dille yazar (sayilariyla birlikte). }
 procedure TfrmAna.AgacYazilariniYenile;
 const
-  ANAHTARLAR: array[0..3] of string = (
-    'AGAC_TABLOLAR', 'AGAC_VIEWLAR', 'AGAC_PROSEDURLER', 'AGAC_GENERATORLER');
+  ANAHTARLAR: array[0..4] of string = (
+    'AGAC_TABLOLAR', 'AGAC_VIEWLAR', 'AGAC_PROSEDURLER', 'AGAC_TETIKLEYICILER', 'AGAC_GENERATORLER');
 var
   i: Integer;
   Dugme: TTreeNode;
@@ -950,6 +978,7 @@ begin
     DAL_TABLO: Tur := ntTablo;
     DAL_VIEW: Tur := ntView;
     DAL_PROSEDUR: Tur := ntProsedur;
+    DAL_TETIKLEYICI: Tur := ntTetikleyici;
   else
     Tur := ntGenerator;
   end;
@@ -971,24 +1000,29 @@ begin
   MesajYaz(TF('MSG_SCRIPT_URETILDI', [Oge.Ad]));
 end;
 
-{ Prosedurun CREATE OR ALTER metnini duzenleme sekmesinde acar. Ayni baglantida ayni prosedur zaten aciksa
-  o sekmeye gecilir (yazilmis ama kaydedilmemis metin kaybolmasin). }
-procedure TfrmAna.ProsedurDuzenleAc(Dugme: TTreeNode);
+{ Prosedurun veya tetikleyicinin CREATE OR ALTER metnini duzenleme sekmesinde acar (hangisi oldugu agactaki dalindan
+  gelir). Ayni baglantida ayni nesne zaten aciksa o sekmeye gecilir (yazilmis ama kaydedilmemis metin kaybolmasin). }
+procedure TfrmAna.NesneDuzenleAc(Dugme: TTreeNode);
 var
   Oge: TAgacOgesi;
   Bag: TAcikBaglanti;
   Sayfa: TTabSheet;
   Sekme: TProsedurSekme;
+  Tur: TNesneTuru;
   i: Integer;
 begin
   Oge := OgeAl(Dugme);
   Bag := FbAcikBaglanti(Oge.BaglantiAd);
   if Bag = nil then
     Exit;
+  Tur := ntProsedur;
+  if Oge.DalNo = DAL_TETIKLEYICI then
+    Tur := ntTetikleyici;
   for i := 0 to pcCalisma.PageCount - 1 do
   begin
     Sekme := ProsedurSekmeAl(pcCalisma.Pages[i]);
-    if (Sekme <> nil) and SameText(Sekme.BaglantiAd, Oge.BaglantiAd) and (Sekme.ProsedurAdi = Oge.Ad) then
+    if (Sekme <> nil) and SameText(Sekme.BaglantiAd, Oge.BaglantiAd) and (Sekme.NesneAdi = Oge.Ad) and
+      ((Sekme.Tur = ntTetikleyici) = (Tur = ntTetikleyici)) then
     begin
       pcCalisma.ActivePage := pcCalisma.Pages[i];
       Exit;
@@ -996,10 +1030,14 @@ begin
   end;
   Sayfa := TTabSheet.Create(pcCalisma);
   Sayfa.PageControl := pcCalisma;
-  Sayfa.ImageIndex := IKON_PROSEDUR;
+  if Tur = ntTetikleyici then
+    Sayfa.ImageIndex := IKON_TETIKLEYICI
+  else
+    Sayfa.ImageIndex := IKON_PROSEDUR;
   Sekme := TProsedurSekme.Create(Sayfa);
   Sekme.Parent := Sayfa;
   Sekme.Align := alClient;
+  Sekme.Tur := Tur;
   Sekme.AnaSonuc := memSonuc.Lines;
   Sekme.SqlYaz := SqlMesajiYaz;
   try
@@ -1021,7 +1059,10 @@ begin
   Sayfa.Caption := Sekme.Baslik;
   pcCalisma.ActivePage := Sayfa;
   Sekme.EditoreOdaklan;
-  MesajYaz(TF('MSG_PRS_ACILDI', [Oge.Ad]));
+  if Tur = ntTetikleyici then
+    MesajYaz(TF('MSG_TRG_ACILDI', [Oge.Ad]))
+  else
+    MesajYaz(TF('MSG_PRS_ACILDI', [Oge.Ad]));
   DurumuGuncelle;
 end;
 
@@ -1283,6 +1324,14 @@ begin
   DurumuGuncelle;
 end;
 
+{ Pasif tetikleyici adi agacta soluk (ve secili degilse) cizilir; baska dugume dokunulmaz. }
+procedure TfrmAna.tvNesnelerCustomDrawItem(Sender: TCustomTreeView; Node: TTreeNode; State: TCustomDrawState;
+  var DefaultDraw: Boolean);
+begin
+  if (OgeAl(Node) <> nil) and OgeAl(Node).Pasif and not (cdsSelected in State) then
+    Sender.Canvas.Font.Color := clGrayText;
+end;
+
 { Cift tik: kapali baglantiya baglanir, tabloyu acar. }
 procedure TfrmAna.tvNesnelerDblClick(Sender: TObject);
 var
@@ -1368,7 +1417,7 @@ var
   Nokta: TPoint;
   Dugme: TTreeNode;
   Tur: TAgacTuru;
-  Bos, Acik: Boolean;
+  Bos, Acik, Uretilebilir: Boolean;
 begin
   Nokta := tvNesneler.ScreenToClient(Mouse.CursorPos);
   if PtInRect(tvNesneler.ClientRect, Nokta) then
@@ -1395,8 +1444,10 @@ begin
   miMetadataCikar.Visible := (not Bos) and (Tur = atBaglanti) and Acik;
   miYedek.Visible := (not Bos) and (Tur = atBaglanti);
   miAc.Visible := (not Bos) and (Tur = atNesne) and (OgeAl(Dugme).DalNo = DAL_TABLO);
-  miScriptUret.Visible := (not Bos) and (Tur = atNesne);
-  miProsedurDuzenle.Visible := (not Bos) and (Tur = atNesne) and (OgeAl(Dugme).DalNo = DAL_PROSEDUR);
+  { DDL tetikleyicisinde (script uretilmeyen tur) Script uret ve Duzenle gizlenir; Yenile kalir. }
+  Uretilebilir := (not Bos) and (Tur = atNesne) and not OgeAl(Dugme).Duzenlenemez;
+  miScriptUret.Visible := Uretilebilir;
+  miNesneDuzenle.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_PROSEDUR, DAL_TETIKLEYICI]);
   miYenile.Visible := (not Bos) and (Tur <> atKlasor) and Acik;
   miBaglan.Enabled := not Acik;
   miKes.Enabled := Acik;
@@ -1414,10 +1465,10 @@ begin
     ScriptAc(tvNesneler.Selected);
 end;
 
-procedure TfrmAna.miProsedurDuzenleClick(Sender: TObject);
+procedure TfrmAna.miNesneDuzenleClick(Sender: TObject);
 begin
   if tvNesneler.Selected <> nil then
-    ProsedurDuzenleAc(tvNesneler.Selected);
+    NesneDuzenleAc(tvNesneler.Selected);
 end;
 
 procedure TfrmAna.miBaglanClick(Sender: TObject);

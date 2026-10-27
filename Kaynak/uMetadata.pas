@@ -212,6 +212,10 @@ function KisitlariOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TKisitBil
 function IndeksleriOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TIndeksBilgisi>;
 { Tablo bos ise veritabanindaki TUM kullanici tetikleyicileri (veritabani tetikleyicileri dahil). }
 function TetikleyicileriOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TTetikleyiciBilgisi>;
+{ Agac listesi icin: tum kullanici tetikleyicileri, govde metni OLMADAN (hizli). DDL tetikleyicisinde Olaylar = 'DDL'. }
+function TetikleyicileriListele(Bag: TAcikBaglanti): TArray<TTetikleyiciBilgisi>;
+{ Tek tetikleyici (govdesiyle). Yoksa veya govde metni kayitli degilse EMetadataHatasi. }
+function TetikleyiciBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TTetikleyiciBilgisi;
 { Tum veritabani icin (Metadata cikar). Sistem nesneleri gelmez. }
 function RolAdlari(Bag: TAcikBaglanti): TArray<string>;
 function IstisnalariOku(Bag: TAcikBaglanti): TArray<TIstisnaBilgisi>;
@@ -780,23 +784,31 @@ begin
 end;
 
 { Kullanici tetikleyicileri (CHECK tetikleyicileri sistem bayrakli oldugu icin gelmez).
-  Tablo doluysa o tablo/view'unkiler, bos ise veritabanindaki hepsi. }
-function TetikleyicileriOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TTetikleyiciBilgisi>;
+  Filtre bos degilse yalniz o tablo/view'unkiler (Ad=False) ya da yalniz o adli tetikleyici (Ad=True).
+  KaynakDahil False ise govde metni okunmaz (agac listesi hizli gelsin). }
+function TetikleyicileriOkuIc(Bag: TAcikBaglanti; const Filtre: string; Ad, KaynakDahil: Boolean):
+  TArray<TTetikleyiciBilgisi>;
 var
   Sorgu: TFDQuery;
   Liste: TList<TTetikleyiciBilgisi>;
   Tetik: TTetikleyiciBilgisi;
   Tip, Olay, i: Integer;
-  Sart: string;
+  Sart, KaynakAlani: string;
 begin
   Sart := '';
-  if Tablo <> '' then
-    Sart := ' and rdb$relation_name = :T';
+  if Filtre <> '' then
+    if Ad then
+      Sart := ' and rdb$trigger_name = :T'
+    else
+      Sart := ' and rdb$relation_name = :T';
+  KaynakAlani := 'cast(null as varchar(1))';
+  if KaynakDahil then
+    KaynakAlani := 'rdb$trigger_source';
   Liste := TList<TTetikleyiciBilgisi>.Create;
   Sorgu := SorguAc(Bag, 'select rdb$trigger_name as AD, rdb$relation_name as TABLO, rdb$trigger_type as TUR, ' +
-    'rdb$trigger_sequence as SIRA, rdb$trigger_inactive as PASIF, rdb$trigger_source as KAYNAK ' +
+    'rdb$trigger_sequence as SIRA, rdb$trigger_inactive as PASIF, ' + KaynakAlani + ' as KAYNAK ' +
     'from rdb$triggers where coalesce(rdb$system_flag, 0) = 0' + Sart + ' ' +
-    'order by rdb$relation_name, rdb$trigger_sequence, rdb$trigger_name', Tablo);
+    'order by rdb$relation_name, rdb$trigger_sequence, rdb$trigger_name', Filtre);
   try
     while not Sorgu.Eof do
     begin
@@ -806,12 +818,15 @@ begin
       Tetik.Sira := Sorgu.FieldByName('SIRA').AsInteger;
       Tetik.Aktif := Sorgu.FieldByName('PASIF').AsInteger <> 1;
       Tetik.Kaynak := Sorgu.FieldByName('KAYNAK').AsString;
-      if (Tablo <> '') and (Trim(Tetik.Kaynak) = '') then
+      if KaynakDahil and (Filtre <> '') and (Trim(Tetik.Kaynak) = '') then
         raise EMetadataHatasi.Create(TF('ERR_DDL_KAYNAK_YOK', [Tetik.Ad]));
       Tip := Sorgu.FieldByName('TUR').AsInteger;
       if (Tip and 16384) <> 0 then
-        { DDL tetikleyicisi: bu surumde script uretilmez. }
-        Tetik.Desteklenmiyor := True
+      begin
+        { DDL tetikleyicisi: bu surumde script uretilmez. Olaylar yalniz agac listesinde tur olarak gorunur. }
+        Tetik.Desteklenmiyor := True;
+        Tetik.Olaylar := 'DDL';
+      end
       else if (Tip and 8192) <> 0 then
       begin
         { Veritabani tetikleyicisi: 8192 + 0 CONNECT, 1 DISCONNECT, 2 TRANSACTION START, 3 COMMIT, 4 ROLLBACK }
@@ -856,6 +871,26 @@ begin
     Sorgu.Free;
     Liste.Free;
   end;
+end;
+
+function TetikleyicileriOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TTetikleyiciBilgisi>;
+begin
+  Result := TetikleyicileriOkuIc(Bag, Tablo, False, True);
+end;
+
+function TetikleyicileriListele(Bag: TAcikBaglanti): TArray<TTetikleyiciBilgisi>;
+begin
+  Result := TetikleyicileriOkuIc(Bag, '', False, False);
+end;
+
+function TetikleyiciBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TTetikleyiciBilgisi;
+var
+  Liste: TArray<TTetikleyiciBilgisi>;
+begin
+  Liste := TetikleyicileriOkuIc(Bag, Ad, True, True);
+  if Length(Liste) = 0 then
+    raise EMetadataHatasi.Create(TF('ERR_DDL_NESNE_YOK', [Ad]));
+  Result := Liste[0];
 end;
 
 { Tablonun gecici/dis tablo ozelliklerini Bilgi'ye yazar (kolon ve kisitlara dokunmaz). }

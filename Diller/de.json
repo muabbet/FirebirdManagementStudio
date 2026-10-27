@@ -337,5 +337,18 @@
   "ERR_PRS_BASLIK_YOK": "Der Text muss mit 'CREATE OR ALTER PROCEDURE %s' beginnen. Dieser Tab speichert nur die Prozedur %s.",
   "ERR_PRS_AD_DEGISTI": "Dieser Tab bearbeitet die Prozedur %s, im Text steht aber der Name %s. Unter anderem Namen zu speichern würde eine neue Prozedur anlegen und wurde deshalb abgelehnt. Setzen Sie den Namen zurück.",
   "ERR_NESNE_BAGIMLI": "Andere Objekte (Prozeduren, Trigger, Views usw.) verwenden dieses Objekt, deshalb ist die gewünschte Änderung (etwa Löschen oder Ändern der Parameter) nicht möglich. Aktualisieren oder entfernen Sie zuerst die Objekte, die es verwenden.",
-  "ERR_PRS_YEDEK_YAZILAMADI": "Die alte Definition konnte nicht gesichert werden, deshalb wurde das Speichern gestoppt. In der Datenbank wurde nichts geändert. Prüfen Sie Schreibrechte und freien Speicherplatz für den Sicherungsordner."
+  "ERR_PRS_YEDEK_YAZILAMADI": "Die alte Definition konnte nicht gesichert werden, deshalb wurde das Speichern gestoppt. In der Datenbank wurde nichts geändert. Prüfen Sie Schreibrechte und freien Speicherplatz für den Sicherungsordner.",
+  "AGAC_TETIKLEYICILER": "Trigger",
+  "TRG_SEKME": "Trigger: %s (%s)",
+  "TRG_BILGI": "Sie bearbeiten den Trigger %s. Speichern (Strg+S) übernimmt die Änderung in die Datenbank; die alte Fassung wird vorher in einer Datei gesichert.",
+  "TRG_YEDEK_BASLIK": "Trigger-Sicherung (Fassung vor dem Speichern)",
+  "ONAY_TRG_KAYDET": "Der Trigger %s wird in der Datenbank geändert. Dieser Trigger läuft bei den entsprechenden Operationen der Tabelle automatisch; ein fehlerhafter Trigger kann Daten beschädigen. Die alte Fassung wird in einer Datei gesichert.\n\nFortfahren?",
+  "MSG_TRG_KAYDEDILDI": "Der Trigger %s wurde gespeichert (Transaktion bestätigt: Commit).",
+  "ERR_TRG_KAYDEDILEMEDI": "Der Trigger %s konnte nicht gespeichert werden.",
+  "MSG_TRG_GERI_ALINDI": "Die Änderung wurde nicht übernommen; die Transaktion wurde zurückgerollt (Rollback), die alte Fassung des Triggers bleibt erhalten.",
+  "MSG_TRG_ACILDI": "Der Trigger %s wurde in einem Bearbeitungs-Tab geöffnet. In der Datenbank ändert sich nichts, bis Sie speichern.",
+  "ERR_TRG_BASLIK_YOK": "Der Text muss mit 'CREATE OR ALTER TRIGGER %s' beginnen. Dieser Tab speichert nur den Trigger %s.",
+  "ERR_TRG_AD_DEGISTI": "Dieser Tab bearbeitet den Trigger %s, im Text steht aber der Name %s. Unter anderem Namen zu speichern würde einen neuen Trigger anlegen und wurde deshalb abgelehnt. Setzen Sie den Namen zurück.",
+  "ERR_TRG_TABLO_DEGISTI": "Der Trigger %s gehört derzeit zur Tabelle %s, im Text steht aber %s (- = ohne Tabelle). Die Tabelle eines Triggers kann nicht geändert werden; es wurde nichts gespeichert. Stellen Sie den FOR-Teil im Text wieder her. Um ihn an eine andere Tabelle zu binden, legen Sie einen neuen Trigger an und löschen den alten.",
+  "ERR_SALT_OKUNUR_KOLON": "Diese Spalte kann in dieser Art von Trigger nicht geändert werden (schreibgeschützt). NEW-Werte können nur in BEFORE INSERT/UPDATE-Triggern zugewiesen werden."
 }

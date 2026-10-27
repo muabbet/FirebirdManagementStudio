@@ -78,6 +78,7 @@ object frmAna: TfrmAna
     RightClickSelect = True
     TabOrder = 1
     OnChange = tvNesnelerChange
+    OnCustomDrawItem = tvNesnelerCustomDrawItem
     OnDblClick = tvNesnelerDblClick
     OnDragDrop = tvNesnelerDragDrop
     OnDragOver = tvNesnelerDragOver
@@ -149,8 +150,8 @@ object frmAna: TfrmAna
     object miScriptUret: TMenuItem
       OnClick = miScriptUretClick
     end
-    object miProsedurDuzenle: TMenuItem
-      OnClick = miProsedurDuzenleClick
+    object miNesneDuzenle: TMenuItem
+      OnClick = miNesneDuzenleClick
     end
     object miBaglan: TMenuItem
       OnClick = miBaglanClick
