@@ -172,6 +172,18 @@ begin
   end;
 end;
 
+{ 2.x mi? 3.0+ ALTER hatasi satir numarasi vermez (olculdu). }
+function Surum25: Boolean;
+begin
+  Result := Copy(Bag.Surum, 1, 2) = '2.';
+end;
+
+{ Beklenen satir ya da (bilinmiyorsa) 0; baska bir satir YANLIS sayilir. }
+function SatirDogruMu(Beklenen, Gelen: Integer): Boolean;
+begin
+  Result := (Gelen = 0) or (Gelen = Beklenen);
+end;
+
 function SatirNo(const Metin, Parca: string): Integer;
 var
   Satirlar: TArray<string>;
@@ -332,7 +344,7 @@ begin
   Kontrol('Sozdizimi hatasi: basarisiz', not Sonuc.Basarili);
   Kontrol('Sozdizimi hatasi: anlasilir cumle (ERR_SQL_SOZDIZIMI)', Sonuc.Cumle = T('ERR_SQL_SOZDIZIMI'));
   Kontrol('Sozdizimi hatasi: ham mesaj Ayrinti''da', Sonuc.Ayrinti <> '');
-  Kontrol('Sozdizimi hatasi: editor satiri dogru', (Satir > 0) and (Sonuc.Satir = Satir));
+  Kontrol('Sozdizimi hatasi: editor satiri dogru (satir bilinmiyorsa 0, yanlis satir degil)', SatirDogruMu(Satir, Sonuc.Satir));
   Kontrol('Sozdizimi hatasi: denenen SQL listede', Length(Sonuc.Komutlar) = 1);
   Kontrol('Sozdizimi hatasi: eski prosedur bozulmadi (X = 1)', Skaler(Bag, 'select X from ' + P1) = '1');
   Kontrol('Sozdizimi hatasi: yedek yine de yazildi (hata veritabaninda)', FileExists(Sonuc.YedekDosyasi));
@@ -350,7 +362,9 @@ begin
   Not_('anlam: cumle=' + TekSatir(Sonuc.Cumle) + '  ayrinti=' + TekSatir(Sonuc.Ayrinti) + '  satir=' + IntToStr(Sonuc.Satir) + ' (beklenen ' + IntToStr(Satir) + ')');
   Kontrol('Olmayan degisken: basarisiz ve genel hata cumlesi DEGIL', (not Sonuc.Basarili) and (Sonuc.Cumle <> T('ERR_GENEL')));
   Kontrol('Olmayan degisken: eski prosedur bozulmadi', Skaler(Bag, 'select X from ' + P1) = '1');
-  Kontrol('Olmayan degisken: editor satiri', (Satir > 0) and (Sonuc.Satir = Satir));
+  Kontrol('Olmayan degisken: editor satiri (2.5 verir; 3.0+ vermez, o zaman 0 kalir, yanlis satir olmaz)', SatirDogruMu(Satir, Sonuc.Satir));
+  if Surum25 then
+    Kontrol('2.5: Column unknown hata satirini verir', Sonuc.Satir = Satir);
 
   { Cok komutlu metin: ikinci komut hata -> hepsi geri alinir }
   Sonuc := ProsedurKaydet(Bag, P1, StringReplace(Metin, 'X = 1', 'X = 7', []) + sLineBreak + 'ALTER PROCEDURE YOK_BOYLE_PROSEDUR AS begin end;');
@@ -499,12 +513,14 @@ begin
     Sorgu.FetchOptions.RowsetSize := 1;
     Sorgu.Open;
     KodDene('ham kod (P1 kullanimda, govde)', Bag, 'alter procedure ' + P1 + ' returns (X integer) as begin X = 5; suspend; end');
-    Yurut(Bag, 'create or alter procedure ' + P1 + ' returns (X integer) as begin X = 1; suspend; end');
+    Dene(Bag, 'create or alter procedure ' + P1 + ' returns (X integer) as begin X = 1; suspend; end');
     KodDene('ham kod (P2 calisiyor, govde)', Bag, 'alter procedure ' + P2 + ' returns (Y integer) as begin Y = 5; suspend; end');
-    Yurut(Bag, 'create or alter procedure ' + P2 + ' returns (Y integer) as declare variable V integer; begin ' +
+    Dene(Bag, 'create or alter procedure ' + P2 + ' returns (Y integer) as declare variable V integer; begin ' +
       'for select X from ' + P1 + ' into :V do begin Y = :V; suspend; Y = :V + 1; suspend; Y = :V + 2; suspend; end end');
     Sonuc := ProsedurKaydet(Bag, P1, StringReplace(Metin, 'X = 1', 'X = 3', []));
     Not_('kullanimda: basarili=' + BoolToStr(Sonuc.Basarili, True) + ' cumle=' + TekSatir(Sonuc.Cumle) + '  ayrinti=' + TekSatir(Sonuc.Ayrinti));
+    if not Surum25 then
+      Kontrol('3.0+: baska baglanti kullanirken ALTER reddedilir (nesne kullanimda, kod 335544345)', not Sonuc.Basarili);
     if Sonuc.Basarili then
       Not_('BILGI: bu surumde baska baglanti kullanirken de ALTER basardi (nesne kullanimda hatasi uretilemedi)')
     else
@@ -518,6 +534,12 @@ begin
     FbBaglantiyiKes(Bag2);
   end;
   { "is in use" metni (DROP ile 5.0.4'te olculdu): sentetik istisnayla cumle denetimi }
+  E := Exception.Create('unsuccessful metadata update' + #13#10 + 'MODIFY RDB$PROCEDURES failed' + #13#10 + 'no permission for protect access to PROCEDURE FBY_TEST_P1');
+  try
+    Kontrol('Metin (2.5.9 olcumu): "no permission for protect access" -> ERR_YETKI_YOK', HataMetniniCevir(E) = T('ERR_YETKI_YOK'));
+  finally
+    E.Free;
+  end;
   E := Exception.Create('unsuccessful metadata update' + #13#10 + 'object PROCEDURE "FBY_TEST_P1" is in use');
   try
     Kontrol('Metin: "object ... is in use" -> ERR_NESNE_KULLANIMDA', HataMetniniCevir(E) = T('ERR_NESNE_KULLANIMDA'));
@@ -539,7 +561,7 @@ begin
   { Parametre degistirme: 2.5'te kabul edilir, 3.0+ reddedebilir; kabul/ret + cumle yazilir. }
   Metin := StringReplace(StringReplace(Metin, 'X INTEGER', 'W INTEGER', []), 'X = 1', 'W = 1', []);
   KodDene('ham kod (bagimli, parametre degisimi)', Bag, 'alter procedure ' + P1 + ' returns (W integer) as begin W = 1; suspend; end');
-  Yurut(Bag, 'create or alter procedure ' + P1 + ' returns (X integer) as begin X = 1; suspend; end');
+  Dene(Bag, 'create or alter procedure ' + P1 + ' returns (X integer) as begin X = 1; suspend; end');
   Sonuc := ProsedurKaydet(Bag, P1, Metin);
   Not_('bagimli parametre degisimi: basarili=' + BoolToStr(Sonuc.Basarili, True) + ' cumle=' + TekSatir(Sonuc.Cumle) +
     '  ayrinti=' + TekSatir(Sonuc.Ayrinti));

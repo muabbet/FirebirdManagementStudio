@@ -82,3 +82,13 @@ Get-Content $env:FBTEST_CIKTI | Select-String "HATA|ham kod|kullanimda|bagimli|y
 8. Bu sekmede F5: yalnızca ipucu mesajı, hiçbir şey çalışmıyor mu?
 9. Dili Almanca/İngilizce yap: sekme başlığı, düğme, mesajlar değişiyor, Almanca yazı düğmede kesilmiyor mu?
 10. İkinci bir bağlantıdan (ya da başka istemciden) aynı prosedürü çalışır halde tutarken Kaydet: "nesne kullanımda" cümlesi geliyor mu? (Üretemediğim durum, bölüm 4.)
+
+## 7. Düzeltme turu (moderatörün 3 sunucudaki koşusundan sonra)
+
+Moderatör testi 3.0.14, 4.0.7 ve 2.5.9 atılabilir sunucularında koştu; üç bulgu, üçü de düzeltildi (ilk koşuda üretemediğim gerçek hatalar böylece görüldü):
+
+1. **3.0+ ALTER hatası satır numarası vermiyor** (Firebird davranışı: `unsuccessful metadata update | CREATE OR ALTER PROCEDURE … failed | … Column unknown | X`, `line N` yok; 2.5'te `At line 1, column 62` var). Kod zaten doğru davranıyor (satır 0 ise imleç oynamaz, "Hata editörde N. satırda" mesajı yazılmaz; yalnız cümle + Ayrıntı). Test sürüme göre düzeltildi: 2.5'te satır beklenir, 3.0+'da `satır = 0` ya da doğru satır kabul, **yanlış satır hata**. Hatalı sözcüğü editörde arayıp satıra gitme yapılmadı (sade kalındı).
+2. **3.0/4.0'da "nesne kullanımda" gerçek hata:** `lock conflict on no wait transaction | unsuccessful metadata update | object PROCEDURE "…" is in use`, **kod 335544345** (`isc_lock_conflict`). Çeviri doğru (`ERR_NESNE_KULLANIMDA`, metindeki `" is in use"` kontrolü kodun önüne geçiyor). Testte sızan istisna, B6'daki yardımcı `create or alter` çağrılarının `Dene` ile sarılmasıyla kapandı; 3.0+'da `ProsedurKaydet`in reddedilmesi (nesne kullanımda cümlesi, eski prosedür bozulmadı) artık bir kontrol. B6'nın geri kalanı, B7, B8, B9 3.0/4.0'da da koşar.
+3. **2.5'te yetkisiz ALTER:** `unsuccessful metadata update | MODIFY RDB$PROCEDURES failed | no permission for protect access to PROCEDURE X`, kod `335544352` gelmiyor. `HataMetniniCevir`: metinde `no permission for` (erişim türü fark etmez) → `ERR_YETKI_YOK`. Testte bu 2.5 metniyle sentetik kontrol var; B7 3.0+'da gerçek mesajı yazdırır ve çevirinin `ERR_YETKI_YOK` olduğunu doğrular.
+
+Gömülü (2.5.9) yeniden koşu: `Kontrol: 77  Hata: 0`. 3 sunucuda tekrar koşu moderatörde.

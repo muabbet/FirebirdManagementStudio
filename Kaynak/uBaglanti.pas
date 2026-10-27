@@ -819,6 +819,10 @@ begin
   if Iceriyor(Hata.Message, 'violation of PRIMARY or UNIQUE KEY') and
     (Iceriyor(Hata.Message, 'PLG$SRP') or Iceriyor(Hata.Message, 'RDB$USERS')) then
     Exit(KullaniciVarCumlesi(Hata.Message));
+  { Olcum (2.5.9, yetkisiz ALTER PROCEDURE): kod 335544352 gelmiyor, yalniz "no permission for protect access to
+    PROCEDURE X" metni var. Erisim turu (protect, INSERT, DELETE, ALTER...) ne olursa olsun ayni cumle. }
+  if Iceriyor(Hata.Message, 'no permission for') then
+    Exit(T('ERR_YETKI_YOK'));
   if (Hata is EFDDBEngineException) and KodundanCevir(EFDDBEngineException(Hata), Result) then
     Exit;
   Result := MetindenCevir(Hata.Message);
