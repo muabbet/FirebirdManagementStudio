@@ -109,7 +109,7 @@ Standart **TDBGrid** kullanılacak, aşağıdaki altı özellik kendi kodumuzla 
 
 ## 8. Ekran Düzeni (SSMS'ten esinlenmiş, sadeleştirilmiş)
 
-- **Sol panel:** Kayıtlı bağlantılar (klasörlere konabilir, aynı anda birden fazlası açık olabilir). Bağlı bir bağlantının altında dört dal: Tablolar, View'lar, Prosedürler, Generator'lar.
+- **Sol panel:** Kayıtlı bağlantılar (klasörlere konabilir, aynı anda birden fazlası açık olabilir). Bağlı bir bağlantının altında beş dal: Tablolar, View'lar, Prosedürler, Trigger'lar, Generator'lar.
 - **Sağ üst:** Sekmeli çalışma alanı. Her açılan şey (sorgu, tablo verisi, tablo yapısı) kendi sekmesinde açılır.
 - **Sağ alt:** Sonuç alanı. Sorgu sonucu veya hata mesajı burada görünür.
 - **Üstte (karar 2026-10-18):** Kendi çizdiğimiz, üçüncü parti bileşensiz **sekmeli şerit (ribbon)**: üstte sekmeler (Bağlantı, Sorgu, Yönetim), tıklanan sekmenin düğmeleri görünür; büyük ikon üstte, yazı altta. Açılır menü ve iç içe menü yok, bir iş için tek düğme. Yeni özellik düğmesi uygun sekmeye konur. Kod: `uSerit.pas`, ayrıntı: `GOREV_ASAMA3R.md`.
@@ -186,7 +186,7 @@ Bu bir "boş zamanda yavaş yavaş" projesidir, acele yoktur. **Her aşama bitin
 - [x] Veri dışa aktarma (yalnızca CSV; Excel'de açılır, `.xlsx` yazılmaz)
 - [x] Yedek/geri yükleme (`gbak` çağırma)
 - [ ] Kullanıcı ve yetki yönetimi (3d-1 kullanıcılar tamam, sahibi denedi; 3d-2 yetki görüntüleme ve 3d-3 yetki verme/geri alma sonra)
-- [ ] Trigger ve saklı prosedür düzenleme ve kaydetme (sahibinin isteği 2026-10-27, 3d-2'den önce): 3e-1 prosedür tamam, sahibi denedi ve onayladı; 3e-2 trigger sırada
+- [x] Trigger ve saklı prosedür düzenleme ve kaydetme (sahibinin isteği 2026-10-27): 3e-1 prosedür ve 3e-2 trigger tamam, sahibi denedi ve onayladı
 
 ### Aşama 4: Çoklu Veritabanı (sahibinin özel ihtiyacı)
 - [ ] Bir sorguyu seçilen birçok veritabanında çalıştırma, sonuçları birleştirme
