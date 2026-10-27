@@ -186,7 +186,7 @@ Bu bir "boş zamanda yavaş yavaş" projesidir, acele yoktur. **Her aşama bitin
 - [x] Veri dışa aktarma (yalnızca CSV; Excel'de açılır, `.xlsx` yazılmaz)
 - [x] Yedek/geri yükleme (`gbak` çağırma)
 - [ ] Kullanıcı ve yetki yönetimi (3d-1 kullanıcılar tamam, sahibi denedi; 3d-2 yetki görüntüleme ve 3d-3 yetki verme/geri alma sonra)
-- [ ] Trigger ve saklı prosedür düzenleme ve kaydetme (sahibinin isteği 2026-10-27, 3d-2'den önce; tasarım sahibiyle konuşulacak)
+- [ ] Trigger ve saklı prosedür düzenleme ve kaydetme (sahibinin isteği 2026-10-27, 3d-2'den önce): 3e-1 prosedür tamam, sahibi denedi ve onayladı; 3e-2 trigger sırada
 
 ### Aşama 4: Çoklu Veritabanı (sahibinin özel ihtiyacı)
 - [ ] Bir sorguyu seçilen birçok veritabanında çalıştırma, sonuçları birleştirme
