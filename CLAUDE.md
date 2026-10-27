@@ -117,6 +117,8 @@ Standart **TDBGrid** kullanılacak, aşağıdaki altı özellik kendi kodumuzla 
 - **İlk sürümde ayar penceresi yok.** Makul varsayılanlar kullanılır, ayarlar sonra eklenir (dil seçimi hariç).
 - **Görsel:** Açık ve temiz VCL Style teması, nesne ağacında tutarlı küçük ikon seti (tablo, view, prosedür vb. için ayrı), cömert boşluklar ve okunaklı yazı boyutu.
 
+- **SQL karşılığı (karar 2026-10-27):** Programın veritabanında yaptığı her yönetim işleminin (kullanıcı, trigger/prosedür kaydetme vb.) çalıştırdığı SQL, işlem bitince alt mesaj alanında gösterilir (hata olunca da denenen SQL). Şifreler her zaman `***`. Amaç öğrenme: kullanıcı işin SQL'ini görür. Ortak yordam `fAna.pas` içindeki `SqlMesajiYaz`.
+
 **Her özellik için soru:** "Kullanıcı bunu tek tıkla yapabiliyor mu?"
 
 ---
@@ -183,7 +185,8 @@ Bu bir "boş zamanda yavaş yavaş" projesidir, acele yoktur. **Her aşama bitin
 - [x] Tüm veritabanının metadata çıkarımı (IBExpert "Extract Metadata" gibi: dosyaya veya panoya, hepsi birden, seçenekler: CREATE DATABASE, CONNECT, şifre)
 - [x] Veri dışa aktarma (yalnızca CSV; Excel'de açılır, `.xlsx` yazılmaz)
 - [x] Yedek/geri yükleme (`gbak` çağırma)
-- [ ] Kullanıcı ve yetki yönetimi
+- [ ] Kullanıcı ve yetki yönetimi (3d-1 kullanıcılar tamam, sahibi denedi; 3d-2 yetki görüntüleme ve 3d-3 yetki verme/geri alma sonra)
+- [ ] Trigger ve saklı prosedür düzenleme ve kaydetme (sahibinin isteği 2026-10-27, 3d-2'den önce; tasarım sahibiyle konuşulacak)
 
 ### Aşama 4: Çoklu Veritabanı (sahibinin özel ihtiyacı)
 - [ ] Bir sorguyu seçilen birçok veritabanında çalıştırma, sonuçları birleştirme
