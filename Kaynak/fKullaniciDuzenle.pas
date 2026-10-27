@@ -43,6 +43,7 @@ type
     FBag: TAcikBaglanti;
     FIslem: TKullaniciIslemi;
     FKullanici: string;
+    FSqlYaz: TSqlGoster;
     procedure Hazirla(Bag: TAcikBaglanti; Islem: TKullaniciIslemi; const Kullanici, Isim, Soyad: string);
     procedure YuksekligiAyarla;
     procedure HataGoster(const Anlasilir, Ayrinti: string);
@@ -52,19 +53,20 @@ type
 { Islem kiEkle: yeni kullanici (Kullanici yok sayilir). kiSifre: Kullanici'nin sifresi. kiAdSoyad: Kullanici'nin
   adi/soyadi (Isim ve Soyad mevcut degerlerdir). Islem yapildiysa True doner; YapilanAd o kullanicinin adi. }
 function KullaniciPenceresiniGoster(Bag: TAcikBaglanti; Islem: TKullaniciIslemi;
-  const Kullanici, Isim, Soyad: string; out YapilanAd: string): Boolean;
+  const Kullanici, Isim, Soyad: string; out YapilanAd: string; SqlYaz: TSqlGoster): Boolean;
 
 implementation
 
 {$R *.dfm}
 
 function KullaniciPenceresiniGoster(Bag: TAcikBaglanti; Islem: TKullaniciIslemi;
-  const Kullanici, Isim, Soyad: string; out YapilanAd: string): Boolean;
+  const Kullanici, Isim, Soyad: string; out YapilanAd: string; SqlYaz: TSqlGoster): Boolean;
 var
   Pencere: TfrmKullaniciDuzenle;
 begin
   Pencere := TfrmKullaniciDuzenle.Create(Application);
   try
+    Pencere.FSqlYaz := SqlYaz;
     Pencere.Hazirla(Bag, Islem, Kullanici, Isim, Soyad);
     Result := Pencere.ShowModal = mrOk;
     YapilanAd := Pencere.FKullanici;
@@ -208,6 +210,9 @@ begin
     on E: Exception do
     begin
       HataGoster(HataMetniniCevir(E), E.Message);
+      { Pencere acik kalir; denenen SQL hata cumlesinin altinda mesaj alanina yazilir. }
+      if Assigned(FSqlYaz) then
+        FSqlYaz(SonKomutlar);
       Exit;
     end;
   end;

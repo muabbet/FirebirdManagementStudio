@@ -315,5 +315,6 @@
   "ERR_KULLANICI_YONETIM_YETKI": "Kullanıcı yönetmek için SYSDBA ya da yönetici olmalısınız.",
   "ERR_KULLANICI_VAR_GENEL": "Bu adda bir kullanıcı zaten var.",
   "ERR_SIFRE_ASCII": "Şifrede yalnızca ASCII (İngilizce) harfler, rakamlar ve işaretler kullanılabilir (Türkçe harf olmaz).",
-  "ERR_ISIM_ASCII_ESKI": "Firebird 2.5'te ad ve soyadda yalnızca ASCII (İngilizce) harfler kullanılabilir (Türkçe harf olmaz)."
+  "ERR_ISIM_ASCII_ESKI": "Firebird 2.5'te ad ve soyadda yalnızca ASCII (İngilizce) harfler kullanılabilir (Türkçe harf olmaz).",
+  "SQL_ETIKET": "SQL:"
 }

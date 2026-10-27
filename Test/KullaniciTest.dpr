@@ -89,6 +89,24 @@ begin
   Result := Result + '  => cevirisi: ' + TekSatir(HataMetniniCevir(E));
 end;
 
+{ Son islemin SQL listesinde (mesaj alaninda gorunecek metin) hicbir sifre parcasi duz gecmemeli; Yildiz True ise *** bulunmali. }
+procedure SqlSifreYok(const Ad: string; const Parcalar: array of string; Yildiz: Boolean);
+var
+  Metin: string;
+  I: Integer;
+  Temiz: Boolean;
+begin
+  Metin := string.Join(' | ', SonKomutlar);
+  Temiz := (Metin <> '') or not Yildiz;
+  for I := Low(Parcalar) to High(Parcalar) do
+    if Pos(Parcalar[I], Metin) > 0 then
+      Temiz := False;
+  if Yildiz and (Pos('***', Metin) = 0) then
+    Temiz := False;
+  Kontrol(Ad, Temiz);
+  Not_('SQL: ' + TekSatir(Metin));
+end;
+
 { Islem EKullaniciKurali ile BeklenenMesaj'i vererek reddedilmeli. }
 procedure KuralReddi(const Ad: string; Islem: TProc; const BeklenenMesaj: string);
 var
@@ -305,6 +323,9 @@ begin
   Kontrol('EkleKomutu(Gizle): sifre gorunmez, *** var',
     (Pos('Ab', EkleKomutu('X', SIFRE_OZEL, '', '', True)) = 0) and (Pos('''***''', EkleKomutu('X', SIFRE_OZEL, '', '', True)) > 0));
   Kontrol('EkleKomutu: ad ve soyad kacirilir', Pos('FIRSTNAME ''O''''Brien''', EkleKomutu('X', 'p', 'O''Brien', '', False)) > 0);
+  Kontrol('EkleKomutu(Gizle): ozel karakterli sifrenin hicbir parcasi gecmez',
+    (Pos('c:d', EkleKomutu('X', SIFRE_OZEL, '', '', True)) = 0) and (Pos('e!f', EkleKomutu('X', SIFRE_OZEL, '', '', True)) = 0) and
+    (Pos('g{h}', EkleKomutu('X', SIFRE_OZEL, '', '', True)) = 0));
   Kontrol('SifreKomutu(Gizle): sifre gorunmez', Pos(SIFRE_1, SifreKomutu(Bag, 'BASKA', SIFRE_1, True)) = 0);
   Kontrol('SifreKomutu: baska kullanici ALTER USER', StartsText('ALTER USER BASKA PASSWORD ', SifreKomutu(Bag, 'BASKA', 'x', False)));
   if KullaniciYetenekleri(Bag).KendiSifreKomutu = skAlterCurrentUser then
@@ -429,6 +450,7 @@ begin
   KuralReddi('Ad/soyad reddedilir', procedure begin AdSoyadDegistir(Bag, 'FBY_X', 'a', 'b'); end, T('ERR_KULLANICI_GOMULU'));
   KuralReddi('Yonetici reddedilir', procedure begin YoneticiAyarla(Bag, 'FBY_X', True); end, T('ERR_KULLANICI_GOMULU'));
   KuralReddi('Aktif/pasif reddedilir', procedure begin AktifAyarla(Bag, 'FBY_X', False); end, T('ERR_KULLANICI_GOMULU'));
+  Kontrol('Reddedilen islemler hicbir komut calistirmadi (SQL listesi bos)', Length(SonKomutlar) = 0);
 end;
 
 { ---------- C) Sunucu: okuma ---------- }
@@ -537,6 +559,7 @@ begin
   // Ozel karakterli sifre (tirnak, iki nokta, &, !, bosluk, suslu parantezler, ?)
   try
     SifreDegistir(Bag, TEST_KULLANICI, SIFRE_OZEL, SIFRE_OZEL);
+    SqlSifreYok('Sifre: mesaj alanindaki SQL sifreyi gostermez (ozel karakterli)', [SIFRE_OZEL, 'c:d', 'e!f', 'g{h}'], True);
     Kontrol('Ozel karakterli sifre (: & ! { } ? '' bosluk): ayarlandi ve baglanilir', BaglanirMi(TEST_KULLANICI, SIFRE_OZEL));
   except
     on E: Exception do
@@ -551,6 +574,7 @@ begin
   { Ozel karakterli ekleme }
   try
     KullaniciEkle(Bag, TEST_KULLANICI_B, SIFRE_OZEL, SIFRE_OZEL, 'O''Brien', 'a:b&c!d', False);
+    SqlSifreYok('Ekle: mesaj alanindaki SQL sifreyi gostermez (ozel karakterli)', [SIFRE_OZEL, 'c:d', 'e!f', 'g{h}'], True);
     Kontrol('Ekle: ozel karakterli sifre ve ad/soyad ile eklendi ve baglanilir', BaglanirMi(TEST_KULLANICI_B, SIFRE_OZEL));
     Kontrol('Ekle: ozel karakterli ad/soyad listede aynen',
       ListedeBul(Bag, TEST_KULLANICI_B, K) and (K.Isim = 'O''Brien') and (K.Soyad = 'a:b&c!d'));
@@ -587,6 +611,8 @@ begin
       SunucuReddi('Yonetici olmayan kullanici baskasinin sifresini degistiremez (SYSDBA)',
         procedure begin SifreDegistir(BagKendi, 'SYSDBA', 'x1234567', 'x1234567'); end,
         T('ERR_KULLANICI_YOK'));
+      { HATA olunca da denenen SQL gosterilir, sifre yine *** }
+      SqlSifreYok('Hata olunca denenen SQL listede ve sifresiz (***)', ['x1234567'], True);
       SunucuReddi('Yonetici olmayan kullanici baska kullaniciyi silemez (' + TEST_KULLANICI_B + ')',
         procedure begin KullaniciSil(BagKendi, TEST_KULLANICI_B); end, T('ERR_KULLANICI_YONETIM_YETKI'));
       Kontrol('Yetkisiz silme ' + TEST_KULLANICI_B + ' kullanicisini silmedi', ListedeVarMi(Bag, TEST_KULLANICI_B));

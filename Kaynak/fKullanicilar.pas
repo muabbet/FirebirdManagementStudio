@@ -43,10 +43,14 @@ type
     function SeciliKullanici(out Kullanici: TKullaniciBilgisi): Boolean;
     procedure IslemHatasi(Hata: Exception);
     procedure Bilgi(const Metin: string);
+    { Son islemin SQL'ini ana pencerenin mesaj alanina yazar (SqlYaz atanmissa). }
+    procedure SqlGoster;
   public
     BaglantiAd: string;
     { Islem ozetleri buraya (ana pencerenin sonuc alani) yazilir; ana pencere atar. }
     AnaSonuc: TStrings;
+    { Calistirilan SQL'i mesaj alaninda gostermek icin ana pencere atar. }
+    SqlYaz: TSqlGoster;
     procedure Yukle(Bag: TAcikBaglanti);
     { Listeyi sunucudan yeniden okur; Sec doluysa o kullanicinin satirina gider. }
     procedure Yenile(const Sec: string = '');
@@ -97,6 +101,12 @@ procedure TKullanicilar.Bilgi(const Metin: string);
 begin
   if AnaSonuc <> nil then
     AnaSonuc.Add(Metin);
+end;
+
+procedure TKullanicilar.SqlGoster;
+begin
+  if Assigned(SqlYaz) then
+    SqlYaz(SonKomutlar);
 end;
 
 { Kural hatasi kendi cumlesiyle; sunucu hatasi anlasilir cumle + Ayrinti (sonuc alanina) ile gosterilir. }
@@ -222,9 +232,10 @@ var
   Ad: string;
 begin
   Bag := Baglanti;
-  if (Bag <> nil) and KullaniciPenceresiniGoster(Bag, kiEkle, '', '', '', Ad) then
+  if (Bag <> nil) and KullaniciPenceresiniGoster(Bag, kiEkle, '', '', '', Ad, SqlYaz) then
   begin
     Bilgi(TF('KUL_MSG_EKLENDI', [Ad]));
+    SqlGoster;
     Yenile(Ad);
   end;
 end;
@@ -238,9 +249,10 @@ begin
   Ad := SeciliAd;
   if (Bag = nil) or (Ad = '') then
     Exit;
-  if not KullaniciPenceresiniGoster(Bag, kiSifre, Ad, '', '', Yapilan) then
+  if not KullaniciPenceresiniGoster(Bag, kiSifre, Ad, '', '', Yapilan, SqlYaz) then
     Exit;
   Bilgi(TF('KUL_MSG_SIFRE', [Ad]));
+  SqlGoster;
   { Baglantinin kendi kullanicisinin sifresi degistiyse, kayitli (DPAPI) sifre de eskimis olur. Acik baglanti etkilenmez. }
   if KendiKullanicisiMi(Bag, Ad) and KayitliSifreSaklaniyorMu(Bag) and OnayIste(T('ONAY_KAYITLI_SIFRE')) then
   begin
@@ -263,9 +275,10 @@ begin
   Bag := Baglanti;
   if (Bag = nil) or not SeciliKullanici(Kullanici) then
     Exit;
-  if KullaniciPenceresiniGoster(Bag, kiAdSoyad, Kullanici.Ad, Kullanici.Isim, Kullanici.Soyad, Ad) then
+  if KullaniciPenceresiniGoster(Bag, kiAdSoyad, Kullanici.Ad, Kullanici.Isim, Kullanici.Soyad, Ad, SqlYaz) then
   begin
     Bilgi(TF('KUL_MSG_ADSOYAD', [Ad]));
+    SqlGoster;
     Yenile(Ad);
   end;
 end;
@@ -295,9 +308,11 @@ begin
     on E: Exception do
     begin
       IslemHatasi(E);
+      SqlGoster;
       Exit;
     end;
   end;
+  SqlGoster;
   Yenile(Kullanici.Ad);
 end;
 
@@ -326,9 +341,11 @@ begin
     on E: Exception do
     begin
       IslemHatasi(E);
+      SqlGoster;
       Exit;
     end;
   end;
+  SqlGoster;
   Yenile(Kullanici.Ad);
 end;
 
@@ -354,10 +371,12 @@ begin
     on E: Exception do
     begin
       IslemHatasi(E);
+      SqlGoster;
       Exit;
     end;
   end;
   Bilgi(TF('KUL_MSG_SILINDI', [Ad]));
+  SqlGoster;
   Yenile;
 end;
 

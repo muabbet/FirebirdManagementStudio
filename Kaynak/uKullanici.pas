@@ -49,6 +49,13 @@ function SqlMetni(const Metin: string): string;
 { Komutu calistirmak icin hazirlanmis sorgu: ':ad', '&makro', '!makro' ve suslu parantez kacislari yorumlanmaz. Sahibi cagiran. }
 function KomutHazirla(Bag: TAcikBaglanti; const Sql: string): TFDQuery;
 
+{ Son islemde calistirilan (veya denenen) SQL komutlari, sifre ***; her islem basinda temizlenir. Hata olsa da dolu kalir. }
+function SonKomutlar: TArray<string>;
+
+{ Ana pencerenin SQL'i mesaj alaninda gostermesi icin: sekmeler ve pencereler bunu cagirir, fAna gerceklestirir. }
+type
+  TSqlGoster = procedure(const Komutlar: TArray<string>) of object;
+
 { Yazma islemleri. Hata verirse istisna firlatir; sifre hata metninde *** olur. }
 procedure KullaniciEkle(Bag: TAcikBaglanti; const Ad, Sifre, SifreTekrar, Isim, Soyad: string; Yonetici: Boolean);
 procedure KullaniciSil(Bag: TAcikBaglanti; const Ad: string);
@@ -194,14 +201,24 @@ begin
   end;
 end;
 
-{ Komutu calistirir. Hata metninde sifre geciyorsa *** ile degistirilir (hata sinifi ve kodu korunur). }
-procedure Calistir(Bag: TAcikBaglanti; const Sql, Sifre: string);
+var
+  GSonKomutlar: TStringList;
+
+function SonKomutlar: TArray<string>;
+begin
+  Result := GSonKomutlar.ToStringArray;
+end;
+
+{ Komutu calistirir. Gorunen: ekranda gosterilecek hali (sifre ***). Hata metninde sifre geciyorsa *** ile degistirilir (hata sinifi ve kodu korunur). }
+procedure Calistir(Bag: TAcikBaglanti; const Sql, Gorunen, Sifre: string);
 var
   Komut: TFDQuery;
 begin
   Komut := KomutHazirla(Bag, Sql);
   try
     try
+      { Denenen komut (sifresiz hali) hata olsa da gosterilebilsin diye calistirmadan once kaydedilir. }
+      GSonKomutlar.Add(Gorunen);
       Komut.ExecSQL;
     except
       on E: Exception do
@@ -240,6 +257,7 @@ procedure KullaniciEkle(Bag: TAcikBaglanti; const Ad, Sifre, SifreTekrar, Isim, 
 var
   Kullanici: string;
 begin
+  GSonKomutlar.Clear;
   YonetimVarMi(Bag);
   Kullanici := KullaniciAdiniDogrula(Ad);
   SifreyiDogrula(Sifre, SifreTekrar);
@@ -248,11 +266,12 @@ begin
     raise EKullaniciKurali.Create(T('ERR_KULLANICI_OZELLIK_YOK'));
   if KullaniciVarMi(Bag, Kullanici) then
     raise EKullaniciKurali.Create(TF('ERR_KULLANICI_VAR', [Kullanici]));
-  Calistir(Bag, EkleKomutu(Kullanici, Sifre, Trim(Isim), Trim(Soyad), False), Sifre);
+  Calistir(Bag, EkleKomutu(Kullanici, Sifre, Trim(Isim), Trim(Soyad), False),
+    EkleKomutu(Kullanici, Sifre, Trim(Isim), Trim(Soyad), True), Sifre);
   { Yonetici yetkisi ayri komutla verilir (olcumde dogrulanan yol); basarisiz olursa kullanici yine de eklenmistir. }
   if Yonetici then
     try
-      Calistir(Bag, 'ALTER USER ' + Kullanici + ' GRANT ADMIN ROLE', '');
+      Calistir(Bag, 'ALTER USER ' + Kullanici + ' GRANT ADMIN ROLE', 'ALTER USER ' + Kullanici + ' GRANT ADMIN ROLE', '');
     except
       on E: Exception do
         raise EKullaniciYarim.Create(TF('ERR_KULLANICI_YONETICI_OLMADI', [Kullanici, HataMetniniCevir(E)]) +
@@ -264,23 +283,25 @@ procedure KullaniciSil(Bag: TAcikBaglanti; const Ad: string);
 var
   Kullanici: string;
 begin
+  GSonKomutlar.Clear;
   YonetimVarMi(Bag);
   Kullanici := KullaniciAdiniDogrula(Ad);
   if SysdbaMi(Kullanici) then
     raise EKullaniciKurali.Create(T('ERR_KULLANICI_SYSDBA'));
   if KendiKullanicisiMi(Bag, Kullanici) then
     raise EKullaniciKurali.Create(T('ERR_KULLANICI_KENDINI'));
-  Calistir(Bag, 'DROP USER ' + Kullanici, '');
+  Calistir(Bag, 'DROP USER ' + Kullanici, 'DROP USER ' + Kullanici, '');
 end;
 
 procedure SifreDegistir(Bag: TAcikBaglanti; const Ad, Sifre, SifreTekrar: string);
 var
   Kullanici: string;
 begin
+  GSonKomutlar.Clear;
   YonetimVarMi(Bag);
   Kullanici := KullaniciAdiniDogrula(Ad);
   SifreyiDogrula(Sifre, SifreTekrar);
-  Calistir(Bag, SifreKomutu(Bag, Kullanici, Sifre, False), Sifre);
+  Calistir(Bag, SifreKomutu(Bag, Kullanici, Sifre, False), SifreKomutu(Bag, Kullanici, Sifre, True), Sifre);
   { Acik baglanti etkilenmez; ama bu baglantinin bellekteki sifresi (yedek penceresi vb. icin) guncellenir. }
   if KendiKullanicisiMi(Bag, Kullanici) then
     Bag.Tanim.Sifre := Sifre;
@@ -288,21 +309,23 @@ end;
 
 procedure AdSoyadDegistir(Bag: TAcikBaglanti; const Ad, Isim, Soyad: string);
 var
-  Kullanici: string;
+  Kullanici, Komut: string;
 begin
+  GSonKomutlar.Clear;
   YonetimVarMi(Bag);
   Kullanici := KullaniciAdiniDogrula(Ad);
   if SysdbaMi(Kullanici) then
     raise EKullaniciKurali.Create(T('ERR_KULLANICI_SYSDBA'));
   IsimiDogrula(Bag, Trim(Isim), Trim(Soyad));
-  Calistir(Bag, 'ALTER USER ' + Kullanici + ' FIRSTNAME ' + SqlMetni(Trim(Isim)) +
-    ' LASTNAME ' + SqlMetni(Trim(Soyad)), '');
+  Komut := 'ALTER USER ' + Kullanici + ' FIRSTNAME ' + SqlMetni(Trim(Isim)) + ' LASTNAME ' + SqlMetni(Trim(Soyad));
+  Calistir(Bag, Komut, Komut, '');
 end;
 
 procedure YoneticiAyarla(Bag: TAcikBaglanti; const Ad: string; Yonetici: Boolean);
 var
   Kullanici: string;
 begin
+  GSonKomutlar.Clear;
   YonetimVarMi(Bag);
   Kullanici := KullaniciAdiniDogrula(Ad);
   if SysdbaMi(Kullanici) then
@@ -310,15 +333,16 @@ begin
   if not KullaniciYetenekleri(Bag).YoneticiAyarlanir then
     raise EKullaniciKurali.Create(T('ERR_KULLANICI_OZELLIK_YOK'));
   if Yonetici then
-    Calistir(Bag, 'ALTER USER ' + Kullanici + ' GRANT ADMIN ROLE', '')
+    Calistir(Bag, 'ALTER USER ' + Kullanici + ' GRANT ADMIN ROLE', 'ALTER USER ' + Kullanici + ' GRANT ADMIN ROLE', '')
   else
-    Calistir(Bag, 'ALTER USER ' + Kullanici + ' REVOKE ADMIN ROLE', '');
+    Calistir(Bag, 'ALTER USER ' + Kullanici + ' REVOKE ADMIN ROLE', 'ALTER USER ' + Kullanici + ' REVOKE ADMIN ROLE', '');
 end;
 
 procedure AktifAyarla(Bag: TAcikBaglanti; const Ad: string; Aktif: Boolean);
 var
   Kullanici: string;
 begin
+  GSonKomutlar.Clear;
   YonetimVarMi(Bag);
   Kullanici := KullaniciAdiniDogrula(Ad);
   if SysdbaMi(Kullanici) then
@@ -328,9 +352,9 @@ begin
   if (not Aktif) and KendiKullanicisiMi(Bag, Kullanici) then
     raise EKullaniciKurali.Create(T('ERR_KULLANICI_KENDINI'));
   if Aktif then
-    Calistir(Bag, 'ALTER USER ' + Kullanici + ' ACTIVE', '')
+    Calistir(Bag, 'ALTER USER ' + Kullanici + ' ACTIVE', 'ALTER USER ' + Kullanici + ' ACTIVE', '')
   else
-    Calistir(Bag, 'ALTER USER ' + Kullanici + ' INACTIVE', '');
+    Calistir(Bag, 'ALTER USER ' + Kullanici + ' INACTIVE', 'ALTER USER ' + Kullanici + ' INACTIVE', '');
 end;
 
 { ---------- Kayitli baglanti sifresi ---------- }
@@ -412,5 +436,11 @@ begin
     Tablo.EnableControls;
   end;
 end;
+
+initialization
+  GSonKomutlar := TStringList.Create;
+
+finalization
+  GSonKomutlar.Free;
 
 end.

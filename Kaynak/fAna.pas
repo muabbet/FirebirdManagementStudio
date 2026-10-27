@@ -115,6 +115,7 @@ type
     procedure DilListesiniDoldur;
     procedure DurumuGuncelle;
     procedure MesajYaz(const Metin: string);
+    procedure SqlMesajiYaz(const Komutlar: TArray<string>);
     procedure HataYaz(const Mesaj: string; const HamMesaj: string);
     procedure KayitHatasiGoster(Hata: Exception);
     { agac }
@@ -339,6 +340,15 @@ end;
 procedure TfrmAna.MesajYaz(const Metin: string);
 begin
   memSonuc.Lines.Add(Metin);
+end;
+
+{ Yonetim islemlerinin calistirdigi SQL'i mesaj alanina yazar (sifre zaten *** gelir). Sekmeler bunu cagirir. }
+procedure TfrmAna.SqlMesajiYaz(const Komutlar: TArray<string>);
+var
+  Komut: string;
+begin
+  for Komut in Komutlar do
+    MesajYaz(T('SQL_ETIKET') + ' ' + Komut);
 end;
 
 procedure TfrmAna.HataYaz(const Mesaj: string; const HamMesaj: string);
@@ -840,6 +850,7 @@ begin
   Sekme.Parent := Sayfa;
   Sekme.Align := alClient;
   Sekme.AnaSonuc := memSonuc.Lines;
+  Sekme.SqlYaz := SqlMesajiYaz;
   try
     Sekme.Yukle(Bag);
   except

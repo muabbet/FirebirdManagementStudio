@@ -315,5 +315,6 @@
   "ERR_KULLANICI_YONETIM_YETKI": "To manage users you must be SYSDBA or an administrator.",
   "ERR_KULLANICI_VAR_GENEL": "A user with this name already exists.",
   "ERR_SIFRE_ASCII": "The password may only contain ASCII (English) letters, digits and signs (no accented letters).",
-  "ERR_ISIM_ASCII_ESKI": "In Firebird 2.5 the first and last name may only contain ASCII (English) letters (no accented letters)."
+  "ERR_ISIM_ASCII_ESKI": "In Firebird 2.5 the first and last name may only contain ASCII (English) letters (no accented letters).",
+  "SQL_ETIKET": "SQL:"
 }
