@@ -39,6 +39,10 @@ function ScriptKodlamasiOlustur(Bag: TAcikBaglanti): TEncoding;
   EMetadataHatasi (uMetadata) verir; mesaji kullaniciya gosterilir. }
 function ScriptUret(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string): string;
 
+{ Prosedurun duzenlenebilir tanimi: ScriptUret ile ayni metin, yalniz baslik CREATE OR ALTER PROCEDURE
+  (Firebird 2.5-5.0). Ayni metin hem duzenleme sekmesinde acilir hem de eski tanim yedegi olarak yazilir. }
+function ProsedurDuzenleScripti(Bag: TAcikBaglanti; const Ad: string): string;
+
 { Tum veritabaninin yapisini (veri yok) Yazici'ya yazar; bos veritabaninda hatasiz calisacak sirada.
   Atlanan/sorunlu seyler Uyarilar'a (kullaniciya gosterilecek cumleler) yazilir. Iptal edilirse False
   doner; o ana kadar yazilan kisim Yazici'da kalir (yarimdir). }
@@ -423,7 +427,7 @@ begin
     Result := Result + sLineBreak + 'RETURNS (' + sLineBreak + ParametreListesi(Bilgi.Ciktilar) + ')';
 end;
 
-function ProsedurScripti(Bag: TAcikBaglanti; const Ad: string): string;
+function ProsedurScripti(Bag: TAcikBaglanti; const Ad, Fiil: string): string;
 var
   Bilgi: TProsedurBilgisi;
   Komutlar: TStringList;
@@ -431,7 +435,7 @@ begin
   Bilgi := ProsedurBilgisiOku(Bag, Ad);
   Komutlar := TStringList.Create;
   try
-    Komutlar.Add(ProsedurBasligi('CREATE', Ad, Bilgi) + sLineBreak + 'AS' + sLineBreak + Trim(Bilgi.Kaynak));
+    Komutlar.Add(ProsedurBasligi(Fiil, Ad, Bilgi) + sLineBreak + 'AS' + sLineBreak + Trim(Bilgi.Kaynak));
     Result := TerimBlogu(Komutlar) + sLineBreak;
   finally
     Komutlar.Free;
@@ -463,10 +467,20 @@ begin
     case Tur of
       ntTablo: Result := TabloScripti(Bag, Ad);
       ntView: Result := ViewScripti(Bag, Ad);
-      ntProsedur: Result := ProsedurScripti(Bag, Ad);
+      ntProsedur: Result := ProsedurScripti(Bag, Ad, 'CREATE');
     else
       Result := GeneratorScripti(Bag, Ad);
     end;
+  finally
+    AnahtarKelimeleriBirak;
+  end;
+end;
+
+function ProsedurDuzenleScripti(Bag: TAcikBaglanti; const Ad: string): string;
+begin
+  AnahtarKelimeleriKur(Bag.Surum);
+  try
+    Result := ProsedurScripti(Bag, Ad, 'CREATE OR ALTER');
   finally
     AnahtarKelimeleriBirak;
   end;

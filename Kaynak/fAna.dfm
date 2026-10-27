@@ -149,6 +149,9 @@ object frmAna: TfrmAna
     object miScriptUret: TMenuItem
       OnClick = miScriptUretClick
     end
+    object miProsedurDuzenle: TMenuItem
+      OnClick = miProsedurDuzenleClick
+    end
     object miBaglan: TMenuItem
       OnClick = miBaglanClick
     end

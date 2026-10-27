@@ -768,6 +768,14 @@ begin
     Result := T('ERR_VERITABANI')
   else if Iceriyor(HamMesaj, 'token unknown') or Iceriyor(HamMesaj, 'sql error code = -104') then
     Result := T('ERR_SQL_SOZDIZIMI')
+  { Olcum (2.5.9): prosedur govdesinde olmayan degisken/kolon "Column unknown" (-206) verir, FireDAC bunu
+    ekObjNotExists saymaz. }
+  else if Iceriyor(HamMesaj, 'column unknown') or Iceriyor(HamMesaj, 'table unknown') or
+    Iceriyor(HamMesaj, 'procedure unknown') then
+    Result := T('ERR_SQL_NESNE_YOK')
+  { Olcum (2.5.9, DROP PROCEDURE): "cannot delete ... there are N dependencies". }
+  else if Iceriyor(HamMesaj, 'dependencies') then
+    Result := T('ERR_NESNE_BAGIMLI')
   else
     Result := T('ERR_GENEL');
 end;
@@ -811,6 +819,10 @@ begin
   if Iceriyor(Hata.Message, 'violation of PRIMARY or UNIQUE KEY') and
     (Iceriyor(Hata.Message, 'PLG$SRP') or Iceriyor(Hata.Message, 'RDB$USERS')) then
     Exit(KullaniciVarCumlesi(Hata.Message));
+  { Olcum (2.5.9, yetkisiz ALTER PROCEDURE): kod 335544352 gelmiyor, yalniz "no permission for protect access to
+    PROCEDURE X" metni var. Erisim turu (protect, INSERT, DELETE, ALTER...) ne olursa olsun ayni cumle. }
+  if Iceriyor(Hata.Message, 'no permission for') then
+    Exit(T('ERR_YETKI_YOK'));
   if (Hata is EFDDBEngineException) and KodundanCevir(EFDDBEngineException(Hata), Result) then
     Exit;
   Result := MetindenCevir(Hata.Message);
