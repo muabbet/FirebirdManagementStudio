@@ -93,6 +93,12 @@
         <DCCReference Include="uAktar.pas"/>
         <DCCReference Include="uYedek.pas"/>
         <DCCReference Include="uKullanici.pas"/>
+        <DCCReference Include="uProsedur.pas"/>
+        <DCCReference Include="fProsedurSekme.pas">
+            <Form>ProsedurSekme</Form>
+            <FormType>dfm</FormType>
+            <DesignClass>TFrame</DesignClass>
+        </DCCReference>
         <DCCReference Include="fKullanicilar.pas">
             <Form>Kullanicilar</Form>
             <FormType>dfm</FormType>

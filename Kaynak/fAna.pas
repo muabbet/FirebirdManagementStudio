@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -45,6 +45,7 @@ type
     pmNesne: TPopupMenu;
     miAc: TMenuItem;
     miScriptUret: TMenuItem;
+    miProsedurDuzenle: TMenuItem;
     miBaglan: TMenuItem;
     miKes: TMenuItem;
     miYenile: TMenuItem;
@@ -82,6 +83,7 @@ type
     procedure pmNesnePopup(Sender: TObject);
     procedure miAcClick(Sender: TObject);
     procedure miScriptUretClick(Sender: TObject);
+    procedure miProsedurDuzenleClick(Sender: TObject);
     procedure miBaglanClick(Sender: TObject);
     procedure miKesClick(Sender: TObject);
     procedure miYenileClick(Sender: TObject);
@@ -152,6 +154,9 @@ type
     function AktifSorguSekmesi: TSorguSekme;
     procedure YeniSorgu(const Metin: string = '');
     procedure ScriptAc(Dugme: TTreeNode);
+    function ProsedurSekmeAl(Sayfa: TTabSheet): TProsedurSekme;
+    function AktifProsedurSekmesi: TProsedurSekme;
+    procedure ProsedurDuzenleAc(Dugme: TTreeNode);
     procedure MetadataCikarAc(Dugme: TTreeNode);
     procedure YedekPenceresiAc(Dugme: TTreeNode);
     procedure SorguyuCalistir;
@@ -239,12 +244,14 @@ var
   Sekme: TTabloSekme;
   SorguSekme: TSorguSekme;
   KullaniciSekme: TKullanicilar;
+  ProsedurSekme: TProsedurSekme;
 begin
   Caption := T('APP_BASLIK');
   FSerit.YazilariYenile;
   pnlUst.Height := FSerit.Yukseklik;
   miAc.Caption := T('MENU_AC');
   miScriptUret.Caption := T('MENU_SCRIPT_URET');
+  miProsedurDuzenle.Caption := T('MENU_PROSEDUR_DUZENLE');
   miBaglan.Caption := T('BTN_BAGLAN');
   miKes.Caption := T('BTN_KES');
   miYenile.Caption := T('MENU_YENILE');
@@ -274,6 +281,12 @@ begin
     begin
       pcCalisma.Pages[i].Caption := SorguSekme.Baslik;
       SorguSekme.YazilariYenile;
+    end;
+    ProsedurSekme := ProsedurSekmeAl(pcCalisma.Pages[i]);
+    if ProsedurSekme <> nil then
+    begin
+      pcCalisma.Pages[i].Caption := ProsedurSekme.Baslik;
+      ProsedurSekme.YazilariYenile;
     end;
   end;
   DurumuGuncelle;
@@ -813,6 +826,20 @@ begin
     Result := TSorguSekme(Sayfa.Controls[0]);
 end;
 
+function TfrmAna.ProsedurSekmeAl(Sayfa: TTabSheet): TProsedurSekme;
+begin
+  Result := nil;
+  if (Sayfa.ControlCount > 0) and (Sayfa.Controls[0] is TProsedurSekme) then
+    Result := TProsedurSekme(Sayfa.Controls[0]);
+end;
+
+function TfrmAna.AktifProsedurSekmesi: TProsedurSekme;
+begin
+  Result := nil;
+  if pcCalisma.ActivePage <> nil then
+    Result := ProsedurSekmeAl(pcCalisma.ActivePage);
+end;
+
 function TfrmAna.KullanicilarAl(Sayfa: TTabSheet): TKullanicilar;
 begin
   Result := nil;
@@ -944,6 +971,60 @@ begin
   MesajYaz(TF('MSG_SCRIPT_URETILDI', [Oge.Ad]));
 end;
 
+{ Prosedurun CREATE OR ALTER metnini duzenleme sekmesinde acar. Ayni baglantida ayni prosedur zaten aciksa
+  o sekmeye gecilir (yazilmis ama kaydedilmemis metin kaybolmasin). }
+procedure TfrmAna.ProsedurDuzenleAc(Dugme: TTreeNode);
+var
+  Oge: TAgacOgesi;
+  Bag: TAcikBaglanti;
+  Sayfa: TTabSheet;
+  Sekme: TProsedurSekme;
+  i: Integer;
+begin
+  Oge := OgeAl(Dugme);
+  Bag := FbAcikBaglanti(Oge.BaglantiAd);
+  if Bag = nil then
+    Exit;
+  for i := 0 to pcCalisma.PageCount - 1 do
+  begin
+    Sekme := ProsedurSekmeAl(pcCalisma.Pages[i]);
+    if (Sekme <> nil) and SameText(Sekme.BaglantiAd, Oge.BaglantiAd) and (Sekme.ProsedurAdi = Oge.Ad) then
+    begin
+      pcCalisma.ActivePage := pcCalisma.Pages[i];
+      Exit;
+    end;
+  end;
+  Sayfa := TTabSheet.Create(pcCalisma);
+  Sayfa.PageControl := pcCalisma;
+  Sayfa.ImageIndex := IKON_PROSEDUR;
+  Sekme := TProsedurSekme.Create(Sayfa);
+  Sekme.Parent := Sayfa;
+  Sekme.Align := alClient;
+  Sekme.AnaSonuc := memSonuc.Lines;
+  Sekme.SqlYaz := SqlMesajiYaz;
+  try
+    Sekme.Yukle(Bag, Oge.Ad);
+  except
+    on E: EMetadataHatasi do
+    begin
+      Sayfa.Free;
+      HataYaz(E.Message, '');
+      Exit;
+    end;
+    on E: Exception do
+    begin
+      Sayfa.Free;
+      HataYaz(T('ERR_DDL_ALINAMADI') + ' ' + HataMetniniCevir(E), E.Message);
+      Exit;
+    end;
+  end;
+  Sayfa.Caption := Sekme.Baslik;
+  pcCalisma.ActivePage := Sayfa;
+  Sekme.EditoreOdaklan;
+  MesajYaz(TF('MSG_PRS_ACILDI', [Oge.Ad]));
+  DurumuGuncelle;
+end;
+
 { Bagli veritabaninin tum yapisini dosyaya/panoya cikaran pencereyi acar; sonucu sonuc alanina yazar. }
 procedure TfrmAna.MetadataCikarAc(Dugme: TTreeNode);
 var
@@ -1016,6 +1097,7 @@ var
   Sekme: TTabloSekme;
   SorguSekme: TSorguSekme;
   KullaniciSekme: TKullanicilar;
+  ProsedurSekme: TProsedurSekme;
 begin
   for i := pcCalisma.PageCount - 1 downto 0 do
   begin
@@ -1031,7 +1113,13 @@ begin
       begin
         KullaniciSekme := KullanicilarAl(pcCalisma.Pages[i]);
         if (KullaniciSekme <> nil) and SameText(KullaniciSekme.BaglantiAd, BaglantiAd) then
-          pcCalisma.Pages[i].Free;
+          pcCalisma.Pages[i].Free
+        else
+        begin
+          ProsedurSekme := ProsedurSekmeAl(pcCalisma.Pages[i]);
+          if (ProsedurSekme <> nil) and SameText(ProsedurSekme.BaglantiAd, BaglantiAd) then
+            pcCalisma.Pages[i].Free;
+        end;
       end;
     end;
   end;
@@ -1146,13 +1234,22 @@ begin
     KullanicilarAc(SeciliBaglantiDugmesi);
 end;
 
-{ F5: aktif sekme bir sorgu sekmesiyse calistirir. Ctrl+L: komutun planini gosterir. }
+{ F5: aktif sekme bir sorgu sekmesiyse calistirir (prosedur sekmesinde yalniz ipucu yazar).
+  Ctrl+L: komutun planini gosterir. Ctrl+S: aktif sekme prosedur duzenleme sekmesiyse kaydeder. }
 procedure TfrmAna.FormKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
   if Key = VK_F5 then
   begin
     Key := 0;
-    SorguyuCalistir;
+    if AktifProsedurSekmesi <> nil then
+      AktifProsedurSekmesi.F5Ipucu
+    else
+      SorguyuCalistir;
+  end
+  else if (Key = Ord('S')) and (ssCtrl in Shift) and (AktifProsedurSekmesi <> nil) then
+  begin
+    Key := 0;
+    AktifProsedurSekmesi.Kaydet;
   end
   else if (Key = Ord('L')) and (ssCtrl in Shift) then
   begin
@@ -1299,6 +1396,7 @@ begin
   miYedek.Visible := (not Bos) and (Tur = atBaglanti);
   miAc.Visible := (not Bos) and (Tur = atNesne) and (OgeAl(Dugme).DalNo = DAL_TABLO);
   miScriptUret.Visible := (not Bos) and (Tur = atNesne);
+  miProsedurDuzenle.Visible := (not Bos) and (Tur = atNesne) and (OgeAl(Dugme).DalNo = DAL_PROSEDUR);
   miYenile.Visible := (not Bos) and (Tur <> atKlasor) and Acik;
   miBaglan.Enabled := not Acik;
   miKes.Enabled := Acik;
@@ -1314,6 +1412,12 @@ procedure TfrmAna.miScriptUretClick(Sender: TObject);
 begin
   if tvNesneler.Selected <> nil then
     ScriptAc(tvNesneler.Selected);
+end;
+
+procedure TfrmAna.miProsedurDuzenleClick(Sender: TObject);
+begin
+  if tvNesneler.Selected <> nil then
+    ProsedurDuzenleAc(tvNesneler.Selected);
 end;
 
 procedure TfrmAna.miBaglanClick(Sender: TObject);

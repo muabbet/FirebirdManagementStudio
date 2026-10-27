@@ -48,6 +48,10 @@ type
     destructor Destroy; override;
     { Secili yazi varsa sadece onu, yoksa editordeki tum yaziyi verir (F5 bunu calistirir). }
     function CalistirilacakMetin: string;
+    { Editordeki tum yazi (secim olsa bile). Prosedur kaydetme bunu kullanir. }
+    function TumMetin: string;
+    { Imleci verilen satirin basina gogoturur ve gorunur yapar (1 tabanli). }
+    procedure SatiraGit(Satir: Integer);
     procedure OdakVer;
     { Editorun tum yazisini degistirir (calistirmaz). }
     procedure MetinYaz(const Metin: string);
@@ -107,6 +111,24 @@ begin
     Result := FEdit.SelText
   else
     Result := FEdit.Text;
+end;
+
+function TSqlEditor.TumMetin: string;
+begin
+  Result := FEdit.Text;
+end;
+
+procedure TSqlEditor.SatiraGit(Satir: Integer);
+begin
+  if Satir > FEdit.Lines.Count then
+    Satir := FEdit.Lines.Count;
+  if Satir < 1 then
+    Exit;
+  FEdit.CaretY := Satir;
+  FEdit.CaretX := 1;
+  FEdit.EnsureCursorPosVisible;
+  if FEdit.Showing then
+    OdakVer;
 end;
 
 procedure TSqlEditor.OdakVer;

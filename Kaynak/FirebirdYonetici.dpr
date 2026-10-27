@@ -22,6 +22,8 @@ uses
   uAktar in 'uAktar.pas',
   uYedek in 'uYedek.pas',
   uKullanici in 'uKullanici.pas',
+  uProsedur in 'uProsedur.pas',
+  fProsedurSekme in 'fProsedurSekme.pas' {ProsedurSekme: TFrame},
   fKullanicilar in 'fKullanicilar.pas' {Kullanicilar: TFrame},
   fKullaniciDuzenle in 'fKullaniciDuzenle.pas' {frmKullaniciDuzenle},
   fTabloSekme in 'fTabloSekme.pas' {TabloSekme: TFrame},
