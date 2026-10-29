@@ -19,7 +19,7 @@ uses
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.Comp.Client, FireDAC.Phys.FB,
   FireDAC.ConsoleUI.Wait,
   Vcl.Forms, Vcl.Controls, Vcl.ExtCtrls,
-  uDil, uBaglanti, uMetadata, uSorgu, uDDL, uKullanici, uProsedur, uEditor, fProsedurSekme;
+  uDil, uBaglanti, uMetadata, uSorgu, uDDL, uKullanici, uProsedur, uNesneYonet, uEditor, fProsedurSekme;
 
 const
   TB = 'FBY_TEST_TB';
@@ -186,16 +186,24 @@ end;
 { ---------- B) Veritabani ---------- }
 
 procedure Temizle;
+var
+  i: Integer;
 begin
+  for i := 1 to 12 do
+    Dene(Bag, 'drop procedure FBY_TEST_PX' + Format('%.2d', [i]));
   Dene(Bag, 'drop view ' + VW2);
   Dene(Bag, 'drop view ' + VW);
   Dene(Bag, 'drop procedure ' + PR);
   Dene(Bag, 'drop trigger ' + TR);
   Dene(Bag, 'drop table ' + TB);
+  Dene(Bag, 'drop table ' + TB + '_D');
   Dene(Bag, 'drop exception ' + EX);
   Dene(Bag, 'drop exception ' + EX + '_B');
   Dene(Bag, 'drop domain ' + DM);
   Dene(Bag, 'drop domain ' + DM + '_B');
+  Dene(Bag, 'drop domain ' + DM + '_C');
+  Dene(Bag, 'drop domain ' + DM + '_X');
+  Dene(Bag, 'drop domain FBY_TEST_DM_X');
   Dene(Bag, 'drop sequence ' + GN);
   Dene(Bag, 'drop sequence ' + GN + '_B');
 end;
@@ -407,12 +415,394 @@ begin
   end;
 end;
 
+{ "Yeni" sekmesi duman testi: sablon editorde, baslik/bilgi dilden, Kaydet dugmesi bagli, olusturma olayi atanabilir. }
+procedure YeniSekmeDene(Tur: TNesneTuru; const SekmeAnahtari, BilgiAnahtari, SablonAdi: string);
+var
+  Form: TForm;
+  Okunan: string;
+  Sekme: TProsedurSekme;
+  Satirlar: TStringList;
+begin
+  Satirlar := TStringList.Create;
+  Form := TForm.CreateNew(nil);
+  try
+    Sekme := TProsedurSekme.Create(Form);
+    Sekme.Parent := Form;
+    Sekme.Align := alClient;
+    Sekme.AnaSonuc := Satirlar;
+    Sekme.Tur := Tur;
+    Sekme.YeniHazirla(Bag);
+    Kontrol(SekmeAnahtari + ': Yeni sekmesi, NesneAdi bos', Sekme.Yeni and (Sekme.NesneAdi = ''));
+    Kontrol(SekmeAnahtari + ': baslik', Sekme.Baslik = TF(SekmeAnahtari, [Bag.Tanim.Ad]));
+    Kontrol(SekmeAnahtari + ': bilgi satiri', Sekme.lblBilgi.Caption = T(BilgiAnahtari));
+    Kontrol(SekmeAnahtari + ': Kaydet dugmesi yazisi dilden ve OnClick bagli', (Sekme.btnKaydet.Caption = T('PRS_KAYDET')) and Assigned(Sekme.btnKaydet.OnClick));
+    Sekme.F5Ipucu;
+    Kontrol(SekmeAnahtari + ': F5 yalniz ipucu', (Satirlar.Count = 1) and (Satirlar[0] = T('MSG_PRS_F5_IPUCU')));
+    Sekme.BaglantiAd := 'yok_boyle_baglanti';
+    Sekme.Kaydet;
+    Kontrol(SekmeAnahtari + ': baglanti yoksa Kaydet mesaj yazar, olusturmaz', (Satirlar.Count = 2) and (Pos('yok_boyle_baglanti', Satirlar[1]) > 0));
+  finally
+    Form.Free;
+    Satirlar.Free;
+  end;
+  Kontrol(SekmeAnahtari + ': sablon adi gecerli (' + SablonAdi + ')', (YeniNesneAdiniDogrula(Tur, YeniNesneSablonu(Tur), Okunan) = '') and (Okunan = SablonAdi));
+end;
+
 procedure SekmeBolumu;
 begin
   Cikti.Add('');
   Cikti.Add('=== B9) Arayuz duman testi: duzenleme sekmeleri ===');
   ViewKur;
   SekmeDene(ntView, VW, 'VIEW_SEKME', 'VIEW_BILGI');
+  Yurut(Bag, 'create exception ' + EX + ' ''m''');
+  SekmeDene(ntIstisna, EX, 'EXC_SEKME', 'EXC_BILGI');
+  YeniSekmeDene(ntIstisna, 'EXC_YENI_SEKME', 'EXC_YENI_BILGI', 'YENI_EXCEPTION');
+  YeniSekmeDene(ntDomain, 'DOM_YENI_SEKME', 'DOM_YENI_BILGI', 'YENI_DOMAIN');
+end;
+
+{ Gercek hata kodlari ve cumleleri (ceviri tablosu bu ciktidan kuruldu); Not_ satirlari, kontrol degil. }
+procedure HataKesfiBolumu;
+begin
+  Cikti.Add('');
+  Cikti.Add('=== B0) Gercek hata kodlari (surum ' + Bag.Surum + ') ===');
+  Temizle;
+  Yurut(Bag, 'create domain ' + DM + ' as integer check (value > 0)');
+  Yurut(Bag, 'create domain ' + DM + '_B as integer');
+  Yurut(Bag, 'create exception ' + EX + ' ''m''');
+  Yurut(Bag, 'create sequence ' + GN);
+  Yurut(Bag, 'create table ' + TB + ' (ID integer, ADI ' + DM + ')');
+  Yurut(Bag, 'create view ' + VW + ' as select ID from ' + TB);
+  Yurut(Bag, 'create view ' + VW2 + ' as select ID from ' + VW);
+  Yurut(Bag, 'create procedure ' + PR + ' as declare variable I integer; begin I = gen_id(' + GN + ', 1); exception ' + EX + '; end');
+  KodDene('create exception var olan', Bag, 'create exception ' + EX + ' ''x''');
+  KodDene('create domain var olan', Bag, 'create domain ' + DM + ' as integer');
+  KodDene('create sequence var olan', Bag, 'create sequence ' + GN);
+  KodDene('create view var olan', Bag, 'create view ' + VW + ' as select ID from ' + TB);
+  KodDene('drop exception kullanilan', Bag, 'drop exception ' + EX);
+  KodDene('drop domain kullanilan (tablo kolonu)', Bag, 'drop domain ' + DM);
+  KodDene('drop sequence kullanilan (prosedur)', Bag, 'drop sequence ' + GN);
+  KodDene('drop view bagimli', Bag, 'drop view ' + VW);
+  KodDene('drop exception olmayan', Bag, 'drop exception FBY_YOK');
+  KodDene('drop domain olmayan', Bag, 'drop domain FBY_YOK');
+  KodDene('drop sequence olmayan', Bag, 'drop sequence FBY_YOK');
+  KodDene('drop view olmayan', Bag, 'drop view FBY_YOK');
+  KodDene('alter domain TO mevcut ad', Bag, 'alter domain ' + DM + ' to ' + DM + '_B');
+  KodDene('alter domain drop constraint (check yok)', Bag, 'alter domain ' + DM + '_B drop constraint');
+  KodDene('alter domain set default gecersiz', Bag, 'alter domain ' + DM + ' set default ''abc''');
+  KodDene('alter domain add check hatali', Bag, 'alter domain ' + DM + '_B add check (value > ''x'')');
+  KodDene('alter domain add check ikinci (zaten var)', Bag, 'alter domain ' + DM + ' add check (value < 100)');
+  KodDene('alter domain olmayan', Bag, 'alter domain FBY_YOK set default 1');
+  KodDene('set generator olmayan', Bag, 'set generator FBY_YOK to 5');
+  KodDene('alter sequence restart (3.0+)', Bag, 'alter sequence ' + GN + ' restart with 7');
+  KodDene('set generator (tum surumler)', Bag, 'set generator ' + GN + ' to 9');
+  KodDene('create or alter exception', Bag, 'create or alter exception ' + EX + ' ''y''');
+  KodDene('create or alter exception yeni ad', Bag, 'create or alter exception ' + EX + '_B ''y''');
+  KodDene('drop sequence DROP GENERATOR sozdizimi', Bag, 'drop generator FBY_YOK');
+  Not_('generator degeri: ' + Skaler(Bag, 'select gen_id(' + GN + ', 0) from rdb$database'));
+end;
+
+{ Yedek dosyasinin metni (kodlama: WIN1254 yazilir); yoksa ''. }
+function YedekMetni(const Dosya: string): string;
+begin
+  if FileExists(Dosya) then
+    Result := TFile.ReadAllText(Dosya, TEncoding.GetEncoding(1254))
+  else
+    Result := '';
+end;
+
+function IstisnaMesaji(const Ad: string): string;
+begin
+  Result := Skaler(Bag, 'select rdb$message from rdb$exceptions where rdb$exception_name = ''' + Ad + '''');
+end;
+
+{ ---------- 3f-3: Exception ---------- }
+
+procedure IstisnaBolumu;
+var
+  Metin, Ad, Hata: string;
+  Sonuc: TProsedurSonucu;
+begin
+  Cikti.Add('');
+  Cikti.Add('=== B4) Exception: yeni, duzenle, kaydet (surum ' + Bag.Surum + ') ===');
+  Temizle;
+  Kontrol('Yeni ad dogrula: CREATE EXCEPTION kabul, ad okunur',
+    (YeniNesneAdiniDogrula(ntIstisna, YeniNesneSablonu(ntIstisna), Ad) = '') and (Ad = 'YENI_EXCEPTION'));
+  Kontrol('Yeni ad dogrula: CREATE OR ALTER EXCEPTION reddedilir (varolan sessizce ezilmesin)',
+    YeniNesneAdiniDogrula(ntIstisna, 'CREATE OR ALTER EXCEPTION X ''m'';', Ad) = T('ERR_EXC_YENI_BASLIK_YOK'));
+  Kontrol('Yeni ad dogrula: DOMAIN basligi exception sekmesinde reddedilir',
+    YeniNesneAdiniDogrula(ntIstisna, 'CREATE DOMAIN X AS INTEGER;', Ad) <> '');
+  Kontrol('Yeni ad dogrula: domain sablonu kabul', (YeniNesneAdiniDogrula(ntDomain, YeniNesneSablonu(ntDomain), Ad) = '') and (Ad = 'YENI_DOMAIN'));
+  Kontrol('Yeni ad dogrula: tirnakli ad', (YeniNesneAdiniDogrula(ntIstisna, 'CREATE EXCEPTION "Kucuk Ad" ''m'';', Ad) = '') and (Ad = 'Kucuk Ad'));
+
+  Sonuc := YeniNesneKaydet(Bag, ntIstisna, 'CREATE EXCEPTION ' + EX + ' ''ilk mesaj'';');
+  if not Sonuc.Basarili then
+    Not_('hata: ' + Sonuc.Cumle + ' / ' + Sonuc.Ayrinti);
+  Kontrol('Yeni exception olusturuldu, sonuc adi dogru, tek komut, yedek yok',
+    Sonuc.Basarili and (Sonuc.Ad = EX) and (Length(Sonuc.Komutlar) = 1) and (Sonuc.YedekDosyasi = '') and (IstisnaMesaji(EX) = 'ilk mesaj'));
+  Sonuc := YeniNesneKaydet(Bag, ntIstisna, 'CREATE EXCEPTION ' + EX + ' ''baska'';');
+  Not_('ad cakismasi: cumle=' + TekSatir(Sonuc.Cumle) + ' ayrinti=' + TekSatir(Sonuc.Ayrinti));
+  Kontrol('Ad cakismasi: reddedildi, cumle ERR_NESNE_VAR, Ayrinti dolu, eski mesaj duruyor',
+    (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_NESNE_VAR')) and (Sonuc.Ayrinti <> '') and (IstisnaMesaji(EX) = 'ilk mesaj'));
+
+  { Duzenle: CREATE OR ALTER EXCEPTION }
+  Metin := IstisnaDuzenleScripti(Bag, EX);
+  Kontrol('Duzenleme metni CREATE OR ALTER EXCEPTION ad ''mesaj'';, ad dogrulamasindan geciyor',
+    (Pos('CREATE OR ALTER EXCEPTION ' + EX + ' ''ilk mesaj'';', Metin) = 1) and (NesneAdiniDogrula(ntIstisna, Metin, EX) = ''));
+  Kontrol('NesneDuzenleMetni(ntIstisna) ayni metin', NesneDuzenleMetni(Bag, ntIstisna, EX) = Metin);
+  Yurut(Bag, 'create procedure ' + PR + ' as begin exception ' + EX + '; end');
+  Sonuc := NesneKaydet(Bag, ntIstisna, EX, StringReplace(Metin, 'ilk mesaj', 'ikinci mesaj', []));
+  if not Sonuc.Basarili then
+    Not_('hata: ' + Sonuc.Cumle + ' / ' + Sonuc.Ayrinti);
+  Kontrol('Exception kaydedildi (mesaj degisti), tek komut', Sonuc.Basarili and (IstisnaMesaji(EX) = 'ikinci mesaj') and (Length(Sonuc.Komutlar) = 1));
+  Hata := '';
+  try
+    Yurut(Bag, 'execute procedure ' + PR);
+  except
+    on E: Exception do
+      Hata := E.Message;
+  end;
+  Kontrol('Prosedur exception''i yeni mesajla firlatiyor', Pos('ikinci mesaj', Hata) > 0);
+  Kontrol('Yedek exception_ADI_...sql, eski mesaji iceriyor (CREATE OR ALTER EXCEPTION)',
+    FileExists(Sonuc.YedekDosyasi) and StartsText('exception_' + EX + '_', ExtractFileName(Sonuc.YedekDosyasi)) and
+    (Pos('ilk mesaj', YedekMetni(Sonuc.YedekDosyasi)) > 0) and (Pos('ikinci', YedekMetni(Sonuc.YedekDosyasi)) = 0));
+
+  { Kurallar }
+  Sonuc := NesneKaydet(Bag, ntIstisna, EX, 'CREATE OR ALTER EXCEPTION FBY_TEST_EX9 ''x'';');
+  Kontrol('Ad degisikligi reddedildi (ERR_EXC_AD_DEGISTI), yeni exception olusmadi',
+    (not Sonuc.Basarili) and (Sonuc.Cumle = TF('ERR_EXC_AD_DEGISTI', [EX, 'FBY_TEST_EX9'])) and (Length(Sonuc.Komutlar) = 0) and
+    (Skaler(Bag, 'select count(*) from rdb$exceptions where rdb$exception_name = ''FBY_TEST_EX9''') = '0'));
+  Sonuc := NesneKaydet(Bag, ntIstisna, EX, 'CREATE EXCEPTION ' + EX + ' ''x'';');
+  Kontrol('Basliksiz (CREATE EXCEPTION) metin reddedildi', (not Sonuc.Basarili) and (Sonuc.Cumle = TF('ERR_EXC_BASLIK_YOK', [EX, EX])));
+  Sonuc := NesneKaydet(Bag, ntIstisna, EX, 'CREATE OR ALTER EXCEPTION ' + EX + ' ''x'';');
+  Sonuc := NesneKaydet(Bag, ntIstisna, EX, 'CREATE OR ALTER EXCEPTION ' + EX + ' ''x'' ZZ YY;');
+  Kontrol('Sozdizimi hatasi: anlasilir cumle, eski mesaj duruyor (once ''x'' kaydedildi)',
+    (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_SQL_SOZDIZIMI')) and (IstisnaMesaji(EX) = 'x'));
+  Sonuc := YedeksizKaydet(ntIstisna, EX, 'CREATE OR ALTER EXCEPTION ' + EX + ' ''z'';');
+  Kontrol('Yedek yazilamadi: kaydetme durdu, exception degismedi',
+    (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_PRS_YEDEK_YAZILAMADI')) and (Length(Sonuc.Komutlar) = 0) and (IstisnaMesaji(EX) = 'x'));
+
+  { Yeni domain }
+  Sonuc := YeniNesneKaydet(Bag, ntDomain, 'CREATE DOMAIN ' + DM + ' AS VARCHAR(10);');
+  Kontrol('Yeni domain olusturuldu', Sonuc.Basarili and (Sonuc.Ad = DM) and (Skaler(Bag, 'select count(*) from rdb$fields where rdb$field_name = ''' + DM + '''') = '1'));
+  Sonuc := YeniNesneKaydet(Bag, ntDomain, 'CREATE DOMAIN ' + DM + ' AS INTEGER;');
+  Not_('domain ad cakismasi: cumle=' + TekSatir(Sonuc.Cumle) + ' ayrinti=' + TekSatir(Sonuc.Ayrinti));
+  Kontrol('Domain ad cakismasi: ERR_NESNE_VAR', (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_NESNE_VAR')));
+  Sonuc := YeniNesneKaydet(Bag, ntDomain, 'CREATE DOMAIN FBY_TEST_DM_X AS NOTATYPE;');
+  Kontrol('Gecersiz domain tipi: anlasilir cumle, domain olusmadi',
+    (not Sonuc.Basarili) and (Sonuc.Cumle <> '') and (Pos('ERR_', Sonuc.Cumle) = 0) and
+    (Skaler(Bag, 'select count(*) from rdb$fields where rdb$field_name = ''FBY_TEST_DM_X''') = '0'));
+  Not_('gecersiz tip: ' + TekSatir(Sonuc.Cumle) + ' | ' + TekSatir(Sonuc.Ayrinti));
+end;
+
+{ ---------- 3f-3: Silme ---------- }
+
+procedure SilmeBolumu;
+var
+  Sonuc: TProsedurSonucu;
+  Onay, Dosya, Dil: string;
+  i, Once: Integer;
+  Liste: TStringList;
+begin
+  Cikti.Add('');
+  Cikti.Add('=== B5) Silme: bagimlilik listesi, onay metni, yedek, DROP (surum ' + Bag.Surum + ') ===');
+  ViewKur;
+  Yurut(Bag, 'create exception ' + EX + ' ''m''');
+  Yurut(Bag, 'create domain ' + DM + ' as integer');
+  Yurut(Bag, 'create sequence ' + GN);
+  Yurut(Bag, 'create table ' + TB + '_D (ID integer, ADI ' + DM + ')');
+  Yurut(Bag, 'create procedure ' + PR + ' as declare variable I integer; begin I = gen_id(' + GN + ', 1); exception ' + EX + '; end');
+
+  Kontrol('Bagimlilik view: VW2 listede (tur view)',
+    (Length(BagimliNesneler(Bag, bhView, VW)) = 1) and (BagimliNesneler(Bag, bhView, VW)[0].Ad = VW2) and (BagimliNesneler(Bag, bhView, VW)[0].Tur = 1));
+  Kontrol('Bagimlilik exception: prosedur listede (tur 5)',
+    (Length(BagimliNesneler(Bag, bhIstisna, EX)) = 1) and (BagimliNesneler(Bag, bhIstisna, EX)[0].Ad = PR) and (BagimliNesneler(Bag, bhIstisna, EX)[0].Tur = 5));
+  Kontrol('Bagimlilik generator: prosedur listede', (Length(BagimliNesneler(Bag, bhGenerator, GN)) = 1) and (BagimliNesneler(Bag, bhGenerator, GN)[0].Ad = PR));
+  Kontrol('Bagimlilik domain: tablo kolonu listede (TABLO.KOLON)',
+    (Length(BagimliNesneler(Bag, bhDomain, DM)) = 1) and (BagimliNesneler(Bag, bhDomain, DM)[0].Ad = TB + '_D.ADI') and (BagimliNesneler(Bag, bhDomain, DM)[0].Tur = BAG_KOLON));
+  Kontrol('Bagimlisi olmayan nesne: bos liste', Length(BagimliNesneler(Bag, bhView, VW2)) = 0);
+
+  Onay := SilmeOnayMetni(Bag, ntView, VW);
+  Not_('view onay metni: ' + TekSatir(Onay, 600));
+  Kontrol('Onay metni: tur, ad, geri alinamaz+yedek blogu, kullananlar (VW2), soru',
+    (Pos(TF('ONAY_SIL', [T('TUR_VIEW'), VW]), Onay) = 1) and (Pos(T('ONAY_SIL_BAGIMLI'), Onay) > 0) and (Pos(VW2, Onay) > 0) and
+    (Pos(T('ONAY_SIL_SORU'), Onay) > 0) and (Pos('_arsiv', Onay) > 0));
+  Kontrol('Onay metni: bagimlisiz nesnede "bulunamadi" cumlesi', Pos(T('ONAY_SIL_BAGIMLI_YOK'), SilmeOnayMetni(Bag, ntView, VW2)) > 0);
+
+  { 13 prosedur ayni exception'i kullaniyor (PR dahil): en cok 10 satir + "ve 3 tane daha". }
+  for i := 1 to 12 do
+    Yurut(Bag, 'create procedure FBY_TEST_PX' + Format('%.2d', [i]) + ' as begin exception ' + EX + '; end');
+  Onay := SilmeOnayMetni(Bag, ntIstisna, EX);
+  Kontrol('13 kullanan: onay metninde 10 satir + "ve 3 tane daha"',
+    (Pos(TF('ONAY_SIL_DAHA_FAZLA', [3]), Onay) > 0) and (Pos('FBY_TEST_PX', Onay) > 0));
+  Liste := TStringList.Create;
+  try
+    Liste.Text := BagimlilikMetni(BagimliNesneler(Bag, bhIstisna, EX));
+    Kontrol('Bagimlilik metni: tam 11 satir (10 madde + "daha")', Liste.Count = 11);
+  finally
+    Liste.Free;
+  end;
+  for i := 1 to 12 do
+    Yurut(Bag, 'drop procedure FBY_TEST_PX' + Format('%.2d', [i]));
+
+  { Kullanilan nesneler silinemez: anlasilir cumle, rollback, nesne duruyor. }
+  Sonuc := NesneSil(Bag, ntIstisna, EX);
+  Not_('kullanilan exception: cumle=' + TekSatir(Sonuc.Cumle) + ' ayrinti=' + TekSatir(Sonuc.Ayrinti));
+  Kontrol('Kullanilan exception silinemez: ERR_NESNE_BAGIMLI, Ayrinti dolu, denenen SQL gorunur, exception duruyor',
+    (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_NESNE_BAGIMLI')) and (Sonuc.Ayrinti <> '') and (Length(Sonuc.Komutlar) = 1) and
+    (Sonuc.Komutlar[0] = 'DROP EXCEPTION ' + EX) and (IstisnaMesaji(EX) = 'm'));
+  Sonuc := NesneSil(Bag, ntGenerator, GN);
+  Kontrol('Kullanilan generator silinemez: ERR_NESNE_BAGIMLI', (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_NESNE_BAGIMLI')));
+  Sonuc := NesneSil(Bag, ntDomain, DM);
+  Not_('kullanilan domain: cumle=' + TekSatir(Sonuc.Cumle) + ' ayrinti=' + TekSatir(Sonuc.Ayrinti));
+  Kontrol('Kolonda kullanilan domain silinemez: ERR_DOMAIN_KULLANILIYOR',
+    (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_DOMAIN_KULLANILIYOR')) and (Skaler(Bag, 'select count(*) from rdb$fields where rdb$field_name = ''' + DM + '''') = '1'));
+  Sonuc := NesneSil(Bag, ntView, VW);
+  Kontrol('Bagimlisi olan view silinemez: ERR_NESNE_BAGIMLI, view duruyor',
+    (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_NESNE_BAGIMLI')) and (ViewKolonlari(VW) = 'ID,AD'));
+  Kontrol('Basarisiz silmede de eski tanim yedeklenmis (yedek dosyasi var)', FileExists(Sonuc.YedekDosyasi));
+
+  { Basarili silme: once bagimlilar kalkar. }
+  Yurut(Bag, 'drop procedure ' + PR);
+  Once := YedekSayisi;
+  Sonuc := NesneSil(Bag, ntIstisna, EX);
+  Kontrol('Exception silindi (kullananlar kalkinca), SQL "DROP EXCEPTION ad"',
+    Sonuc.Basarili and (Skaler(Bag, 'select count(*) from rdb$exceptions where rdb$exception_name = ''' + EX + '''') = '0') and
+    (Length(Sonuc.Komutlar) = 1) and (Sonuc.Komutlar[0] = 'DROP EXCEPTION ' + EX));
+  Dosya := Sonuc.YedekDosyasi;
+  Kontrol('Silme yedegi: exception_ADI_...sql, tam CREATE EXCEPTION iceriyor',
+    FileExists(Dosya) and StartsText('exception_' + EX + '_', ExtractFileName(Dosya)) and (Pos('CREATE EXCEPTION ' + EX + ' ''m'';', YedekMetni(Dosya)) > 0) and
+    (YedekSayisi = Once + 1));
+  Sonuc := NesneSil(Bag, ntGenerator, GN);
+  Kontrol('Generator silindi, yedekte CREATE SEQUENCE',
+    Sonuc.Basarili and (Skaler(Bag, 'select count(*) from rdb$generators where rdb$generator_name = ''' + GN + '''') = '0') and
+    (Pos('CREATE SEQUENCE ' + GN, YedekMetni(Sonuc.YedekDosyasi)) > 0) and StartsText('generator_' + GN + '_', ExtractFileName(Sonuc.YedekDosyasi)));
+  Sonuc := NesneSil(Bag, ntView, VW2);
+  Kontrol('Bagimlisiz view silindi, yedekte tam CREATE VIEW', Sonuc.Basarili and (Pos('CREATE VIEW ' + VW2, YedekMetni(Sonuc.YedekDosyasi)) > 0));
+  Sonuc := NesneSil(Bag, ntView, VW);
+  Kontrol('Ustteki view de silindi (artik bagimlisi yok)', Sonuc.Basarili);
+  Yurut(Bag, 'drop table ' + TB + '_D');
+  Sonuc := NesneSil(Bag, ntDomain, DM);
+  Kontrol('Domain kullanilmayinca silindi, yedekte CREATE DOMAIN',
+    Sonuc.Basarili and (Pos('CREATE DOMAIN ' + DM + ' AS INTEGER', YedekMetni(Sonuc.YedekDosyasi)) > 0));
+
+  { Olmayan nesne ve yedek yazilamiyor }
+  Sonuc := NesneSil(Bag, ntView, 'FBY_YOK_BOYLE');
+  Kontrol('Olmayan nesne: islem baslamaz, cumle "bulunamadi" (yedek hatasi DEGIL)', (not Sonuc.Basarili) and (Sonuc.Cumle <> '') and (Sonuc.Cumle <> T('ERR_PRS_YEDEK_YAZILAMADI')) and (Length(Sonuc.Komutlar) = 0));
+  Not_('olmayan view silme: ' + TekSatir(Sonuc.Cumle) + ' | ' + TekSatir(Sonuc.Ayrinti));
+  Yurut(Bag, 'create exception ' + EX + ' ''m''');
+  Dosya := TPath.Combine(TPath.GetTempPath, 'nesnetest_yedeksiz');
+  TDirectory.CreateDirectory(Dosya);
+  TFile.WriteAllText(TPath.Combine(Dosya, '_arsiv'), 'engel');
+  VeriKlasoruAyarla(Dosya);
+  try
+    Sonuc := NesneSil(Bag, ntIstisna, EX);
+  finally
+    VeriKlasoruAyarla(VeriKlasoru);
+  end;
+  TFile.Delete(TPath.Combine(Dosya, '_arsiv'));
+  Kontrol('Yedek yazilamadi: silme baslamadi, exception duruyor',
+    (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_PRS_YEDEK_YAZILAMADI')) and (Length(Sonuc.Komutlar) = 0) and (IstisnaMesaji(EX) = 'm'));
+
+  { Uc dilde yeni cumleler }
+  for Dil in ['tr', 'en', 'de'] do
+  begin
+    DilYukle(Dil);
+    Not_(Dil + ' ERR_NESNE_VAR: ' + TekSatir(T('ERR_NESNE_VAR')));
+    Not_(Dil + ' ERR_DOMAIN_KULLANILIYOR: ' + TekSatir(T('ERR_DOMAIN_KULLANILIYOR')));
+    Not_(Dil + ' ONAY_SIL: ' + TekSatir(TF('ONAY_SIL', [T('TUR_VIEW'), 'ORNEK'])));
+    Kontrol('Dil ' + Dil + ': silme ve hata anahtarlari tanimli',
+      (T('ERR_NESNE_VAR') <> 'ERR_NESNE_VAR') and (T('ERR_DOMAIN_KULLANILIYOR') <> 'ERR_DOMAIN_KULLANILIYOR') and
+      (T('ONAY_SIL') <> 'ONAY_SIL') and (T('ONAY_SIL_BAGIMLI') <> 'ONAY_SIL_BAGIMLI') and (T('ONAY_SIL_DAHA_FAZLA') <> 'ONAY_SIL_DAHA_FAZLA'));
+  end;
+  DilYukle('tr');
+end;
+
+{ ---------- 3f-3: Domain degistirme ---------- }
+
+function DomainBilgi(const Ad: string): TDomainBilgisi;
+begin
+  Result := DomainBilgisiOku(Bag, Ad);
+end;
+
+procedure DomainBolumu;
+var
+  Sonuc: TProsedurSonucu;
+  Hata: string;
+begin
+  Cikti.Add('');
+  Cikti.Add('=== B6) Domain: varsayilan, CHECK, ad degistirme (surum ' + Bag.Surum + ') ===');
+  Temizle;
+  Yurut(Bag, 'create domain ' + DM + ' as integer');
+  Yurut(Bag, 'create table ' + TB + ' (ID integer, ADI ' + DM + ')');
+
+  Kontrol('Komut metni: varsayilan SET DEFAULT', DomainKomutlari(Bag, DM, diVarsayilan, '5') = 'ALTER DOMAIN ' + DM + ' SET DEFAULT 5');
+  Kontrol('Komut metni: "DEFAULT 5" yazilsa da ayni', DomainKomutlari(Bag, DM, diVarsayilan, 'default 5') = 'ALTER DOMAIN ' + DM + ' SET DEFAULT 5');
+  Kontrol('Komut metni: bos varsayilan DROP DEFAULT', DomainKomutlari(Bag, DM, diVarsayilan, '  ') = 'ALTER DOMAIN ' + DM + ' DROP DEFAULT');
+  Kontrol('Komut metni: CHECK once DROP CONSTRAINT sonra ADD CHECK (parantez eklenir)',
+    DomainKomutlari(Bag, DM, diKontrol, 'VALUE > 0') = 'ALTER DOMAIN ' + DM + ' DROP CONSTRAINT;' + sLineBreak + 'ALTER DOMAIN ' + DM + ' ADD CHECK (VALUE > 0)');
+  Kontrol('Komut metni: bos CHECK yalniz DROP CONSTRAINT', DomainKomutlari(Bag, DM, diKontrol, '') = 'ALTER DOMAIN ' + DM + ' DROP CONSTRAINT');
+  Kontrol('Komut metni: ad TO yeniad', DomainKomutlari(Bag, DM, diAd, ' ' + DM + '_B ') = 'ALTER DOMAIN ' + DM + ' TO ' + DM + '_B');
+  Kontrol('Mevcut deger: ad', DomainMevcutDeger(Bag, DM, diAd) = DM);
+  Kontrol('Mevcut deger: varsayilan/CHECK yokken bos', (DomainMevcutDeger(Bag, DM, diVarsayilan) = '') and (DomainMevcutDeger(Bag, DM, diKontrol) = ''));
+
+  { Varsayilan }
+  Sonuc := DomainDegistir(Bag, DM, diVarsayilan, '7');
+  if not Sonuc.Basarili then
+    Not_('hata: ' + Sonuc.Cumle + ' / ' + Sonuc.Ayrinti);
+  Kontrol('Varsayilan 7 atandi: domain bilgisinde, tek komut SQL',
+    Sonuc.Basarili and ContainsText(DomainBilgi(DM).Varsayilan, '7') and (Length(Sonuc.Komutlar) = 1) and (Sonuc.Komutlar[0] = 'ALTER DOMAIN ' + DM + ' SET DEFAULT 7'));
+  Yurut(Bag, 'insert into ' + TB + ' (ID) values (1)');
+  Kontrol('Yeni satirin kolonu domain varsayilani 7', Skaler(Bag, 'select ADI from ' + TB + ' where ID = 1') = '7');
+  Kontrol('Mevcut deger kutusu: "7"', DomainMevcutDeger(Bag, DM, diVarsayilan) = '7');
+  Kontrol('Yedek domain_ADI_...sql ESKI hali (varsayilansiz) iceriyor',
+    FileExists(Sonuc.YedekDosyasi) and StartsText('domain_' + DM + '_', ExtractFileName(Sonuc.YedekDosyasi)) and
+    (Pos('CREATE DOMAIN ' + DM + ' AS INTEGER;', YedekMetni(Sonuc.YedekDosyasi)) > 0));
+  Sonuc := DomainDegistir(Bag, DM, diVarsayilan, '');
+  Kontrol('Varsayilan kaldirildi', Sonuc.Basarili and (DomainBilgi(DM).Varsayilan = ''));
+
+  { CHECK }
+  Sonuc := DomainDegistir(Bag, DM, diKontrol, 'VALUE > 0');
+  if not Sonuc.Basarili then
+    Not_('hata: ' + Sonuc.Cumle + ' / ' + Sonuc.Ayrinti);
+  Kontrol('CHECK eklendi (iki komut: DROP CONSTRAINT, ADD CHECK)', Sonuc.Basarili and (Length(Sonuc.Komutlar) = 2) and ContainsText(DomainBilgi(DM).Kontrol, 'VALUE > 0'));
+  Hata := '';
+  try
+    Yurut(Bag, 'insert into ' + TB + ' (ID, ADI) values (2, -5)');
+  except
+    on E: Exception do
+      Hata := E.Message;
+  end;
+  Kontrol('CHECK calisiyor: -5 reddedilir', Hata <> '');
+  Kontrol('Mevcut deger kutusu: CHECK ifadesi', ContainsText(DomainMevcutDeger(Bag, DM, diKontrol), 'VALUE > 0'));
+  Sonuc := DomainDegistir(Bag, DM, diKontrol, 'CHECK (VALUE < 100)');
+  Kontrol('CHECK degistirildi (eski kalkti, yenisi geldi)',
+    Sonuc.Basarili and ContainsText(DomainBilgi(DM).Kontrol, 'VALUE < 100') and not ContainsText(DomainBilgi(DM).Kontrol, 'VALUE > 0'));
+  { Hatali ifade: ikinci komut hata verir; ilk komut (DROP CONSTRAINT) da geri alinmali. }
+  Sonuc := DomainDegistir(Bag, DM, diKontrol, '(VALUE >');
+  Not_('hatali CHECK: cumle=' + TekSatir(Sonuc.Cumle) + ' ayrinti=' + TekSatir(Sonuc.Ayrinti));
+  Kontrol('Hatali CHECK: reddedildi, anlasilir cumle, ESKI CHECK duruyor (tek islem, rollback)',
+    (not Sonuc.Basarili) and (Sonuc.Cumle <> '') and (Pos('ERR_', Sonuc.Cumle) = 0) and ContainsText(DomainBilgi(DM).Kontrol, 'VALUE < 100'));
+  Sonuc := DomainDegistir(Bag, DM, diKontrol, '');
+  Kontrol('CHECK kaldirildi', Sonuc.Basarili and (DomainBilgi(DM).Kontrol = ''));
+
+  { Ad }
+  Yurut(Bag, 'create domain ' + DM + '_C as integer');
+  Sonuc := DomainDegistir(Bag, DM, diAd, DM + '_C');
+  Not_('var olan ada tasima: cumle=' + TekSatir(Sonuc.Cumle) + ' ayrinti=' + TekSatir(Sonuc.Ayrinti));
+  Kontrol('Var olan ada tasima reddedildi: ERR_NESNE_VAR', (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_NESNE_VAR')));
+  Sonuc := DomainDegistir(Bag, DM, diAd, '   ');
+  Kontrol('Bos yeni ad: ERR_DOM_AD_BOS, veritabanina dokunulmadi', (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_DOM_AD_BOS')) and (Length(Sonuc.Komutlar) = 0));
+  Sonuc := DomainDegistir(Bag, DM, diAd, DM + '_B');
+  if not Sonuc.Basarili then
+    Not_('hata: ' + Sonuc.Cumle + ' / ' + Sonuc.Ayrinti);
+  Kontrol('Domain yeniden adlandirildi (sonuc adi yeni), eski ad yok, tablo kolonu yeni domain adini kullaniyor',
+    Sonuc.Basarili and (Sonuc.Ad = DM + '_B') and (Skaler(Bag, 'select count(*) from rdb$fields where rdb$field_name = ''' + DM + '''') = '0') and
+    (Skaler(Bag, 'select trim(rdb$field_source) from rdb$relation_fields where rdb$relation_name = ''' + TB + ''' and rdb$field_name = ''ADI''') = DM + '_B'));
+  Sonuc := DomainDegistir(Bag, 'FBY_YOK_BOYLE', diVarsayilan, '1');
+  Kontrol('Olmayan domain: anlasilir cumle, komut calismadi (yedek icin tanim okunamaz)', (not Sonuc.Basarili) and (Sonuc.Cumle <> '') and (Length(Sonuc.Komutlar) = 0));
+  Kontrol('Onay metni: SQL komutu ve kullananlar (tablo kolonu) gorunuyor',
+    (Pos('ALTER DOMAIN', DomainOnayMetni(Bag, DM + '_B', DomainKomutlari(Bag, DM + '_B', diVarsayilan, '3'))) > 0) and
+    (Pos(TB + '.ADI', DomainOnayMetni(Bag, DM + '_B', 'x')) > 0));
 end;
 
 { EKLEME NOKTASI: yeni bolumler buraya }
@@ -482,8 +872,12 @@ begin
         Bag := FbBaglan(Tanim);
         Cikti.Add('Surum: ' + Bag.Surum);
         try
+          HataKesfiBolumu;
           ListeBolumu;
           ViewBolumu;
+          IstisnaBolumu;
+          SilmeBolumu;
+          DomainBolumu;
           SekmeBolumu;
         finally
           Temizle;

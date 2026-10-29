@@ -48,6 +48,9 @@ function ProsedurDuzenleScripti(Bag: TAcikBaglanti; const Ad: string): string;
   (script uretilmeyen tur) EMetadataHatasi. }
 function TetikleyiciDuzenleScripti(Bag: TAcikBaglanti; const Ad: string): string;
 
+{ Ad yalniz gerektiginde "..." icine alinarak yazilir (komut metni kurmak icin: DROP, ALTER DOMAIN ...). }
+function AdiYaz(Bag: TAcikBaglanti; const Ad: string): string;
+
 { View'un duzenlenebilir tanimi: CREATE OR ALTER VIEW ad (kolonlar) AS select ...; (Firebird 2.5-5.0, olculdu).
   View'a bagli tetikleyiciler metne dahil degildir. }
 function ViewDuzenleScripti(Bag: TAcikBaglanti; const Ad: string): string;
@@ -559,6 +562,16 @@ begin
     else
       Result := GeneratorScripti(Bag, Ad);
     end;
+  finally
+    AnahtarKelimeleriBirak;
+  end;
+end;
+
+function AdiYaz(Bag: TAcikBaglanti; const Ad: string): string;
+begin
+  AnahtarKelimeleriKur(Bag.Surum);
+  try
+    Result := AdYaz(Ad);
   finally
     AnahtarKelimeleriBirak;
   end;

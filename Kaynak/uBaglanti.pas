@@ -773,6 +773,11 @@ begin
   else if Iceriyor(HamMesaj, 'column unknown') or Iceriyor(HamMesaj, 'table unknown') or
     Iceriyor(HamMesaj, 'procedure unknown') then
     Result := T('ERR_SQL_NESNE_YOK')
+  { Olcum (3f, 2.5.9 - 5.0.4): DROP/ALTER/SET GENERATOR olmayan nesnede "Exception not found", "Domain not found",
+    "Sequence X not found", "generator X is not defined", "View X does not exist". }
+  else if Iceriyor(HamMesaj, ' not found') or Iceriyor(HamMesaj, 'is not defined') or
+    Iceriyor(HamMesaj, 'does not exist') then
+    Result := T('ERR_SQL_NESNE_YOK')
   { Olcum (2.5.9, DROP PROCEDURE): "cannot delete ... there are N dependencies". }
   else if Iceriyor(HamMesaj, 'dependencies') then
     Result := T('ERR_NESNE_BAGIMLI')
@@ -831,6 +836,15 @@ begin
     kodlardan ONCE metne bakilir. }
   if Iceriyor(Hata.Message, 'is referenced in') or Iceriyor(Hata.Message, 'dependencies') then
     Exit(T('ERR_NESNE_BAGIMLI'));
+  { Olcum (3f): domain bir tabloda kullaniliyorsa "Domain X is used in table T (local name C) and cannot be dropped". }
+  if Iceriyor(Hata.Message, 'is used in table') then
+    Exit(T('ERR_DOMAIN_KULLANILIYOR'));
+  { Olcum (3f): ayni adli exception, sequence/generator, view/tablo, domain: "X already exists" (domain'de 2.5:
+    RDB$FIELDS benzersiz indeks ihlali, 3.0+: "violation of PRIMARY or UNIQUE KEY ... RDB$FIELDS"). }
+  if Iceriyor(Hata.Message, 'already exists') or
+    (Iceriyor(Hata.Message, 'RDB$FIELDS') and (Iceriyor(Hata.Message, 'duplicate value') or
+    Iceriyor(Hata.Message, 'violation of PRIMARY or UNIQUE KEY'))) then
+    Exit(T('ERR_NESNE_VAR'));
   if (Hata is EFDDBEngineException) and KodundanCevir(EFDDBEngineException(Hata), Result) then
     Exit;
   Result := MetindenCevir(Hata.Message);

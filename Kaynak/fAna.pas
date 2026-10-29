@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, uProsedur;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, uProsedur, uNesneYonet;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -49,6 +49,11 @@ type
     miAc: TMenuItem;
     miScriptUret: TMenuItem;
     miNesneDuzenle: TMenuItem;
+    miYeniNesne: TMenuItem;
+    miDomVarsayilan: TMenuItem;
+    miDomKontrol: TMenuItem;
+    miDomAd: TMenuItem;
+    miNesneSil: TMenuItem;
     miBaglan: TMenuItem;
     miKes: TMenuItem;
     miYenile: TMenuItem;
@@ -89,6 +94,11 @@ type
     procedure miAcClick(Sender: TObject);
     procedure miScriptUretClick(Sender: TObject);
     procedure miNesneDuzenleClick(Sender: TObject);
+    procedure miYeniNesneClick(Sender: TObject);
+    procedure miDomVarsayilanClick(Sender: TObject);
+    procedure miDomKontrolClick(Sender: TObject);
+    procedure miDomAdClick(Sender: TObject);
+    procedure miNesneSilClick(Sender: TObject);
     procedure miBaglanClick(Sender: TObject);
     procedure miKesClick(Sender: TObject);
     procedure miYenileClick(Sender: TObject);
@@ -117,6 +127,8 @@ type
     FOgeler: TObjectList<TAgacOgesi>;
     FSurukleNode: TTreeNode;
     FSorguNo: Integer;
+    { Olusturma isi biten "Yeni" sekmesi: sekmenin kendi olayinin icinde silinmez, kuyruktan kapatilir. }
+    FKapatilacakSayfa: TTabSheet;
     procedure SeritKur;
     procedure YazilariYenile;
     procedure DilListesiniDoldur;
@@ -164,6 +176,15 @@ type
     function ProsedurSekmeAl(Sayfa: TTabSheet): TProsedurSekme;
     function AktifProsedurSekmesi: TProsedurSekme;
     procedure NesneDuzenleAc(Dugme: TTreeNode);
+    function DalTuru(DalNo: Integer): TNesneTuru;
+    function DalDugmesiBul(const BaglantiAd: string; DalNo: Integer): TTreeNode;
+    procedure DalYenile(Dal: TTreeNode);
+    procedure YeniNesneAc(Dal: TTreeNode);
+    procedure YeniNesneOlusturuldu(Sender: TObject);
+    procedure SayfayiKapat;
+    procedure NesneSekmeleriniKapat(const BaglantiAd: string; Tur: TNesneTuru; const Ad: string);
+    procedure NesneyiSil(Dugme: TTreeNode);
+    procedure DomainDegistirAc(Dugme: TTreeNode; Islem: TDomainIslemi);
     procedure MetadataCikarAc(Dugme: TTreeNode);
     procedure YedekPenceresiAc(Dugme: TTreeNode);
     procedure SorguyuCalistir;
@@ -263,6 +284,10 @@ begin
   miAc.Caption := T('MENU_AC');
   miScriptUret.Caption := T('MENU_SCRIPT_URET');
   miNesneDuzenle.Caption := T('MENU_PROSEDUR_DUZENLE');
+  miDomVarsayilan.Caption := T('MENU_DOM_VARSAYILAN');
+  miDomKontrol.Caption := T('MENU_DOM_KONTROL');
+  miDomAd.Caption := T('MENU_DOM_AD');
+  miNesneSil.Caption := T('MENU_SIL');
   miBaglan.Caption := T('BTN_BAGLAN');
   miKes.Caption := T('BTN_KES');
   miYenile.Caption := T('MENU_YENILE');
@@ -1014,16 +1039,7 @@ begin
   Bag := FbAcikBaglanti(Oge.BaglantiAd);
   if Bag = nil then
     Exit;
-  case Oge.DalNo of
-    DAL_TABLO: Tur := ntTablo;
-    DAL_VIEW: Tur := ntView;
-    DAL_PROSEDUR: Tur := ntProsedur;
-    DAL_TETIKLEYICI: Tur := ntTetikleyici;
-    DAL_DOMAIN: Tur := ntDomain;
-    DAL_ISTISNA: Tur := ntIstisna;
-  else
-    Tur := ntGenerator;
-  end;
+  Tur := DalTuru(Oge.DalNo);
   try
     Script := ScriptUret(Bag, Tur, Oge.Ad);
   except
@@ -1057,16 +1073,11 @@ begin
   Bag := FbAcikBaglanti(Oge.BaglantiAd);
   if Bag = nil then
     Exit;
-  case Oge.DalNo of
-    DAL_TETIKLEYICI: Tur := ntTetikleyici;
-    DAL_VIEW: Tur := ntView;
-  else
-    Tur := ntProsedur;
-  end;
+  Tur := DalTuru(Oge.DalNo);
   for i := 0 to pcCalisma.PageCount - 1 do
   begin
     Sekme := ProsedurSekmeAl(pcCalisma.Pages[i]);
-    if (Sekme <> nil) and SameText(Sekme.BaglantiAd, Oge.BaglantiAd) and (Sekme.NesneAdi = Oge.Ad) and
+    if (Sekme <> nil) and not Sekme.Yeni and SameText(Sekme.BaglantiAd, Oge.BaglantiAd) and (Sekme.NesneAdi = Oge.Ad) and
       (TurOnEki(Sekme.Tur) = TurOnEki(Tur)) then
     begin
       pcCalisma.ActivePage := pcCalisma.Pages[i];
@@ -1078,6 +1089,7 @@ begin
   case Tur of
     ntTetikleyici: Sayfa.ImageIndex := IKON_TETIKLEYICI;
     ntView: Sayfa.ImageIndex := IKON_VIEW;
+    ntIstisna: Sayfa.ImageIndex := IKON_ISTISNA;
   else
     Sayfa.ImageIndex := IKON_PROSEDUR;
   end;
@@ -1107,6 +1119,264 @@ begin
   pcCalisma.ActivePage := Sayfa;
   Sekme.EditoreOdaklan;
   MesajYaz(TF('MSG_' + TurOnEki(Tur) + '_ACILDI', [Oge.Ad]));
+  DurumuGuncelle;
+end;
+
+{ Dal numarasindan nesne turu (prosedur dahil her dal icin). }
+function TfrmAna.DalTuru(DalNo: Integer): TNesneTuru;
+begin
+  case DalNo of
+    DAL_TABLO: Result := ntTablo;
+    DAL_VIEW: Result := ntView;
+    DAL_PROSEDUR: Result := ntProsedur;
+    DAL_TETIKLEYICI: Result := ntTetikleyici;
+    DAL_DOMAIN: Result := ntDomain;
+    DAL_ISTISNA: Result := ntIstisna;
+  else
+    Result := ntGenerator;
+  end;
+end;
+
+{ Baglantinin altindaki dal dugumu (agacta yoksa nil). }
+function TfrmAna.DalDugmesiBul(const BaglantiAd: string; DalNo: Integer): TTreeNode;
+var
+  i: Integer;
+begin
+  for i := 0 to tvNesneler.Items.Count - 1 do
+  begin
+    Result := tvNesneler.Items[i];
+    if (OgeAl(Result) <> nil) and (OgeAl(Result).Tur = atDal) and (OgeAl(Result).DalNo = DalNo) and
+      SameText(OgeAl(Result).BaglantiAd, BaglantiAd) then
+      Exit;
+  end;
+  Result := nil;
+end;
+
+{ Yalniz bu dalin icini sunucudan yeniden okur (olusturma, silme, ad degisikligi sonrasi); dal acik/kapali durumu korunur. }
+procedure TfrmAna.DalYenile(Dal: TTreeNode);
+var
+  Bag: TAcikBaglanti;
+  Acikti: Boolean;
+begin
+  if Dal = nil then
+    Exit;
+  Bag := FbAcikBaglanti(OgeAl(Dal).BaglantiAd);
+  if Bag = nil then
+    Exit;
+  Acikti := Dal.Expanded;
+  tvNesneler.Items.BeginUpdate;
+  try
+    DalIciniDoldur(Dal, Bag);
+    Dal.Expanded := Acikti;
+  finally
+    tvNesneler.Items.EndUpdate;
+  end;
+  AgacYazilariniYenile;
+end;
+
+{ Dala sag tik "Yeni": exception ve domain icin bos sablonlu duzenleme sekmesi acar (Kaydet = olusturur). Ayni baglanti
+  ve turde "Yeni" sekmesi zaten aciksa ona gecilir. }
+procedure TfrmAna.YeniNesneAc(Dal: TTreeNode);
+var
+  Oge: TAgacOgesi;
+  Bag: TAcikBaglanti;
+  Sayfa: TTabSheet;
+  Sekme: TProsedurSekme;
+  Tur: TNesneTuru;
+  i: Integer;
+begin
+  Oge := OgeAl(Dal);
+  Bag := FbAcikBaglanti(Oge.BaglantiAd);
+  if Bag = nil then
+    Exit;
+  Tur := DalTuru(Oge.DalNo);
+  for i := 0 to pcCalisma.PageCount - 1 do
+  begin
+    Sekme := ProsedurSekmeAl(pcCalisma.Pages[i]);
+    if (Sekme <> nil) and Sekme.Yeni and SameText(Sekme.BaglantiAd, Oge.BaglantiAd) and
+      (TurOnEki(Sekme.Tur) = TurOnEki(Tur)) then
+    begin
+      pcCalisma.ActivePage := pcCalisma.Pages[i];
+      Exit;
+    end;
+  end;
+  Sayfa := TTabSheet.Create(pcCalisma);
+  Sayfa.PageControl := pcCalisma;
+  if Tur = ntDomain then
+    Sayfa.ImageIndex := IKON_DOMAIN
+  else
+    Sayfa.ImageIndex := IKON_ISTISNA;
+  Sekme := TProsedurSekme.Create(Sayfa);
+  Sekme.Parent := Sayfa;
+  Sekme.Align := alClient;
+  Sekme.Tur := Tur;
+  Sekme.AnaSonuc := memSonuc.Lines;
+  Sekme.SqlYaz := SqlMesajiYaz;
+  Sekme.OnOlusturuldu := YeniNesneOlusturuldu;
+  try
+    Sekme.YeniHazirla(Bag);
+  except
+    on E: Exception do
+    begin
+      Sayfa.Free;
+      HataYaz(T('ERR_DDL_ALINAMADI') + ' ' + HataMetniniCevir(E), E.Message);
+      Exit;
+    end;
+  end;
+  Sayfa.Caption := Sekme.Baslik;
+  pcCalisma.ActivePage := Sayfa;
+  Sekme.EditoreOdaklan;
+  MesajYaz(T('MSG_' + TurOnEki(Tur) + '_YENI_ACILDI'));
+  DurumuGuncelle;
+end;
+
+{ "Yeni" sekmesi nesneyi olusturdu: dal yenilenir, is bitti sayilip sekme kapatilir (kuyruktan: sekmenin kendi olayi
+  bitmeden silinmesin). Exception'i duzenlemek icin agactan Duzenle'ye basilir. }
+procedure TfrmAna.YeniNesneOlusturuldu(Sender: TObject);
+var
+  Sekme: TProsedurSekme;
+  DalNo: Integer;
+begin
+  Sekme := TProsedurSekme(Sender);
+  if Sekme.Tur = ntDomain then
+    DalNo := DAL_DOMAIN
+  else
+    DalNo := DAL_ISTISNA;
+  DalYenile(DalDugmesiBul(Sekme.BaglantiAd, DalNo));
+  FKapatilacakSayfa := TTabSheet(Sekme.Parent);
+  TThread.ForceQueue(nil, SayfayiKapat);
+end;
+
+procedure TfrmAna.SayfayiKapat;
+begin
+  if FKapatilacakSayfa <> nil then
+  begin
+    FKapatilacakSayfa.Free;
+    FKapatilacakSayfa := nil;
+  end;
+  DurumuGuncelle;
+end;
+
+{ Silinen nesnenin acik duzenleme sekmeleri kapatilir (kaydedilirse nesne yeniden olusurdu). }
+procedure TfrmAna.NesneSekmeleriniKapat(const BaglantiAd: string; Tur: TNesneTuru; const Ad: string);
+var
+  i: Integer;
+  Sekme: TProsedurSekme;
+begin
+  for i := pcCalisma.PageCount - 1 downto 0 do
+  begin
+    Sekme := ProsedurSekmeAl(pcCalisma.Pages[i]);
+    if (Sekme <> nil) and not Sekme.Yeni and SameText(Sekme.BaglantiAd, BaglantiAd) and (Sekme.NesneAdi = Ad) and
+      (TurOnEki(Sekme.Tur) = TurOnEki(Tur)) then
+      pcCalisma.Pages[i].Free;
+  end;
+end;
+
+{ Sag tik "Sil": net onay (nesne, geri alinamaz, yedek, kullananlar), yedek + DROP, sonuc ve SQL mesaj alaninda. }
+procedure TfrmAna.NesneyiSil(Dugme: TTreeNode);
+var
+  Oge: TAgacOgesi;
+  Bag: TAcikBaglanti;
+  Tur: TNesneTuru;
+  Dal: TTreeNode;
+  Onay: string;
+  Sonuc: TProsedurSonucu;
+begin
+  Oge := OgeAl(Dugme);
+  Bag := FbAcikBaglanti(Oge.BaglantiAd);
+  if Bag = nil then
+    Exit;
+  Tur := DalTuru(Oge.DalNo);
+  try
+    Onay := SilmeOnayMetni(Bag, Tur, Oge.Ad);
+  except
+    on E: Exception do
+    begin
+      HataYaz(T('ERR_DDL_ALINAMADI') + ' ' + HataMetniniCevir(E), E.Message);
+      Exit;
+    end;
+  end;
+  if not OnayIste(Onay) then
+  begin
+    MesajYaz(T('MSG_SIL_VAZGECILDI'));
+    Exit;
+  end;
+  Dal := Dugme.Parent;
+  Sonuc := NesneSil(Bag, Tur, Oge.Ad);
+  if Sonuc.Basarili then
+  begin
+    MesajYaz(TF('MSG_SIL_YAPILDI', [Oge.Ad]));
+    MesajYaz(TF('MSG_PRS_YEDEKLENDI', [Sonuc.YedekDosyasi]));
+    NesneSekmeleriniKapat(Oge.BaglantiAd, Tur, Oge.Ad);
+    DalYenile(Dal);
+  end
+  else
+  begin
+    HataYaz(TF('ERR_SIL_YAPILAMADI', [Oge.Ad]) + ' ' + Sonuc.Cumle, Sonuc.Ayrinti);
+    if Length(Sonuc.Komutlar) = 0 then
+      MesajYaz(T('MSG_PRS_DOKUNULMADI'))
+    else
+      MesajYaz(T('MSG_SIL_GERI_ALINDI'));
+  end;
+  SqlMesajiYaz(Sonuc.Komutlar);
+  DurumuGuncelle;
+end;
+
+{ Domain sag tik: varsayilan degeri, CHECK'i veya adi degistirir. Her is kucuk bir yazi penceresi (mevcut deger yazili,
+  bos birakmak varsayilani/CHECK'i kaldirir) + SQL'in gorundugu net onay penceresi. }
+procedure TfrmAna.DomainDegistirAc(Dugme: TTreeNode; Islem: TDomainIslemi);
+const
+  ONEKLER: array[TDomainIslemi] of string = ('DOM_VARSAYILAN', 'DOM_KONTROL', 'DOM_AD');
+var
+  Oge: TAgacOgesi;
+  Bag: TAcikBaglanti;
+  Deger, Komutlar: string;
+  Dal: TTreeNode;
+  Sonuc: TProsedurSonucu;
+begin
+  Oge := OgeAl(Dugme);
+  Bag := FbAcikBaglanti(Oge.BaglantiAd);
+  if Bag = nil then
+    Exit;
+  try
+    Deger := DomainMevcutDeger(Bag, Oge.Ad, Islem);
+  except
+    on E: Exception do
+    begin
+      HataYaz(T('ERR_DDL_ALINAMADI') + ' ' + HataMetniniCevir(E), E.Message);
+      Exit;
+    end;
+  end;
+  if not MetinSor(TF(ONEKLER[Islem] + '_BASLIK', [Oge.Ad]), T(ONEKLER[Islem] + '_ETIKET'), Deger, False) then
+    Exit;
+  if (Islem = diAd) and (Trim(Deger) = '') then
+  begin
+    UyariGoster(T('ERR_DOM_AD_BOS'));
+    Exit;
+  end;
+  Komutlar := DomainKomutlari(Bag, Oge.Ad, Islem, Deger);
+  if not OnayIste(DomainOnayMetni(Bag, Oge.Ad, Komutlar)) then
+  begin
+    MesajYaz(T('MSG_DOM_VAZGECILDI'));
+    Exit;
+  end;
+  Dal := Dugme.Parent;
+  Sonuc := DomainDegistir(Bag, Oge.Ad, Islem, Deger);
+  if Sonuc.Basarili then
+  begin
+    MesajYaz(TF('MSG_DOM_DEGISTI', [Oge.Ad]));
+    MesajYaz(TF('MSG_PRS_YEDEKLENDI', [Sonuc.YedekDosyasi]));
+    DalYenile(Dal);
+  end
+  else
+  begin
+    HataYaz(TF('ERR_DOM_DEGISTIRILEMEDI', [Oge.Ad]) + ' ' + Sonuc.Cumle, Sonuc.Ayrinti);
+    if Length(Sonuc.Komutlar) = 0 then
+      MesajYaz(T('MSG_PRS_DOKUNULMADI'))
+    else
+      MesajYaz(T('MSG_DOM_GERI_ALINDI'));
+  end;
+  SqlMesajiYaz(Sonuc.Komutlar);
   DurumuGuncelle;
 end;
 
@@ -1491,7 +1761,19 @@ begin
   { DDL tetikleyicisinde (script uretilmeyen tur) Script uret ve Duzenle gizlenir; Yenile kalir. }
   Uretilebilir := (not Bos) and (Tur = atNesne) and not OgeAl(Dugme).Duzenlenemez;
   miScriptUret.Visible := Uretilebilir;
-  miNesneDuzenle.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_VIEW, DAL_PROSEDUR, DAL_TETIKLEYICI]);
+  miNesneDuzenle.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_VIEW, DAL_PROSEDUR, DAL_TETIKLEYICI, DAL_ISTISNA]);
+  { Domain: CREATE OR ALTER yok; yalniz uc kucuk is (varsayilan, CHECK, ad). Sil: view, exception, domain, generator. }
+  miDomVarsayilan.Visible := Uretilebilir and (OgeAl(Dugme).DalNo = DAL_DOMAIN);
+  miDomKontrol.Visible := miDomVarsayilan.Visible;
+  miDomAd.Visible := miDomVarsayilan.Visible;
+  miNesneSil.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_VIEW, DAL_DOMAIN, DAL_ISTISNA, DAL_GENERATOR]);
+  { Dala sag tik: yeni exception / domain. }
+  miYeniNesne.Visible := (not Bos) and (Tur = atDal) and Acik and (OgeAl(Dugme).DalNo in [DAL_DOMAIN, DAL_ISTISNA]);
+  if miYeniNesne.Visible then
+    if OgeAl(Dugme).DalNo = DAL_DOMAIN then
+      miYeniNesne.Caption := T('MENU_YENI_DOMAIN')
+    else
+      miYeniNesne.Caption := T('MENU_YENI_ISTISNA');
   miYenile.Visible := (not Bos) and (Tur <> atKlasor) and Acik;
   miBaglan.Enabled := not Acik;
   miKes.Enabled := Acik;
@@ -1513,6 +1795,36 @@ procedure TfrmAna.miNesneDuzenleClick(Sender: TObject);
 begin
   if tvNesneler.Selected <> nil then
     NesneDuzenleAc(tvNesneler.Selected);
+end;
+
+procedure TfrmAna.miYeniNesneClick(Sender: TObject);
+begin
+  if (tvNesneler.Selected <> nil) and (OgeAl(tvNesneler.Selected).Tur = atDal) then
+    YeniNesneAc(tvNesneler.Selected);
+end;
+
+procedure TfrmAna.miDomVarsayilanClick(Sender: TObject);
+begin
+  if tvNesneler.Selected <> nil then
+    DomainDegistirAc(tvNesneler.Selected, diVarsayilan);
+end;
+
+procedure TfrmAna.miDomKontrolClick(Sender: TObject);
+begin
+  if tvNesneler.Selected <> nil then
+    DomainDegistirAc(tvNesneler.Selected, diKontrol);
+end;
+
+procedure TfrmAna.miDomAdClick(Sender: TObject);
+begin
+  if tvNesneler.Selected <> nil then
+    DomainDegistirAc(tvNesneler.Selected, diAd);
+end;
+
+procedure TfrmAna.miNesneSilClick(Sender: TObject);
+begin
+  if tvNesneler.Selected <> nil then
+    NesneyiSil(tvNesneler.Selected);
 end;
 
 procedure TfrmAna.miBaglanClick(Sender: TObject);
