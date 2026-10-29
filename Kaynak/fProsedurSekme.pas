@@ -235,6 +235,7 @@ begin
   Sonuc := NesneKaydet(Bag, Tur, NesneAdi, Metin);
   if Sonuc.Basarili then
   begin
+    FEditor.HataSatiriniTemizle;
     Yaz(TF(Anahtar('MSG_', '_KAYDEDILDI'), [NesneAdi]));
     Yaz(TF('MSG_PRS_YEDEKLENDI', [Sonuc.YedekDosyasi]));
   end
@@ -250,7 +251,7 @@ begin
     if Sonuc.Satir > 0 then
     begin
       Yaz(TF('MSG_PRS_HATA_SATIRI', [Sonuc.Satir]));
-      FEditor.SatiraGit(Sonuc.Satir);
+      FEditor.HataSatiriniIsaretle(Sonuc.Satir);
     end;
   end;
   if (Length(Sonuc.Komutlar) > 0) and Assigned(SqlYaz) then
@@ -288,7 +289,7 @@ begin
     if Sonuc.Satir > 0 then
     begin
       Yaz(TF('MSG_PRS_HATA_SATIRI', [Sonuc.Satir]));
-      FEditor.SatiraGit(Sonuc.Satir);
+      FEditor.HataSatiriniIsaretle(Sonuc.Satir);
     end;
   end;
   if (Length(Sonuc.Komutlar) > 0) and Assigned(SqlYaz) then

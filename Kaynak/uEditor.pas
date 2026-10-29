@@ -35,6 +35,9 @@ type
     FAnahtarKelimeler: TStringList;
     FNesneAdlari: TStringList;
     FKolonlar: TObjectDictionary<string, TStringList>;
+    FHataSatiri: Integer;
+    procedure HataSatiriRengi(Sender: TObject; Line: Integer; var Special: Boolean; var FG, BG: TColor);
+    procedure MetinDegisti(Sender: TObject);
     procedure OneriHazirla(Kind: SynCompletionType; Sender: TObject; var CurrentInput: string;
       var x, y: Integer; var CanExecute: Boolean);
     procedure OneriSecildi(Sender: TObject; var Value: string; Shift: TShiftState; Index: Integer;
@@ -52,6 +55,10 @@ type
     function TumMetin: string;
     { Imleci verilen satirin basina gogoturur ve gorunur yapar (1 tabanli). }
     procedure SatiraGit(Satir: Integer);
+    { Hatali satiri koyu zeminle isaretler ve oraya gider (1 tabanli). Yazi degisince veya
+      HataSatiriniTemizle ile isaret kalkar. }
+    procedure HataSatiriniIsaretle(Satir: Integer);
+    procedure HataSatiriniTemizle;
     procedure OdakVer;
     { Editorun tum yazisini degistirir (calistirmaz). }
     procedure MetinYaz(const Metin: string);
@@ -87,6 +94,8 @@ begin
   FEdit.Font.Size := 11;
   FEdit.Gutter.ShowLineNumbers := True;
   FEdit.Highlighter := FRenk;
+  FEdit.OnSpecialLineColors := HataSatiriRengi;
+  FEdit.OnChange := MetinDegisti;
   FOneri := TSynCompletionProposal.Create(Self);
   { Ctrl+Bosluk bilesenin varsayilan kisayoludur. '.' yazilinca da kisa beklemeden liste acilir. }
   FOneri.Options := FOneri.Options + [scoUseBuiltInTimer];
@@ -129,6 +138,37 @@ begin
   FEdit.EnsureCursorPosVisible;
   if FEdit.Showing then
     OdakVer;
+end;
+
+procedure TSqlEditor.HataSatiriniIsaretle(Satir: Integer);
+begin
+  FHataSatiri := Satir;
+  FEdit.Invalidate;
+  SatiraGit(Satir);
+end;
+
+procedure TSqlEditor.HataSatiriniTemizle;
+begin
+  if FHataSatiri = 0 then
+    Exit;
+  FHataSatiri := 0;
+  FEdit.Invalidate;
+end;
+
+procedure TSqlEditor.HataSatiriRengi(Sender: TObject; Line: Integer; var Special: Boolean;
+  var FG, BG: TColor);
+begin
+  if (FHataSatiri > 0) and (Line = FHataSatiri) then
+  begin
+    Special := True;
+    FG := clWhite;
+    BG := $3C3CC8;
+  end;
+end;
+
+procedure TSqlEditor.MetinDegisti(Sender: TObject);
+begin
+  HataSatiriniTemizle;
 end;
 
 procedure TSqlEditor.OdakVer;
