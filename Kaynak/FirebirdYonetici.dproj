@@ -127,6 +127,10 @@
             <Form>frmMetinSor</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="fGeneratorDeger.pas">
+            <Form>frmGeneratorDeger</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <DCCReference Include="fMetadataCikar.pas">
             <Form>frmMetadataCikar</Form>
             <FormType>dfm</FormType>

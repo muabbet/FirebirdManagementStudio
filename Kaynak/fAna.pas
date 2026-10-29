@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, uProsedur, uNesneYonet;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -53,6 +53,7 @@ type
     miDomVarsayilan: TMenuItem;
     miDomKontrol: TMenuItem;
     miDomAd: TMenuItem;
+    miGenDeger: TMenuItem;
     miNesneSil: TMenuItem;
     miBaglan: TMenuItem;
     miKes: TMenuItem;
@@ -98,6 +99,7 @@ type
     procedure miDomVarsayilanClick(Sender: TObject);
     procedure miDomKontrolClick(Sender: TObject);
     procedure miDomAdClick(Sender: TObject);
+    procedure miGenDegerClick(Sender: TObject);
     procedure miNesneSilClick(Sender: TObject);
     procedure miBaglanClick(Sender: TObject);
     procedure miKesClick(Sender: TObject);
@@ -185,6 +187,8 @@ type
     procedure NesneSekmeleriniKapat(const BaglantiAd: string; Tur: TNesneTuru; const Ad: string);
     procedure NesneyiSil(Dugme: TTreeNode);
     procedure DomainDegistirAc(Dugme: TTreeNode; Islem: TDomainIslemi);
+    procedure GeneratorDegeriAc(Dugme: TTreeNode);
+    procedure YeniGeneratorAc(Dal: TTreeNode);
     procedure MetadataCikarAc(Dugme: TTreeNode);
     procedure YedekPenceresiAc(Dugme: TTreeNode);
     procedure SorguyuCalistir;
@@ -287,6 +291,7 @@ begin
   miDomVarsayilan.Caption := T('MENU_DOM_VARSAYILAN');
   miDomKontrol.Caption := T('MENU_DOM_KONTROL');
   miDomAd.Caption := T('MENU_DOM_AD');
+  miGenDeger.Caption := T('MENU_GEN_DEGER');
   miNesneSil.Caption := T('MENU_SIL');
   miBaglan.Caption := T('BTN_BAGLAN');
   miKes.Caption := T('BTN_KES');
@@ -1322,6 +1327,101 @@ begin
   DurumuGuncelle;
 end;
 
+{ Generator sag tik "Degeri goster/ayarla": kucuk pencerede simdiki deger, yeni deger ve generator'i kullananlar; sonra
+  SQL'in gorundugu net onay (yeni deger kucukse ek uyari); yedek + komut. }
+procedure TfrmAna.GeneratorDegeriAc(Dugme: TTreeNode);
+var
+  Oge: TAgacOgesi;
+  Bag: TAcikBaglanti;
+  Mevcut, Yeni: Int64;
+  Kullananlar: string;
+  Sonuc: TProsedurSonucu;
+begin
+  Oge := OgeAl(Dugme);
+  Bag := FbAcikBaglanti(Oge.BaglantiAd);
+  if Bag = nil then
+    Exit;
+  try
+    Mevcut := GeneratorDeger(Bag, Oge.Ad);
+    Kullananlar := GeneratorKullananlarMetni(Bag, Oge.Ad);
+  except
+    on E: Exception do
+    begin
+      HataYaz(T('ERR_DDL_ALINAMADI') + ' ' + HataMetniniCevir(E), E.Message);
+      Exit;
+    end;
+  end;
+  if not GeneratorDegerPenceresi(Oge.Ad, Mevcut, Kullananlar, Yeni) then
+    Exit;
+  if Yeni = Mevcut then
+  begin
+    MesajYaz(TF('MSG_GEN_DEGISMEDI', [Oge.Ad, Mevcut]));
+    Exit;
+  end;
+  if not OnayIste(GeneratorDegerOnayMetni(Bag, Oge.Ad, Mevcut, Yeni)) then
+  begin
+    MesajYaz(T('MSG_GEN_VAZGECILDI'));
+    Exit;
+  end;
+  Sonuc := GeneratorDegerAyarla(Bag, Oge.Ad, Yeni);
+  if Sonuc.Basarili then
+  begin
+    MesajYaz(TF('MSG_GEN_AYARLANDI', [Oge.Ad, Mevcut, Yeni]));
+    MesajYaz(TF('MSG_PRS_YEDEKLENDI', [Sonuc.YedekDosyasi]));
+  end
+  else
+  begin
+    HataYaz(TF('ERR_GEN_AYARLANAMADI', [Oge.Ad]) + ' ' + Sonuc.Cumle, Sonuc.Ayrinti);
+    if Length(Sonuc.Komutlar) = 0 then
+      MesajYaz(T('MSG_PRS_DOKUNULMADI'))
+    else
+      MesajYaz(T('MSG_GEN_GERI_ALINDI'));
+  end;
+  SqlMesajiYaz(Sonuc.Komutlar);
+  DurumuGuncelle;
+end;
+
+{ Generator dalina sag tik "Yeni generator": ad sorulur, net onay, CREATE SEQUENCE; dal yenilenir. }
+procedure TfrmAna.YeniGeneratorAc(Dal: TTreeNode);
+var
+  Oge: TAgacOgesi;
+  Bag: TAcikBaglanti;
+  Ad: string;
+  Sonuc: TProsedurSonucu;
+begin
+  Oge := OgeAl(Dal);
+  Bag := FbAcikBaglanti(Oge.BaglantiAd);
+  if Bag = nil then
+    Exit;
+  Ad := '';
+  if not MetinSor(T('GEN_YENI_BASLIK'), T('GEN_YENI_ETIKET'), Ad, False) then
+    Exit;
+  Ad := AdHazirla(Ad);
+  if Ad = '' then
+  begin
+    UyariGoster(T('ERR_GEN_AD_BOS'));
+    Exit;
+  end;
+  if not OnayIste(TF('ONAY_GEN_YENI', [Ad])) then
+  begin
+    MesajYaz(T('MSG_GEN_VAZGECILDI'));
+    Exit;
+  end;
+  Sonuc := GeneratorOlustur(Bag, Ad);
+  if Sonuc.Basarili then
+  begin
+    MesajYaz(TF('MSG_GEN_OLUSTURULDU', [Ad]));
+    DalYenile(Dal);
+  end
+  else
+  begin
+    HataYaz(TF('ERR_GEN_OLUSTURULAMADI', [Ad]) + ' ' + Sonuc.Cumle, Sonuc.Ayrinti);
+    MesajYaz(T('MSG_YENI_GERI_ALINDI'));
+  end;
+  SqlMesajiYaz(Sonuc.Komutlar);
+  DurumuGuncelle;
+end;
+
 { Domain sag tik: varsayilan degeri, CHECK'i veya adi degistirir. Her is kucuk bir yazi penceresi (mevcut deger yazili,
   bos birakmak varsayilani/CHECK'i kaldirir) + SQL'in gorundugu net onay penceresi. }
 procedure TfrmAna.DomainDegistirAc(Dugme: TTreeNode; Islem: TDomainIslemi);
@@ -1768,12 +1868,15 @@ begin
   miDomAd.Visible := miDomVarsayilan.Visible;
   miNesneSil.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_VIEW, DAL_DOMAIN, DAL_ISTISNA, DAL_GENERATOR]);
   { Dala sag tik: yeni exception / domain. }
-  miYeniNesne.Visible := (not Bos) and (Tur = atDal) and Acik and (OgeAl(Dugme).DalNo in [DAL_DOMAIN, DAL_ISTISNA]);
+  miYeniNesne.Visible := (not Bos) and (Tur = atDal) and Acik and (OgeAl(Dugme).DalNo in [DAL_DOMAIN, DAL_ISTISNA, DAL_GENERATOR]);
   if miYeniNesne.Visible then
-    if OgeAl(Dugme).DalNo = DAL_DOMAIN then
-      miYeniNesne.Caption := T('MENU_YENI_DOMAIN')
+    case OgeAl(Dugme).DalNo of
+      DAL_DOMAIN: miYeniNesne.Caption := T('MENU_YENI_DOMAIN');
+      DAL_ISTISNA: miYeniNesne.Caption := T('MENU_YENI_ISTISNA');
     else
-      miYeniNesne.Caption := T('MENU_YENI_ISTISNA');
+      miYeniNesne.Caption := T('MENU_YENI_GENERATOR');
+    end;
+  miGenDeger.Visible := Uretilebilir and (OgeAl(Dugme).DalNo = DAL_GENERATOR);
   miYenile.Visible := (not Bos) and (Tur <> atKlasor) and Acik;
   miBaglan.Enabled := not Acik;
   miKes.Enabled := Acik;
@@ -1800,7 +1903,18 @@ end;
 procedure TfrmAna.miYeniNesneClick(Sender: TObject);
 begin
   if (tvNesneler.Selected <> nil) and (OgeAl(tvNesneler.Selected).Tur = atDal) then
-    YeniNesneAc(tvNesneler.Selected);
+  begin
+    if OgeAl(tvNesneler.Selected).DalNo = DAL_GENERATOR then
+      YeniGeneratorAc(tvNesneler.Selected)
+    else
+      YeniNesneAc(tvNesneler.Selected);
+  end;
+end;
+
+procedure TfrmAna.miGenDegerClick(Sender: TObject);
+begin
+  if tvNesneler.Selected <> nil then
+    GeneratorDegeriAc(tvNesneler.Selected);
 end;
 
 procedure TfrmAna.miDomVarsayilanClick(Sender: TObject);

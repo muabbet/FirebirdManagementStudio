@@ -51,6 +51,13 @@ function TetikleyiciDuzenleScripti(Bag: TAcikBaglanti; const Ad: string): string
 { Ad yalniz gerektiginde "..." icine alinarak yazilir (komut metni kurmak icin: DROP, ALTER DOMAIN ...). }
 function AdiYaz(Bag: TAcikBaglanti; const Ad: string): string;
 
+{ Generator'in degerini ayarlayan komut: SET GENERATOR ad TO n, TUM surumlerde (2.5, 3.0, 4.0, 5.0) sonrasinda GEN_ID(ad, 0) = n olur.
+  Gorev "3.0+ icin ALTER SEQUENCE ad RESTART WITH n" diyordu; olcum (ASAMA3F_RAPOR.md): RESTART WITH 2.5.9 ve 3.0.14'te
+  GEN_ID(ad,0) = n yapar, ama 4.0.7 ve 5.0.4'te "SONRAKI deger n olsun" anlamina gelir (GEN_ID(ad,0) = n - artis).
+  Ekranda "deger n" yazip gercekte n-1 gostermemek icin her surumde ayni anlamli SET GENERATOR kullanilir. Surum farki
+  gerekirse yalniz bu yordam degisir. }
+function GeneratorDegerKomutu(Bag: TAcikBaglanti; const Ad: string; Deger: Int64): string;
+
 { View'un duzenlenebilir tanimi: CREATE OR ALTER VIEW ad (kolonlar) AS select ...; (Firebird 2.5-5.0, olculdu).
   View'a bagli tetikleyiciler metne dahil degildir. }
 function ViewDuzenleScripti(Bag: TAcikBaglanti; const Ad: string): string;
@@ -575,6 +582,11 @@ begin
   finally
     AnahtarKelimeleriBirak;
   end;
+end;
+
+function GeneratorDegerKomutu(Bag: TAcikBaglanti; const Ad: string; Deger: Int64): string;
+begin
+  Result := 'SET GENERATOR ' + AdiYaz(Bag, Ad) + ' TO ' + IntToStr(Deger);
 end;
 
 function ViewDuzenleScripti(Bag: TAcikBaglanti; const Ad: string): string;

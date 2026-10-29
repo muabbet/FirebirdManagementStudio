@@ -31,6 +31,7 @@ uses
   fSorguSekme in 'fSorguSekme.pas' {SorguSekme: TFrame},
   fMetinGoster in 'fMetinGoster.pas' {frmMetinGoster},
   fMetinSor in 'fMetinSor.pas' {frmMetinSor},
+  fGeneratorDeger in 'fGeneratorDeger.pas' {frmGeneratorDeger},
   fMetadataCikar in 'fMetadataCikar.pas' {frmMetadataCikar},
   fCsvAktar in 'fCsvAktar.pas' {frmCsvAktar},
   fYedek in 'fYedek.pas' {frmYedek},

@@ -19,7 +19,7 @@ uses
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.Comp.Client, FireDAC.Phys.FB,
   FireDAC.ConsoleUI.Wait,
   Vcl.Forms, Vcl.Controls, Vcl.ExtCtrls,
-  uDil, uBaglanti, uMetadata, uSorgu, uDDL, uKullanici, uProsedur, uNesneYonet, uEditor, fProsedurSekme;
+  uDil, uBaglanti, uMetadata, uSorgu, uDDL, uKullanici, uProsedur, uNesneYonet, uEditor, fProsedurSekme, fGeneratorDeger;
 
 const
   TB = 'FBY_TEST_TB';
@@ -805,6 +805,154 @@ begin
     (Pos(TB + '.ADI', DomainOnayMetni(Bag, DM + '_B', 'x')) > 0));
 end;
 
+{ ---------- 3f-4: Generator ---------- }
+
+function GenDeger(const Ad: string): Int64;
+begin
+  Result := StrToInt64Def(Skaler(Bag, 'select gen_id(' + Ad + ', 0) from rdb$database'), -999);
+end;
+
+procedure GeneratorBolumu;
+var
+  Sonuc: TProsedurSonucu;
+  Onay, Dil, Komut: string;
+  Form: TfrmGeneratorDeger;
+  Kapanabilir: Boolean;
+  Anahtar: string;
+  Eksik: string;
+begin
+  Cikti.Add('');
+  Cikti.Add('=== B7) Generator: yeni, deger, kucultme (surum ' + Bag.Surum + ') ===');
+  Temizle;
+  Kontrol('Ad hazirla: kucuk harf -> BUYUK', AdHazirla(' fby_test_gn ') = 'FBY_TEST_GN');
+  Kontrol('Ad hazirla: bosluklu ad oldugu gibi, rakamla baslayan oldugu gibi',
+    (AdHazirla('Benim Gen') = 'Benim Gen') and (AdHazirla('1abc') = '1abc') and (AdHazirla('   ') = ''));
+
+  Sonuc := GeneratorOlustur(Bag, 'fby_test_gn');
+  if not Sonuc.Basarili then
+    Not_('hata: ' + Sonuc.Cumle + ' / ' + Sonuc.Ayrinti);
+  Kontrol('Yeni generator olusturuldu (kucuk harf yazildi, BUYUK olustu), SQL "CREATE SEQUENCE ad", deger 0',
+    Sonuc.Basarili and (Sonuc.Ad = GN) and (Length(Sonuc.Komutlar) = 1) and (Sonuc.Komutlar[0] = 'CREATE SEQUENCE ' + GN) and (GenDeger(GN) = 0));
+  Sonuc := GeneratorOlustur(Bag, GN);
+  Kontrol('Ayni adli generator: ERR_NESNE_VAR, Ayrinti dolu', (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_NESNE_VAR')) and (Sonuc.Ayrinti <> ''));
+  Sonuc := GeneratorOlustur(Bag, '   ');
+  Kontrol('Bos ad: ERR_GEN_AD_BOS, komut calismadi', (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_GEN_AD_BOS')) and (Length(Sonuc.Komutlar) = 0));
+  Sonuc := GeneratorOlustur(Bag, 'Benim Gen');
+  Kontrol('Bosluklu ad tirnaklanarak olusur', Sonuc.Basarili and (Sonuc.Komutlar[0] = 'CREATE SEQUENCE "Benim Gen"'));
+  if Sonuc.Basarili then
+    Yurut(Bag, 'drop sequence "Benim Gen"');
+
+  { Deger ayarlama: surume gore komut, sonucta GEN_ID(ad, 0) = n. }
+  Komut := GeneratorDegerKomutu(Bag, GN, 50);
+  Not_('deger komutu (surum ' + Bag.Surum + '): ' + Komut);
+  Kontrol('Komut her surumde SET GENERATOR ad TO n (RESTART WITH 4.0+ta farkli anlamli, bkz. rapor)', Komut = 'SET GENERATOR ' + GN + ' TO 50');
+  { Olcum notu: ALTER SEQUENCE RESTART WITH 200 sonrasi GEN_ID(ad,0): 2.5.9 ve 3.0.14'te 200, 4.0.7 ve 5.0.4'te 199 (sonraki deger 200). }
+  try
+    Yurut(Bag, 'alter sequence ' + GN + ' restart with 200');
+    Not_('OLCUM: ALTER SEQUENCE RESTART WITH 200 -> GEN_ID(ad,0) = ' + IntToStr(GenDeger(GN)) + ' (surum ' + Bag.Surum + ')');
+  except
+    on E: Exception do
+      Not_('OLCUM: ALTER SEQUENCE RESTART WITH desteklenmiyor: ' + HataKodlari(E));
+  end;
+  Yurut(Bag, GeneratorDegerKomutu(Bag, GN, 0));
+  Kontrol('Deger okuma: 0', GeneratorDeger(Bag, GN) = 0);
+  Sonuc := GeneratorDegerAyarla(Bag, GN, 50);
+  if not Sonuc.Basarili then
+    Not_('hata: ' + Sonuc.Cumle + ' / ' + Sonuc.Ayrinti);
+  Kontrol('Deger 50 yapildi (GEN_ID(ad,0) = 50), tek komut, SQL gorunur',
+    Sonuc.Basarili and (GenDeger(GN) = 50) and (GeneratorDeger(Bag, GN) = 50) and (Length(Sonuc.Komutlar) = 1) and (Sonuc.Komutlar[0] = Komut));
+  Kontrol('Sonraki deger 51 (ayarlanan deger SON verilen degerdir)', StrToInt64Def(Skaler(Bag, 'select gen_id(' + GN + ', 1) from rdb$database'), -1) = 51);
+  { Ayni anlam: eski komut da ayni sonucu verir (5.0 dahil tum surumlerde calisiyor). }
+  Yurut(Bag, 'set generator ' + GN + ' to 77');
+  Kontrol('SET GENERATOR ad TO 77 -> GEN_ID(ad,0) = 77 (RESTART WITH ile ayni anlam)', GenDeger(GN) = 77);
+  Sonuc := GeneratorDegerAyarla(Bag, GN, 4000000000);
+  Kontrol('Buyuk (32 bit disi) deger: 4000000000', Sonuc.Basarili and (GenDeger(GN) = 4000000000));
+  Kontrol('Yedek generator_ADI_...sql: ESKI degeri (SET GENERATOR ad TO 77) iceriyor',
+    FileExists(Sonuc.YedekDosyasi) and StartsText('generator_' + GN + '_', ExtractFileName(Sonuc.YedekDosyasi)) and
+    (Pos('CREATE SEQUENCE ' + GN, YedekMetni(Sonuc.YedekDosyasi)) > 0) and (Pos('SET GENERATOR ' + GN + ' TO 77;', YedekMetni(Sonuc.YedekDosyasi)) > 0));
+
+  { Kucultme }
+  Kontrol('Kucultuyor mu: 100 -> 10 evet, 10 -> 100 hayir, esit hayir',
+    GeneratorKucultuyorMu(100, 10) and not GeneratorKucultuyorMu(10, 100) and not GeneratorKucultuyorMu(5, 5));
+  Onay := GeneratorDegerOnayMetni(Bag, GN, 4000000000, 10);
+  Not_('kucultme onay metni: ' + TekSatir(Onay, 700));
+  Kontrol('Kucultme onayi: ek cakisma uyarisi, komut, eski/yeni deger',
+    (Pos(T('ONAY_GEN_KUCULTME'), Onay) > 0) and (Pos(GeneratorDegerKomutu(Bag, GN, 10), Onay) > 0) and (Pos('4000000000', Onay) > 0));
+  Kontrol('Buyutme onayinda uyari YOK', Pos(T('ONAY_GEN_KUCULTME'), GeneratorDegerOnayMetni(Bag, GN, 10, 500)) = 0);
+  Sonuc := GeneratorDegerAyarla(Bag, GN, 10);
+  Kontrol('Deger kucultulebiliyor (uyari ile): 10', Sonuc.Basarili and (GenDeger(GN) = 10));
+  Sonuc := GeneratorDegerAyarla(Bag, GN, 0);
+  Kontrol('Deger 0 yapilabiliyor', Sonuc.Basarili and (GenDeger(GN) = 0));
+
+  { Kullanan trigger bagimlilik listesinden }
+  Yurut(Bag, 'create table ' + TB + ' (ID integer)');
+  Yurut(Bag, 'create trigger ' + TR + ' for ' + TB + ' before insert as begin new.ID = gen_id(' + GN + ', 1); end');
+  Kontrol('Kullanan trigger bagimlilik listesinde (tur 2)',
+    (Length(BagimliNesneler(Bag, bhGenerator, GN)) = 1) and (BagimliNesneler(Bag, bhGenerator, GN)[0].Ad = TR) and (BagimliNesneler(Bag, bhGenerator, GN)[0].Tur = 2));
+  Kontrol('Kullananlar metni ve onay metni trigger adini iceriyor',
+    (Pos(TR, GeneratorKullananlarMetni(Bag, GN)) > 0) and (Pos(TR, GeneratorDegerOnayMetni(Bag, GN, 0, 5)) > 0));
+  Yurut(Bag, 'insert into ' + TB + ' (ID) values (null)');
+  Kontrol('Trigger generator kullaniyor: ilk satir 1', Skaler(Bag, 'select max(ID) from ' + TB) = '1');
+  Sonuc := GeneratorDegerAyarla(Bag, GN, 1000);
+  Yurut(Bag, 'insert into ' + TB + ' (ID) values (null)');
+  Kontrol('Deger 1000 yapilinca sonraki kayit 1001', Sonuc.Basarili and (Skaler(Bag, 'select max(ID) from ' + TB) = '1001'));
+
+  { Yedek yazilamiyor / olmayan generator }
+  Komut := TPath.Combine(TPath.GetTempPath, 'nesnetest_yedeksiz');
+  TDirectory.CreateDirectory(Komut);
+  TFile.WriteAllText(TPath.Combine(Komut, '_arsiv'), 'engel');
+  VeriKlasoruAyarla(Komut);
+  try
+    Sonuc := GeneratorDegerAyarla(Bag, GN, 5);
+  finally
+    VeriKlasoruAyarla(VeriKlasoru);
+  end;
+  TFile.Delete(TPath.Combine(Komut, '_arsiv'));
+  Kontrol('Yedek yazilamadi: deger degismedi, komut calismadi',
+    (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_PRS_YEDEK_YAZILAMADI')) and (Length(Sonuc.Komutlar) = 0) and (GenDeger(GN) = 1001));
+  Sonuc := GeneratorDegerAyarla(Bag, 'FBY_YOK_BOYLE', 5);
+  Kontrol('Olmayan generator: anlasilir cumle, komut calismadi',
+    (not Sonuc.Basarili) and (Sonuc.Cumle <> '') and (Sonuc.Cumle <> T('ERR_PRS_YEDEK_YAZILAMADI')) and (Length(Sonuc.Komutlar) = 0));
+
+  { INCREMENT BY (3.0+) }
+  if StrToIntDef(Copy(Bag.Surum, 1, 1), 0) >= 3 then
+  begin
+    Yurut(Bag, 'create sequence ' + GN + '_B increment by 5');
+    Sonuc := GeneratorDegerAyarla(Bag, GN + '_B', 100);
+    Kontrol('INCREMENT BY 5: deger 100 yapildi (GEN_ID(ad,0) = 100)', Sonuc.Basarili and (GenDeger(GN + '_B') = 100));
+    Not_('INCREMENT BY 5 + SET GENERATOR 100: GEN_ID(,0)=' + IntToStr(GenDeger(GN + '_B')) + ' sonraki=' + Skaler(Bag, 'select next value for ' + GN + '_B from rdb$database'));
+    Kontrol('INCREMENT BY 5: yedek INCREMENT BY 5 iceriyor', Pos('INCREMENT BY 5', YedekMetni(Sonuc.YedekDosyasi)) > 0);
+  end;
+
+  { Pencere duman testi: gecerli sayi kapanir, anahtarlar uc dilde }
+  Form := TfrmGeneratorDeger.Create(nil);
+  try
+    Form.edtYeni.Text := ' 123 ';
+    Form.ModalResult := mrOk;
+    Kapanabilir := False;
+    Form.FormCloseQuery(Form, Kapanabilir);
+    Kontrol('Deger penceresi: gecerli tam sayi kapanabilir', Kapanabilir);
+  finally
+    Form.Free;
+  end;
+  for Dil in ['tr', 'en', 'de'] do
+  begin
+    DilYukle(Dil);
+    Eksik := '';
+    for Anahtar in ['MENU_GEN_DEGER', 'MENU_YENI_GENERATOR', 'GEN_DEGER_BASLIK', 'GEN_DEGER_SIMDIKI', 'GEN_DEGER_YENI', 'GEN_DEGER_KULLANANLAR',
+      'ERR_GEN_DEGER_GECERSIZ', 'ONAY_GEN_DEGER', 'ONAY_GEN_KUCULTME', 'ONAY_GEN_KULLANANLAR', 'MSG_GEN_DEGISMEDI', 'MSG_GEN_VAZGECILDI',
+      'MSG_GEN_AYARLANDI', 'ERR_GEN_AYARLANAMADI', 'MSG_GEN_GERI_ALINDI', 'GEN_YENI_BASLIK', 'GEN_YENI_ETIKET', 'ONAY_GEN_YENI',
+      'MSG_GEN_OLUSTURULDU', 'ERR_GEN_OLUSTURULAMADI', 'ERR_GEN_AD_BOS', 'GEN_YEDEK_BASLIK'] do
+      if T(Anahtar) = Anahtar then
+        Eksik := Eksik + ' ' + Anahtar;
+    Kontrol('Dil ' + Dil + ': tum generator anahtarlari tanimli', Eksik = '');
+    if Eksik <> '' then
+      Not_('eksik:' + Eksik);
+    Not_(Dil + ' kucultme uyarisi: ' + TekSatir(T('ONAY_GEN_KUCULTME')));
+  end;
+  DilYukle('tr');
+end;
+
 { EKLEME NOKTASI: yeni bolumler buraya }
 
 { ---------- Ana akis ---------- }
@@ -878,6 +1026,7 @@ begin
           IstisnaBolumu;
           SilmeBolumu;
           DomainBolumu;
+          GeneratorBolumu;
           SekmeBolumu;
         finally
           Temizle;

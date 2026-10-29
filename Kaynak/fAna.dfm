@@ -165,6 +165,9 @@ object frmAna: TfrmAna
     object miDomAd: TMenuItem
       OnClick = miDomAdClick
     end
+    object miGenDeger: TMenuItem
+      OnClick = miGenDegerClick
+    end
     object miBaglan: TMenuItem
       OnClick = miBaglanClick
     end

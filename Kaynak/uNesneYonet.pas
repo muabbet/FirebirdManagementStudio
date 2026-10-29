@@ -37,6 +37,24 @@ function BagimlilikMetni(const Liste: TArray<TBagimlilik>): string;
 { Yeni nesne duzenleme sekmesinin bos sablonu (ntIstisna, ntDomain). }
 function YeniNesneSablonu(Tur: TNesneTuru): string;
 
+{ Kullanicinin yazdigi ad: yalniz harf, rakam, _ ve $ iceriyorsa BUYUK harfe cevrilir (Firebird'de tirnaksiz ad boyle olur);
+  bosluk, Turkce harf gibi baska karakter varsa oldugu gibi kalir (komutta "..." icine alinir). }
+function AdHazirla(const Girilen: string): string;
+
+{ ---------- Generator ---------- }
+
+{ Generator'in simdiki degeri (GEN_ID(ad, 0), degeri degistirmez). }
+function GeneratorDeger(Bag: TAcikBaglanti; const Ad: string): Int64;
+{ Yeni deger simdikinden kucukse True: bu degerler daha once verilmis olabilir, ek uyari gerekir. }
+function GeneratorKucultuyorMu(Mevcut, Yeni: Int64): Boolean;
+{ Generator'i kullanan prosedur / trigger'lar (onay ve deger penceresinde gosterilir); yoksa bos metin. }
+function GeneratorKullananlarMetni(Bag: TAcikBaglanti; const Ad: string): string;
+{ Deger degistirme onayi: komut, (kucultuyorsa) cakisma uyarisi, kullananlar. }
+function GeneratorDegerOnayMetni(Bag: TAcikBaglanti; const Ad: string; Mevcut, Yeni: Int64): string;
+function GeneratorDegerAyarla(Bag: TAcikBaglanti; const Ad: string; Yeni: Int64): TProsedurSonucu;
+{ Yeni generator: CREATE SEQUENCE ad. Sonuc.Ad olusan adi tasir. }
+function GeneratorOlustur(Bag: TAcikBaglanti; const Ad: string): TProsedurSonucu;
+
 { Domain'in yazi kutusuna konacak mevcut degeri (varsayilan ifade, CHECK ifadesi, ad). }
 function DomainMevcutDeger(Bag: TAcikBaglanti; const Ad: string; Islem: TDomainIslemi): string;
 { Calisacak komut(lar), "; " ile ayrilmis tek metin olarak (onay penceresinde de gosterilir). Deger bos:
@@ -146,6 +164,73 @@ begin
     Result := 'CREATE EXCEPTION YENI_EXCEPTION ''' + T('EXC_SABLON_MESAJ') + ''';' + sLineBreak;
 end;
 
+function AdHazirla(const Girilen: string): string;
+var
+  Harf: Char;
+  Basit: Boolean;
+begin
+  Result := Trim(Girilen);
+  Basit := Result <> '';
+  for Harf in Result do
+    if not CharInSet(Harf, ['A'..'Z', 'a'..'z', '0'..'9', '_', '$']) then
+      Basit := False;
+  if Basit and CharInSet(Result[1], ['0'..'9', '$']) then
+    Basit := False;
+  if Basit then
+    Result := UpperCase(Result);
+end;
+
+{ ---------- Generator ---------- }
+
+function GeneratorDeger(Bag: TAcikBaglanti; const Ad: string): Int64;
+begin
+  Result := GeneratorBilgisiOku(Bag, Ad).Deger;
+end;
+
+function GeneratorKucultuyorMu(Mevcut, Yeni: Int64): Boolean;
+begin
+  Result := Yeni < Mevcut;
+end;
+
+function GeneratorKullananlarMetni(Bag: TAcikBaglanti; const Ad: string): string;
+begin
+  Result := BagimlilikMetni(BagimliNesneler(Bag, bhGenerator, Ad));
+end;
+
+function GeneratorDegerOnayMetni(Bag: TAcikBaglanti; const Ad: string; Mevcut, Yeni: Int64): string;
+var
+  Kullananlar: string;
+begin
+  Result := TF('ONAY_GEN_DEGER', [Ad, Mevcut, Yeni, GeneratorDegerKomutu(Bag, Ad, Yeni)]);
+  if GeneratorKucultuyorMu(Mevcut, Yeni) then
+    Result := Result + sLineBreak + sLineBreak + T('ONAY_GEN_KUCULTME');
+  Kullananlar := GeneratorKullananlarMetni(Bag, Ad);
+  if Kullananlar <> '' then
+    Result := Result + sLineBreak + sLineBreak + T('ONAY_GEN_KULLANANLAR') + sLineBreak + Kullananlar;
+  Result := Result + sLineBreak + sLineBreak + T('ONAY_DOM_SORU');
+end;
+
+function GeneratorDegerAyarla(Bag: TAcikBaglanti; const Ad: string; Yeni: Int64): TProsedurSonucu;
+begin
+  Result := Default(TProsedurSonucu);
+  { Yedek: tam CREATE SEQUENCE script'i, SET GENERATOR ile ESKI degeri de tasir. }
+  if not EskiTanimiYedekle(Bag, ntGenerator, Ad, True, Result) then
+    Exit;
+  MetniCalistir(Bag, GeneratorDegerKomutu(Bag, Ad, Yeni), Result);
+end;
+
+function GeneratorOlustur(Bag: TAcikBaglanti; const Ad: string): TProsedurSonucu;
+begin
+  Result := Default(TProsedurSonucu);
+  Result.Ad := AdHazirla(Ad);
+  if Result.Ad = '' then
+  begin
+    Result.Cumle := T('ERR_GEN_AD_BOS');
+    Exit;
+  end;
+  MetniCalistir(Bag, 'CREATE SEQUENCE ' + AdiYaz(Bag, Result.Ad), Result);
+end;
+
 { ---------- Domain ---------- }
 
 { Yazilan degerin basindaki anahtar sozcugu atar: "DEFAULT 5" -> "5", "CHECK (VALUE > 0)" -> "(VALUE > 0)". }
@@ -196,7 +281,7 @@ begin
         end;
       end;
   else
-    Result := On + ' TO ' + AdiYaz(Bag, Trim(Deger));
+    Result := On + ' TO ' + AdiYaz(Bag, AdHazirla(Deger));
   end;
 end;
 
@@ -211,7 +296,7 @@ begin
   if not EskiTanimiYedekle(Bag, ntDomain, Ad, True, Result) then
     Exit;
   if Islem = diAd then
-    Result.Ad := Trim(Deger);
+    Result.Ad := AdHazirla(Deger);
   MetniCalistir(Bag, DomainKomutlari(Bag, Ad, Islem, Deger), Result);
 end;
 
