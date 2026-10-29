@@ -336,7 +336,7 @@
   "MSG_PRS_ACILDI": "Die Prozedur %s wurde in einem Bearbeitungs-Tab geöffnet. In der Datenbank ändert sich nichts, bis Sie speichern.",
   "ERR_PRS_BASLIK_YOK": "Der Text muss mit 'CREATE OR ALTER PROCEDURE %s' beginnen. Dieser Tab speichert nur die Prozedur %s.",
   "ERR_PRS_AD_DEGISTI": "Dieser Tab bearbeitet die Prozedur %s, im Text steht aber der Name %s. Unter anderem Namen zu speichern würde eine neue Prozedur anlegen und wurde deshalb abgelehnt. Setzen Sie den Namen zurück.",
-  "ERR_NESNE_BAGIMLI": "Andere Objekte (Prozeduren, Trigger, Views usw.) verwenden dieses Objekt, deshalb ist die gewünschte Änderung (etwa Löschen oder Ändern der Parameter) nicht möglich. Aktualisieren oder entfernen Sie zuerst die Objekte, die es verwenden.",
+  "ERR_NESNE_BAGIMLI": "Andere Objekte (Prozeduren, Trigger, Views usw.) verwenden dieses Objekt, deshalb ist die gewünschte Änderung (etwa Löschen, Entfernen einer View-Spalte oder Ändern der Parameter) nicht möglich. Aktualisieren oder entfernen Sie zuerst die Objekte, die es verwenden.",
   "ERR_PRS_YEDEK_YAZILAMADI": "Die alte Definition konnte nicht gesichert werden, deshalb wurde das Speichern gestoppt. In der Datenbank wurde nichts geändert. Prüfen Sie Schreibrechte und freien Speicherplatz für den Sicherungsordner.",
   "AGAC_TETIKLEYICILER": "Trigger",
   "TRG_SEKME": "Trigger: %s (%s)",
@@ -352,5 +352,15 @@
   "ERR_TRG_TABLO_DEGISTI": "Der Trigger %s gehört derzeit zur Tabelle %s, im Text steht aber %s (- = ohne Tabelle). Die Tabelle eines Triggers kann nicht geändert werden; es wurde nichts gespeichert. Stellen Sie den FOR-Teil im Text wieder her. Um ihn an eine andere Tabelle zu binden, legen Sie einen neuen Trigger an und löschen den alten.",
   "ERR_SALT_OKUNUR_KOLON": "Diese Spalte kann in dieser Art von Trigger nicht geändert werden (schreibgeschützt). NEW-Werte können nur in BEFORE INSERT/UPDATE-Triggern zugewiesen werden.",
   "AGAC_DOMAINLER": "Domänen",
-  "AGAC_ISTISNALAR": "Exceptions"
+  "AGAC_ISTISNALAR": "Exceptions",
+  "VIEW_SEKME": "View: %s (%s)",
+  "VIEW_BILGI": "Sie bearbeiten die View %s. Speichern (Strg+S) übernimmt die Änderung in die Datenbank; die alte Definition wird zuvor in eine Datei gesichert.",
+  "VIEW_YEDEK_BASLIK": "View-Sicherung (Stand vor dem Speichern)",
+  "ONAY_VIEW_KAYDET": "Die View %s wird in der Datenbank geändert. Prozeduren, Trigger und andere Views, die sie verwenden, können betroffen sein; das Speichern wird abgelehnt, wenn eine von ihnen genutzte Spalte entfällt. Die alte Definition wird in eine Datei gesichert.\n\nFortfahren?",
+  "MSG_VIEW_KAYDEDILDI": "View %s gespeichert (Transaktion bestätigt: Commit).",
+  "ERR_VIEW_KAYDEDILEMEDI": "Die View %s konnte nicht gespeichert werden.",
+  "MSG_VIEW_GERI_ALINDI": "Die Änderung wurde nicht übernommen; die Transaktion wurde zurückgerollt (Rollback), die alte View-Definition bleibt.",
+  "MSG_VIEW_ACILDI": "Die View %s wurde in einem Bearbeitungs-Tab geöffnet. In der Datenbank ändert sich nichts, bis Sie speichern.",
+  "ERR_VIEW_BASLIK_YOK": "Der Text muss mit 'CREATE OR ALTER VIEW %s' beginnen. Dieser Tab speichert nur die View %s.",
+  "ERR_VIEW_AD_DEGISTI": "Dieser Tab bearbeitet die View %s, im Text steht aber der Name %s. Unter anderem Namen zu speichern würde eine neue View anlegen und wurde deshalb abgelehnt. Setzen Sie den Namen zurück."
 }

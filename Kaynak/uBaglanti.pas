@@ -826,6 +826,11 @@ begin
     PROCEDURE X" metni var. Erisim turu (protect, INSERT, DELETE, ALTER...) ne olursa olsun ayni cumle. }
   if Iceriyor(Hata.Message, 'no permission for') then
     Exit(T('ERR_YETKI_YOK'));
+  { Olcum (3f, 2.5.9 - 5.0.4): view kolonu baska view tarafindan kullaniliyorsa "Column X from table V is referenced in
+    view W"; DROP'ta "cannot delete ... there are N dependencies". Kod 2.5'te nesne-yok koduyla karisabildigi icin
+    kodlardan ONCE metne bakilir. }
+  if Iceriyor(Hata.Message, 'is referenced in') or Iceriyor(Hata.Message, 'dependencies') then
+    Exit(T('ERR_NESNE_BAGIMLI'));
   if (Hata is EFDDBEngineException) and KodundanCevir(EFDDBEngineException(Hata), Result) then
     Exit;
   Result := MetindenCevir(Hata.Message);

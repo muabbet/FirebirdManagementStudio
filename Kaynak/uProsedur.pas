@@ -1,5 +1,5 @@
-{ uProsedur.pas - Sakli prosedur (Asama 3e-1) ve tetikleyici (Asama 3e-2) duzenleme ve veritabanina kaydetme.
-  Ikisi ayni adimlarla calisir; fark yalniz tur (ntProsedur / ntTetikleyici): baslik, yedek dosya adi ve metinler.
+{ uProsedur.pas - Sakli prosedur (Asama 3e-1), tetikleyici (3e-2) ve view (3f-2) duzenleme ve veritabanina kaydetme.
+  Hepsi ayni adimlarla calisir; fark yalniz tur (ntProsedur / ntTetikleyici / ntView): baslik, yedek dosya adi ve metinler.
   Prosedur* adli yordamlar 3e-1'den kalma ince sarmalardir (davranis ayni); asil is Nesne* yordamlarindadir.
 
   Hedeflenen Firebird surumleri: 2.5, 3.0, 4.0, 5.0
@@ -34,7 +34,7 @@ type
   end;
 
 { Duzenleme sekmesinde acilacak metin. Nesne yoksa (prosedurde paketliyse) EMetadataHatasi.
-  Tur: ntProsedur veya ntTetikleyici (baska tur verilmez). }
+  Tur: ntProsedur, ntTetikleyici veya ntView (baska tur verilmez). }
 function NesneDuzenleMetni(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string): string;
 
 { Metindeki ilk komut "CREATE OR ALTER PROCEDURE|TRIGGER <Ad>" ile basliyor mu? Degilse hata cumlesi, tamamsa bos doner. }
@@ -42,6 +42,9 @@ function NesneAdiniDogrula(Tur: TNesneTuru; const Metin, Ad: string): string;
 
 { Yalniz tetikleyici: metindeki FOR tablosu mevcut tabloyla ayni mi? Tablo degistirilemez; degilse hata cumlesi, tamamsa bos. }
 function TetikleyiciTablosunuDogrula(Bag: TAcikBaglanti; const Metin, Ad: string): string;
+
+{ Dil anahtarlarinin tur eki: PRS (prosedur, belirtilmeyen tur de), TRG (tetikleyici), VIEW. Sekme yazilari bununla secilir. }
+function TurOnEki(Tur: TNesneTuru): string;
 
 { Eski tanimi yedekler, metni calistirir. Bkz. unit basligi. }
 function NesneKaydet(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad, Metin: string): TProsedurSonucu;
@@ -66,37 +69,45 @@ type
   { Eski tanim yedeklenemedi: kaydetme baslamadan durur. }
   EProsedurYedek = class(Exception);
 
-{ Metindeki baslik sozcugu ve dil anahtarlari tura gore secilir. }
+{ Metindeki baslik sozcugu ve dil anahtarlari tura gore secilir (belirtilmeyen tur prosedurdur). }
 function TurSozcugu(Tur: TNesneTuru): string;
 begin
-  if Tur = ntTetikleyici then
-    Result := 'TRIGGER'
+  case Tur of
+    ntTetikleyici: Result := 'TRIGGER';
+    ntView: Result := 'VIEW';
   else
     Result := 'PROCEDURE';
+  end;
 end;
 
 function TurOnEki(Tur: TNesneTuru): string;
 begin
-  if Tur = ntTetikleyici then
-    Result := 'TRG'
+  case Tur of
+    ntTetikleyici: Result := 'TRG';
+    ntView: Result := 'VIEW';
   else
     Result := 'PRS';
+  end;
 end;
 
 function DosyaOnEki(Tur: TNesneTuru): string;
 begin
-  if Tur = ntTetikleyici then
-    Result := 'trigger_'
+  case Tur of
+    ntTetikleyici: Result := 'trigger_';
+    ntView: Result := 'view_';
   else
     Result := 'prosedur_';
+  end;
 end;
 
 function NesneDuzenleMetni(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string): string;
 begin
-  if Tur = ntTetikleyici then
-    Result := TetikleyiciDuzenleScripti(Bag, Ad)
+  case Tur of
+    ntTetikleyici: Result := TetikleyiciDuzenleScripti(Bag, Ad);
+    ntView: Result := ViewDuzenleScripti(Bag, Ad);
   else
     Result := ProsedurDuzenleScripti(Bag, Ad);
+  end;
 end;
 
 function NesneAdiniDogrula(Tur: TNesneTuru; const Metin, Ad: string): string;

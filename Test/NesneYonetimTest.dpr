@@ -255,6 +255,166 @@ begin
   Kontrol('Olmayan domain: anlasilir EMetadataHatasi', Metin <> '');
 end;
 
+{ ---------- 3f-2: View duzenleme ---------- }
+
+function ViewKaynagi(const Ad: string): string;
+begin
+  Result := Skaler(Bag, 'select rdb$view_source from rdb$relations where rdb$relation_name = ''' + Ad + '''');
+end;
+
+function ViewKolonlari(const Ad: string): string;
+begin
+  Result := Skaler(Bag, 'select list(trim(rdb$field_name), '','') from (select rdb$field_name from rdb$relation_fields ' +
+    'where rdb$relation_name = ''' + Ad + ''' order by rdb$field_position)');
+end;
+
+function YedekSayisi: Integer;
+begin
+  ForceDirectories(ProsedurYedekKlasoru(Bag.Tanim.Ad));
+  Result := Length(TDirectory.GetFiles(ProsedurYedekKlasoru(Bag.Tanim.Ad), '*.sql'));
+end;
+
+{ Yedek klasoru yerine dosya konur (yazilamaz); kaydetme denenir, sonra eski haline donulur. }
+function YedeksizKaydet(Tur: TNesneTuru; const Ad, Metin: string): TProsedurSonucu;
+var
+  Klasor, Dosya: string;
+begin
+  Klasor := TPath.Combine(TPath.GetTempPath, 'nesnetest_yedeksiz');
+  TDirectory.CreateDirectory(Klasor);
+  Dosya := TPath.Combine(Klasor, '_arsiv');
+  TFile.WriteAllText(Dosya, 'engel');
+  VeriKlasoruAyarla(Klasor);
+  try
+    Result := NesneKaydet(Bag, Tur, Ad, Metin);
+  finally
+    VeriKlasoruAyarla(VeriKlasoru);
+  end;
+  TFile.Delete(Dosya);
+end;
+
+procedure ViewKur;
+begin
+  Temizle;
+  Yurut(Bag, 'create table ' + TB + ' (ID integer, AD varchar(30), X integer)');
+  Yurut(Bag, 'create view ' + VW + ' (ID, AD) as select ID, AD from ' + TB);
+  Yurut(Bag, 'create view ' + VW2 + ' (ID) as select ID from ' + VW);
+end;
+
+procedure ViewBolumu;
+var
+  Metin, Yedek, YedekMetni: string;
+  Sonuc: TProsedurSonucu;
+  Once: Integer;
+begin
+  Cikti.Add('');
+  Cikti.Add('=== B3) View duzenleme (surum ' + Bag.Surum + ') ===');
+  ViewKur;
+  Metin := ViewDuzenleScripti(Bag, VW);
+  Not_('view duzenleme metni: ' + TekSatir(Metin, 300));
+  Kontrol('View metni CREATE OR ALTER VIEW ad (kolonlar) AS ile basliyor',
+    (Pos('CREATE OR ALTER VIEW ' + VW + ' (ID, AD) AS', Metin) = 1) and (Pos('SET TERM', Metin) = 0));
+  Kontrol('View metni TEK komut ve ad dogrulamasindan geciyor',
+    (Length(KomutlaraBol(Metin)) = 1) and (NesneAdiniDogrula(ntView, Metin, VW) = ''));
+  Kontrol('NesneDuzenleMetni(ntView) ayni metni veriyor', NesneDuzenleMetni(Bag, ntView, VW) = Metin);
+  Kontrol('ScriptUret(ntView) CREATE VIEW uretiyor', Pos('CREATE VIEW ' + VW, ScriptUret(Bag, ntView, VW)) > 0);
+
+  { Bagimlisiz degisiklik: WHERE ekle. Bagimli VW2 var ama kullandigi ID kolonu duruyor. }
+  Once := YedekSayisi;
+  Sonuc := NesneKaydet(Bag, ntView, VW, StringReplace(Metin, 'from ' + TB, 'from ' + TB + ' where ID > 0', [rfIgnoreCase]));
+  if not Sonuc.Basarili then
+    Not_('hata: ' + Sonuc.Cumle + ' / ' + Sonuc.Ayrinti);
+  Kontrol('Bagimlisi olan view kaydedildi (kullanilan kolon duruyor)', Sonuc.Basarili);
+  Kontrol('View yeni tanimda (WHERE var)', ContainsText(ViewKaynagi(VW), 'ID > 0'));
+  Kontrol('Sonuc: tek komut, CREATE OR ALTER VIEW ile basliyor',
+    (Length(Sonuc.Komutlar) = 1) and (Pos('CREATE OR ALTER VIEW', Sonuc.Komutlar[0]) = 1));
+  Yedek := Sonuc.YedekDosyasi;
+  Kontrol('Yedek dosyasi view_ADI_...sql, _arsiv\<baglanti> altinda',
+    FileExists(Yedek) and (Pos(ProsedurYedekKlasoru(Bag.Tanim.Ad), Yedek) = 1) and StartsText('view_' + VW + '_', ExtractFileName(Yedek)) and
+    EndsText('.sql', Yedek) and (YedekSayisi = Once + 1));
+  Not_('yedek: ' + Yedek);
+  if FileExists(Yedek) then
+  begin
+    YedekMetni := TFile.ReadAllText(Yedek, TEncoding.GetEncoding(1254));
+    Kontrol('Yedek ESKI tanimi iceriyor (WHERE yok), CREATE OR ALTER VIEW ve SET NAMES var',
+      (Pos('CREATE OR ALTER VIEW ' + VW, YedekMetni) > 0) and (Pos('SET NAMES ', YedekMetni) > 0) and (Pos('ID > 0', YedekMetni) = 0));
+    Sonuc := NesneKaydet(Bag, ntView, VW, StringReplace(YedekMetni, 'SET NAMES ', '-- SET NAMES ', []));
+    Kontrol('Yedek metniyle geri kaydetme basarili, WHERE gitti', Sonuc.Basarili and not ContainsText(ViewKaynagi(VW), 'ID > 0'));
+  end;
+
+  { Bagimliyi bozan degisiklik: VW2'nin kullandigi ID kolonu cikarilir. }
+  Sonuc := NesneKaydet(Bag, ntView, VW, 'CREATE OR ALTER VIEW ' + VW + ' (AD) AS select AD from ' + TB + ';');
+  Not_('bagimli kolon cikarma: basarili=' + BoolToStr(Sonuc.Basarili, True) + ' cumle=' + TekSatir(Sonuc.Cumle) + ' ayrinti=' + TekSatir(Sonuc.Ayrinti));
+  Kontrol('Bagimlinin kullandigi kolon cikarilamaz: reddedildi, cumle ERR_NESNE_BAGIMLI, Ayrinti dolu',
+    (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_NESNE_BAGIMLI')) and (Sonuc.Ayrinti <> ''));
+  Kontrol('Reddedilince view eski halinde (ID, AD kolonlari duruyor)', ViewKolonlari(VW) = 'ID,AD');
+  { Bagimlinin kullanmadigi kolon cikarilabilir. }
+  Sonuc := NesneKaydet(Bag, ntView, VW, 'CREATE OR ALTER VIEW ' + VW + ' (ID) AS select ID from ' + TB + ';');
+  Kontrol('Bagimlinin kullanmadigi kolon (AD) cikarilabilir', Sonuc.Basarili and (ViewKolonlari(VW) = 'ID'));
+
+  { Hatalar: sozdizimi, olmayan tablo; eski view bozulmaz. }
+  Sonuc := NesneKaydet(Bag, ntView, VW, 'CREATE OR ALTER VIEW ' + VW + ' (ID) AS selec ID from ' + TB + ';');
+  Not_('sozdizimi: cumle=' + TekSatir(Sonuc.Cumle) + ' ayrinti=' + TekSatir(Sonuc.Ayrinti) + ' satir=' + IntToStr(Sonuc.Satir));
+  Kontrol('Sozdizimi hatasi: anlasilir cumle, Ayrinti dolu, view bozulmadi',
+    (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_SQL_SOZDIZIMI')) and (Sonuc.Ayrinti <> '') and (ViewKolonlari(VW) = 'ID'));
+  Sonuc := NesneKaydet(Bag, ntView, VW, 'CREATE OR ALTER VIEW ' + VW + ' (ID) AS select ID from FBY_TEST_YOKTABLO;');
+  Not_('olmayan tablo: cumle=' + TekSatir(Sonuc.Cumle) + ' ayrinti=' + TekSatir(Sonuc.Ayrinti));
+  Kontrol('Olmayan tablo: anlasilir cumle, view bozulmadi',
+    (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_SQL_NESNE_YOK')) and (ViewKolonlari(VW) = 'ID'));
+
+  { Kurallar: ad degisikligi ve basliksiz metin veritabanina dokunmadan reddedilir. }
+  Sonuc := NesneKaydet(Bag, ntView, VW, 'CREATE OR ALTER VIEW FBY_TEST_VW9 (ID) AS select ID from ' + TB + ';');
+  Kontrol('Ad degisikligi reddedildi (ERR_VIEW_AD_DEGISTI), yeni view olusmadi',
+    (not Sonuc.Basarili) and (Sonuc.Cumle = TF('ERR_VIEW_AD_DEGISTI', [VW, 'FBY_TEST_VW9'])) and (Length(Sonuc.Komutlar) = 0) and
+    (Skaler(Bag, 'select count(*) from rdb$relations where rdb$relation_name = ''FBY_TEST_VW9''') = '0'));
+  Sonuc := NesneKaydet(Bag, ntView, VW, 'CREATE VIEW ' + VW + ' (ID) AS select ID from ' + TB + ';');
+  Kontrol('Basliksiz (CREATE VIEW, OR ALTER yok) metin reddedildi', (not Sonuc.Basarili) and (Sonuc.Cumle = TF('ERR_VIEW_BASLIK_YOK', [VW, VW])));
+  Kontrol('PROCEDURE basligi view sekmesinde reddedilir', NesneAdiniDogrula(ntView, 'CREATE OR ALTER PROCEDURE ' + VW + ' AS begin end', VW) <> '');
+
+  { Yedek yazilamazsa durur. }
+  Sonuc := YedeksizKaydet(ntView, VW, ViewDuzenleScripti(Bag, VW));
+  Kontrol('Yedek yazilamadi: kaydetme durdu (ERR_PRS_YEDEK_YAZILAMADI), veritabanina dokunulmadi',
+    (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_PRS_YEDEK_YAZILAMADI')) and (Length(Sonuc.Komutlar) = 0));
+end;
+
+{ Duzenleme sekmesi duman testi: sekme acilir, baslik/bilgi/Kaydet dugmesi dilden, F5 yalniz ipucu, Kaydet baglanti yoksa mesaj. }
+procedure SekmeDene(Tur: TNesneTuru; const Ad, SekmeAnahtari, BilgiAnahtari: string);
+var
+  Form: TForm;
+  Sekme: TProsedurSekme;
+  Satirlar: TStringList;
+begin
+  Satirlar := TStringList.Create;
+  Form := TForm.CreateNew(nil);
+  try
+    Sekme := TProsedurSekme.Create(Form);
+    Sekme.Parent := Form;
+    Sekme.Align := alClient;
+    Sekme.AnaSonuc := Satirlar;
+    Sekme.Tur := Tur;
+    Sekme.Yukle(Bag, Ad);
+    Kontrol(SekmeAnahtari + ': sekme basligi', Sekme.Baslik = TF(SekmeAnahtari, [Ad, Bag.Tanim.Ad]));
+    Kontrol(SekmeAnahtari + ': Kaydet dugmesi yazisi dilden ve OnClick bagli',
+      (Sekme.btnKaydet.Caption = T('PRS_KAYDET')) and Assigned(Sekme.btnKaydet.OnClick));
+    Kontrol(SekmeAnahtari + ': bilgi satiri', Sekme.lblBilgi.Caption = TF(BilgiAnahtari, [Ad]));
+    Sekme.F5Ipucu;
+    Kontrol(SekmeAnahtari + ': F5 yalniz ipucu yazar', (Satirlar.Count = 1) and (Satirlar[0] = T('MSG_PRS_F5_IPUCU')));
+    Sekme.BaglantiAd := 'yok_boyle_baglanti';
+    Sekme.Kaydet;
+    Kontrol(SekmeAnahtari + ': baglanti yoksa Kaydet mesaj yazar', (Satirlar.Count = 2) and (Pos('yok_boyle_baglanti', Satirlar[1]) > 0));
+  finally
+    Form.Free;
+    Satirlar.Free;
+  end;
+end;
+
+procedure SekmeBolumu;
+begin
+  Cikti.Add('');
+  Cikti.Add('=== B9) Arayuz duman testi: duzenleme sekmeleri ===');
+  ViewKur;
+  SekmeDene(ntView, VW, 'VIEW_SEKME', 'VIEW_BILGI');
+end;
+
 { EKLEME NOKTASI: yeni bolumler buraya }
 
 { ---------- Ana akis ---------- }
@@ -323,6 +483,8 @@ begin
         Cikti.Add('Surum: ' + Bag.Surum);
         try
           ListeBolumu;
+          ViewBolumu;
+          SekmeBolumu;
         finally
           Temizle;
         end;

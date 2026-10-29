@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, uProsedur;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -1042,8 +1042,8 @@ begin
   MesajYaz(TF('MSG_SCRIPT_URETILDI', [Oge.Ad]));
 end;
 
-{ Prosedurun veya tetikleyicinin CREATE OR ALTER metnini duzenleme sekmesinde acar (hangisi oldugu agactaki dalindan
-  gelir). Ayni baglantida ayni nesne zaten aciksa o sekmeye gecilir (yazilmis ama kaydedilmemis metin kaybolmasin). }
+{ Prosedurun, tetikleyicinin veya view'in CREATE OR ALTER metnini duzenleme sekmesinde acar (hangisi oldugu agactaki
+  dalindan gelir). Ayni baglantida ayni nesne zaten aciksa o sekmeye gecilir (yazilmis ama kaydedilmemis metin kaybolmasin). }
 procedure TfrmAna.NesneDuzenleAc(Dugme: TTreeNode);
 var
   Oge: TAgacOgesi;
@@ -1057,14 +1057,17 @@ begin
   Bag := FbAcikBaglanti(Oge.BaglantiAd);
   if Bag = nil then
     Exit;
-  Tur := ntProsedur;
-  if Oge.DalNo = DAL_TETIKLEYICI then
-    Tur := ntTetikleyici;
+  case Oge.DalNo of
+    DAL_TETIKLEYICI: Tur := ntTetikleyici;
+    DAL_VIEW: Tur := ntView;
+  else
+    Tur := ntProsedur;
+  end;
   for i := 0 to pcCalisma.PageCount - 1 do
   begin
     Sekme := ProsedurSekmeAl(pcCalisma.Pages[i]);
     if (Sekme <> nil) and SameText(Sekme.BaglantiAd, Oge.BaglantiAd) and (Sekme.NesneAdi = Oge.Ad) and
-      ((Sekme.Tur = ntTetikleyici) = (Tur = ntTetikleyici)) then
+      (TurOnEki(Sekme.Tur) = TurOnEki(Tur)) then
     begin
       pcCalisma.ActivePage := pcCalisma.Pages[i];
       Exit;
@@ -1072,10 +1075,12 @@ begin
   end;
   Sayfa := TTabSheet.Create(pcCalisma);
   Sayfa.PageControl := pcCalisma;
-  if Tur = ntTetikleyici then
-    Sayfa.ImageIndex := IKON_TETIKLEYICI
+  case Tur of
+    ntTetikleyici: Sayfa.ImageIndex := IKON_TETIKLEYICI;
+    ntView: Sayfa.ImageIndex := IKON_VIEW;
   else
     Sayfa.ImageIndex := IKON_PROSEDUR;
+  end;
   Sekme := TProsedurSekme.Create(Sayfa);
   Sekme.Parent := Sayfa;
   Sekme.Align := alClient;
@@ -1101,10 +1106,7 @@ begin
   Sayfa.Caption := Sekme.Baslik;
   pcCalisma.ActivePage := Sayfa;
   Sekme.EditoreOdaklan;
-  if Tur = ntTetikleyici then
-    MesajYaz(TF('MSG_TRG_ACILDI', [Oge.Ad]))
-  else
-    MesajYaz(TF('MSG_PRS_ACILDI', [Oge.Ad]));
+  MesajYaz(TF('MSG_' + TurOnEki(Tur) + '_ACILDI', [Oge.Ad]));
   DurumuGuncelle;
 end;
 
@@ -1489,7 +1491,7 @@ begin
   { DDL tetikleyicisinde (script uretilmeyen tur) Script uret ve Duzenle gizlenir; Yenile kalir. }
   Uretilebilir := (not Bos) and (Tur = atNesne) and not OgeAl(Dugme).Duzenlenemez;
   miScriptUret.Visible := Uretilebilir;
-  miNesneDuzenle.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_PROSEDUR, DAL_TETIKLEYICI]);
+  miNesneDuzenle.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_VIEW, DAL_PROSEDUR, DAL_TETIKLEYICI]);
   miYenile.Visible := (not Bos) and (Tur <> atKlasor) and Acik;
   miBaglan.Enabled := not Acik;
   miKes.Enabled := Acik;

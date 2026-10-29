@@ -336,7 +336,7 @@
   "MSG_PRS_ACILDI": "%s prosedürü düzenleme sekmesinde açıldı. Kaydedilene kadar veritabanında hiçbir şey değişmez.",
   "ERR_PRS_BASLIK_YOK": "Metin 'CREATE OR ALTER PROCEDURE %s' ile başlamalı. Bu sekme yalnızca %s prosedürünü kaydeder.",
   "ERR_PRS_AD_DEGISTI": "Bu sekme %s prosedürünü düzenliyor, ama metinde %s adı yazıyor. Başka adla kaydetmek yeni bir prosedür oluştururdu; bu yüzden reddedildi. Adı geri değiştirin.",
-  "ERR_NESNE_BAGIMLI": "Bu nesneyi başka nesneler (prosedür, tetikleyici, view vb.) kullanıyor; bu yüzden istenen değişiklik (silme veya parametre değiştirme gibi) yapılamıyor. Önce bu nesneyi kullanan nesneleri güncelleyin ya da kaldırın.",
+  "ERR_NESNE_BAGIMLI": "Bu nesneyi başka nesneler (prosedür, tetikleyici, view vb.) kullanıyor; bu yüzden istenen değişiklik (silme, view kolonunu çıkarma veya parametre değiştirme gibi) yapılamıyor. Önce bu nesneyi kullanan nesneleri güncelleyin ya da kaldırın.",
   "ERR_PRS_YEDEK_YAZILAMADI": "Eski tanım yedeklenemedi, bu yüzden kaydetme durduruldu. Veritabanında hiçbir şey değişmedi. Yedek klasörüne yazma iznini ve disk alanını kontrol edin.",
   "AGAC_TETIKLEYICILER": "Trigger'lar",
   "TRG_SEKME": "Trigger: %s (%s)",
@@ -352,5 +352,15 @@
   "ERR_TRG_TABLO_DEGISTI": "%s trigger'ı şu an %s tablosuna bağlı, ama metinde %s yazıyor (- = tablosuz). Trigger'ın bağlı olduğu tablo değiştirilemez; kaydetme yapılmadı. Metindeki FOR kısmını eski haline getirin. Başka tabloya taşımak için yeni bir trigger oluşturup eskisini silin.",
   "ERR_SALT_OKUNUR_KOLON": "Bu kolon bu trigger türünde değiştirilemez (salt okunur). NEW değerleri yalnızca BEFORE INSERT/UPDATE trigger'larında atanabilir.",
   "AGAC_DOMAINLER": "Domain'ler",
-  "AGAC_ISTISNALAR": "Exception'lar"
+  "AGAC_ISTISNALAR": "Exception'lar",
+  "VIEW_SEKME": "View: %s (%s)",
+  "VIEW_BILGI": "%s view'ını düzenliyorsunuz. Kaydet (Ctrl+S) değişikliği veritabanına uygular; eski hali önce bir dosyaya yedeklenir.",
+  "VIEW_YEDEK_BASLIK": "View yedeği (kaydetmeden önceki hali)",
+  "ONAY_VIEW_KAYDET": "%s view'ı veritabanında değiştirilecek. Bu view'ı kullanan prosedür, trigger ve başka view'lar etkilenebilir; kullandıkları bir kolon kaldırılırsa kaydetme reddedilir. Eski hali bir dosyaya yedeklenir.\n\nDevam edilsin mi?",
+  "MSG_VIEW_KAYDEDILDI": "%s view'ı kaydedildi (işlem onaylandı: commit).",
+  "ERR_VIEW_KAYDEDILEMEDI": "%s view'ı kaydedilemedi.",
+  "MSG_VIEW_GERI_ALINDI": "Değişiklik uygulanmadı; işlem geri alındı (rollback), view'ın eski hali duruyor.",
+  "MSG_VIEW_ACILDI": "%s view'ı düzenleme sekmesinde açıldı. Kaydedilene kadar veritabanında hiçbir şey değişmez.",
+  "ERR_VIEW_BASLIK_YOK": "Metin 'CREATE OR ALTER VIEW %s' ile başlamalı. Bu sekme yalnızca %s view'ını kaydeder.",
+  "ERR_VIEW_AD_DEGISTI": "Bu sekme %s view'ını düzenliyor, ama metinde %s adı yazıyor. Başka adla kaydetmek yeni bir view oluştururdu; bu yüzden reddedildi. Adı geri değiştirin."
 }
