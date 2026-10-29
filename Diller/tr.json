@@ -350,5 +350,7 @@
   "ERR_TRG_BASLIK_YOK": "Metin 'CREATE OR ALTER TRIGGER %s' ile başlamalı. Bu sekme yalnızca %s trigger'ını kaydeder.",
   "ERR_TRG_AD_DEGISTI": "Bu sekme %s trigger'ını düzenliyor, ama metinde %s adı yazıyor. Başka adla kaydetmek yeni bir trigger oluştururdu; bu yüzden reddedildi. Adı geri değiştirin.",
   "ERR_TRG_TABLO_DEGISTI": "%s trigger'ı şu an %s tablosuna bağlı, ama metinde %s yazıyor (- = tablosuz). Trigger'ın bağlı olduğu tablo değiştirilemez; kaydetme yapılmadı. Metindeki FOR kısmını eski haline getirin. Başka tabloya taşımak için yeni bir trigger oluşturup eskisini silin.",
-  "ERR_SALT_OKUNUR_KOLON": "Bu kolon bu trigger türünde değiştirilemez (salt okunur). NEW değerleri yalnızca BEFORE INSERT/UPDATE trigger'larında atanabilir."
+  "ERR_SALT_OKUNUR_KOLON": "Bu kolon bu trigger türünde değiştirilemez (salt okunur). NEW değerleri yalnızca BEFORE INSERT/UPDATE trigger'larında atanabilir.",
+  "AGAC_DOMAINLER": "Domain'ler",
+  "AGAC_ISTISNALAR": "Exception'lar"
 }

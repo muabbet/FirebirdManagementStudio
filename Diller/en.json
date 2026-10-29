@@ -350,5 +350,7 @@
   "ERR_TRG_BASLIK_YOK": "The text must start with 'CREATE OR ALTER TRIGGER %s'. This tab only saves trigger %s.",
   "ERR_TRG_AD_DEGISTI": "This tab edits trigger %s, but the text uses the name %s. Saving under another name would create a new trigger, so it was refused. Change the name back.",
   "ERR_TRG_TABLO_DEGISTI": "Trigger %s is currently attached to table %s, but the text says %s (- = no table). The table of a trigger cannot be changed; nothing was saved. Restore the FOR part of the text. To move it to another table, create a new trigger and drop the old one.",
-  "ERR_SALT_OKUNUR_KOLON": "This column cannot be changed in this kind of trigger (read-only). NEW values can only be assigned in BEFORE INSERT/UPDATE triggers."
+  "ERR_SALT_OKUNUR_KOLON": "This column cannot be changed in this kind of trigger (read-only). NEW values can only be assigned in BEFORE INSERT/UPDATE triggers.",
+  "AGAC_DOMAINLER": "Domains",
+  "AGAC_ISTISNALAR": "Exceptions"
 }

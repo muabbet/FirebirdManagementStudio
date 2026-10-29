@@ -197,6 +197,9 @@ procedure TablolariGetir(Bag: TAcikBaglanti; Hedef: TStrings);
 procedure ViewlariGetir(Bag: TAcikBaglanti; Hedef: TStrings);
 procedure ProsedurleriGetir(Bag: TAcikBaglanti; Hedef: TStrings);
 procedure GeneratorleriGetir(Bag: TAcikBaglanti; Hedef: TStrings);
+{ Agac listeleri (Asama 3f): kullanici domain'leri ve exception'lari, yalniz adlar. Sistem nesneleri gelmez. }
+procedure DomainleriGetir(Bag: TAcikBaglanti; Hedef: TStrings);
+procedure IstisnalariGetir(Bag: TAcikBaglanti; Hedef: TStrings);
 function KolonTablosuOlustur(Bag: TAcikBaglanti; const Tablo: string; Sahip: TComponent): TFDMemTable;
 procedure KolonTablosuYazilariniYenile(Tablo: TDataSet);
 
@@ -206,6 +209,9 @@ procedure TabloOzellikleriniOku(Bag: TAcikBaglanti; const Ad: string; var Bilgi:
 function ViewBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TViewBilgisi;
 function ProsedurBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TProsedurBilgisi;
 function GeneratorBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TGeneratorBilgisi;
+{ Tek domain / exception. Yoksa EMetadataHatasi. }
+function DomainBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TDomainBilgisi;
+function IstisnaBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TIstisnaBilgisi;
 { Tek tablonun parcalari (TabloBilgisiOku bunlari birlestirir). }
 function KolonlariOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TKolonBilgisi>;
 function KisitlariOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TKisitBilgisi>;
@@ -472,6 +478,22 @@ procedure NesneVarMi(Bag: TAcikBaglanti; const Sql, Ad: string);
 begin
   if TekDeger(Bag, Sql, Ad) = '' then
     raise EMetadataHatasi.Create(TF('ERR_DDL_NESNE_YOK', [Ad]));
+end;
+
+{ Domain adlari: kullanici domain'leri (RDB$ ile baslayan, sunucunun kolonlar icin urettigi adlar ve sistem domain'leri haric). }
+procedure DomainleriGetir(Bag: TAcikBaglanti; Hedef: TStrings);
+begin
+  Hedef.Clear;
+  Hedef.AddStrings(SutunListesi(Bag, 'select rdb$field_name from rdb$fields ' +
+    'where rdb$field_name not starting with ''RDB$'' and coalesce(rdb$system_flag, 0) = 0 ' +
+    'order by rdb$field_name', ''));
+end;
+
+procedure IstisnalariGetir(Bag: TAcikBaglanti; Hedef: TStrings);
+begin
+  Hedef.Clear;
+  Hedef.AddStrings(SutunListesi(Bag, 'select rdb$exception_name from rdb$exceptions ' +
+    'where coalesce(rdb$system_flag, 0) = 0 order by rdb$exception_name', ''));
 end;
 
 function SayiTipi(const Ad: string; VarsayilanHassasiyet, AltTip, Hassasiyet, Olcek: Integer): string;
@@ -1127,6 +1149,26 @@ begin
     Sorgu.Free;
     Liste.Free;
   end;
+end;
+
+function DomainBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TDomainBilgisi;
+var
+  Alan: TDomainBilgisi;
+begin
+  for Alan in DomainleriOku(Bag) do
+    if Alan.Ad = Ad then
+      Exit(Alan);
+  raise EMetadataHatasi.Create(TF('ERR_DDL_NESNE_YOK', [Ad]));
+end;
+
+function IstisnaBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TIstisnaBilgisi;
+var
+  Istisna: TIstisnaBilgisi;
+begin
+  for Istisna in IstisnalariOku(Bag) do
+    if Istisna.Ad = Ad then
+      Exit(Istisna);
+  raise EMetadataHatasi.Create(TF('ERR_DDL_NESNE_YOK', [Ad]));
 end;
 
 function TabloAdlari(Bag: TAcikBaglanti): TArray<string>;

@@ -14,7 +14,7 @@ uses
   System.SysUtils, System.Classes, uBaglanti;
 
 type
-  TNesneTuru = (ntTablo, ntView, ntProsedur, ntGenerator, ntTetikleyici);
+  TNesneTuru = (ntTablo, ntView, ntProsedur, ntGenerator, ntTetikleyici, ntDomain, ntIstisna);
 
   { Metadata cikar: CREATE DATABASE / CONNECT ifadeleri ve sifre. Uc secenek de varsayilan KAPALI. }
   TCikarSecenekleri = record
@@ -47,6 +47,13 @@ function ProsedurDuzenleScripti(Bag: TAcikBaglanti; const Ad: string): string;
   (Firebird 2.5-5.0). Tablo, olay, POSITION ve ACTIVE/INACTIVE mevcut halinden gelir. DDL tetikleyicisinde
   (script uretilmeyen tur) EMetadataHatasi. }
 function TetikleyiciDuzenleScripti(Bag: TAcikBaglanti; const Ad: string): string;
+
+{ View'un duzenlenebilir tanimi: CREATE OR ALTER VIEW ad (kolonlar) AS select ...; (Firebird 2.5-5.0, olculdu).
+  View'a bagli tetikleyiciler metne dahil degildir. }
+function ViewDuzenleScripti(Bag: TAcikBaglanti; const Ad: string): string;
+
+{ Exception'in duzenlenebilir tanimi: CREATE OR ALTER EXCEPTION ad 'mesaj'; }
+function IstisnaDuzenleScripti(Bag: TAcikBaglanti; const Ad: string): string;
 
 { Tum veritabaninin yapisini (veri yok) Yazici'ya yazar; bos veritabaninda hatasiz calisacak sirada.
   Atlanan/sorunlu seyler Uyarilar'a (kullaniciya gosterilecek cumleler) yazilir. Iptal edilirse False
@@ -489,6 +496,53 @@ begin
     Result := Result + 'SET GENERATOR ' + AdYaz(Ad) + ' TO ' + IntToStr(Bilgi.Deger) + ';' + sLineBreak;
 end;
 
+{ ---------- Domain ve exception ---------- }
+
+function YaziSabiti(const Metin: string): string;
+begin
+  Result := '''' + StringReplace(Metin, '''', '''''', [rfReplaceAll]) + '''';
+end;
+
+{ CREATE DOMAIN ad AS tip [DEFAULT ..] [NOT NULL] [CHECK ..] [COLLATE ..]; (sonunda ';' ile) }
+function DomainMetni(const Alan: TDomainBilgisi): string;
+begin
+  Result := 'CREATE DOMAIN ' + AdYaz(Alan.Ad) + ' AS ' + Alan.Tip;
+  if Alan.Varsayilan <> '' then
+    Result := Result + ' ' + Alan.Varsayilan;
+  if Alan.BosOlmaz then
+    Result := Result + ' NOT NULL';
+  if Alan.Kontrol <> '' then
+    Result := Result + ' ' + Alan.Kontrol;
+  if Alan.Collate <> '' then
+    Result := Result + ' COLLATE ' + AdYaz(Alan.Collate);
+  Result := Result + ';';
+end;
+
+function DomainScripti(Bag: TAcikBaglanti; const Ad: string): string;
+begin
+  Result := DomainMetni(DomainBilgisiOku(Bag, Ad)) + sLineBreak;
+end;
+
+{ Fiil: CREATE veya CREATE OR ALTER (2.5-5.0'da ikisi de var, olculdu). }
+function IstisnaScripti(Bag: TAcikBaglanti; const Ad, Fiil: string): string;
+begin
+  Result := Fiil + ' EXCEPTION ' + AdYaz(Ad) + ' ' + YaziSabiti(IstisnaBilgisiOku(Bag, Ad).Mesaj) + ';' + sLineBreak;
+end;
+
+{ ---------- View duzenleme ---------- }
+
+{ CREATE OR ALTER VIEW 2.5, 3.0, 4.0 ve 5.0'da vardir (olculdu, ASAMA3F_RAPOR.md). Bagimli nesne varsa ve
+  kullandigi kolon degismiyorsa calisir; RECREATE VIEW ise bagimli varken her zaman basarisiz olur, bu yuzden
+  kullanilmaz. View'a bagli tetikleyiciler bu metne dahil degildir (CREATE OR ALTER onlara dokunmaz). }
+function ViewDuzenleMetniUret(Bag: TAcikBaglanti; const Ad: string): string;
+var
+  Bilgi: TViewBilgisi;
+begin
+  Bilgi := ViewBilgisiOku(Bag, Ad);
+  Result := 'CREATE OR ALTER VIEW ' + AdYaz(Ad) + ' (' + AdListesi(Bilgi.Kolonlar) + ') AS' + sLineBreak +
+    Bitir(Trim(Bilgi.Kaynak), ';') + sLineBreak;
+end;
+
 { ---------- Disariya acik ---------- }
 
 function ScriptUret(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string): string;
@@ -500,9 +554,31 @@ begin
       ntView: Result := ViewScripti(Bag, Ad);
       ntProsedur: Result := ProsedurScripti(Bag, Ad, 'CREATE');
       ntTetikleyici: Result := TetikleyiciScripti(Bag, Ad, 'CREATE');
+      ntDomain: Result := DomainScripti(Bag, Ad);
+      ntIstisna: Result := IstisnaScripti(Bag, Ad, 'CREATE');
     else
       Result := GeneratorScripti(Bag, Ad);
     end;
+  finally
+    AnahtarKelimeleriBirak;
+  end;
+end;
+
+function ViewDuzenleScripti(Bag: TAcikBaglanti; const Ad: string): string;
+begin
+  AnahtarKelimeleriKur(Bag.Surum);
+  try
+    Result := ViewDuzenleMetniUret(Bag, Ad);
+  finally
+    AnahtarKelimeleriBirak;
+  end;
+end;
+
+function IstisnaDuzenleScripti(Bag: TAcikBaglanti; const Ad: string): string;
+begin
+  AnahtarKelimeleriKur(Bag.Surum);
+  try
+    Result := IstisnaScripti(Bag, Ad, 'CREATE OR ALTER');
   finally
     AnahtarKelimeleriBirak;
   end;
@@ -529,11 +605,6 @@ begin
 end;
 
 { ---------- Tum veritabani (Metadata cikar) ---------- }
-
-function YaziSabiti(const Metin: string): string;
-begin
-  Result := '''' + StringReplace(Metin, '''', '''''', [rfReplaceAll]) + '''';
-end;
 
 type
   TTabloKisiti = record
@@ -712,16 +783,8 @@ begin
     Haber(T('MD_ASAMA_DOMAINLER'), i + 1, Length(Liste));
     if FIptal then
       Exit;
-    Komut := 'CREATE DOMAIN ' + AdYaz(Liste[i].Ad) + ' AS ' + Liste[i].Tip;
-    if Liste[i].Varsayilan <> '' then
-      Komut := Komut + ' ' + Liste[i].Varsayilan;
-    if Liste[i].BosOlmaz then
-      Komut := Komut + ' NOT NULL';
-    if Liste[i].Kontrol <> '' then
-      Komut := Komut + ' ' + Liste[i].Kontrol;
-    if Liste[i].Collate <> '' then
-      Komut := Komut + ' COLLATE ' + AdYaz(Liste[i].Collate);
-    Satir(Komut + ';');
+    Komut := DomainMetni(Liste[i]);
+    Satir(Komut);
   end;
   if Length(Liste) > 0 then
     Satir('');

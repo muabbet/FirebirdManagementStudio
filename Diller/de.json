@@ -350,5 +350,7 @@
   "ERR_TRG_BASLIK_YOK": "Der Text muss mit 'CREATE OR ALTER TRIGGER %s' beginnen. Dieser Tab speichert nur den Trigger %s.",
   "ERR_TRG_AD_DEGISTI": "Dieser Tab bearbeitet den Trigger %s, im Text steht aber der Name %s. Unter anderem Namen zu speichern würde einen neuen Trigger anlegen und wurde deshalb abgelehnt. Setzen Sie den Namen zurück.",
   "ERR_TRG_TABLO_DEGISTI": "Der Trigger %s gehört derzeit zur Tabelle %s, im Text steht aber %s (- = ohne Tabelle). Die Tabelle eines Triggers kann nicht geändert werden; es wurde nichts gespeichert. Stellen Sie den FOR-Teil im Text wieder her. Um ihn an eine andere Tabelle zu binden, legen Sie einen neuen Trigger an und löschen den alten.",
-  "ERR_SALT_OKUNUR_KOLON": "Diese Spalte kann in dieser Art von Trigger nicht geändert werden (schreibgeschützt). NEW-Werte können nur in BEFORE INSERT/UPDATE-Triggern zugewiesen werden."
+  "ERR_SALT_OKUNUR_KOLON": "Diese Spalte kann in dieser Art von Trigger nicht geändert werden (schreibgeschützt). NEW-Werte können nur in BEFORE INSERT/UPDATE-Triggern zugewiesen werden.",
+  "AGAC_DOMAINLER": "Domänen",
+  "AGAC_ISTISNALAR": "Exceptions"
 }

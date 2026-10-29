@@ -1,8 +1,8 @@
 { fAna.pas - Ana form: sol agac, sag sekmeler, alt sonuc alani, ust arac cubugu.
   Form sadece arayuzu bilir; is uBaglanti, uMetadata, uSorgu unit'lerindedir.
 
-  Agac: kokte klasorler ve kayitli baglantilar durur. Baglanti acilinca altinda
-  bes dal (Tablolar, View'lar, Prosedurler, Trigger'lar, Generator'lar) dolar. Birden fazla
+  Agac: kokte klasorler ve kayitli baglantilar durur. Baglanti acilinca altinda yedi dal (Tablolar, View'lar,
+  Prosedurler, Trigger'lar, Domain'ler, Exception'lar, Generator'lar) dolar. Birden fazla
   baglanti ayni anda acik olabilir. Her agac dugumunun Data alani bir
   TAgacOgesi'ni gosterir; dugumun ne oldugu orada yazar. }
 unit fAna;
@@ -135,6 +135,7 @@ type
     function BaglantiDugmesineCik(Dugme: TTreeNode): TTreeNode;
     function SeciliBaglantiDugmesi: TTreeNode;
     procedure AgaciKur;
+    procedure DalIciniDoldur(Dal: TTreeNode; Bag: TAcikBaglanti);
     procedure DallariDoldur(Dugme: TTreeNode; Bag: TAcikBaglanti);
     procedure DalDoldur(Dal: TTreeNode; Ikon: Integer; Liste: TStrings);
     procedure TetikleyiciDaliDoldur(Dal: TTreeNode; const Liste: TArray<TTetikleyiciBilgisi>);
@@ -182,7 +183,10 @@ const
   DAL_VIEW = 1;
   DAL_PROSEDUR = 2;
   DAL_TETIKLEYICI = 3;
-  DAL_GENERATOR = 4;
+  DAL_DOMAIN = 4;
+  DAL_ISTISNA = 5;
+  DAL_GENERATOR = 6;
+  DAL_SAYISI = 7;
 
 procedure TfrmAna.FormCreate(Sender: TObject);
 var
@@ -529,36 +533,71 @@ begin
   end;
 end;
 
-{ Baglantinin altindaki bes dali sunucudan okuyup yeniden doldurur. }
-procedure TfrmAna.DallariDoldur(Dugme: TTreeNode; Bag: TAcikBaglanti);
+{ Tek dalin icini sunucudan okuyup doldurur (dal dugumu zaten vardir). }
+procedure TfrmAna.DalIciniDoldur(Dal: TTreeNode; Bag: TAcikBaglanti);
 var
   Liste: TStringList;
-  Dallar: array[0..4] of TTreeNode;
-  i: Integer;
 begin
   Liste := TStringList.Create;
+  try
+    Dal.DeleteChildren;
+    case OgeAl(Dal).DalNo of
+      DAL_TABLO:
+        begin
+          TablolariGetir(Bag, Liste);
+          DalDoldur(Dal, IKON_TABLO, Liste);
+        end;
+      DAL_VIEW:
+        begin
+          ViewlariGetir(Bag, Liste);
+          DalDoldur(Dal, IKON_VIEW, Liste);
+        end;
+      DAL_PROSEDUR:
+        begin
+          ProsedurleriGetir(Bag, Liste);
+          DalDoldur(Dal, IKON_PROSEDUR, Liste);
+        end;
+      DAL_TETIKLEYICI:
+        TetikleyiciDaliDoldur(Dal, TetikleyicileriListele(Bag));
+      DAL_DOMAIN:
+        begin
+          DomainleriGetir(Bag, Liste);
+          DalDoldur(Dal, IKON_DOMAIN, Liste);
+        end;
+      DAL_ISTISNA:
+        begin
+          IstisnalariGetir(Bag, Liste);
+          DalDoldur(Dal, IKON_ISTISNA, Liste);
+        end;
+    else
+      GeneratorleriGetir(Bag, Liste);
+      DalDoldur(Dal, IKON_GENERATOR, Liste);
+    end;
+  finally
+    Liste.Free;
+  end;
+end;
+
+{ Baglantinin altindaki yedi dali sunucudan okuyup yeniden doldurur. }
+procedure TfrmAna.DallariDoldur(Dugme: TTreeNode; Bag: TAcikBaglanti);
+var
+  Dallar: array[0..DAL_SAYISI - 1] of TTreeNode;
+  i: Integer;
+begin
   tvNesneler.Items.BeginUpdate;
   try
     Dugme.DeleteChildren;
-    for i := 0 to 4 do
+    for i := 0 to DAL_SAYISI - 1 do
     begin
       Dallar[i] := tvNesneler.Items.AddChild(Dugme, '');
       OgeBagla(Dallar[i], IKON_KLASOR, atDal, Bag.Tanim.Ad, '', i);
     end;
-    TablolariGetir(Bag, Liste);
-    DalDoldur(Dallar[DAL_TABLO], IKON_TABLO, Liste);
-    ViewlariGetir(Bag, Liste);
-    DalDoldur(Dallar[DAL_VIEW], IKON_VIEW, Liste);
-    ProsedurleriGetir(Bag, Liste);
-    DalDoldur(Dallar[DAL_PROSEDUR], IKON_PROSEDUR, Liste);
-    TetikleyiciDaliDoldur(Dallar[DAL_TETIKLEYICI], TetikleyicileriListele(Bag));
-    GeneratorleriGetir(Bag, Liste);
-    DalDoldur(Dallar[DAL_GENERATOR], IKON_GENERATOR, Liste);
+    for i := 0 to DAL_SAYISI - 1 do
+      DalIciniDoldur(Dallar[i], Bag);
     Dugme.Expand(False);
     Dallar[DAL_TABLO].Expand(False);
   finally
     tvNesneler.Items.EndUpdate;
-    Liste.Free;
   end;
   AgacYazilariniYenile;
 end;
@@ -566,8 +605,9 @@ end;
 { Dal basliklarini secili dille yazar (sayilariyla birlikte). }
 procedure TfrmAna.AgacYazilariniYenile;
 const
-  ANAHTARLAR: array[0..4] of string = (
-    'AGAC_TABLOLAR', 'AGAC_VIEWLAR', 'AGAC_PROSEDURLER', 'AGAC_TETIKLEYICILER', 'AGAC_GENERATORLER');
+  ANAHTARLAR: array[0..DAL_SAYISI - 1] of string = (
+    'AGAC_TABLOLAR', 'AGAC_VIEWLAR', 'AGAC_PROSEDURLER', 'AGAC_TETIKLEYICILER', 'AGAC_DOMAINLER',
+    'AGAC_ISTISNALAR', 'AGAC_GENERATORLER');
 var
   i: Integer;
   Dugme: TTreeNode;
@@ -979,6 +1019,8 @@ begin
     DAL_VIEW: Tur := ntView;
     DAL_PROSEDUR: Tur := ntProsedur;
     DAL_TETIKLEYICI: Tur := ntTetikleyici;
+    DAL_DOMAIN: Tur := ntDomain;
+    DAL_ISTISNA: Tur := ntIstisna;
   else
     Tur := ntGenerator;
   end;
