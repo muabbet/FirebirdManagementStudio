@@ -32,6 +32,9 @@ const
   IKON_KULLANICI = IKON_GENERATOR;
   { Tetikleyici icin ayri ikon yok (Ikonlar\svg icinde uygun yok); gecici olarak "calistir" (oynat) ikonu (rapora yazildi). }
   IKON_TETIKLEYICI = IKON_CALISTIR;
+  { Domain ve exception icin ayri ikon yok; gecici olarak "agac" (list-tree) ve "yeni dosya" (file-plus) ikonlari (rapora yazildi). }
+  IKON_DOMAIN = IKON_PLAN;
+  IKON_ISTISNA = IKON_METADATA;
 
 procedure IkonlariKoleksiyonaYukle(Koleksiyon: TImageCollection);
 procedure IkonlariYukle(Koleksiyon: TImageCollection; Liste: TVirtualImageList);

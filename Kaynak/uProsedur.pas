@@ -1,5 +1,5 @@
-{ uProsedur.pas - Sakli prosedur (Asama 3e-1) ve tetikleyici (Asama 3e-2) duzenleme ve veritabanina kaydetme.
-  Ikisi ayni adimlarla calisir; fark yalniz tur (ntProsedur / ntTetikleyici): baslik, yedek dosya adi ve metinler.
+{ uProsedur.pas - Sakli prosedur (Asama 3e-1), tetikleyici (3e-2) ve view (3f-2) duzenleme ve veritabanina kaydetme.
+  Hepsi ayni adimlarla calisir; fark yalniz tur (ntProsedur / ntTetikleyici / ntView): baslik, yedek dosya adi ve metinler.
   Prosedur* adli yordamlar 3e-1'den kalma ince sarmalardir (davranis ayni); asil is Nesne* yordamlarindadir.
 
   Hedeflenen Firebird surumleri: 2.5, 3.0, 4.0, 5.0
@@ -31,10 +31,12 @@ type
     { Calistirilan (hatada denenen) komutlar, SqlOzeti ile kisaltilmis; mesaj alanina yazilir. }
     Komutlar: TArray<string>;
     YedekDosyasi: string;
+    { Yeni nesne kaydedilirken metinden okunan (olusan) nesne adi. }
+    Ad: string;
   end;
 
 { Duzenleme sekmesinde acilacak metin. Nesne yoksa (prosedurde paketliyse) EMetadataHatasi.
-  Tur: ntProsedur veya ntTetikleyici (baska tur verilmez). }
+  Tur: ntProsedur, ntTetikleyici veya ntView (baska tur verilmez). }
 function NesneDuzenleMetni(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string): string;
 
 { Metindeki ilk komut "CREATE OR ALTER PROCEDURE|TRIGGER <Ad>" ile basliyor mu? Degilse hata cumlesi, tamamsa bos doner. }
@@ -43,8 +45,27 @@ function NesneAdiniDogrula(Tur: TNesneTuru; const Metin, Ad: string): string;
 { Yalniz tetikleyici: metindeki FOR tablosu mevcut tabloyla ayni mi? Tablo degistirilemez; degilse hata cumlesi, tamamsa bos. }
 function TetikleyiciTablosunuDogrula(Bag: TAcikBaglanti; const Metin, Ad: string): string;
 
+{ Dil anahtarlarinin tur eki: PRS (prosedur, belirtilmeyen tur de), TRG (tetikleyici), VIEW. Sekme yazilari bununla secilir. }
+function TurOnEki(Tur: TNesneTuru): string;
+
 { Eski tanimi yedekler, metni calistirir. Bkz. unit basligi. }
 function NesneKaydet(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad, Metin: string): TProsedurSonucu;
+
+{ Yeni nesne (3f-3, yalniz ntIstisna ve ntDomain): metindeki ilk komut "CREATE EXCEPTION|DOMAIN <ad>" ile basliyor mu?
+  Degilse hata cumlesi (Ad bos), tamamsa bos doner ve Ad'a olusacak nesnenin adi yazilir. CREATE OR ALTER kabul
+  EDILMEZ: ayni adli nesne varsa sessizce ezilmesin, "zaten var" hatasi alinsin. }
+function YeniNesneAdiniDogrula(Tur: TNesneTuru; const Metin: string; out Ad: string): string;
+
+{ Yeni nesneyi olusturur (yedek yok, eski tanim yok): ad kontrolu, sonra tek acik islemde calistirma. }
+function YeniNesneKaydet(Bag: TAcikBaglanti; Tur: TNesneTuru; const Metin: string): TProsedurSonucu;
+
+{ Yonetim islemleri icin ortak parcalar (uNesneYonet). Eski tanimi yedekler: Tam = True tam CREATE script'i, False
+  duzenleme metni. Yazilamazsa False doner ve Sonuc.Cumle/Ayrinti dolar (veritabanina dokunulmaz). }
+function EskiTanimiYedekle(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string; Tam: Boolean;
+  var Sonuc: TProsedurSonucu): Boolean;
+
+{ Metindeki komutlari tek ACIK islemde calistirir (commit / hatada rollback); sonucu ve calisan komutlari Sonuc'a yazar. }
+procedure MetniCalistir(Bag: TAcikBaglanti; const Metin: string; var Sonuc: TProsedurSonucu);
 
 { 3e-1'den kalan prosedur sarmalari (Tur = ntProsedur). }
 function ProsedurDuzenleMetni(Bag: TAcikBaglanti; const Ad: string): string;
@@ -66,37 +87,54 @@ type
   { Eski tanim yedeklenemedi: kaydetme baslamadan durur. }
   EProsedurYedek = class(Exception);
 
-{ Metindeki baslik sozcugu ve dil anahtarlari tura gore secilir. }
+{ Metindeki baslik sozcugu ve dil anahtarlari tura gore secilir (belirtilmeyen tur prosedurdur). }
 function TurSozcugu(Tur: TNesneTuru): string;
 begin
-  if Tur = ntTetikleyici then
-    Result := 'TRIGGER'
+  case Tur of
+    ntTetikleyici: Result := 'TRIGGER';
+    ntView: Result := 'VIEW';
+    ntIstisna: Result := 'EXCEPTION';
+    ntDomain: Result := 'DOMAIN';
   else
     Result := 'PROCEDURE';
+  end;
 end;
 
 function TurOnEki(Tur: TNesneTuru): string;
 begin
-  if Tur = ntTetikleyici then
-    Result := 'TRG'
+  case Tur of
+    ntTetikleyici: Result := 'TRG';
+    ntView: Result := 'VIEW';
+    ntIstisna: Result := 'EXC';
+    ntDomain: Result := 'DOM';
+    ntGenerator: Result := 'GEN';
   else
     Result := 'PRS';
+  end;
 end;
 
 function DosyaOnEki(Tur: TNesneTuru): string;
 begin
-  if Tur = ntTetikleyici then
-    Result := 'trigger_'
+  case Tur of
+    ntTetikleyici: Result := 'trigger_';
+    ntView: Result := 'view_';
+    ntIstisna: Result := 'exception_';
+    ntDomain: Result := 'domain_';
+    ntGenerator: Result := 'generator_';
   else
     Result := 'prosedur_';
+  end;
 end;
 
 function NesneDuzenleMetni(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string): string;
 begin
-  if Tur = ntTetikleyici then
-    Result := TetikleyiciDuzenleScripti(Bag, Ad)
+  case Tur of
+    ntTetikleyici: Result := TetikleyiciDuzenleScripti(Bag, Ad);
+    ntView: Result := ViewDuzenleScripti(Bag, Ad);
+    ntIstisna: Result := IstisnaDuzenleScripti(Bag, Ad);
   else
     Result := ProsedurDuzenleScripti(Bag, Ad);
+  end;
 end;
 
 function NesneAdiniDogrula(Tur: TNesneTuru; const Metin, Ad: string): string;
@@ -218,15 +256,19 @@ begin
     Result := 0;
 end;
 
-{ Eski tanimi yedek dosyasina yazar, dosyanin yolunu verir. Her hata EProsedurYedek olarak gelir. }
-function EskiTanimiYedekle(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string): string;
+{ Eski tanimi yedek dosyasina yazar, dosyanin yolunu verir. Her hata EProsedurYedek olarak gelir.
+  Tam = False: duzenleme metni (CREATE OR ALTER); True: tam CREATE script'i (silmeden once; view tetikleyicileri dahil). }
+function YedekDosyasiYaz(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string; Tam: Boolean): string;
 var
   Klasor, Dosya, Metin: string;
   Kodlama: TEncoding;
   No: Integer;
 begin
   try
-    Metin := NesneDuzenleMetni(Bag, Tur, Ad);
+    if Tam then
+      Metin := ScriptUret(Bag, Tur, Ad)
+    else
+      Metin := NesneDuzenleMetni(Bag, Tur, Ad);
     Klasor := ProsedurYedekKlasoru(Bag.Tanim.Ad);
     ForceDirectories(Klasor);
     if not DirectoryExists(Klasor) then
@@ -253,6 +295,9 @@ begin
   except
     on E: EProsedurYedek do
       raise;
+    { Nesne veritabaninda yok (silinmis olabilir): "yedek yazilamadi" demek yaniltir, asil cumle gosterilsin. }
+    on E: EMetadataHatasi do
+      raise;
     on E: Exception do
       raise EProsedurYedek.Create(E.Message);
   end;
@@ -273,7 +318,30 @@ begin
       Inc(Result);
 end;
 
-function NesneKaydet(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad, Metin: string): TProsedurSonucu;
+function EskiTanimiYedekle(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string; Tam: Boolean;
+  var Sonuc: TProsedurSonucu): Boolean;
+begin
+  try
+    Sonuc.YedekDosyasi := YedekDosyasiYaz(Bag, Tur, Ad, Tam);
+    Result := True;
+  except
+    on E: EProsedurYedek do
+    begin
+      Sonuc.Cumle := T('ERR_PRS_YEDEK_YAZILAMADI');
+      Sonuc.Ayrinti := E.Message;
+      Result := False;
+    end;
+    on E: EMetadataHatasi do
+    begin
+      Sonuc.Cumle := E.Message;
+      Result := False;
+    end;
+  end;
+end;
+
+{ Metindeki komutlari tek ACIK islemde sirayla calistirir; hepsi basariliysa commit, biri hata verirse rollback.
+  Sonuc.Komutlar'a calistirilan (hatada denenen) komutlar yazilir. }
+procedure MetniCalistir(Bag: TAcikBaglanti; const Metin: string; var Sonuc: TProsedurSonucu);
 var
   Komutlar: TArray<string>;
   Komut: string;
@@ -282,22 +350,6 @@ var
   Aranan, Once, Satir: Integer;
   KomutCalisiyor: Boolean;
 begin
-  Result := Default(TProsedurSonucu);
-  Result.Cumle := NesneAdiniDogrula(Tur, Metin, Ad);
-  if (Result.Cumle = '') and (Tur = ntTetikleyici) then
-    Result.Cumle := TetikleyiciTablosunuDogrula(Bag, Metin, Ad);
-  if Result.Cumle <> '' then
-    Exit;
-  try
-    Result.YedekDosyasi := EskiTanimiYedekle(Bag, Tur, Ad);
-  except
-    on E: EProsedurYedek do
-    begin
-      Result.Cumle := T('ERR_PRS_YEDEK_YAZILAMADI');
-      Result.Ayrinti := E.Message;
-      Exit;
-    end;
-  end;
   Komutlar := KomutlaraBol(Metin);
   Islem := TFDTransaction.Create(nil);
   Sorgu := TFDQuery.Create(nil);
@@ -319,14 +371,14 @@ begin
       for Komut in Komutlar do
       begin
         Once := KomutunOncekiSatiri(Metin, Komut, Aranan);
-        Result.Komutlar := Result.Komutlar + [SqlOzeti(Komut)];
+        Sonuc.Komutlar := Sonuc.Komutlar + [SqlOzeti(Komut)];
         Sorgu.SQL.Text := Komut;
         KomutCalisiyor := True;
         Sorgu.ExecSQL;
         KomutCalisiyor := False;
       end;
       Islem.Commit;
-      Result.Basarili := True;
+      Sonuc.Basarili := True;
     except
       on E: Exception do
       begin
@@ -336,17 +388,60 @@ begin
         except
           { Rollback da basarisiz olursa asil hata gosterilir. }
         end;
-        Result.Cumle := HataMetniniCevir(E);
-        Result.Ayrinti := E.Message;
+        Sonuc.Cumle := HataMetniniCevir(E);
+        Sonuc.Ayrinti := E.Message;
         Satir := HataSatiriBul(E.Message);
         if KomutCalisiyor and (Satir > 0) then
-          Result.Satir := Once + Satir;
+          Sonuc.Satir := Once + Satir;
       end;
     end;
   finally
     Sorgu.Free;
     Islem.Free;
   end;
+end;
+
+function NesneKaydet(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad, Metin: string): TProsedurSonucu;
+begin
+  Result := Default(TProsedurSonucu);
+  Result.Cumle := NesneAdiniDogrula(Tur, Metin, Ad);
+  if (Result.Cumle = '') and (Tur = ntTetikleyici) then
+    Result.Cumle := TetikleyiciTablosunuDogrula(Bag, Metin, Ad);
+  if Result.Cumle <> '' then
+    Exit;
+  if not EskiTanimiYedekle(Bag, Tur, Ad, False, Result) then
+    Exit;
+  MetniCalistir(Bag, Metin, Result);
+end;
+
+function YeniNesneAdiniDogrula(Tur: TNesneTuru; const Metin: string; out Ad: string): string;
+const
+  BASLIK = '^\s*(?:(?:--[^\n]*\n|/\*.*?\*/)\s*)*CREATE\s+%s\s+("(?:[^"]|"")+"|[A-Za-z_][A-Za-z0-9_$]*)';
+var
+  Komutlar: TArray<string>;
+  Eslesme: TMatch;
+begin
+  Ad := '';
+  Komutlar := KomutlaraBol(Metin);
+  if Length(Komutlar) > 0 then
+  begin
+    Eslesme := TRegEx.Match(Komutlar[0], Format(BASLIK, [TurSozcugu(Tur)]), [roIgnoreCase, roSingleLine]);
+    if Eslesme.Success then
+    begin
+      Ad := AdCoz(Eslesme.Groups[1].Value);
+      Exit('');
+    end;
+  end;
+  Result := T('ERR_' + TurOnEki(Tur) + '_YENI_BASLIK_YOK');
+end;
+
+function YeniNesneKaydet(Bag: TAcikBaglanti; Tur: TNesneTuru; const Metin: string): TProsedurSonucu;
+begin
+  Result := Default(TProsedurSonucu);
+  Result.Cumle := YeniNesneAdiniDogrula(Tur, Metin, Result.Ad);
+  if Result.Cumle <> '' then
+    Exit;
+  MetniCalistir(Bag, Metin, Result);
 end;
 
 end.

@@ -153,6 +153,21 @@ object frmAna: TfrmAna
     object miNesneDuzenle: TMenuItem
       OnClick = miNesneDuzenleClick
     end
+    object miYeniNesne: TMenuItem
+      OnClick = miYeniNesneClick
+    end
+    object miDomVarsayilan: TMenuItem
+      OnClick = miDomVarsayilanClick
+    end
+    object miDomKontrol: TMenuItem
+      OnClick = miDomKontrolClick
+    end
+    object miDomAd: TMenuItem
+      OnClick = miDomAdClick
+    end
+    object miGenDeger: TMenuItem
+      OnClick = miGenDegerClick
+    end
     object miBaglan: TMenuItem
       OnClick = miBaglanClick
     end
@@ -161,6 +176,9 @@ object frmAna: TfrmAna
     end
     object miYenile: TMenuItem
       OnClick = miYenileClick
+    end
+    object miNesneSil: TMenuItem
+      OnClick = miNesneSilClick
     end
     object miMetadataCikar: TMenuItem
       OnClick = miMetadataCikarClick

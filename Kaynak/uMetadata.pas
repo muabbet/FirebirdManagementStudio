@@ -190,6 +190,20 @@ type
     KendiSifreKomutu: TKendiSifreKomutu;
   end;
 
+type
+  { Bir nesneyi (view, exception, domain, generator) kullananlar. Tur: Firebird'in RDB$DEPENDENT_TYPE kodu
+    (1 view, 2 tetikleyici, 3 hesaplanan kolon, 5 prosedur); domain'in tablo kolonlarinda kullanimi icin
+    Tur = BAG_KOLON ve Ad = 'TABLO.KOLON'. }
+  TBagimlilik = record
+    Ad: string;
+    Tur: Integer;
+  end;
+
+  TBagimlilikHedefi = (bhView, bhIstisna, bhDomain, bhGenerator);
+
+const
+  BAG_KOLON = -1;
+
 function KullaniciYetenekleri(Bag: TAcikBaglanti): TKullaniciYetenekleri;
 function KullaniciListesiOku(Bag: TAcikBaglanti): TArray<TKullaniciBilgisi>;
 
@@ -197,6 +211,9 @@ procedure TablolariGetir(Bag: TAcikBaglanti; Hedef: TStrings);
 procedure ViewlariGetir(Bag: TAcikBaglanti; Hedef: TStrings);
 procedure ProsedurleriGetir(Bag: TAcikBaglanti; Hedef: TStrings);
 procedure GeneratorleriGetir(Bag: TAcikBaglanti; Hedef: TStrings);
+{ Agac listeleri (Asama 3f): kullanici domain'leri ve exception'lari, yalniz adlar. Sistem nesneleri gelmez. }
+procedure DomainleriGetir(Bag: TAcikBaglanti; Hedef: TStrings);
+procedure IstisnalariGetir(Bag: TAcikBaglanti; Hedef: TStrings);
 function KolonTablosuOlustur(Bag: TAcikBaglanti; const Tablo: string; Sahip: TComponent): TFDMemTable;
 procedure KolonTablosuYazilariniYenile(Tablo: TDataSet);
 
@@ -206,6 +223,12 @@ procedure TabloOzellikleriniOku(Bag: TAcikBaglanti; const Ad: string; var Bilgi:
 function ViewBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TViewBilgisi;
 function ProsedurBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TProsedurBilgisi;
 function GeneratorBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TGeneratorBilgisi;
+{ Nesneyi kullananlar (RDB$DEPENDENCIES; domain'de ayrica tablo kolonlari). Silmeden ve degistirmeden once gosterilir.
+  Kendisi listeye girmez; bagimli yoksa bos dizi. }
+function BagimliNesneler(Bag: TAcikBaglanti; Hedef: TBagimlilikHedefi; const Ad: string): TArray<TBagimlilik>;
+{ Tek domain / exception. Yoksa EMetadataHatasi. }
+function DomainBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TDomainBilgisi;
+function IstisnaBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TIstisnaBilgisi;
 { Tek tablonun parcalari (TabloBilgisiOku bunlari birlestirir). }
 function KolonlariOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TKolonBilgisi>;
 function KisitlariOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TKisitBilgisi>;
@@ -472,6 +495,22 @@ procedure NesneVarMi(Bag: TAcikBaglanti; const Sql, Ad: string);
 begin
   if TekDeger(Bag, Sql, Ad) = '' then
     raise EMetadataHatasi.Create(TF('ERR_DDL_NESNE_YOK', [Ad]));
+end;
+
+{ Domain adlari: kullanici domain'leri (RDB$ ile baslayan, sunucunun kolonlar icin urettigi adlar ve sistem domain'leri haric). }
+procedure DomainleriGetir(Bag: TAcikBaglanti; Hedef: TStrings);
+begin
+  Hedef.Clear;
+  Hedef.AddStrings(SutunListesi(Bag, 'select rdb$field_name from rdb$fields ' +
+    'where rdb$field_name not starting with ''RDB$'' and coalesce(rdb$system_flag, 0) = 0 ' +
+    'order by rdb$field_name', ''));
+end;
+
+procedure IstisnalariGetir(Bag: TAcikBaglanti; Hedef: TStrings);
+begin
+  Hedef.Clear;
+  Hedef.AddStrings(SutunListesi(Bag, 'select rdb$exception_name from rdb$exceptions ' +
+    'where coalesce(rdb$system_flag, 0) = 0 order by rdb$exception_name', ''));
 end;
 
 function SayiTipi(const Ad: string; VarsayilanHassasiyet, AltTip, Hassasiyet, Olcek: Integer): string;
@@ -1125,6 +1164,80 @@ begin
     Result := Liste.ToArray;
   finally
     Sorgu.Free;
+    Liste.Free;
+  end;
+end;
+
+function DomainBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TDomainBilgisi;
+var
+  Alan: TDomainBilgisi;
+begin
+  for Alan in DomainleriOku(Bag) do
+    if Alan.Ad = Ad then
+      Exit(Alan);
+  raise EMetadataHatasi.Create(TF('ERR_DDL_NESNE_YOK', [Ad]));
+end;
+
+function IstisnaBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TIstisnaBilgisi;
+var
+  Istisna: TIstisnaBilgisi;
+begin
+  for Istisna in IstisnalariOku(Bag) do
+    if Istisna.Ad = Ad then
+      Exit(Istisna);
+  raise EMetadataHatasi.Create(TF('ERR_DDL_NESNE_YOK', [Ad]));
+end;
+
+function BagimliNesneler(Bag: TAcikBaglanti; Hedef: TBagimlilikHedefi; const Ad: string): TArray<TBagimlilik>;
+var
+  Sorgu: TFDQuery;
+  Liste: TList<TBagimlilik>;
+  Satir: TBagimlilik;
+  TurSarti: string;
+begin
+  { RDB$DEPENDED_ON_TYPE: 0 tablo, 1 view, 7 exception, 9 domain, 14 generator (olculdu, 2.5.9 ve 4.0.7). }
+  case Hedef of
+    bhView: TurSarti := 'in (0, 1)';
+    bhIstisna: TurSarti := '= 7';
+    bhDomain: TurSarti := '= 9';
+  else
+    TurSarti := '= 14';
+  end;
+  Liste := TList<TBagimlilik>.Create;
+  try
+    Sorgu := SorguAc(Bag, 'select distinct rdb$dependent_name, rdb$dependent_type from rdb$dependencies ' +
+      'where rdb$depended_on_name = :N and rdb$depended_on_type ' + TurSarti +
+      ' and rdb$dependent_name <> rdb$depended_on_name order by 2, 1', Ad);
+    try
+      while not Sorgu.Eof do
+      begin
+        Satir.Ad := Trim(Sorgu.Fields[0].AsString);
+        Satir.Tur := Sorgu.Fields[1].AsInteger;
+        Liste.Add(Satir);
+        Sorgu.Next;
+      end;
+    finally
+      Sorgu.Free;
+    end;
+    { Domain'i kullanan tablo kolonlari RDB$DEPENDENCIES'te degil, RDB$RELATION_FIELDS'tedir. }
+    if Hedef = bhDomain then
+    begin
+      Sorgu := SorguAc(Bag, 'select trim(rdb$relation_name) || ''.'' || trim(rdb$field_name) from rdb$relation_fields ' +
+        'where rdb$field_source = :N order by 1', Ad);
+      try
+        while not Sorgu.Eof do
+        begin
+          Satir.Ad := Trim(Sorgu.Fields[0].AsString);
+          Satir.Tur := BAG_KOLON;
+          Liste.Add(Satir);
+          Sorgu.Next;
+        end;
+      finally
+        Sorgu.Free;
+      end;
+    end;
+    Result := Liste.ToArray;
+  finally
     Liste.Free;
   end;
 end;

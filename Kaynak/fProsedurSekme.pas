@@ -1,5 +1,5 @@
-{ fProsedurSekme.pas - Sakli prosedur (3e-1) ve tetikleyici (3e-2) duzenleme sekmesi: ustte "Kaydet" dugmesi, altta SQL editoru.
-  Hangisi oldugu Tur alanindadir (ntTetikleyici ise tetikleyici, aksi halde prosedur); Yukle'den once atanir.
+{ fProsedurSekme.pas - Sakli prosedur (3e-1), tetikleyici (3e-2) ve view (3f-2) duzenleme sekmesi: ustte "Kaydet" dugmesi, altta SQL editoru.
+  Hangisi oldugu Tur alanindadir (ntTetikleyici, ntView; aksi halde prosedur); Yukle'den once atanir.
   Frame sadece arayuzu bilir; yedekleme ve calistirma uProsedur'dedir.
 
   Bu sekmede tek yol: Kaydet dugmesi ve Ctrl+S (ikisi de Kaydet'i cagirir). F5 bu sekmede bir sey calistirmaz,
@@ -11,7 +11,7 @@ interface
 uses
   System.SysUtils, System.Classes, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls, Vcl.StdCtrls,
   FireDAC.Comp.Client,
-  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uKullanici, uDDL, uProsedur;
+  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uKullanici, uDDL, uProsedur, uNesneYonet;
 
 type
   TProsedurSekme = class(TFrame)
@@ -23,21 +23,30 @@ type
   private
     FEditor: TSqlEditor;
     procedure Yaz(const Metin: string);
-    function Anahtar(const Prosedur, Tetikleyici: string): string;
+    function Anahtar(const Bas, Son: string): string;
+    procedure EditoruKur(Bag: TAcikBaglanti; const Metin: string);
     procedure OneriHazirla(Bag: TAcikBaglanti);
     procedure KolonlariGetir(const Tablo: string; Kolonlar: TStrings);
     function OnayMetni(const Metin: string): string;
+    procedure YeniKaydet(Bag: TAcikBaglanti);
   public
     BaglantiAd: string;
     NesneAdi: string;
-    { ntTetikleyici: tetikleyici sekmesi; baska her deger prosedur sekmesi (varsayilan). Yukle'den once atanir. }
+    { ntTetikleyici, ntView, ntIstisna, ntDomain: o tur sekmesi; baska her deger prosedur sekmesi (varsayilan).
+      Yukle / YeniHazirla'dan once atanir. }
     Tur: TNesneTuru;
+    { True: var olan nesneyi degil YENI nesneyi (CREATE EXCEPTION|DOMAIN) olusturan sekme; NesneAdi bostur. }
+    Yeni: Boolean;
     { Mesajlar buraya (ana pencerenin sonuc alani) yazilir; ana pencere atar. }
     AnaSonuc: TStrings;
     { Calistirilan SQL'i mesaj alaninda gostermek icin ana pencere atar. }
     SqlYaz: TSqlGoster;
-    { Nesnenin (prosedur/tetikleyici) CREATE OR ALTER metnini editore koyar. Hata verirse istisna firlar, cagiran gosterir. }
+    { Yeni nesne basariyla olusturulunca cagrilir (ana pencere agaci yeniler, sekmeyi kapatir). }
+    OnOlusturuldu: TNotifyEvent;
+    { Nesnenin (prosedur/tetikleyici/view/exception) CREATE OR ALTER metnini editore koyar. Hata verirse istisna firlar, cagiran gosterir. }
     procedure Yukle(Bag: TAcikBaglanti; const Ad: string);
+    { Yeni nesne sekmesi: editore bos sablon (CREATE EXCEPTION|DOMAIN ...) konur. }
+    procedure YeniHazirla(Bag: TAcikBaglanti);
     procedure Kaydet;
     procedure F5Ipucu;
     procedure EditoreOdaklan;
@@ -55,27 +64,37 @@ begin
     AnaSonuc.Add(Metin);
 end;
 
-{ Prosedur ve tetikleyici metinleri ayri dil anahtarlarindadir; sekmenin turune gore olani verir. }
-function TProsedurSekme.Anahtar(const Prosedur, Tetikleyici: string): string;
+{ Prosedur, tetikleyici ve view metinleri ayri dil anahtarlarindadir: Bas + tur eki (PRS, TRG, VIEW) + Son,
+  ornek Anahtar('ONAY_', '_KAYDET') = ONAY_PRS_KAYDET. }
+function TProsedurSekme.Anahtar(const Bas, Son: string): string;
 begin
-  if Tur = ntTetikleyici then
-    Result := Tetikleyici
-  else
-    Result := Prosedur;
+  Result := Bas + TurOnEki(Tur) + Son;
 end;
 
-procedure TProsedurSekme.Yukle(Bag: TAcikBaglanti; const Ad: string);
-var
-  Metin: string;
+{ Editoru kurar (anahtar kelimeler, Ctrl+Bosluk nesne adlari) ve metni yazar. }
+procedure TProsedurSekme.EditoruKur(Bag: TAcikBaglanti; const Metin: string);
 begin
-  BaglantiAd := Bag.Tanim.Ad;
-  NesneAdi := Ad;
-  Metin := NesneDuzenleMetni(Bag, Tur, Ad);
   FEditor := TSqlEditor.Create(pnlEditor);
   FEditor.KolonGetirici := KolonlariGetir;
   OneriHazirla(Bag);
   FEditor.MetinYaz(Metin);
   YazilariYenile;
+end;
+
+procedure TProsedurSekme.Yukle(Bag: TAcikBaglanti; const Ad: string);
+begin
+  BaglantiAd := Bag.Tanim.Ad;
+  NesneAdi := Ad;
+  Yeni := False;
+  EditoruKur(Bag, NesneDuzenleMetni(Bag, Tur, Ad));
+end;
+
+procedure TProsedurSekme.YeniHazirla(Bag: TAcikBaglanti);
+begin
+  BaglantiAd := Bag.Tanim.Ad;
+  NesneAdi := '';
+  Yeni := True;
+  EditoruKur(Bag, YeniNesneSablonu(Tur));
 end;
 
 { Ctrl+Bosluk listesi icin anahtar kelimeleri ve nesne adlarini editore verir (bkz. fSorguSekme). }
@@ -132,7 +151,10 @@ end;
 
 function TProsedurSekme.Baslik: string;
 begin
-  Result := TF(Anahtar('PRS_SEKME', 'TRG_SEKME'), [NesneAdi, BaglantiAd]);
+  if Yeni then
+    Result := TF(Anahtar('', '_YENI_SEKME'), [BaglantiAd])
+  else
+    Result := TF(Anahtar('', '_SEKME'), [NesneAdi, BaglantiAd]);
 end;
 
 procedure TProsedurSekme.EditoreOdaklan;
@@ -144,7 +166,10 @@ procedure TProsedurSekme.YazilariYenile;
 begin
   btnKaydet.Caption := T('PRS_KAYDET');
   DugmeyiYaziyaUydur(btnKaydet);
-  lblBilgi.Caption := TF(Anahtar('PRS_BILGI', 'TRG_BILGI'), [NesneAdi]);
+  if Yeni then
+    lblBilgi.Caption := T(Anahtar('', '_YENI_BILGI'))
+  else
+    lblBilgi.Caption := TF(Anahtar('', '_BILGI'), [NesneAdi]);
 end;
 
 procedure TProsedurSekme.F5Ipucu;
@@ -160,7 +185,7 @@ var
   Komut, UyariAnahtari: string;
   Uyarilar: string;
 begin
-  Result := TF(Anahtar('ONAY_PRS_KAYDET', 'ONAY_TRG_KAYDET'), [NesneAdi]);
+  Result := TF(Anahtar('ONAY_', '_KAYDET'), [NesneAdi]);
   Komutlar := KomutlaraBol(Metin);
   if Length(Komutlar) > 1 then
     Result := Result + sLineBreak + sLineBreak + TF('ONAY_PRS_COK_KOMUT', [Length(Komutlar)]);
@@ -188,6 +213,11 @@ begin
     Yaz(TF('ERR_SORGU_BAGLANTI_YOK', [BaglantiAd]));
     Exit;
   end;
+  if Yeni then
+  begin
+    YeniKaydet(Bag);
+    Exit;
+  end;
   Metin := FEditor.TumMetin;
   Uyari := NesneAdiniDogrula(Tur, Metin, NesneAdi);
   if (Uyari = '') and (Tur = ntTetikleyici) then
@@ -205,26 +235,67 @@ begin
   Sonuc := NesneKaydet(Bag, Tur, NesneAdi, Metin);
   if Sonuc.Basarili then
   begin
-    Yaz(TF(Anahtar('MSG_PRS_KAYDEDILDI', 'MSG_TRG_KAYDEDILDI'), [NesneAdi]));
+    FEditor.HataSatiriniTemizle;
+    Yaz(TF(Anahtar('MSG_', '_KAYDEDILDI'), [NesneAdi]));
     Yaz(TF('MSG_PRS_YEDEKLENDI', [Sonuc.YedekDosyasi]));
   end
   else
   begin
-    Yaz(TF(Anahtar('ERR_PRS_KAYDEDILEMEDI', 'ERR_TRG_KAYDEDILEMEDI'), [NesneAdi]) + ' ' + Sonuc.Cumle);
+    Yaz(TF(Anahtar('ERR_', '_KAYDEDILEMEDI'), [NesneAdi]) + ' ' + Sonuc.Cumle);
     if Sonuc.Ayrinti <> '' then
       Yaz(T('AYRINTI') + ': ' + Sonuc.Ayrinti);
     if Length(Sonuc.Komutlar) = 0 then
       Yaz(T('MSG_PRS_DOKUNULMADI'))
     else
-      Yaz(T(Anahtar('MSG_PRS_GERI_ALINDI', 'MSG_TRG_GERI_ALINDI')));
+      Yaz(T(Anahtar('MSG_', '_GERI_ALINDI')));
     if Sonuc.Satir > 0 then
     begin
       Yaz(TF('MSG_PRS_HATA_SATIRI', [Sonuc.Satir]));
-      FEditor.SatiraGit(Sonuc.Satir);
+      FEditor.HataSatiriniIsaretle(Sonuc.Satir);
     end;
   end;
   if (Length(Sonuc.Komutlar) > 0) and Assigned(SqlYaz) then
     SqlYaz(Sonuc.Komutlar);
+end;
+
+{ Yeni nesne: ad kurali (CREATE EXCEPTION|DOMAIN <ad>), net onay, olusturma. Yedek yok (eski tanim yok). Basarida
+  OnOlusturuldu cagrilir; hatada sekme acik kalir, metin duzeltilip yeniden denenir. }
+procedure TProsedurSekme.YeniKaydet(Bag: TAcikBaglanti);
+var
+  Metin, Ad, Uyari: string;
+  Sonuc: TProsedurSonucu;
+begin
+  Metin := FEditor.TumMetin;
+  Uyari := YeniNesneAdiniDogrula(Tur, Metin, Ad);
+  if Uyari <> '' then
+  begin
+    UyariGoster(Uyari);
+    Exit;
+  end;
+  if not OnayIste(TF(Anahtar('ONAY_', '_YENI'), [Ad])) then
+  begin
+    Yaz(T('MSG_PRS_VAZGECILDI'));
+    Exit;
+  end;
+  Sonuc := YeniNesneKaydet(Bag, Tur, Metin);
+  if Sonuc.Basarili then
+    Yaz(TF(Anahtar('MSG_', '_OLUSTURULDU'), [Ad]))
+  else
+  begin
+    Yaz(TF(Anahtar('ERR_', '_OLUSTURULAMADI'), [Ad]) + ' ' + Sonuc.Cumle);
+    if Sonuc.Ayrinti <> '' then
+      Yaz(T('AYRINTI') + ': ' + Sonuc.Ayrinti);
+    Yaz(T('MSG_YENI_GERI_ALINDI'));
+    if Sonuc.Satir > 0 then
+    begin
+      Yaz(TF('MSG_PRS_HATA_SATIRI', [Sonuc.Satir]));
+      FEditor.HataSatiriniIsaretle(Sonuc.Satir);
+    end;
+  end;
+  if (Length(Sonuc.Komutlar) > 0) and Assigned(SqlYaz) then
+    SqlYaz(Sonuc.Komutlar);
+  if Sonuc.Basarili and Assigned(OnOlusturuldu) then
+    OnOlusturuldu(Self);
 end;
 
 procedure TProsedurSekme.btnKaydetClick(Sender: TObject);
