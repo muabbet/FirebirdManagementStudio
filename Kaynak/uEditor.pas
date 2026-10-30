@@ -18,9 +18,9 @@ unit uEditor;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Generics.Collections, Vcl.Controls, Vcl.Graphics,
+  System.SysUtils, System.Classes, System.Generics.Collections, Vcl.Controls, Vcl.Graphics, Vcl.ExtCtrls,
   SynEdit, SynHighlighterSQL, SynCompletionProposal,
-  uSorgu, uMetadata;
+  uDil, uSorgu, uMetadata;
 
 type
   { Tablo adini verir, kolon adlarini Kolonlar'a ekler. Tablo yoksa bos birakir. }
@@ -36,6 +36,8 @@ type
     FNesneAdlari: TStringList;
     FKolonlar: TObjectDictionary<string, TStringList>;
     FHataSatiri: Integer;
+    FDurum: TPanel;
+    procedure DurumDegisti(Sender: TObject; Changes: TSynStatusChanges);
     procedure HataSatiriRengi(Sender: TObject; Line: Integer; var Special: Boolean; var FG, BG: TColor);
     procedure MetinDegisti(Sender: TObject);
     procedure OneriHazirla(Kind: SynCompletionType; Sender: TObject; var CurrentInput: string;
@@ -93,6 +95,22 @@ begin
   FEdit.Font.Name := 'Consolas';
   FEdit.Font.Size := 11;
   FEdit.Gutter.ShowLineNumbers := True;
+  FEdit.Gutter.Color := TColor($F0F0F0);
+  FEdit.Gutter.BorderColor := TColor($E0DCDA);
+  FEdit.Gutter.Font.Color := clGrayText;
+  FEdit.ActiveLineColor := TColor($FCF4EC);
+  { Editorun altinda ince durum satiri: imlecin satiri ve kolonu. }
+  FDurum := TPanel.Create(Self);
+  FDurum.Parent := Ust;
+  FDurum.Align := alBottom;
+  FDurum.Height := 22;
+  FDurum.BevelOuter := bvNone;
+  FDurum.Alignment := taRightJustify;
+  FDurum.ParentBackground := False;
+  FDurum.Color := TColor($F0F0F0);
+  FDurum.StyleElements := [seBorder];
+  FDurum.Caption := TF('EDITOR_KONUM', [1, 1]) + '  ';
+  FEdit.OnStatusChange := DurumDegisti;
   FEdit.Highlighter := FRenk;
   FEdit.OnSpecialLineColors := HataSatiriRengi;
   FEdit.OnChange := MetinDegisti;
@@ -164,6 +182,12 @@ begin
     FG := clWhite;
     BG := $3C3CC8;
   end;
+end;
+
+procedure TSqlEditor.DurumDegisti(Sender: TObject; Changes: TSynStatusChanges);
+begin
+  if (scCaretX in Changes) or (scCaretY in Changes) then
+    FDurum.Caption := TF('EDITOR_KONUM', [FEdit.CaretY, FEdit.CaretX]) + '  ';
 end;
 
 procedure TSqlEditor.MetinDegisti(Sender: TObject);

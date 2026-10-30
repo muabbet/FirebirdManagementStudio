@@ -41,6 +41,7 @@
   "DURUM_ISLEM_KAPALI": "Transaction: closed",
   "DURUM_SURE": "Time: %d ms",
   "DURUM_SATIR": "%d rows",
+  "EDITOR_KONUM": "Ln: %d, Col: %d",
 
   "MSG_BAGLANDI": "Connected: %s (Firebird %s)",
   "MSG_KESILDI": "Disconnected: %s",

@@ -41,6 +41,7 @@
   "DURUM_ISLEM_KAPALI": "İşlem: kapalı",
   "DURUM_SURE": "Süre: %d ms",
   "DURUM_SATIR": "%d satır",
+  "EDITOR_KONUM": "Sat: %d, Sütun: %d",
 
   "MSG_BAGLANDI": "Bağlandı: %s (Firebird %s)",
   "MSG_KESILDI": "Bağlantı kesildi: %s",
