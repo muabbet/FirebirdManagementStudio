@@ -98,6 +98,7 @@ begin
     ntView: Result := 'VIEW';
     ntIstisna: Result := 'EXCEPTION';
     ntDomain: Result := 'DOMAIN';
+    ntTablo: Result := 'TABLE';
   else
     Result := 'PROCEDURE';
   end;
@@ -111,6 +112,7 @@ begin
     ntIstisna: Result := 'EXC';
     ntDomain: Result := 'DOM';
     ntGenerator: Result := 'GEN';
+    ntTablo: Result := 'TBL';
   else
     Result := 'PRS';
   end;
@@ -124,6 +126,7 @@ begin
     ntIstisna: Result := 'exception_';
     ntDomain: Result := 'domain_';
     ntGenerator: Result := 'generator_';
+    ntTablo: Result := 'tablo_';
   else
     Result := 'prosedur_';
   end;

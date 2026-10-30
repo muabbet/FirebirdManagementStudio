@@ -12,7 +12,8 @@ uses
   System.SysUtils, System.Classes, System.StrUtils, System.IOUtils, Data.DB,
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.Comp.Client, FireDAC.Phys.FB,
   FireDAC.ConsoleUI.Wait,
-  uDil, uBaglanti, uMetadata, uKullanici, uDDL, uProsedur, uNesneYonet, uKolon, uIndeksKisit;
+  Vcl.Forms, Vcl.Controls,
+  uDil, uBaglanti, uMetadata, uKullanici, uDDL, uProsedur, uNesneYonet, uKolon, uIndeksKisit, fProsedurSekme;
 
 const
   ANA = 'FBY_TEST_ANA';
@@ -148,7 +149,9 @@ begin
     'YAPI_ETIKET_SIL', 'YAPI_ETIKET_GUNCELLE', 'YAPI_ETIKET_IFADE', 'YAPI_ETIKET_BENZERSIZ', 'YAPI_ETIKET_AZALAN',
     'YAPI_KURAL_VARSAYILAN', 'ERR_INDEKS_AD_BOS', 'ERR_YAPI_KOLON_BOS', 'ERR_KISIT_HEDEF_BOS', 'ERR_KISIT_IFADE_BOS',
     'ONAY_KISIT_FK_KULLANANLAR', 'ERR_YAPI_TEKRAR', 'ERR_YAPI_YETIM', 'ERR_PK_VAR', 'ERR_KISIT_FK_BAGLI',
-    'ONAY_KISIT_CHECK_NOT'];
+    'ONAY_KISIT_CHECK_NOT', 'MENU_YENI_TABLO', 'TUR_TABLO', 'TBL_YENI_SEKME', 'TBL_YENI_BILGI', 'ONAY_TBL_YENI',
+    'ERR_TBL_YENI_BASLIK_YOK', 'MSG_TBL_YENI_ACILDI', 'MSG_TBL_OLUSTURULDU', 'ERR_TBL_OLUSTURULAMADI', 'ONAY_SIL_TABLO_VERI',
+    'SIL_TABLO_AD_BASLIK', 'SIL_TABLO_AD_ETIKET', 'ERR_SIL_TABLO_AD_UYMADI', 'ERR_TABLO_FK_BAGLI'];
   for Dil in ['tr', 'en', 'de'] do
   begin
     DilYukle(Dil);
@@ -530,6 +533,106 @@ begin
 end;
 
 
+function TabloVarMi(const Ad: string): Boolean;
+var
+  Yok: string;
+begin
+  for Yok in TabloAdlari(Bag) do
+    if Yok = Ad then
+      Exit(True);
+  Result := False;
+end;
+
+procedure YeniTabloSilBolumu;
+const
+  YENI = 'FBY_TEST_YENI';
+var
+  Sonuc: TProsedurSonucu;
+  Ad, Metin, Yedek: string;
+  Form: TForm;
+  Sekme: TProsedurSekme;
+begin
+  Cikti.Add('');
+  Cikti.Add('=== E) Yeni tablo ve tablo sil (' + Bag.Surum + ') ===');
+  Dene('drop view ' + VW);
+  Dene('drop table ' + ALT2);
+  Dene('drop table ' + YENI);
+  Temizle;
+
+  { Yeni tablo }
+  Metin := YeniNesneSablonu(ntTablo);
+  Kontrol('Yeni tablo: sablon CREATE TABLE ile baslar', Pos('CREATE TABLE', Metin) = 1);
+  Kontrol('Yeni tablo: sablonun adi okunur', (YeniNesneAdiniDogrula(ntTablo, Metin, Ad) = '') and (Ad = 'YENI_TABLO'));
+  Kontrol('Yeni tablo: CREATE OR ALTER reddedilir', YeniNesneAdiniDogrula(ntTablo, 'CREATE OR ALTER TABLE X (ID INTEGER);', Ad) =
+    T('ERR_TBL_YENI_BASLIK_YOK'));
+  Metin := 'CREATE TABLE ' + YENI + ' (ID INTEGER NOT NULL PRIMARY KEY, AD VARCHAR(20));';
+  Sonuc := YeniNesneKaydet(Bag, ntTablo, Metin);
+  Kontrol('Yeni tablo: olusturuldu', Sonuc.Basarili and (Sonuc.Ad = YENI) and TabloVarMi(YENI));
+  Sonuc := YeniNesneKaydet(Bag, ntTablo, Metin);
+  Cikti.Add('      [ayni ad] cumle: ' + TekSatirMetin(Sonuc.Cumle));
+  Kontrol('Yeni tablo: ayni ad -> "zaten var" cumlesi', (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_NESNE_VAR')));
+  Yurut('insert into ' + YENI + ' (ID, AD) values (1, ''gizli veri'')');
+
+  { Sekme: varsayilan tur prosedur, Yeni tablo basligi }
+  Form := TForm.CreateNew(nil);
+  try
+    Sekme := TProsedurSekme.Create(Form);
+    Kontrol('Sekme: varsayilan tur ntProsedur (ntTablo yalniz Yeni tablo)', Sekme.Tur = ntProsedur);
+    Sekme.Parent := Form;
+    Sekme.Tur := ntTablo;
+    Sekme.AnaSonuc := TStringList.Create;
+    Sekme.YeniHazirla(Bag);
+    Kontrol('Sekme: Yeni tablo basligi', Sekme.Baslik = TF('TBL_YENI_SEKME', [Bag.Tanim.Ad]));
+    Sekme.AnaSonuc.Free;
+  finally
+    Form.Free;
+  end;
+
+  { Tablo sil: onay metni }
+  Yurut('create table ' + ALT2 + ' (ID integer not null primary key, YENI_ID integer references ' + YENI + ' (ID))');
+  Yurut('create view ' + VW + ' as select ID from ' + YENI);
+  Metin := SilmeOnayMetni(Bag, ntTablo, YENI);
+  Kontrol('Onay: tablo adi ve "geri alinamaz"', (Pos(YENI, Metin) > 0) and (Pos(TF('ONAY_SIL', [T('TUR_TABLO'), YENI]), Metin) = 1));
+  Kontrol('Onay: satir sayisi (1) ve veri yedeklenmez uyarisi', Pos(TF('ONAY_SIL_TABLO_VERI', [1]), Metin) > 0);
+  Kontrol('Onay: kullanan view listelenir', Pos(VW, Metin) > 0);
+  Kontrol('Onay: FK ile bagli tablo listelenir', Pos(ALT2, Metin) > 0);
+
+  { Tablo sil: engellenir }
+  Sonuc := NesneSil(Bag, ntTablo, YENI);
+  Cikti.Add('      [engelli sil] cumle: ' + TekSatirMetin(Sonuc.Cumle));
+  Cikti.Add('      [engelli sil] ayrinti: ' + TekSatirMetin(Sonuc.Ayrinti));
+  Kontrol('Sil: view ve FK varken reddedilir, anlasilir cumle, tablo yerinde',
+    (not Sonuc.Basarili) and (Sonuc.Cumle <> '') and (Sonuc.Cumle <> T('ERR_GENEL')) and TabloVarMi(YENI));
+  Kontrol('Sil: reddedilse de yapi yedegi yazildi', Sonuc.YedekDosyasi <> '');
+  Dene('drop view ' + VW);
+  Sonuc := NesneSil(Bag, ntTablo, YENI);
+  Cikti.Add('      [FK ile engelli sil] cumle: ' + TekSatirMetin(Sonuc.Cumle));
+  Cikti.Add('      [FK ile engelli sil] ayrinti: ' + TekSatirMetin(Sonuc.Ayrinti));
+  Kontrol('Sil: yalniz FK kaldiysa yine reddedilir, tabloya ozel cumle',
+    (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_TABLO_FK_BAGLI')) and TabloVarMi(YENI));
+
+  { Yalniz view bagli olan tablo }
+  Dene('drop table ' + ALT2);
+  Yurut('create view ' + VW + ' as select ID from ' + YENI);
+  Sonuc := NesneSil(Bag, ntTablo, YENI);
+  Cikti.Add('      [view ile engelli sil] cumle: ' + TekSatirMetin(Sonuc.Cumle));
+  Cikti.Add('      [view ile engelli sil] ayrinti: ' + TekSatirMetin(Sonuc.Ayrinti));
+  Kontrol('Sil: yalniz view bagliyken reddedilir, bagimlilik cumlesi, tablo yerinde',
+    (not Sonuc.Basarili) and (Sonuc.Cumle = T('ERR_NESNE_BAGIMLI')) and TabloVarMi(YENI));
+  Dene('drop view ' + VW);
+
+  { Tablo sil: serbest }
+  Sonuc := NesneSil(Bag, ntTablo, YENI);
+  Kontrol('Sil: bagimlisiz tablo silindi', Sonuc.Basarili and not TabloVarMi(YENI));
+  Kontrol('Sil: SQL karsiligi DROP TABLE', (Length(Sonuc.Komutlar) > 0) and (Pos('DROP TABLE', UpperCase(Sonuc.Komutlar[0])) > 0));
+  Yedek := '';
+  if Sonuc.YedekDosyasi <> '' then
+    Yedek := TFile.ReadAllText(Sonuc.YedekDosyasi, TEncoding.Default);
+  Kontrol('Sil: yedek dosyasi CREATE TABLE icerir', Pos('CREATE TABLE', UpperCase(Yedek)) > 0);
+  Kontrol('Sil: yedek dosyasi tablonun VERISINI icermez', Pos('gizli veri', Yedek) = 0);
+  Kontrol('Sil: yedek dosyasi adi tablo_ ile baslar', Pos('tablo_', ExtractFileName(Sonuc.YedekDosyasi)) = 1);
+end;
+
 var
   YazmaIstendi, YazmaIzni, KendiVeritabanim: Boolean;
   Neden, Klasor: string;
@@ -587,6 +690,7 @@ begin
           YapiBolumu;
           KolonBolumu;
           IndeksKisitBolumu;
+          YeniTabloSilBolumu;
         finally
           Temizle;
         end;

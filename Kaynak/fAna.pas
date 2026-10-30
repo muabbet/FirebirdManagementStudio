@@ -1219,7 +1219,9 @@ begin
   end;
   Sayfa := TTabSheet.Create(pcCalisma);
   Sayfa.PageControl := pcCalisma;
-  if Tur = ntDomain then
+  if Tur = ntTablo then
+    Sayfa.ImageIndex := IKON_TABLO
+  else if Tur = ntDomain then
     Sayfa.ImageIndex := IKON_DOMAIN
   else
     Sayfa.ImageIndex := IKON_ISTISNA;
@@ -1255,7 +1257,9 @@ var
   DalNo: Integer;
 begin
   Sekme := TProsedurSekme(Sender);
-  if Sekme.Tur = ntDomain then
+  if Sekme.Tur = ntTablo then
+    DalNo := DAL_TABLO
+  else if Sekme.Tur = ntDomain then
     DalNo := DAL_DOMAIN
   else
     DalNo := DAL_ISTISNA;
@@ -1279,9 +1283,18 @@ procedure TfrmAna.NesneSekmeleriniKapat(const BaglantiAd: string; Tur: TNesneTur
 var
   i: Integer;
   Sekme: TProsedurSekme;
+  TabloSekmesi: TTabloSekme;
 begin
   for i := pcCalisma.PageCount - 1 downto 0 do
   begin
+    { Silinen tablonun acik tablo sekmeleri (kolon/veri) de kapanir. }
+    TabloSekmesi := SekmeAl(pcCalisma.Pages[i]);
+    if (Tur = ntTablo) and (TabloSekmesi <> nil) and SameText(TabloSekmesi.BaglantiAd, BaglantiAd) and
+      (TabloSekmesi.TabloAdi = Ad) then
+    begin
+      pcCalisma.Pages[i].Free;
+      Continue;
+    end;
     Sekme := ProsedurSekmeAl(pcCalisma.Pages[i]);
     if (Sekme <> nil) and not Sekme.Yeni and SameText(Sekme.BaglantiAd, BaglantiAd) and (Sekme.NesneAdi = Ad) and
       (TurOnEki(Sekme.Tur) = TurOnEki(Tur)) then
@@ -1296,7 +1309,7 @@ var
   Bag: TAcikBaglanti;
   Tur: TNesneTuru;
   Dal: TTreeNode;
-  Onay: string;
+  Onay, Yazilan: string;
   Sonuc: TProsedurSonucu;
 begin
   Oge := OgeAl(Dugme);
@@ -1317,6 +1330,22 @@ begin
   begin
     MesajYaz(T('MSG_SIL_VAZGECILDI'));
     Exit;
+  end;
+  { Tablo: yanlislikla silinmesin diye adi yazdirilir (veriler yedeklenmez). }
+  if Tur = ntTablo then
+  begin
+    Yazilan := '';
+    if not MetinSor(T('SIL_TABLO_AD_BASLIK'), TF('SIL_TABLO_AD_ETIKET', [Oge.Ad]), Yazilan, False) then
+    begin
+      MesajYaz(T('MSG_SIL_VAZGECILDI'));
+      Exit;
+    end;
+    if not SameText(Trim(Yazilan), Oge.Ad) then
+    begin
+      UyariGoster(T('ERR_SIL_TABLO_AD_UYMADI'));
+      MesajYaz(T('MSG_SIL_VAZGECILDI'));
+      Exit;
+    end;
   end;
   Dal := Dugme.Parent;
   Sonuc := NesneSil(Bag, Tur, Oge.Ad);
@@ -1880,11 +1909,12 @@ begin
   miDomVarsayilan.Visible := Uretilebilir and (OgeAl(Dugme).DalNo = DAL_DOMAIN);
   miDomKontrol.Visible := miDomVarsayilan.Visible;
   miDomAd.Visible := miDomVarsayilan.Visible;
-  miNesneSil.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_VIEW, DAL_DOMAIN, DAL_ISTISNA, DAL_GENERATOR]);
+  miNesneSil.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_TABLO, DAL_VIEW, DAL_DOMAIN, DAL_ISTISNA, DAL_GENERATOR]);
   { Dala sag tik: yeni exception / domain. }
-  miYeniNesne.Visible := (not Bos) and (Tur = atDal) and Acik and (OgeAl(Dugme).DalNo in [DAL_DOMAIN, DAL_ISTISNA, DAL_GENERATOR]);
+  miYeniNesne.Visible := (not Bos) and (Tur = atDal) and Acik and (OgeAl(Dugme).DalNo in [DAL_TABLO, DAL_DOMAIN, DAL_ISTISNA, DAL_GENERATOR]);
   if miYeniNesne.Visible then
     case OgeAl(Dugme).DalNo of
+      DAL_TABLO: miYeniNesne.Caption := T('MENU_YENI_TABLO');
       DAL_DOMAIN: miYeniNesne.Caption := T('MENU_YENI_DOMAIN');
       DAL_ISTISNA: miYeniNesne.Caption := T('MENU_YENI_ISTISNA');
     else
