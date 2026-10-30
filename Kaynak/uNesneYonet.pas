@@ -55,6 +55,9 @@ function GeneratorDegerAyarla(Bag: TAcikBaglanti; const Ad: string; Yeni: Int64)
 { Yeni generator: CREATE SEQUENCE ad. Sonuc.Ad olusan adi tasir. }
 function GeneratorOlustur(Bag: TAcikBaglanti; const Ad: string): TProsedurSonucu;
 
+{ Yazilan degerin basindaki anahtar sozcugu atar: "DEFAULT 5" -> "5", "CHECK (VALUE > 0)" -> "(VALUE > 0)". }
+function SozcuguAt(const Deger, Sozcuk: string): string;
+
 { Domain'in yazi kutusuna konacak mevcut degeri (varsayilan ifade, CHECK ifadesi, ad). }
 function DomainMevcutDeger(Bag: TAcikBaglanti; const Ad: string; Islem: TDomainIslemi): string;
 { Calisacak komut(lar), "; " ile ayrilmis tek metin olarak (onay penceresinde de gosterilir). Deger bos:

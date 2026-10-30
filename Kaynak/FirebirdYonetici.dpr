@@ -24,6 +24,8 @@ uses
   uKullanici in 'uKullanici.pas',
   uProsedur in 'uProsedur.pas',
   uNesneYonet in 'uNesneYonet.pas',
+  uKolon in 'uKolon.pas',
+  fKolonIslem in 'fKolonIslem.pas' {frmKolonIslem},
   fProsedurSekme in 'fProsedurSekme.pas' {ProsedurSekme: TFrame},
   fKullanicilar in 'fKullanicilar.pas' {Kullanicilar: TFrame},
   fKullaniciDuzenle in 'fKullaniciDuzenle.pas' {frmKullaniciDuzenle},

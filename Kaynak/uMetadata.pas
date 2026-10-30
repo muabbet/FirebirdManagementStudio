@@ -208,6 +208,9 @@ const
   { Tablo icin: baska bir tablonun yabanci anahtari bu tabloyu kullaniyor / bu tablonun yabanci anahtari buna bagli. }
   BAG_FK_KULLANAN = -2;
   BAG_FK_HEDEF = -3;
+  { Kolon icin: kolonu iceren kisit ve index. }
+  BAG_KISIT = -4;
+  BAG_INDEKS = -5;
 
 function KullaniciYetenekleri(Bag: TAcikBaglanti): TKullaniciYetenekleri;
 function KullaniciListesiOku(Bag: TAcikBaglanti): TArray<TKullaniciBilgisi>;
@@ -235,6 +238,12 @@ function BagimliNesneler(Bag: TAcikBaglanti; Hedef: TBagimlilikHedefi; const Ad:
 function BagimlilikTuruAdi(Tur: Integer): string;
 { Tablo icin: onu kullanan view/trigger/prosedur ve yabanci anahtar ile bagli tablolar. }
 function TabloBagimliliklariniOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TBagimlilik>;
+{ Kolon icin: onu kullanan view/trigger/prosedur (RDB$DEPENDENCIES) ile onu iceren kisit ve index'ler. }
+function KolonBagimliliklariniOku(Bag: TAcikBaglanti; const Tablo, Kolon: string): TArray<TBagimlilik>;
+{ Tablodaki satir sayisi (COUNT(*)); veri kaybi riskli islerin onayinda gosterilir. Buyuk tabloda uzun surebilir. }
+function TabloSatirSayisi(Bag: TAcikBaglanti; const Tablo: string): Int64;
+{ ALTER COLUMN ... SET/DROP NOT NULL: Firebird 3.0 ve ustu. 2.5'te yok (yalniz sistem tablosuna elle yazilirdi, yapilmaz). }
+function KolonNullDegistirilebilir(Bag: TAcikBaglanti): Boolean;
 { Tablo yapi sekmesi icin kucuk bellek tablolari. Tablo, Sahip ile birlikte yok olur. }
 function IndeksTablosuOlustur(Bag: TAcikBaglanti; const Tablo: string; Sahip: TComponent): TFDMemTable;
 function KisitTablosuOlustur(Bag: TAcikBaglanti; const Tablo: string; Sahip: TComponent): TFDMemTable;
@@ -1262,6 +1271,8 @@ begin
     BAG_KOLON: Result := T('BAG_TUR_KOLON');
     BAG_FK_KULLANAN: Result := T('BAG_TUR_FK_KULLANAN');
     BAG_FK_HEDEF: Result := T('BAG_TUR_FK_HEDEF');
+    BAG_KISIT: Result := T('BAG_TUR_KISIT');
+    BAG_INDEKS: Result := T('BAG_TUR_INDEKS');
     1: Result := T('BAG_TUR_VIEW');
     2: Result := T('BAG_TUR_TETIKLEYICI');
     3: Result := T('BAG_TUR_HESAPLANAN');
@@ -1310,6 +1321,66 @@ begin
   finally
     Liste.Free;
   end;
+end;
+
+function KolonBagimliliklariniOku(Bag: TAcikBaglanti; const Tablo, Kolon: string): TArray<TBagimlilik>;
+var
+  Sorgu: TFDQuery;
+  Liste: TList<TBagimlilik>;
+  Satir: TBagimlilik;
+  Kisit: TKisitBilgisi;
+  Indeks: TIndeksBilgisi;
+begin
+  Liste := TList<TBagimlilik>.Create;
+  try
+    Sorgu := TFDQuery.Create(nil);
+    try
+      Sorgu.Connection := Bag.Baglanti;
+      Sorgu.FetchOptions.Mode := fmAll;
+      Sorgu.SQL.Text := 'select distinct rdb$dependent_name, rdb$dependent_type from rdb$dependencies ' +
+        'where rdb$depended_on_name = :T and rdb$field_name = :K and rdb$depended_on_type = 0 ' +
+        'and rdb$dependent_name <> rdb$depended_on_name order by 2, 1';
+      Sorgu.Params[0].AsString := Tablo;
+      Sorgu.Params[1].AsString := Kolon;
+      Sorgu.Open;
+      while not Sorgu.Eof do
+      begin
+        Satir.Ad := Trim(Sorgu.Fields[0].AsString);
+        Satir.Tur := Sorgu.Fields[1].AsInteger;
+        Liste.Add(Satir);
+        Sorgu.Next;
+      end;
+    finally
+      Sorgu.Free;
+    end;
+    for Kisit in KisitlariOku(Bag, Tablo) do
+      if (Kisit.Tur <> ktCheck) and (IndexText(Kolon, Kisit.Kolonlar) >= 0) then
+      begin
+        Satir.Ad := Kisit.GercekAd;
+        Satir.Tur := BAG_KISIT;
+        Liste.Add(Satir);
+      end;
+    for Indeks in IndeksleriOku(Bag, Tablo) do
+      if IndexText(Kolon, Indeks.Kolonlar) >= 0 then
+      begin
+        Satir.Ad := Indeks.Ad;
+        Satir.Tur := BAG_INDEKS;
+        Liste.Add(Satir);
+      end;
+    Result := Liste.ToArray;
+  finally
+    Liste.Free;
+  end;
+end;
+
+function TabloSatirSayisi(Bag: TAcikBaglanti; const Tablo: string): Int64;
+begin
+  Result := StrToInt64Def(TekDeger(Bag, 'select count(*) from ' + HamTirnak(Tablo), ''), 0);
+end;
+
+function KolonNullDegistirilebilir(Bag: TAcikBaglanti): Boolean;
+begin
+  Result := SurumNo(Bag) >= 3;
 end;
 
 function Virgullu(const Parcalar: TArray<string>): string;

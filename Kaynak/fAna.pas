@@ -1622,6 +1622,7 @@ begin
   Sekme.Parent := Sayfa;
   Sekme.Align := alClient;
   Sekme.AnaSonuc := memSonuc.Lines;
+  Sekme.SqlYaz := SqlMesajiYaz;
   try
     Sekme.Yukle(Bag, Oge.Ad);
   except

@@ -21,6 +21,75 @@ object TabloSekme: TTabloSekme
       Align = alClient
       TabOrder = 0
       object tsKolonlar: TTabSheet
+        object pnlKolonDugme: TPanel
+          Left = 0
+          Top = 0
+          Width = 712
+          Height = 34
+          Align = alTop
+          BevelOuter = bvNone
+          TabOrder = 1
+          object btnKolonEkle: TButton
+            AlignWithMargins = True
+            Left = 4
+            Top = 3
+            Width = 90
+            Height = 28
+            Margins.Left = 4
+            Margins.Top = 3
+            Margins.Right = 0
+            Margins.Bottom = 3
+            Align = alLeft
+            Constraints.MinWidth = 90
+            TabOrder = 0
+            OnClick = btnKolonEkleClick
+          end
+          object btnKolonAd: TButton
+            AlignWithMargins = True
+            Left = 98
+            Top = 3
+            Width = 90
+            Height = 28
+            Margins.Left = 4
+            Margins.Top = 3
+            Margins.Right = 0
+            Margins.Bottom = 3
+            Align = alLeft
+            Constraints.MinWidth = 90
+            TabOrder = 1
+            OnClick = btnKolonAdClick
+          end
+          object btnKolonDegistir: TButton
+            AlignWithMargins = True
+            Left = 192
+            Top = 3
+            Width = 90
+            Height = 28
+            Margins.Left = 4
+            Margins.Top = 3
+            Margins.Right = 0
+            Margins.Bottom = 3
+            Align = alLeft
+            Constraints.MinWidth = 90
+            TabOrder = 2
+            OnClick = btnKolonDegistirClick
+          end
+          object btnKolonSil: TButton
+            AlignWithMargins = True
+            Left = 286
+            Top = 3
+            Width = 90
+            Height = 28
+            Margins.Left = 4
+            Margins.Top = 3
+            Margins.Right = 0
+            Margins.Bottom = 3
+            Align = alLeft
+            Constraints.MinWidth = 90
+            TabOrder = 3
+            OnClick = btnKolonSilClick
+          end
+        end
         object gridKolonlar: TDBGrid
           Left = 0
           Top = 0

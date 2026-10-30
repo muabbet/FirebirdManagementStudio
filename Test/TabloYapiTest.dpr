@@ -12,7 +12,7 @@ uses
   System.SysUtils, System.Classes, System.StrUtils, System.IOUtils, Data.DB,
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.Comp.Client, FireDAC.Phys.FB,
   FireDAC.ConsoleUI.Wait,
-  uDil, uBaglanti, uMetadata, uKullanici;
+  uDil, uBaglanti, uMetadata, uKullanici, uDDL, uProsedur, uNesneYonet, uKolon;
 
 const
   ANA = 'FBY_TEST_ANA';
@@ -32,6 +32,11 @@ begin
   Result := GetEnvironmentVariable(Ad);
   if Result = '' then
     Result := Varsayilan;
+end;
+
+function TekSatirMetin(const Metin: string): string;
+begin
+  Result := Copy(StringReplace(StringReplace(Metin, #13, '', [rfReplaceAll]), #10, ' | ', [rfReplaceAll]), 1, 300);
 end;
 
 procedure Kontrol(const Ad: string; Sonuc: Boolean);
@@ -131,7 +136,13 @@ begin
   Cikti.Add('=== A) Dil anahtarlari ===');
   Anahtarlar := ['LBL_INDEKSLER', 'LBL_KISITLAR', 'LBL_BAGIMLILIKLAR', 'YAPI_AD', 'YAPI_TUR', 'YAPI_KOLONLAR',
     'YAPI_BENZERSIZ', 'YAPI_YON', 'YAPI_DURUM', 'YAPI_DETAY', 'INDEKS_AKTIF', 'INDEKS_PASIF', 'KISIT_PK',
-    'KISIT_UNIQUE', 'KISIT_FK', 'KISIT_CHECK', 'BAG_TUR_FK_KULLANAN', 'BAG_TUR_FK_HEDEF', 'MENU_BAGIMLILIKLAR'];
+    'KISIT_UNIQUE', 'KISIT_FK', 'KISIT_CHECK', 'BAG_TUR_FK_KULLANAN', 'BAG_TUR_FK_HEDEF', 'MENU_BAGIMLILIKLAR',
+    'BTN_KOLON_EKLE', 'BTN_KOLON_AD', 'BTN_KOLON_DEGISTIR', 'BTN_KOLON_SIL', 'KOLON_BASLIK_EKLE', 'KOLON_BASLIK_AD',
+    'KOLON_BASLIK_DEGISTIR', 'KOLON_BASLIK_SIL', 'KOLON_ETIKET_AD', 'KOLON_ETIKET_TIP', 'KOLON_ETIKET_VARSAYILAN',
+    'KOLON_ETIKET_BOS_OLMAZ', 'KOLON_ETIKET_KOMUT', 'KOLON_SIL_NOT', 'KOLON_NULL_YOK_25', 'ERR_KOLON_HESAPLANAN',
+    'ERR_KOLON_AD_BOS', 'ERR_KOLON_TIP_BOS', 'ERR_KOLON_DEGISIKLIK_YOK', 'ONAY_KOLON', 'ONAY_KOLON_VERI_RISKI',
+    'ONAY_KOLON_KULLANANLAR', 'ONAY_KOLON_YEDEK', 'MSG_KOLON_VAZGECILDI', 'MSG_KOLON_TAMAM', 'ERR_KOLON_UYGULANAMADI',
+    'MSG_KOLON_GERI_ALINDI', 'BAG_TUR_KISIT', 'BAG_TUR_INDEKS', 'TBL_YEDEK_BASLIK'];
   for Dil in ['tr', 'en', 'de'] do
   begin
     DilYukle(Dil);
@@ -197,6 +208,152 @@ begin
   end;
 end;
 
+{ Kolon islemini uKolon ile uygular (pencere ve onay yok). Eski, mevcut kolondan okunur. }
+function KolonUygula_(Islem: TKolonIslemi; const Kolon, YeniAd, Tip, Varsayilan: string; BosOlmaz: Boolean;
+  out Eski, Yeni: TKolonGirdisi): TProsedurSonucu;
+begin
+  if Islem = kiEkle then
+  begin
+    Eski := Default(TKolonGirdisi);
+    Eski.Islem := kiEkle;
+    Eski.Tablo := ANA;
+  end
+  else
+    Eski := KolonGirdisiOku(Bag, ANA, Kolon, Islem);
+  Yeni := Eski;
+  if Islem in [kiEkle, kiAd] then
+    Yeni.YeniAd := YeniAd;
+  if Islem in [kiEkle, kiDegistir] then
+  begin
+    Yeni.Tip := Tip;
+    Yeni.Varsayilan := Varsayilan;
+    Yeni.BosOlmaz := BosOlmaz;
+  end;
+  Result := KolonUygula(Bag, Eski, Yeni);
+end;
+
+function KolonVarMi(const Kolon: string): Boolean;
+var
+  Bilgi: TKolonBilgisi;
+begin
+  Result := False;
+  for Bilgi in KolonlariOku(Bag, ANA) do
+    if Bilgi.Ad = Kolon then
+      Exit(True);
+end;
+
+function YedekIcerigi: string;
+var
+  Dosyalar: TArray<string>;
+begin
+  Result := '';
+  Dosyalar := TDirectory.GetFiles(ProsedurYedekKlasoru(Tanim.Ad), 'tablo_' + ANA + '_*.sql');
+  if Length(Dosyalar) > 0 then
+    Result := TFile.ReadAllText(Dosyalar[High(Dosyalar)], TEncoding.Default);
+end;
+
+procedure KolonBolumu;
+var
+  Eski, Yeni: TKolonGirdisi;
+  Sonuc: TProsedurSonucu;
+  Komutlar, Metin: string;
+begin
+  Cikti.Add('');
+  Cikti.Add('=== C) Kolon islemleri (' + Bag.Surum + ') ===');
+  Temizle;
+  Yurut('create table ' + ANA + ' (ID integer not null primary key, AD varchar(30), KOD varchar(10) not null, ' +
+    'constraint FBY_TEST_UQ unique (KOD))');
+  Yurut('insert into ' + ANA + ' (ID, AD, KOD) values (1, ''a'', ''k1'')');
+  Yurut('insert into ' + ANA + ' (ID, AD, KOD) values (2, ''b'', ''k2'')');
+  Yurut('insert into ' + ANA + ' (ID, AD, KOD) values (3, ''c'', ''k3'')');
+  Yurut('create view ' + VW + ' as select ID, AD from ' + ANA);
+
+  { Dogrulama ve "degisiklik yok" }
+  Eski := Default(TKolonGirdisi);
+  Eski.Islem := kiEkle;
+  Eski.Tablo := ANA;
+  Kontrol('Dogrula: bos kolon adi reddedilir', KolonGirdisiniDogrula(Eski) = T('ERR_KOLON_AD_BOS'));
+  Eski.YeniAd := 'x';
+  Kontrol('Dogrula: bos tip reddedilir', KolonGirdisiniDogrula(Eski) = T('ERR_KOLON_TIP_BOS'));
+  Eski := KolonGirdisiOku(Bag, ANA, 'AD', kiDegistir);
+  Kontrol('Oku: tip dolu (VARCHAR)', Pos('VARCHAR', UpperCase(Eski.Tip)) > 0);
+  Sonuc := KolonUygula(Bag, Eski, Eski);
+  Kontrol('Degisiklik yok: komut yok cumlesi, veritabanina dokunulmaz', (not Sonuc.Basarili) and
+    (Sonuc.Cumle = T('ERR_KOLON_DEGISIKLIK_YOK')) and (Length(Sonuc.Komutlar) = 0));
+
+  { Ekle }
+  Sonuc := KolonUygula_(kiEkle, '', 'ZZ1', 'INTEGER', 'DEFAULT 5', True, Eski, Yeni);
+  Kontrol('Ekle: NOT NULL DEFAULT kolon eklendi', Sonuc.Basarili);
+  if not Sonuc.Basarili then
+    Cikti.Add('      ' + Sonuc.Cumle + ' | ' + TekSatirMetin(Sonuc.Ayrinti));
+  Kontrol('Ekle: kolon var', KolonVarMi('ZZ1'));
+  Kontrol('Ekle: yedek dosyasi yazildi, CREATE TABLE ve veri-yedeklenmedi notu var',
+    (Pos('CREATE TABLE', UpperCase(YedekIcerigi)) > 0) and (Pos(T('TBL_YEDEK_BASLIK'), YedekIcerigi) > 0));
+  Sonuc := KolonUygula_(kiEkle, '', 'ZZ2', 'VARCHAR(20)', '', False, Eski, Yeni);
+  Kontrol('Ekle: bos olabilen kolon eklendi', Sonuc.Basarili and KolonVarMi('ZZ2'));
+
+  { Ad }
+  Sonuc := KolonUygula_(kiAd, 'ZZ2', 'ZZ3', '', '', False, Eski, Yeni);
+  Kontrol('Ad: ZZ2 -> ZZ3', Sonuc.Basarili and KolonVarMi('ZZ3') and not KolonVarMi('ZZ2'));
+
+  { Degistir: tip + varsayilan (+ NOT NULL, yalniz 3.0+) }
+  Yurut('update ' + ANA + ' set ZZ3 = ''x''');
+  Sonuc := KolonUygula_(kiDegistir, 'ZZ3', '', 'VARCHAR(40)', 'DEFAULT ''abc''', False, Eski, Yeni);
+  Kontrol('Degistir: tip VARCHAR(40) ve varsayilan', Sonuc.Basarili);
+  if not Sonuc.Basarili then
+    Cikti.Add('      ' + Sonuc.Cumle + ' | ' + TekSatirMetin(Sonuc.Ayrinti));
+  Eski := KolonGirdisiOku(Bag, ANA, 'ZZ3', kiDegistir);
+  Kontrol('Degistir: yeni tip okunur', Pos('40', Eski.Tip) > 0);
+  Kontrol('Degistir: varsayilan okunur', Pos('abc', Eski.Varsayilan) > 0);
+  Yeni := Eski;
+  Yeni.BosOlmaz := True;
+  Komutlar := KolonKomutlari(Bag, Eski, Yeni);
+  if KolonNullDegistirilebilir(Bag) then
+  begin
+    Kontrol('NOT NULL (3.0+): komutta SET NOT NULL', Pos('SET NOT NULL', Komutlar) > 0);
+    Sonuc := KolonUygula(Bag, Eski, Yeni);
+    Kontrol('NOT NULL (3.0+): uygulandi', Sonuc.Basarili);
+    Kontrol('NOT NULL (3.0+): kolon NOT NULL oldu', KolonGirdisiOku(Bag, ANA, 'ZZ3', kiDegistir).BosOlmaz);
+  end
+  else
+    Kontrol('NOT NULL (2.5): komut uretilmez (surum kurali)', Komutlar = '');
+  Eski := KolonGirdisiOku(Bag, ANA, 'ZZ3', kiDegistir);
+  Yeni := Eski;
+  Yeni.Varsayilan := '';
+  Kontrol('Varsayilan kaldirma: DROP DEFAULT komutu', Pos('DROP DEFAULT', KolonKomutlari(Bag, Eski, Yeni)) > 0);
+
+  { Hesaplanan kolon }
+  Yurut('alter table ' + ANA + ' add ZZH computed by (ID * 2)');
+  try
+    KolonGirdisiOku(Bag, ANA, 'ZZH', kiDegistir);
+    Kontrol('Hesaplanan kolon: degistirme reddedilir', False);
+  except
+    on E: EMetadataHatasi do
+      Kontrol('Hesaplanan kolon: degistirme reddedilir (' + E.Message + ')', E.Message = T('ERR_KOLON_HESAPLANAN'));
+  end;
+
+  { Veri riski ve bagimlilik onayi }
+  Eski := KolonGirdisiOku(Bag, ANA, 'AD', kiSil);
+  Yeni := Eski;
+  Metin := KolonOnayMetni(Bag, Eski, Yeni, KolonKomutlari(Bag, Eski, Yeni));
+  Kontrol('Onay (sil): satir sayisi yazili', Pos(TF('ONAY_KOLON_VERI_RISKI', [3]), Metin) > 0);
+  Kontrol('Onay (sil): kolonu kullanan view listelenir', Pos(VW, Metin) > 0);
+  Kontrol('Onay (sil): yedek bilgisi', Pos(T('ONAY_KOLON_YEDEK'), Metin) > 0);
+
+  { Bagimli view yuzunden silinemez: rollback, kolon yerinde }
+  Sonuc := KolonUygula(Bag, Eski, Yeni);
+  Kontrol('Sil (bagimli view var): reddedilir, anlasilir cumle, komut gorunur',
+    (not Sonuc.Basarili) and (Sonuc.Cumle <> '') and (Length(Sonuc.Komutlar) > 0) and KolonVarMi('AD'));
+  Cikti.Add('      cumle: ' + TekSatirMetin(Sonuc.Cumle));
+  Cikti.Add('      ayrinti: ' + TekSatirMetin(Sonuc.Ayrinti));
+  Kontrol('Sil (bagimli view var): cumle bagimlilik cumlesi', Sonuc.Cumle = T('ERR_NESNE_BAGIMLI'));
+
+  { Bagimsiz kolon silinir }
+  Sonuc := KolonUygula_(kiSil, 'ZZ1', '', '', '', False, Eski, Yeni);
+  Kontrol('Sil: ZZ1 silindi', Sonuc.Basarili and not KolonVarMi('ZZ1'));
+  Kontrol('Sil: SQL karsiligi ALTER TABLE ... DROP', (Length(Sonuc.Komutlar) > 0) and (Pos('DROP', UpperCase(Sonuc.Komutlar[0])) > 0));
+end;
+
 var
   YazmaIstendi, YazmaIzni, KendiVeritabanim: Boolean;
   Neden, Klasor: string;
@@ -243,12 +400,16 @@ begin
       Cikti.Add('TabloYapiTest  ' + FormatDateTime('yyyy-mm-dd hh:nn:ss', Now));
       Cikti.Add('Sunucu: ' + IfThen(Gomulu, '(gomulu)', Tanim.Sunucu + ':' + IntToStr(Tanim.Port)));
       Cikti.Add('Yazma bolumu: ' + IfThen(YazmaIzni, 'ACIK', 'KAPALI - ' + Neden));
+      if TDirectory.Exists(TPath.Combine(GetEnvironmentVariable('TEMP'), 'yapitest_veri')) then
+        TDirectory.Delete(TPath.Combine(GetEnvironmentVariable('TEMP'), 'yapitest_veri'), True);
+      VeriKlasoruAyarla(TPath.Combine(GetEnvironmentVariable('TEMP'), 'yapitest_veri'));
       KurallarBolumu;
       if YazmaIzni then
       begin
         Bag := FbBaglan(Tanim);
         try
           YapiBolumu;
+          KolonBolumu;
         finally
           Temizle;
         end;
