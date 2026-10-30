@@ -44,6 +44,10 @@ type
 
 implementation
 
+type
+  { DefaultRowHeight korumalidir; satir yuksekligini ayarlamak icin tek amacli erisim. }
+  TGridErisim = class(TDBGrid);
+
 const
   KISA_UZUNLUK = 100;
   OTO_GENISLIK_SATIR = 50;
@@ -51,6 +55,12 @@ const
   EN_COK_GENISLIK = 400;
   YUKARI_OK = #$25B2;
   ASAGI_OK = #$25BC;
+  { Gorunum (SSMS gibi). Sayilari saga dayamak icin SAYI_SAGA'yi True yapmak yeter. }
+  SAYI_SAGA = False;
+  RENK_CIZGI = $E0DCDA;
+  RENK_BASLIK = $F0F0F0;
+  RENK_ZEBRA = $FCF9F7;
+  RENK_SECIM = $F7E4CC;
 
 function MemoMu(Alan: TField): Boolean;
 begin
@@ -125,7 +135,15 @@ begin
   FGrid := Grid;
   FGrid.ReadOnly := True;
   FGrid.DefaultDrawing := False;
-  FGrid.Options := FGrid.Options + [dgTitles, dgIndicator, dgMultiSelect];
+  FGrid.Options := FGrid.Options + [dgTitles, dgIndicator, dgMultiSelect] - [dgRowLines, dgColLines];
+  { Cizgileri ve renkleri biz ciziyoruz; VCL Style hucre zeminini ezmesin. }
+  FGrid.StyleElements := [seBorder];
+  FGrid.Font.Name := 'Segoe UI';
+  FGrid.Font.Size := 9;
+  FGrid.TitleFont.Assign(FGrid.Font);
+  FGrid.FixedColor := RENK_BASLIK;
+  FGrid.Canvas.Font.Assign(FGrid.Font);
+  TGridErisim(FGrid).DefaultRowHeight := FGrid.Canvas.TextHeight('Wg') + 6;
   FGrid.OnTitleClick := BaslikTik;
   FGrid.OnDrawColumnCell := HucreCiz;
   FGrid.OnKeyDown := TusBas;
@@ -153,6 +171,10 @@ begin
   begin
     Kolon := FGrid.Columns[i];
     Kolon.Title.Caption := Kolon.FieldName;
+    Kolon.Title.Color := RENK_BASLIK;
+    Kolon.Title.Font.Assign(FGrid.Font);
+    Kolon.Title.Font.Color := clWindowText;
+    Kolon.Title.Font.Style := [];
     if SameText(Kolon.FieldName, FSiraAlan) then
     begin
       if FAzalan then
@@ -212,19 +234,13 @@ begin
     Exit;
   end;
   Secili :=(gdSelected in State) or FGrid.SelectedRows.CurrentRowSelected;
+  FGrid.Canvas.Font.Color := clWindowText;
   if Secili then
-  begin
-    FGrid.Canvas.Brush.Color := clHighlight;
-    FGrid.Canvas.Font.Color := clHighlightText;
-  end
+    FGrid.Canvas.Brush.Color := RENK_SECIM
+  else if Odd(FGrid.DataSource.DataSet.RecNo) then
+    FGrid.Canvas.Brush.Color := clWindow
   else
-  begin
-    if Odd(FGrid.DataSource.DataSet.RecNo) then
-      FGrid.Canvas.Brush.Color := clWindow
-    else
-      FGrid.Canvas.Brush.Color := TColor(RGB(240, 245, 250));
-    FGrid.Canvas.Font.Color := clWindowText;
-  end;
+    FGrid.Canvas.Brush.Color := RENK_ZEBRA;
   FGrid.Canvas.Font.Style := [];
   if Alan.IsNull then
   begin
@@ -238,15 +254,20 @@ begin
   begin
     Metin := HucreMetni(Alan);
     Bicim := [tfSingleLine, tfVerticalCenter, tfEndEllipsis, tfNoPrefix];
-    if Column.Alignment = taRightJustify then
+    if SAYI_SAGA and (Column.Alignment = taRightJustify) then
       Include(Bicim, tfRight)
     else
       Include(Bicim, tfLeft);
   end;
   FGrid.Canvas.FillRect(Rect);
   Alani := Rect;
-  InflateRect(Alani, -3, 0);
+  InflateRect(Alani, -4, 0);
   FGrid.Canvas.TextRect(Alani, Metin, Bicim);
+  { Ince hucre cizgileri: sag ve alt kenar. }
+  FGrid.Canvas.Pen.Color := RENK_CIZGI;
+  FGrid.Canvas.MoveTo(Rect.Right - 1, Rect.Top);
+  FGrid.Canvas.LineTo(Rect.Right - 1, Rect.Bottom - 1);
+  FGrid.Canvas.LineTo(Rect.Left - 1, Rect.Bottom - 1);
   if gdFocused in State then
     FGrid.Canvas.DrawFocusRect(Rect);
 end;
