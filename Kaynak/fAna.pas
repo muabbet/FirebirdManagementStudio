@@ -47,6 +47,7 @@ type
     vilIkonlar: TVirtualImageList;
     pmNesne: TPopupMenu;
     miAc: TMenuItem;
+    miBagimliliklar: TMenuItem;
     miScriptUret: TMenuItem;
     miNesneDuzenle: TMenuItem;
     miYeniNesne: TMenuItem;
@@ -93,6 +94,7 @@ type
     procedure tvNesnelerDragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure pmNesnePopup(Sender: TObject);
     procedure miAcClick(Sender: TObject);
+    procedure miBagimliliklarClick(Sender: TObject);
     procedure miScriptUretClick(Sender: TObject);
     procedure miNesneDuzenleClick(Sender: TObject);
     procedure miYeniNesneClick(Sender: TObject);
@@ -287,6 +289,7 @@ begin
   FSerit.YazilariYenile;
   pnlUst.Height := FSerit.Yukseklik;
   miAc.Caption := T('MENU_AC');
+  miBagimliliklar.Caption := T('MENU_BAGIMLILIKLAR');
   miScriptUret.Caption := T('MENU_SCRIPT_URET');
   miNesneDuzenle.Caption := T('MENU_PROSEDUR_DUZENLE');
   miDomVarsayilan.Caption := T('MENU_DOM_VARSAYILAN');
@@ -1867,6 +1870,7 @@ begin
   miMetadataCikar.Visible := (not Bos) and (Tur = atBaglanti) and Acik;
   miYedek.Visible := (not Bos) and (Tur = atBaglanti);
   miAc.Visible := (not Bos) and (Tur = atNesne) and (OgeAl(Dugme).DalNo = DAL_TABLO);
+  miBagimliliklar.Visible := miAc.Visible;
   { DDL tetikleyicisinde (script uretilmeyen tur) Script uret ve Duzenle gizlenir; Yenile kalir. }
   Uretilebilir := (not Bos) and (Tur = atNesne) and not OgeAl(Dugme).Duzenlenemez;
   miScriptUret.Visible := Uretilebilir;
@@ -1895,6 +1899,19 @@ procedure TfrmAna.miAcClick(Sender: TObject);
 begin
   if tvNesneler.Selected <> nil then
     TabloAc(tvNesneler.Selected);
+end;
+
+{ Tabloyu acar ve "Bagimliliklar" alt sekmesini one getirir. }
+procedure TfrmAna.miBagimliliklarClick(Sender: TObject);
+var
+  Sekme: TTabloSekme;
+begin
+  if tvNesneler.Selected = nil then
+    Exit;
+  TabloAc(tvNesneler.Selected);
+  Sekme := SekmeAl(pcCalisma.ActivePage);
+  if Sekme <> nil then
+    Sekme.BagimliliklariGoster;
 end;
 
 procedure TfrmAna.miScriptUretClick(Sender: TObject);

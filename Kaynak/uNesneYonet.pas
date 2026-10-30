@@ -88,19 +88,6 @@ begin
   end;
 end;
 
-function BagimlilikTuruYazisi(Tur: Integer): string;
-begin
-  case Tur of
-    BAG_KOLON: Result := T('BAG_TUR_KOLON');
-    1: Result := T('BAG_TUR_VIEW');
-    2: Result := T('BAG_TUR_TETIKLEYICI');
-    3: Result := T('BAG_TUR_HESAPLANAN');
-    5: Result := T('BAG_TUR_PROSEDUR');
-  else
-    Result := T('BAG_TUR_DIGER');
-  end;
-end;
-
 function BagimlilikMetni(const Liste: TArray<TBagimlilik>): string;
 var
   i: Integer;
@@ -115,7 +102,7 @@ begin
     end;
     if i > 0 then
       Result := Result + sLineBreak;
-    Result := Result + '- ' + BagimlilikTuruYazisi(Liste[i].Tur) + ': ' + Liste[i].Ad;
+    Result := Result + '- ' + BagimlilikTuruAdi(Liste[i].Tur) + ': ' + Liste[i].Ad;
   end;
 end;
 

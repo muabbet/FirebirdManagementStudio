@@ -8,39 +8,78 @@ object TabloSekme: TTabloSekme
     Left = 0
     Top = 0
     Width = 720
-    Height = 170
+    Height = 200
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
-    object lblKolonlar: TLabel
-      AlignWithMargins = True
-      Left = 8
-      Top = 4
-      Width = 704
-      Height = 17
-      Margins.Left = 8
-      Margins.Top = 4
-      Margins.Right = 8
-      Margins.Bottom = 2
-      Align = alTop
-      Font.Style = [fsBold]
-      ParentFont = False
-    end
-    object gridKolonlar: TDBGrid
+    object pcYapi: TPageControl
       Left = 0
-      Top = 25
+      Top = 0
       Width = 720
-      Height = 145
+      Height = 200
+      ActivePage = tsKolonlar
       Align = alClient
-      DataSource = dsKolonlar
-      Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgCancelOnExit]
-      ReadOnly = True
       TabOrder = 0
+      object tsKolonlar: TTabSheet
+        object gridKolonlar: TDBGrid
+          Left = 0
+          Top = 0
+          Width = 712
+          Height = 170
+          Align = alClient
+          DataSource = dsKolonlar
+          Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgCancelOnExit]
+          ReadOnly = True
+          TabOrder = 0
+        end
+      end
+      object tsIndeksler: TTabSheet
+        ImageIndex = 1
+        object gridIndeksler: TDBGrid
+          Left = 0
+          Top = 0
+          Width = 712
+          Height = 170
+          Align = alClient
+          DataSource = dsIndeksler
+          Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgCancelOnExit]
+          ReadOnly = True
+          TabOrder = 0
+        end
+      end
+      object tsKisitlar: TTabSheet
+        ImageIndex = 2
+        object gridKisitlar: TDBGrid
+          Left = 0
+          Top = 0
+          Width = 712
+          Height = 170
+          Align = alClient
+          DataSource = dsKisitlar
+          Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgCancelOnExit]
+          ReadOnly = True
+          TabOrder = 0
+        end
+      end
+      object tsBagimliliklar: TTabSheet
+        ImageIndex = 3
+        object gridBagimliliklar: TDBGrid
+          Left = 0
+          Top = 0
+          Width = 712
+          Height = 170
+          Align = alClient
+          DataSource = dsBagimliliklar
+          Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgRowSelect, dgCancelOnExit]
+          ReadOnly = True
+          TabOrder = 0
+        end
+      end
     end
   end
   object Bolucu: TSplitter
     Left = 0
-    Top = 170
+    Top = 200
     Width = 720
     Height = 5
     Cursor = crVSplit
@@ -48,7 +87,7 @@ object TabloSekme: TTabloSekme
   end
   object pnlVeri: TPanel
     Left = 0
-    Top = 175
+    Top = 205
     Width = 720
     Height = 245
     Align = alClient
@@ -113,5 +152,17 @@ object TabloSekme: TTabloSekme
   object dsVeri: TDataSource
     Left = 40
     Top = 250
+  end
+  object dsIndeksler: TDataSource
+    Left = 120
+    Top = 80
+  end
+  object dsKisitlar: TDataSource
+    Left = 200
+    Top = 80
+  end
+  object dsBagimliliklar: TDataSource
+    Left = 280
+    Top = 80
   end
 end

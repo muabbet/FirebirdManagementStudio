@@ -153,6 +153,9 @@ object frmAna: TfrmAna
     object miAc: TMenuItem
       OnClick = miAcClick
     end
+    object miBagimliliklar: TMenuItem
+      OnClick = miBagimliliklarClick
+    end
     object miScriptUret: TMenuItem
       OnClick = miScriptUretClick
     end

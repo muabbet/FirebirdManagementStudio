@@ -45,6 +45,8 @@ type
   TKisitBilgisi = record
     { Sistem verdiyse (INTEG_n) bos }
     Ad: string;
+    { Veritabanindaki gercek ad (INTEG_n dahil); yapi sekmesi ve ileride silme icin }
+    GercekAd: string;
     Tur: TKisitTuru;
     Kolonlar: TArray<string>;
     { Kullanici adli ozel indeks kullaniyorsa adi, degilse bos }
@@ -203,6 +205,9 @@ type
 
 const
   BAG_KOLON = -1;
+  { Tablo icin: baska bir tablonun yabanci anahtari bu tabloyu kullaniyor / bu tablonun yabanci anahtari buna bagli. }
+  BAG_FK_KULLANAN = -2;
+  BAG_FK_HEDEF = -3;
 
 function KullaniciYetenekleri(Bag: TAcikBaglanti): TKullaniciYetenekleri;
 function KullaniciListesiOku(Bag: TAcikBaglanti): TArray<TKullaniciBilgisi>;
@@ -226,6 +231,14 @@ function GeneratorBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TGeneratorBi
 { Nesneyi kullananlar (RDB$DEPENDENCIES; domain'de ayrica tablo kolonlari). Silmeden ve degistirmeden once gosterilir.
   Kendisi listeye girmez; bagimli yoksa bos dizi. }
 function BagimliNesneler(Bag: TAcikBaglanti; Hedef: TBagimlilikHedefi; const Ad: string): TArray<TBagimlilik>;
+{ Bagimlilik turunun yazisi (view, trigger, prosedur, kolon, yabanci anahtar ...). }
+function BagimlilikTuruAdi(Tur: Integer): string;
+{ Tablo icin: onu kullanan view/trigger/prosedur ve yabanci anahtar ile bagli tablolar. }
+function TabloBagimliliklariniOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TBagimlilik>;
+{ Tablo yapi sekmesi icin kucuk bellek tablolari. Tablo, Sahip ile birlikte yok olur. }
+function IndeksTablosuOlustur(Bag: TAcikBaglanti; const Tablo: string; Sahip: TComponent): TFDMemTable;
+function KisitTablosuOlustur(Bag: TAcikBaglanti; const Tablo: string; Sahip: TComponent): TFDMemTable;
+function BagimlilikTablosuOlustur(Bag: TAcikBaglanti; const Tablo: string; Sahip: TComponent): TFDMemTable;
 { Tek domain / exception. Yoksa EMetadataHatasi. }
 function DomainBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TDomainBilgisi;
 function IstisnaBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TIstisnaBilgisi;
@@ -730,6 +743,7 @@ begin
       Ad := Trim(Sorgu.FieldByName('AD').AsString);
       Tur := Trim(Sorgu.FieldByName('TUR').AsString);
       Indeks := Trim(Sorgu.FieldByName('INDEKS').AsString);
+      Kisit.GercekAd := Ad;
       if not StartsText('INTEG_', Ad) then
         Kisit.Ad := Ad;
       if (Indeks <> '') and (Indeks <> Ad) and not StartsText('RDB$', Indeks) then
@@ -1240,6 +1254,164 @@ begin
   finally
     Liste.Free;
   end;
+end;
+
+function BagimlilikTuruAdi(Tur: Integer): string;
+begin
+  case Tur of
+    BAG_KOLON: Result := T('BAG_TUR_KOLON');
+    BAG_FK_KULLANAN: Result := T('BAG_TUR_FK_KULLANAN');
+    BAG_FK_HEDEF: Result := T('BAG_TUR_FK_HEDEF');
+    1: Result := T('BAG_TUR_VIEW');
+    2: Result := T('BAG_TUR_TETIKLEYICI');
+    3: Result := T('BAG_TUR_HESAPLANAN');
+    5: Result := T('BAG_TUR_PROSEDUR');
+  else
+    Result := T('BAG_TUR_DIGER');
+  end;
+end;
+
+{ Tablonun bagimliliklari: onu kullanan view/trigger/prosedur (RDB$DEPENDENCIES), yabanci anahtari bu tabloya
+  baglanan tablolar ve bu tablonun yabanci anahtarlarinin gittigi tablolar. }
+function TabloBagimliliklariniOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TBagimlilik>;
+var
+  Sorgu: TFDQuery;
+  Liste: TList<TBagimlilik>;
+  Satir: TBagimlilik;
+  Kisit: TKisitBilgisi;
+begin
+  Liste := TList<TBagimlilik>.Create;
+  try
+    Liste.AddRange(BagimliNesneler(Bag, bhView, Tablo));
+    Sorgu := SorguAc(Bag, 'select distinct trim(rc.rdb$relation_name), trim(rc.rdb$constraint_name) ' +
+      'from rdb$ref_constraints rf ' +
+      'join rdb$relation_constraints rc on rc.rdb$constraint_name = rf.rdb$constraint_name ' +
+      'join rdb$relation_constraints uq on uq.rdb$constraint_name = rf.rdb$const_name_uq ' +
+      'where uq.rdb$relation_name = :T order by 1, 2', Tablo);
+    try
+      while not Sorgu.Eof do
+      begin
+        Satir.Ad := Sorgu.Fields[0].AsString + ' (' + Sorgu.Fields[1].AsString + ')';
+        Satir.Tur := BAG_FK_KULLANAN;
+        Liste.Add(Satir);
+        Sorgu.Next;
+      end;
+    finally
+      Sorgu.Free;
+    end;
+    for Kisit in KisitlariOku(Bag, Tablo) do
+      if Kisit.Tur = ktYabanci then
+      begin
+        Satir.Ad := Kisit.HedefTablo + ' (' + Kisit.GercekAd + ')';
+        Satir.Tur := BAG_FK_HEDEF;
+        Liste.Add(Satir);
+      end;
+    Result := Liste.ToArray;
+  finally
+    Liste.Free;
+  end;
+end;
+
+function Virgullu(const Parcalar: TArray<string>): string;
+var
+  i: Integer;
+begin
+  Result := '';
+  for i := 0 to High(Parcalar) do
+  begin
+    if i > 0 then
+      Result := Result + ', ';
+    Result := Result + Parcalar[i];
+  end;
+end;
+
+{ Metin alanlarindan olusan bos bir bellek tablosu: AD, ... Hepsi gorunur, genislik DisplayWidth. }
+function YapiTablosuAc(Sahip: TComponent; const Alanlar: array of string): TFDMemTable;
+var
+  i: Integer;
+begin
+  Result := TFDMemTable.Create(Sahip);
+  for i := 0 to High(Alanlar) do
+    Result.FieldDefs.Add(Alanlar[i], ftWideString, 512);
+  Result.CreateDataSet;
+  for i := 0 to High(Alanlar) do
+    Result.FieldByName(Alanlar[i]).DisplayWidth := 28;
+end;
+
+function IndeksTablosuOlustur(Bag: TAcikBaglanti; const Tablo: string; Sahip: TComponent): TFDMemTable;
+var
+  Indeks: TIndeksBilgisi;
+begin
+  Result := YapiTablosuAc(Sahip, ['AD', 'KOLONLAR', 'BENZERSIZ', 'YON', 'DURUM']);
+  for Indeks in IndeksleriOku(Bag, Tablo) do
+  begin
+    Result.Append;
+    Result.FieldByName('AD').AsString := Indeks.Ad;
+    if Indeks.Ifade <> '' then
+      Result.FieldByName('KOLONLAR').AsString := Indeks.Ifade
+    else
+      Result.FieldByName('KOLONLAR').AsString := Virgullu(Indeks.Kolonlar);
+    Result.FieldByName('BENZERSIZ').AsString := EvetHayir(Indeks.Benzersiz);
+    if Indeks.Azalan then
+      Result.FieldByName('YON').AsString := 'DESC'
+    else
+      Result.FieldByName('YON').AsString := 'ASC';
+    if Indeks.Pasif then
+      Result.FieldByName('DURUM').AsString := T('INDEKS_PASIF')
+    else
+      Result.FieldByName('DURUM').AsString := T('INDEKS_AKTIF');
+    Result.Post;
+  end;
+  Result.First;
+end;
+
+function KisitTablosuOlustur(Bag: TAcikBaglanti; const Tablo: string; Sahip: TComponent): TFDMemTable;
+var
+  Kisit: TKisitBilgisi;
+  Detay: string;
+begin
+  Result := YapiTablosuAc(Sahip, ['AD', 'TUR', 'KOLONLAR', 'DETAY']);
+  for Kisit in KisitlariOku(Bag, Tablo) do
+  begin
+    Result.Append;
+    Result.FieldByName('AD').AsString := Kisit.GercekAd;
+    Detay := '';
+    case Kisit.Tur of
+      ktBirincil: Result.FieldByName('TUR').AsString := T('KISIT_PK');
+      ktBenzersiz: Result.FieldByName('TUR').AsString := T('KISIT_UNIQUE');
+      ktYabanci:
+        begin
+          Result.FieldByName('TUR').AsString := T('KISIT_FK');
+          Detay := Kisit.HedefTablo + ' (' + Virgullu(Kisit.HedefKolonlar) + ')';
+          if Kisit.SilKurali <> '' then
+            Detay := Detay + ' ON DELETE ' + Kisit.SilKurali;
+          if Kisit.GuncelleKurali <> '' then
+            Detay := Detay + ' ON UPDATE ' + Kisit.GuncelleKurali;
+        end;
+    else
+      Result.FieldByName('TUR').AsString := T('KISIT_CHECK');
+      Detay := Kisit.CheckMetni;
+    end;
+    Result.FieldByName('KOLONLAR').AsString := Virgullu(Kisit.Kolonlar);
+    Result.FieldByName('DETAY').AsString := Detay;
+    Result.Post;
+  end;
+  Result.First;
+end;
+
+function BagimlilikTablosuOlustur(Bag: TAcikBaglanti; const Tablo: string; Sahip: TComponent): TFDMemTable;
+var
+  Satir: TBagimlilik;
+begin
+  Result := YapiTablosuAc(Sahip, ['TUR', 'AD']);
+  for Satir in TabloBagimliliklariniOku(Bag, Tablo) do
+  begin
+    Result.Append;
+    Result.FieldByName('TUR').AsString := BagimlilikTuruAdi(Satir.Tur);
+    Result.FieldByName('AD').AsString := Satir.Ad;
+    Result.Post;
+  end;
+  Result.First;
 end;
 
 function TabloAdlari(Bag: TAcikBaglanti): TArray<string>;
