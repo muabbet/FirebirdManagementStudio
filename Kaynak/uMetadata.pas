@@ -240,6 +240,8 @@ function BagimlilikTuruAdi(Tur: Integer): string;
 function TabloBagimliliklariniOku(Bag: TAcikBaglanti; const Tablo: string): TArray<TBagimlilik>;
 { Kolon icin: onu kullanan view/trigger/prosedur (RDB$DEPENDENCIES) ile onu iceren kisit ve index'ler. }
 function KolonBagimliliklariniOku(Bag: TAcikBaglanti; const Tablo, Kolon: string): TArray<TBagimlilik>;
+{ Birincil anahtar / UNIQUE kisitina bagli yabanci anahtarlar ("TABLO (FK_ADI)", Tur = BAG_FK_KULLANAN); silmeyi engeller. }
+function KisitaBagliYabanciAnahtarlar(Bag: TAcikBaglanti; const Kisit: string): TArray<TBagimlilik>;
 { Tablodaki satir sayisi (COUNT(*)); veri kaybi riskli islerin onayinda gosterilir. Buyuk tabloda uzun surebilir. }
 function TabloSatirSayisi(Bag: TAcikBaglanti; const Tablo: string): Int64;
 { ALTER COLUMN ... SET/DROP NOT NULL: Firebird 3.0 ve ustu. 2.5'te yok (yalniz sistem tablosuna elle yazilirdi, yapilmaz). }
@@ -1367,6 +1369,35 @@ begin
         Satir.Tur := BAG_INDEKS;
         Liste.Add(Satir);
       end;
+    Result := Liste.ToArray;
+  finally
+    Liste.Free;
+  end;
+end;
+
+function KisitaBagliYabanciAnahtarlar(Bag: TAcikBaglanti; const Kisit: string): TArray<TBagimlilik>;
+var
+  Sorgu: TFDQuery;
+  Liste: TList<TBagimlilik>;
+  Satir: TBagimlilik;
+begin
+  Liste := TList<TBagimlilik>.Create;
+  try
+    Sorgu := SorguAc(Bag, 'select trim(rc.rdb$relation_name), trim(rc.rdb$constraint_name) ' +
+      'from rdb$ref_constraints rf ' +
+      'join rdb$relation_constraints rc on rc.rdb$constraint_name = rf.rdb$constraint_name ' +
+      'where rf.rdb$const_name_uq = :K order by 1, 2', Kisit);
+    try
+      while not Sorgu.Eof do
+      begin
+        Satir.Ad := Sorgu.Fields[0].AsString + ' (' + Sorgu.Fields[1].AsString + ')';
+        Satir.Tur := BAG_FK_KULLANAN;
+        Liste.Add(Satir);
+        Sorgu.Next;
+      end;
+    finally
+      Sorgu.Free;
+    end;
     Result := Liste.ToArray;
   finally
     Liste.Free;

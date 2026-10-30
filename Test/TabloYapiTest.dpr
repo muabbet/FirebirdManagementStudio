@@ -12,7 +12,7 @@ uses
   System.SysUtils, System.Classes, System.StrUtils, System.IOUtils, Data.DB,
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.Comp.Client, FireDAC.Phys.FB,
   FireDAC.ConsoleUI.Wait,
-  uDil, uBaglanti, uMetadata, uKullanici, uDDL, uProsedur, uNesneYonet, uKolon;
+  uDil, uBaglanti, uMetadata, uKullanici, uDDL, uProsedur, uNesneYonet, uKolon, uIndeksKisit;
 
 const
   ANA = 'FBY_TEST_ANA';
@@ -142,7 +142,13 @@ begin
     'KOLON_ETIKET_BOS_OLMAZ', 'KOLON_ETIKET_KOMUT', 'KOLON_SIL_NOT', 'KOLON_NULL_YOK_25', 'ERR_KOLON_HESAPLANAN',
     'ERR_KOLON_AD_BOS', 'ERR_KOLON_TIP_BOS', 'ERR_KOLON_DEGISIKLIK_YOK', 'ONAY_KOLON', 'ONAY_KOLON_VERI_RISKI',
     'ONAY_KOLON_KULLANANLAR', 'ONAY_KOLON_YEDEK', 'MSG_KOLON_VAZGECILDI', 'MSG_KOLON_TAMAM', 'ERR_KOLON_UYGULANAMADI',
-    'MSG_KOLON_GERI_ALINDI', 'BAG_TUR_KISIT', 'BAG_TUR_INDEKS', 'TBL_YEDEK_BASLIK'];
+    'MSG_KOLON_GERI_ALINDI', 'BAG_TUR_KISIT', 'BAG_TUR_INDEKS', 'TBL_YEDEK_BASLIK', 'BTN_INDEKS_OLUSTUR', 'BTN_INDEKS_SIL',
+    'BTN_INDEKS_DURUM', 'BTN_KISIT_EKLE', 'BTN_KISIT_SIL', 'YAPI_BASLIK_INDEKS', 'YAPI_BASLIK_KISIT', 'YAPI_ETIKET_TUR',
+    'YAPI_ETIKET_AD_INDEKS', 'YAPI_ETIKET_AD_KISIT', 'YAPI_ETIKET_KOLONLAR', 'YAPI_ETIKET_HEDEF', 'YAPI_ETIKET_HEDEF_KOLON',
+    'YAPI_ETIKET_SIL', 'YAPI_ETIKET_GUNCELLE', 'YAPI_ETIKET_IFADE', 'YAPI_ETIKET_BENZERSIZ', 'YAPI_ETIKET_AZALAN',
+    'YAPI_KURAL_VARSAYILAN', 'ERR_INDEKS_AD_BOS', 'ERR_YAPI_KOLON_BOS', 'ERR_KISIT_HEDEF_BOS', 'ERR_KISIT_IFADE_BOS',
+    'ONAY_KISIT_FK_KULLANANLAR', 'ERR_YAPI_TEKRAR', 'ERR_YAPI_YETIM', 'ERR_PK_VAR', 'ERR_KISIT_FK_BAGLI',
+    'ONAY_KISIT_CHECK_NOT'];
   for Dil in ['tr', 'en', 'de'] do
   begin
     DilYukle(Dil);
@@ -354,6 +360,176 @@ begin
   Kontrol('Sil: SQL karsiligi ALTER TABLE ... DROP', (Length(Sonuc.Komutlar) > 0) and (Pos('DROP', UpperCase(Sonuc.Komutlar[0])) > 0));
 end;
 
+const
+  ALT2 = 'FBY_TEST_ALT2';
+
+function KisitVarMi(Tablo, Ad: string): Boolean;
+var
+  Bilgi: TKisitBilgisi;
+begin
+  Result := False;
+  for Bilgi in KisitlariOku(Bag, Tablo) do
+    if Bilgi.GercekAd = Ad then
+      Exit(True);
+end;
+
+function IndeksVarMi(Ad: string): Boolean;
+var
+  Bilgi: TIndeksBilgisi;
+begin
+  Result := False;
+  for Bilgi in IndeksleriOku(Bag, ANA) do
+    if Bilgi.Ad = Ad then
+      Exit(True);
+end;
+
+function IndeksG(const Ad, Kolonlar: string; Benzersiz, Azalan: Boolean): TIndeksGirdisi;
+begin
+  Result := Default(TIndeksGirdisi);
+  Result.Tablo := ANA;
+  Result.Ad := Ad;
+  Result.Kolonlar := Kolonlar;
+  Result.Benzersiz := Benzersiz;
+  Result.Azalan := Azalan;
+end;
+
+function KisitG(Tur: TKisitTuru; const Ad, Kolonlar: string): TKisitGirdisi;
+begin
+  Result := Default(TKisitGirdisi);
+  Result.Tablo := ANA;
+  Result.Tur := Tur;
+  Result.Ad := Ad;
+  Result.Kolonlar := Kolonlar;
+end;
+
+{ Reddedilmesi beklenen islem: basarisiz, genel hata cumlesi DEGIL, rollback (komut gorunur). Cumle ve ayrinti rapora yazilir. }
+procedure Reddedilir(const Ad: string; const Sonuc: TProsedurSonucu);
+begin
+  Cikti.Add('      [' + Ad + '] cumle: ' + TekSatirMetin(Sonuc.Cumle));
+  Cikti.Add('      [' + Ad + '] ayrinti: ' + TekSatirMetin(Sonuc.Ayrinti));
+  Kontrol(Ad + ': reddedildi, anlasilir cumle (ERR_GENEL degil)',
+    (not Sonuc.Basarili) and (Sonuc.Cumle <> '') and (Sonuc.Cumle <> T('ERR_GENEL')) and (Length(Sonuc.Komutlar) > 0));
+end;
+
+procedure IndeksKisitBolumu;
+var
+  Sonuc: TProsedurSonucu;
+  G: TKisitGirdisi;
+  Bilgi: TKisitBilgisi;
+  PkAd: string;
+begin
+  Cikti.Add('');
+  Cikti.Add('=== D) Index ve kisit islemleri (' + Bag.Surum + ') ===');
+  Dene('drop table ' + ALT2);
+  Temizle;
+  Yurut('create table ' + ANA + ' (ID integer not null primary key, AD varchar(30), KOD varchar(10) not null)');
+  Yurut('insert into ' + ANA + ' (ID, AD, KOD) values (1, ''a'', ''k1'')');
+  Yurut('insert into ' + ANA + ' (ID, AD, KOD) values (2, ''a'', ''k2'')');
+  Yurut('insert into ' + ANA + ' (ID, AD, KOD) values (3, null, ''k3'')');
+  Yurut('create table ' + ALT + ' (ID integer not null primary key, ANA_ID integer)');
+  Yurut('insert into ' + ALT + ' (ID, ANA_ID) values (1, 99)');
+
+  { Dogrulama }
+  Kontrol('Index dogrula: bos ad', IndeksDogrula(IndeksG('', 'AD', False, False)) = T('ERR_INDEKS_AD_BOS'));
+  Kontrol('Index dogrula: bos kolon', IndeksDogrula(IndeksG('X', ' , ', False, False)) = T('ERR_YAPI_KOLON_BOS'));
+  Kontrol('Kisit dogrula: FK hedefsiz', KisitDogrula(KisitG(ktYabanci, '', 'AD')) = T('ERR_KISIT_HEDEF_BOS'));
+  Kontrol('Kisit dogrula: CHECK ifadesiz', KisitDogrula(KisitG(ktCheck, '', '')) = T('ERR_KISIT_IFADE_BOS'));
+
+  { Index }
+  Kontrol('Index komutu: UNIQUE DESC', Pos('CREATE UNIQUE DESCENDING INDEX FBY_TEST_I1 ON FBY_TEST_ANA (AD, KOD)',
+    IndeksKomutu(Bag, yiOlustur, IndeksG('fby_test_i1', 'ad, kod', True, True))) = 1);
+  Sonuc := IndeksUygula(Bag, yiOlustur, IndeksG('FBY_TEST_I1', 'AD', False, False));
+  Kontrol('Index: olusturuldu', Sonuc.Basarili and IndeksVarMi('FBY_TEST_I1'));
+  Kontrol('Index: yedek yazildi', Sonuc.YedekDosyasi <> '');
+  Sonuc := IndeksUygula(Bag, yiOlustur, IndeksG('FBY_TEST_I1', 'AD', False, False));
+  Reddedilir('Index: ayni ad', Sonuc);
+  Sonuc := IndeksUygula(Bag, yiOlustur, IndeksG('FBY_TEST_I2', 'AD', True, False));
+  Reddedilir('Index: UNIQUE ama tekrarli veri', Sonuc);
+  Sonuc := IndeksUygula(Bag, yiOlustur, IndeksG('FBY_TEST_I3', 'OLMAYAN', False, False));
+  Reddedilir('Index: olmayan kolon', Sonuc);
+  Sonuc := IndeksUygula(Bag, yiDurum, IndeksGirdisiOku(Bag, ANA, 'FBY_TEST_I1'));
+  Kontrol('Index: pasif yapildi', Sonuc.Basarili and IndeksGirdisiOku(Bag, ANA, 'FBY_TEST_I1').Pasif);
+  Sonuc := IndeksUygula(Bag, yiDurum, IndeksGirdisiOku(Bag, ANA, 'FBY_TEST_I1'));
+  Kontrol('Index: tekrar aktif yapildi', Sonuc.Basarili and not IndeksGirdisiOku(Bag, ANA, 'FBY_TEST_I1').Pasif);
+  Sonuc := IndeksUygula(Bag, yiSil, IndeksGirdisiOku(Bag, ANA, 'FBY_TEST_I1'));
+  Kontrol('Index: silindi', Sonuc.Basarili and not IndeksVarMi('FBY_TEST_I1'));
+
+  { Kisit komutlari }
+  Kontrol('Kisit komutu: UNIQUE', KisitKomutu(Bag, yiOlustur, KisitG(ktBenzersiz, 'uq1', 'kod')) =
+    'ALTER TABLE FBY_TEST_ANA ADD CONSTRAINT UQ1 UNIQUE (KOD)');
+  Kontrol('Kisit komutu: CHECK parantez eklenir', KisitKomutu(Bag, yiOlustur, KisitG(ktCheck, '', '')) = '');
+  G := KisitG(ktCheck, 'ck1', '');
+  G.Ifade := 'CHECK ID > 0';
+  Kontrol('Kisit komutu: CHECK sozcugu ve parantez', KisitKomutu(Bag, yiOlustur, G) =
+    'ALTER TABLE FBY_TEST_ANA ADD CONSTRAINT CK1 CHECK (ID > 0)');
+  G := KisitG(ktYabanci, 'fk1', 'ana_id');
+  G.Tablo := ALT;
+  G.HedefTablo := ANA;
+  G.SilKurali := 'CASCADE';
+  Kontrol('Kisit komutu: FK ON DELETE', KisitKomutu(Bag, yiOlustur, G) =
+    'ALTER TABLE FBY_TEST_ALT ADD CONSTRAINT FK1 FOREIGN KEY (ANA_ID) REFERENCES FBY_TEST_ANA ON DELETE CASCADE');
+
+  { Kisit ekle: basarili ve reddedilenler }
+  Sonuc := KisitUygula(Bag, yiOlustur, KisitG(ktBenzersiz, 'FBY_TEST_UQ1', 'KOD'));
+  Kontrol('Kisit: UNIQUE eklendi', Sonuc.Basarili and KisitVarMi(ANA, 'FBY_TEST_UQ1'));
+  Sonuc := KisitUygula(Bag, yiOlustur, KisitG(ktBenzersiz, 'FBY_TEST_UQ1', 'KOD'));
+  Reddedilir('Kisit: ayni ad', Sonuc);
+  Sonuc := KisitUygula(Bag, yiOlustur, KisitG(ktBenzersiz, 'FBY_TEST_UQ2', 'AD'));
+  Reddedilir('Kisit: UNIQUE ama tekrarli veri', Sonuc);
+  Sonuc := KisitUygula(Bag, yiOlustur, KisitG(ktBirincil, '', 'KOD'));
+  Reddedilir('Kisit: ikinci PRIMARY KEY', Sonuc);
+  G := KisitG(ktCheck, 'FBY_TEST_CK1', '');
+  G.Ifade := 'ID > 2';
+  Sonuc := KisitUygula(Bag, yiOlustur, G);
+  Kontrol('Kisit: CHECK mevcut kayitlari denetlemez (Firebird), mevcut veri uymasa da eklenir',
+    Sonuc.Basarili and KisitVarMi(ANA, 'FBY_TEST_CK1'));
+  Kontrol('Kisit: CHECK onayinda mevcut-veri notu var',
+    Pos(T('ONAY_KISIT_CHECK_NOT'), KisitOnayMetni(Bag, yiOlustur, G, 'x')) > 0);
+  Sonuc := KisitUygula(Bag, yiSil, KisitGirdisiOku(Bag, ANA, 'FBY_TEST_CK1'));
+  Kontrol('Kisit: CHECK geri silindi', Sonuc.Basarili and not KisitVarMi(ANA, 'FBY_TEST_CK1'));
+  G.Ifade := 'ID > 0';
+  Sonuc := KisitUygula(Bag, yiOlustur, G);
+  Kontrol('Kisit: CHECK eklendi', Sonuc.Basarili and KisitVarMi(ANA, 'FBY_TEST_CK1'));
+  Sonuc := KisitUygula(Bag, yiOlustur, KisitG(ktBenzersiz, 'FBY_TEST_UQ3', 'OLMAYAN'));
+  Reddedilir('Kisit: olmayan kolon', Sonuc);
+
+  G := KisitG(ktYabanci, 'FBY_TEST_FK1', 'ANA_ID');
+  G.Tablo := ALT;
+  G.HedefTablo := ANA;
+  G.SilKurali := 'CASCADE';
+  Sonuc := KisitUygula(Bag, yiOlustur, G);
+  Reddedilir('Kisit: FK ama yetim kayit var', Sonuc);
+  Yurut('update ' + ALT + ' set ANA_ID = 1');
+  Sonuc := KisitUygula(Bag, yiOlustur, G);
+  Kontrol('Kisit: FK eklendi', Sonuc.Basarili and KisitVarMi(ALT, 'FBY_TEST_FK1'));
+  Kontrol('Kisit: FK ON DELETE CASCADE okunur',
+    KisitGirdisiOku(Bag, ALT, 'FBY_TEST_FK1').SilKurali = 'CASCADE');
+
+
+  { Kisit sil: UNIQUE ve CHECK serbest; birincil anahtara bagli FK varken once FK'nin kalkmasi gerekir }
+  Sonuc := KisitUygula(Bag, yiSil, KisitGirdisiOku(Bag, ANA, 'FBY_TEST_UQ1'));
+  Kontrol('Kisit sil: UNIQUE silindi', Sonuc.Basarili and not KisitVarMi(ANA, 'FBY_TEST_UQ1'));
+  Sonuc := KisitUygula(Bag, yiSil, KisitGirdisiOku(Bag, ANA, 'FBY_TEST_CK1'));
+  Kontrol('Kisit sil: CHECK silindi', Sonuc.Basarili and not KisitVarMi(ANA, 'FBY_TEST_CK1'));
+  for Bilgi in KisitlariOku(Bag, ANA) do
+    if Bilgi.Tur = ktBirincil then
+      PkAd := Bilgi.GercekAd;
+  Kontrol('Kisit sil: birincil anahtarin sistem adi okunur (INTEG_ ...)', PkAd <> '');
+  G := KisitGirdisiOku(Bag, ANA, PkAd);
+  Kontrol('Kisit sil: PK onay metni baglanan FK''yi listeler (ALT)',
+    Pos(ALT, KisitOnayMetni(Bag, yiSil, G, KisitKomutu(Bag, yiSil, G))) > 0);
+  Sonuc := KisitUygula(Bag, yiSil, G);
+  Reddedilir('Kisit sil: PK''ya bagli FK var', Sonuc);
+  Kontrol('Kisit sil: PK reddedilince yerinde', KisitVarMi(ANA, PkAd));
+  Sonuc := KisitUygula(Bag, yiSil, KisitGirdisiOku(Bag, ALT, 'FBY_TEST_FK1'));
+  Kontrol('Kisit sil: FK silindi', Sonuc.Basarili and not KisitVarMi(ALT, 'FBY_TEST_FK1'));
+  Sonuc := KisitUygula(Bag, yiSil, G);
+  Kontrol('Kisit sil: FK kalkinca PK silindi', Sonuc.Basarili and not KisitVarMi(ANA, PkAd));
+  Kontrol('Kisit sil: SQL karsiligi DROP CONSTRAINT',
+    (Length(Sonuc.Komutlar) > 0) and (Pos('DROP CONSTRAINT', UpperCase(Sonuc.Komutlar[0])) > 0));
+end;
+
+
 var
   YazmaIstendi, YazmaIzni, KendiVeritabanim: Boolean;
   Neden, Klasor: string;
@@ -410,6 +586,7 @@ begin
         try
           YapiBolumu;
           KolonBolumu;
+          IndeksKisitBolumu;
         finally
           Temizle;
         end;

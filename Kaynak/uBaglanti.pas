@@ -771,7 +771,7 @@ begin
   { Olcum (2.5.9): prosedur govdesinde olmayan degisken/kolon "Column unknown" (-206) verir, FireDAC bunu
     ekObjNotExists saymaz. }
   else if Iceriyor(HamMesaj, 'column unknown') or Iceriyor(HamMesaj, 'table unknown') or
-    Iceriyor(HamMesaj, 'procedure unknown') then
+    Iceriyor(HamMesaj, 'procedure unknown') or Iceriyor(HamMesaj, 'unknown column') then
     Result := T('ERR_SQL_NESNE_YOK')
   { Olcum (3f, 2.5.9 - 5.0.4): DROP/ALTER/SET GENERATOR olmayan nesnede "Exception not found", "Domain not found",
     "Sequence X not found", "generator X is not defined", "View X does not exist". }
@@ -839,6 +839,15 @@ begin
   { Olcum (3f): domain bir tabloda kullaniliyorsa "Domain X is used in table T (local name C) and cannot be dropped". }
   if Iceriyor(Hata.Message, 'is used in table') then
     Exit(T('ERR_DOMAIN_KULLANILIYOR'));
+  { Olcum (3g-3, 5.0.4): ikinci birincil anahtar "Attempt to define a second PRIMARY KEY for the same table";
+    FK'nin kullandigi PK/UNIQUE silinirse "Cannot delete PRIMARY KEY being used in FOREIGN KEY definition";
+    UNIQUE index tekrarli veride "attempt to store duplicate value (visible to active transactions) in unique index". }
+  if Iceriyor(Hata.Message, 'second PRIMARY KEY') then
+    Exit(T('ERR_PK_VAR'));
+  if Iceriyor(Hata.Message, 'being used in FOREIGN KEY') then
+    Exit(T('ERR_KISIT_FK_BAGLI'));
+  if Iceriyor(Hata.Message, 'duplicate value') and Iceriyor(Hata.Message, 'unique index') then
+    Exit(T('ERR_SQL_BENZERSIZ'));
   { Olcum (3f): ayni adli exception, sequence/generator, view/tablo, domain: "X already exists" (domain'de 2.5:
     RDB$FIELDS benzersiz indeks ihlali, 3.0+: "violation of PRIMARY or UNIQUE KEY ... RDB$FIELDS"). }
   if Iceriyor(Hata.Message, 'already exists') or

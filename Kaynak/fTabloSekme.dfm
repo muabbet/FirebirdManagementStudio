@@ -104,6 +104,60 @@ object TabloSekme: TTabloSekme
       end
       object tsIndeksler: TTabSheet
         ImageIndex = 1
+        object pnlIndeksDugme: TPanel
+          Left = 0
+          Top = 0
+          Width = 712
+          Height = 34
+          Align = alTop
+          BevelOuter = bvNone
+          TabOrder = 1
+          object btnIndeksOlustur: TButton
+            AlignWithMargins = True
+            Left = 4
+            Top = 3
+            Width = 90
+            Height = 28
+            Margins.Left = 4
+            Margins.Top = 3
+            Margins.Right = 0
+            Margins.Bottom = 3
+            Align = alLeft
+            Constraints.MinWidth = 90
+            TabOrder = 0
+            OnClick = btnIndeksOlusturClick
+          end
+          object btnIndeksSil: TButton
+            AlignWithMargins = True
+            Left = 98
+            Top = 3
+            Width = 90
+            Height = 28
+            Margins.Left = 4
+            Margins.Top = 3
+            Margins.Right = 0
+            Margins.Bottom = 3
+            Align = alLeft
+            Constraints.MinWidth = 90
+            TabOrder = 1
+            OnClick = btnIndeksSilClick
+          end
+          object btnIndeksDurum: TButton
+            AlignWithMargins = True
+            Left = 192
+            Top = 3
+            Width = 90
+            Height = 28
+            Margins.Left = 4
+            Margins.Top = 3
+            Margins.Right = 0
+            Margins.Bottom = 3
+            Align = alLeft
+            Constraints.MinWidth = 90
+            TabOrder = 2
+            OnClick = btnIndeksDurumClick
+          end
+        end
         object gridIndeksler: TDBGrid
           Left = 0
           Top = 0
@@ -118,6 +172,45 @@ object TabloSekme: TTabloSekme
       end
       object tsKisitlar: TTabSheet
         ImageIndex = 2
+        object pnlKisitDugme: TPanel
+          Left = 0
+          Top = 0
+          Width = 712
+          Height = 34
+          Align = alTop
+          BevelOuter = bvNone
+          TabOrder = 1
+          object btnKisitEkle: TButton
+            AlignWithMargins = True
+            Left = 4
+            Top = 3
+            Width = 90
+            Height = 28
+            Margins.Left = 4
+            Margins.Top = 3
+            Margins.Right = 0
+            Margins.Bottom = 3
+            Align = alLeft
+            Constraints.MinWidth = 90
+            TabOrder = 0
+            OnClick = btnKisitEkleClick
+          end
+          object btnKisitSil: TButton
+            AlignWithMargins = True
+            Left = 98
+            Top = 3
+            Width = 90
+            Height = 28
+            Margins.Left = 4
+            Margins.Top = 3
+            Margins.Right = 0
+            Margins.Bottom = 3
+            Align = alLeft
+            Constraints.MinWidth = 90
+            TabOrder = 1
+            OnClick = btnKisitSilClick
+          end
+        end
         object gridKisitlar: TDBGrid
           Left = 0
           Top = 0

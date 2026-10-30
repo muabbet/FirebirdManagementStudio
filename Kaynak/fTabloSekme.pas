@@ -7,7 +7,7 @@ interface
 uses
   System.SysUtils, System.Classes, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
   Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls,
-  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uSonucGrid, uKullanici, uProsedur, uKolon, fKolonIslem, fCsvAktar;
+  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uSonucGrid, uKullanici, uProsedur, uKolon, uIndeksKisit, fKolonIslem, fYapiIslem, fCsvAktar;
 
 type
   TTabloSekme = class(TFrame)
@@ -21,8 +21,15 @@ type
     btnKolonSil: TButton;
     gridKolonlar: TDBGrid;
     tsIndeksler: TTabSheet;
+    pnlIndeksDugme: TPanel;
+    btnIndeksOlustur: TButton;
+    btnIndeksSil: TButton;
+    btnIndeksDurum: TButton;
     gridIndeksler: TDBGrid;
     tsKisitlar: TTabSheet;
+    pnlKisitDugme: TPanel;
+    btnKisitEkle: TButton;
+    btnKisitSil: TButton;
     gridKisitlar: TDBGrid;
     tsBagimliliklar: TTabSheet;
     gridBagimliliklar: TDBGrid;
@@ -42,10 +49,19 @@ type
     procedure btnKolonAdClick(Sender: TObject);
     procedure btnKolonDegistirClick(Sender: TObject);
     procedure btnKolonSilClick(Sender: TObject);
+    procedure btnIndeksOlusturClick(Sender: TObject);
+    procedure btnIndeksSilClick(Sender: TObject);
+    procedure btnIndeksDurumClick(Sender: TObject);
+    procedure btnKisitEkleClick(Sender: TObject);
+    procedure btnKisitSilClick(Sender: TObject);
   private
     FVeriGrid: TSonucGrid;
     procedure Yaz(const Metin: string);
+    function BaglantiAl: TAcikBaglanti;
+    procedure SonucuBildir(Bag: TAcikBaglanti; const Sonuc: TProsedurSonucu);
     procedure KolonIsle(Islem: TKolonIslemi);
+    procedure IndeksIsle(Islem: TYapiIslemi);
+    procedure KisitIsle(Islem: TYapiIslemi);
     procedure YenidenYukle(Bag: TAcikBaglanti);
     procedure YapiyiYukle(Bag: TAcikBaglanti);
     procedure YapiAlanYazilari(Kaynak: TDataSource; const Anahtarlar: array of string);
@@ -135,7 +151,12 @@ begin
     Yaz(T('MSG_KOLON_VAZGECILDI'));
     Exit;
   end;
-  Sonuc := KolonUygula(Bag, Eski, Yeni);
+  SonucuBildir(Bag, KolonUygula(Bag, Eski, Yeni));
+end;
+
+{ Tablo yapisi islemlerinin (kolon, index, kisit) ortak sonu: mesajlar, SQL karsiligi, basarida yeniden okuma. }
+procedure TTabloSekme.SonucuBildir(Bag: TAcikBaglanti; const Sonuc: TProsedurSonucu);
+begin
   if Sonuc.Basarili then
   begin
     Yaz(TF('MSG_KOLON_TAMAM', [TabloAdi]));
@@ -154,6 +175,115 @@ begin
   end;
   if (Length(Sonuc.Komutlar) > 0) and Assigned(SqlYaz) then
     SqlYaz(Sonuc.Komutlar);
+end;
+
+{ Bagli baglanti; yoksa uyari gosterip nil doner. }
+function TTabloSekme.BaglantiAl: TAcikBaglanti;
+begin
+  Result := FbAcikBaglanti(BaglantiAd);
+  if Result = nil then
+    UyariGoster(TF('ERR_SORGU_BAGLANTI_YOK', [BaglantiAd]));
+end;
+
+{ Index dugmeleri: olustur (pencere), sil ve aktif/pasif (seciliye). Hepsi net onay ister. }
+procedure TTabloSekme.IndeksIsle(Islem: TYapiIslemi);
+var
+  Bag: TAcikBaglanti;
+  G: TIndeksGirdisi;
+  Komut: string;
+begin
+  Bag := BaglantiAl;
+  if Bag = nil then
+    Exit;
+  if Islem = yiOlustur then
+  begin
+    if not IndeksPenceresiGoster(Bag, TabloAdi, G) then
+      Exit;
+  end
+  else
+  begin
+    if dsIndeksler.DataSet.IsEmpty then
+      Exit;
+    try
+      G := IndeksGirdisiOku(Bag, TabloAdi, dsIndeksler.DataSet.FieldByName('AD').AsString);
+    except
+      on E: Exception do
+      begin
+        UyariGoster(E.Message);
+        Exit;
+      end;
+    end;
+  end;
+  Komut := IndeksKomutu(Bag, Islem, G);
+  if not OnayIste(IndeksOnayMetni(G, Komut)) then
+  begin
+    Yaz(T('MSG_KOLON_VAZGECILDI'));
+    Exit;
+  end;
+  SonucuBildir(Bag, IndeksUygula(Bag, Islem, G));
+end;
+
+{ Kisit dugmeleri: ekle (pencere) ve sil (seciliye). }
+procedure TTabloSekme.KisitIsle(Islem: TYapiIslemi);
+var
+  Bag: TAcikBaglanti;
+  G: TKisitGirdisi;
+  Komut: string;
+begin
+  Bag := BaglantiAl;
+  if Bag = nil then
+    Exit;
+  if Islem = yiOlustur then
+  begin
+    if not KisitPenceresiGoster(Bag, TabloAdi, G) then
+      Exit;
+  end
+  else
+  begin
+    if dsKisitlar.DataSet.IsEmpty then
+      Exit;
+    try
+      G := KisitGirdisiOku(Bag, TabloAdi, dsKisitlar.DataSet.FieldByName('AD').AsString);
+    except
+      on E: Exception do
+      begin
+        UyariGoster(E.Message);
+        Exit;
+      end;
+    end;
+  end;
+  Komut := KisitKomutu(Bag, Islem, G);
+  if not OnayIste(KisitOnayMetni(Bag, Islem, G, Komut)) then
+  begin
+    Yaz(T('MSG_KOLON_VAZGECILDI'));
+    Exit;
+  end;
+  SonucuBildir(Bag, KisitUygula(Bag, Islem, G));
+end;
+
+procedure TTabloSekme.btnIndeksOlusturClick(Sender: TObject);
+begin
+  IndeksIsle(yiOlustur);
+end;
+
+procedure TTabloSekme.btnIndeksSilClick(Sender: TObject);
+begin
+  IndeksIsle(yiSil);
+end;
+
+procedure TTabloSekme.btnIndeksDurumClick(Sender: TObject);
+begin
+  IndeksIsle(yiDurum);
+end;
+
+procedure TTabloSekme.btnKisitEkleClick(Sender: TObject);
+begin
+  KisitIsle(yiOlustur);
+end;
+
+procedure TTabloSekme.btnKisitSilClick(Sender: TObject);
+begin
+  KisitIsle(yiSil);
 end;
 
 procedure TTabloSekme.btnKolonEkleClick(Sender: TObject);
@@ -234,6 +364,16 @@ begin
   DugmeyiYaziyaUydur(btnKolonAd);
   DugmeyiYaziyaUydur(btnKolonDegistir);
   DugmeyiYaziyaUydur(btnKolonSil);
+  btnIndeksOlustur.Caption := T('BTN_INDEKS_OLUSTUR');
+  btnIndeksSil.Caption := T('BTN_INDEKS_SIL');
+  btnIndeksDurum.Caption := T('BTN_INDEKS_DURUM');
+  btnKisitEkle.Caption := T('BTN_KISIT_EKLE');
+  btnKisitSil.Caption := T('BTN_KISIT_SIL');
+  DugmeyiYaziyaUydur(btnIndeksOlustur);
+  DugmeyiYaziyaUydur(btnIndeksSil);
+  DugmeyiYaziyaUydur(btnIndeksDurum);
+  DugmeyiYaziyaUydur(btnKisitEkle);
+  DugmeyiYaziyaUydur(btnKisitSil);
   lblVeri.Caption := T('LBL_ILK_SATIRLAR');
   btnDisaAktar.Caption := T('AKTAR_DUGME');
   DugmeyiYaziyaUydur(btnDisaAktar);

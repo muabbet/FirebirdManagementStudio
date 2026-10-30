@@ -97,6 +97,11 @@
         <DCCReference Include="uProsedur.pas"/>
         <DCCReference Include="uNesneYonet.pas"/>
         <DCCReference Include="uKolon.pas"/>
+        <DCCReference Include="uIndeksKisit.pas"/>
+        <DCCReference Include="fYapiIslem.pas">
+            <Form>frmYapiIslem</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <DCCReference Include="fKolonIslem.pas">
             <Form>frmKolonIslem</Form>
             <FormType>dfm</FormType>

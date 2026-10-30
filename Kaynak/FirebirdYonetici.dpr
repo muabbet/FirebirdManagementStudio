@@ -25,6 +25,8 @@ uses
   uProsedur in 'uProsedur.pas',
   uNesneYonet in 'uNesneYonet.pas',
   uKolon in 'uKolon.pas',
+  uIndeksKisit in 'uIndeksKisit.pas',
+  fYapiIslem in 'fYapiIslem.pas' {frmYapiIslem},
   fKolonIslem in 'fKolonIslem.pas' {frmKolonIslem},
   fProsedurSekme in 'fProsedurSekme.pas' {ProsedurSekme: TFrame},
   fKullanicilar in 'fKullanicilar.pas' {Kullanicilar: TFrame},
