@@ -187,7 +187,7 @@ Bu bir "boş zamanda yavaş yavaş" projesidir, acele yoktur. **Her aşama bitin
 - [x] Yedek/geri yükleme (`gbak` çağırma)
 - [ ] Kullanıcı ve yetki yönetimi (3d-1 kullanıcılar tamam, sahibi denedi; 3d-2 yetki görüntüleme ve 3d-3 yetki verme/geri alma sonra)
 - [x] Trigger ve saklı prosedür düzenleme ve kaydetme (sahibinin isteği 2026-10-27): 3e-1 prosedür ve 3e-2 trigger tamam, sahibi denedi ve onayladı
-- [x] 3f: View düzenleme; Domain, Exception ve Generator yönetimi (ağaç dalları, oluştur, düzenle, sil; ayrıntı: `GOREV_ASAMA3F.md`), sahibi denedi ve onayladı (2026-10-29). Sıradaki: görsel düzeltme (SSMS örneği `Referans/ssms.png`), sonra 3g tablo yapısı düzenleme, bağımlılıklar, 3d-2/3d-3 yetkiler
+- [x] 3f: View düzenleme; Domain, Exception ve Generator yönetimi (ağaç dalları, oluştur, düzenle, sil; ayrıntı: `GOREV_ASAMA3F.md`), sahibi denedi ve onayladı (2026-10-29). Görsel düzeltme (SSMS örneği `Referans/ssms.png`, StokluBulut ikonu) tamam ve onaylandı (2026-10-30, `GORSEL_RAPOR.md`). Sıradaki: 3g tablo yapısı düzenleme, bağımlılıklar, 3d-2/3d-3 yetkiler
 
 ### Aşama 4: Çoklu Veritabanı (sahibinin özel ihtiyacı)
 - [ ] Bir sorguyu seçilen birçok veritabanında çalıştırma, sonuçları birleştirme
