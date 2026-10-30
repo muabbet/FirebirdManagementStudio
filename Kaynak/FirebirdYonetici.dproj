@@ -54,6 +54,7 @@
         <DCC_K>false</DCC_K>
         <VerInfo_Locale>1055</VerInfo_Locale>
         <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <Icon_MainIcon>FirebirdYonetici_Icon.ico</Icon_MainIcon>
         <Manifest_File>(None)</Manifest_File>
         <PostBuildEvent><![CDATA["$(MSBuildProjectDirectory)\..\SonDerleme.bat" "$(MSBuildProjectDirectory)\..\bin\$(Platform)\$(Config)"]]></PostBuildEvent>
     </PropertyGroup>

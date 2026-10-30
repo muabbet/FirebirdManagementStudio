@@ -62,6 +62,12 @@ object frmAna: TfrmAna
       end
       item
         Width = 240
+      end
+      item
+        Width = 120
+      end
+      item
+        Width = 120
       end>
   end
   object tvNesneler: TTreeView
