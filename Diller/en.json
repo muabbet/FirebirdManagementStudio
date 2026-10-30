@@ -39,6 +39,8 @@
   "DURUM_SURUM": "Firebird %s",
   "DURUM_ISLEM_ACIK": "Transaction: open",
   "DURUM_ISLEM_KAPALI": "Transaction: closed",
+  "DURUM_SURE": "Time: %d ms",
+  "DURUM_SATIR": "%d rows",
 
   "MSG_BAGLANDI": "Connected: %s (Firebird %s)",
   "MSG_KESILDI": "Disconnected: %s",

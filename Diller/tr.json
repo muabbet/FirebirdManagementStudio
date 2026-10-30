@@ -39,6 +39,8 @@
   "DURUM_SURUM": "Firebird %s",
   "DURUM_ISLEM_ACIK": "İşlem: açık",
   "DURUM_ISLEM_KAPALI": "İşlem: kapalı",
+  "DURUM_SURE": "Süre: %d ms",
+  "DURUM_SATIR": "%d satır",
 
   "MSG_BAGLANDI": "Bağlandı: %s (Firebird %s)",
   "MSG_KESILDI": "Bağlantı kesildi: %s",

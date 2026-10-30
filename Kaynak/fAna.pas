@@ -173,6 +173,7 @@ type
     procedure KullanicilarAc(Dugme: TTreeNode);
     function SorguSekmeAl(Sayfa: TTabSheet): TSorguSekme;
     function AktifSorguSekmesi: TSorguSekme;
+    procedure SorguDurumuYaz(Sender: TObject);
     procedure YeniSorgu(const Metin: string = '');
     procedure ScriptAc(Dugme: TTreeNode);
     function ProsedurSekmeAl(Sayfa: TTabSheet): TProsedurSekme;
@@ -331,6 +332,13 @@ begin
     end;
   end;
   DurumuGuncelle;
+end;
+
+{ Sorgu sekmesi sonuc yazinca: son sorgunun suresi ve satir sayisi durum cubugunun sag panellerine. }
+procedure TfrmAna.SorguDurumuYaz(Sender: TObject);
+begin
+  stbDurum.Panels[3].Text := TSorguSekme(Sender).SonSure;
+  stbDurum.Panels[4].Text := TSorguSekme(Sender).SonSatir;
 end;
 
 { Durum cubugu ve dugmeler: agacta secili baglantiya gore. }
@@ -1023,6 +1031,7 @@ begin
   Sekme.Parent := Sayfa;
   Sekme.Align := alClient;
   Sekme.AnaSonuc := memSonuc.Lines;
+  Sekme.OnDurum := SorguDurumuYaz;
   Sekme.Hazirla(FSorguNo, Bag.Tanim.Ad);
   if Metin <> '' then
     Sekme.MetinYaz(Metin);

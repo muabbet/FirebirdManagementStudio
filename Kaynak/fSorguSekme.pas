@@ -46,6 +46,10 @@ type
     No: Integer;
     { Disa aktarma ozeti buraya (ana pencerenin sonuc alani) yazilir; ana pencere atar. }
     AnaSonuc: TStrings;
+    { Ana pencerenin alt durum cubugu icin son sorgunun suresi ve satir sayisi (yazi); degisince OnDurum cagrilir. }
+    SonSure: string;
+    SonSatir: string;
+    OnDurum: TNotifyEvent;
     destructor Destroy; override;
     procedure Hazirla(SekmeNo: Integer; const Baglanti: string);
     procedure Calistir;
@@ -169,12 +173,21 @@ var
 begin
   { Disa aktar dugmesi yalnizca satir donduren bir sonuc varken etkin. }
   btnDisaAktar.Enabled := (FSonuc <> nil) and FSonuc.SatirVar;
+  SonSure := '';
+  SonSatir := '';
+  if FSonuc <> nil then
+    SonSure := TF('DURUM_SURE', [FSonuc.Sure]);
   if (FSonuc = nil) or not FSonuc.SatirVar then
   begin
     lblSonuc.Caption := T('LBL_SONUC');
+    if Assigned(OnDurum) then
+      OnDurum(Self);
     Exit;
   end;
   Sayi := FSonuc.Sorgu.RecordCount;
+  SonSatir := TF('DURUM_SATIR', [Sayi]);
+  if Assigned(OnDurum) then
+    OnDurum(Self);
   lblSonuc.Caption := TF('LBL_SATIR_YUKLENDI', [Sayi]);
   if (Sayi > 0) and (Sayi mod SATIR_PARCASI = 0) then
     lblSonuc.Caption := lblSonuc.Caption + ' ' + TF('LBL_SATIR_DEVAMI', [SATIR_PARCASI]);
