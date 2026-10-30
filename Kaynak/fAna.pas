@@ -47,6 +47,7 @@ type
     vilIkonlar: TVirtualImageList;
     pmNesne: TPopupMenu;
     miAc: TMenuItem;
+    miBagimliliklar: TMenuItem;
     miScriptUret: TMenuItem;
     miNesneDuzenle: TMenuItem;
     miYeniNesne: TMenuItem;
@@ -93,6 +94,7 @@ type
     procedure tvNesnelerDragDrop(Sender, Source: TObject; X, Y: Integer);
     procedure pmNesnePopup(Sender: TObject);
     procedure miAcClick(Sender: TObject);
+    procedure miBagimliliklarClick(Sender: TObject);
     procedure miScriptUretClick(Sender: TObject);
     procedure miNesneDuzenleClick(Sender: TObject);
     procedure miYeniNesneClick(Sender: TObject);
@@ -287,6 +289,7 @@ begin
   FSerit.YazilariYenile;
   pnlUst.Height := FSerit.Yukseklik;
   miAc.Caption := T('MENU_AC');
+  miBagimliliklar.Caption := T('MENU_BAGIMLILIKLAR');
   miScriptUret.Caption := T('MENU_SCRIPT_URET');
   miNesneDuzenle.Caption := T('MENU_PROSEDUR_DUZENLE');
   miDomVarsayilan.Caption := T('MENU_DOM_VARSAYILAN');
@@ -1216,7 +1219,9 @@ begin
   end;
   Sayfa := TTabSheet.Create(pcCalisma);
   Sayfa.PageControl := pcCalisma;
-  if Tur = ntDomain then
+  if Tur = ntTablo then
+    Sayfa.ImageIndex := IKON_TABLO
+  else if Tur = ntDomain then
     Sayfa.ImageIndex := IKON_DOMAIN
   else
     Sayfa.ImageIndex := IKON_ISTISNA;
@@ -1252,7 +1257,9 @@ var
   DalNo: Integer;
 begin
   Sekme := TProsedurSekme(Sender);
-  if Sekme.Tur = ntDomain then
+  if Sekme.Tur = ntTablo then
+    DalNo := DAL_TABLO
+  else if Sekme.Tur = ntDomain then
     DalNo := DAL_DOMAIN
   else
     DalNo := DAL_ISTISNA;
@@ -1276,9 +1283,18 @@ procedure TfrmAna.NesneSekmeleriniKapat(const BaglantiAd: string; Tur: TNesneTur
 var
   i: Integer;
   Sekme: TProsedurSekme;
+  TabloSekmesi: TTabloSekme;
 begin
   for i := pcCalisma.PageCount - 1 downto 0 do
   begin
+    { Silinen tablonun acik tablo sekmeleri (kolon/veri) de kapanir. }
+    TabloSekmesi := SekmeAl(pcCalisma.Pages[i]);
+    if (Tur = ntTablo) and (TabloSekmesi <> nil) and SameText(TabloSekmesi.BaglantiAd, BaglantiAd) and
+      (TabloSekmesi.TabloAdi = Ad) then
+    begin
+      pcCalisma.Pages[i].Free;
+      Continue;
+    end;
     Sekme := ProsedurSekmeAl(pcCalisma.Pages[i]);
     if (Sekme <> nil) and not Sekme.Yeni and SameText(Sekme.BaglantiAd, BaglantiAd) and (Sekme.NesneAdi = Ad) and
       (TurOnEki(Sekme.Tur) = TurOnEki(Tur)) then
@@ -1293,7 +1309,7 @@ var
   Bag: TAcikBaglanti;
   Tur: TNesneTuru;
   Dal: TTreeNode;
-  Onay: string;
+  Onay, Yazilan: string;
   Sonuc: TProsedurSonucu;
 begin
   Oge := OgeAl(Dugme);
@@ -1314,6 +1330,22 @@ begin
   begin
     MesajYaz(T('MSG_SIL_VAZGECILDI'));
     Exit;
+  end;
+  { Tablo: yanlislikla silinmesin diye adi yazdirilir (veriler yedeklenmez). }
+  if Tur = ntTablo then
+  begin
+    Yazilan := '';
+    if not MetinSor(T('SIL_TABLO_AD_BASLIK'), TF('SIL_TABLO_AD_ETIKET', [Oge.Ad]), Yazilan, False) then
+    begin
+      MesajYaz(T('MSG_SIL_VAZGECILDI'));
+      Exit;
+    end;
+    if not SameText(Trim(Yazilan), Oge.Ad) then
+    begin
+      UyariGoster(T('ERR_SIL_TABLO_AD_UYMADI'));
+      MesajYaz(T('MSG_SIL_VAZGECILDI'));
+      Exit;
+    end;
   end;
   Dal := Dugme.Parent;
   Sonuc := NesneSil(Bag, Tur, Oge.Ad);
@@ -1619,6 +1651,7 @@ begin
   Sekme.Parent := Sayfa;
   Sekme.Align := alClient;
   Sekme.AnaSonuc := memSonuc.Lines;
+  Sekme.SqlYaz := SqlMesajiYaz;
   try
     Sekme.Yukle(Bag, Oge.Ad);
   except
@@ -1867,6 +1900,7 @@ begin
   miMetadataCikar.Visible := (not Bos) and (Tur = atBaglanti) and Acik;
   miYedek.Visible := (not Bos) and (Tur = atBaglanti);
   miAc.Visible := (not Bos) and (Tur = atNesne) and (OgeAl(Dugme).DalNo = DAL_TABLO);
+  miBagimliliklar.Visible := miAc.Visible;
   { DDL tetikleyicisinde (script uretilmeyen tur) Script uret ve Duzenle gizlenir; Yenile kalir. }
   Uretilebilir := (not Bos) and (Tur = atNesne) and not OgeAl(Dugme).Duzenlenemez;
   miScriptUret.Visible := Uretilebilir;
@@ -1875,11 +1909,12 @@ begin
   miDomVarsayilan.Visible := Uretilebilir and (OgeAl(Dugme).DalNo = DAL_DOMAIN);
   miDomKontrol.Visible := miDomVarsayilan.Visible;
   miDomAd.Visible := miDomVarsayilan.Visible;
-  miNesneSil.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_VIEW, DAL_DOMAIN, DAL_ISTISNA, DAL_GENERATOR]);
+  miNesneSil.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_TABLO, DAL_VIEW, DAL_DOMAIN, DAL_ISTISNA, DAL_GENERATOR]);
   { Dala sag tik: yeni exception / domain. }
-  miYeniNesne.Visible := (not Bos) and (Tur = atDal) and Acik and (OgeAl(Dugme).DalNo in [DAL_DOMAIN, DAL_ISTISNA, DAL_GENERATOR]);
+  miYeniNesne.Visible := (not Bos) and (Tur = atDal) and Acik and (OgeAl(Dugme).DalNo in [DAL_TABLO, DAL_DOMAIN, DAL_ISTISNA, DAL_GENERATOR]);
   if miYeniNesne.Visible then
     case OgeAl(Dugme).DalNo of
+      DAL_TABLO: miYeniNesne.Caption := T('MENU_YENI_TABLO');
       DAL_DOMAIN: miYeniNesne.Caption := T('MENU_YENI_DOMAIN');
       DAL_ISTISNA: miYeniNesne.Caption := T('MENU_YENI_ISTISNA');
     else
@@ -1895,6 +1930,19 @@ procedure TfrmAna.miAcClick(Sender: TObject);
 begin
   if tvNesneler.Selected <> nil then
     TabloAc(tvNesneler.Selected);
+end;
+
+{ Tabloyu acar ve "Bagimliliklar" alt sekmesini one getirir. }
+procedure TfrmAna.miBagimliliklarClick(Sender: TObject);
+var
+  Sekme: TTabloSekme;
+begin
+  if tvNesneler.Selected = nil then
+    Exit;
+  TabloAc(tvNesneler.Selected);
+  Sekme := SekmeAl(pcCalisma.ActivePage);
+  if Sekme <> nil then
+    Sekme.BagimliliklariGoster;
 end;
 
 procedure TfrmAna.miScriptUretClick(Sender: TObject);

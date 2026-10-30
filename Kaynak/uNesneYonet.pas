@@ -14,7 +14,7 @@ unit uNesneYonet;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.StrUtils, System.RegularExpressions,
+  System.SysUtils, System.Classes, System.StrUtils, System.RegularExpressions, System.Generics.Collections,
   uDil, uBaglanti, uMetadata, uDDL, uProsedur;
 
 type
@@ -25,7 +25,7 @@ const
   { Onay penceresinde en cok bu kadar bagimli nesne listelenir, fazlasi "ve N tane daha" olur. }
   EN_COK_BAGIMLI = 10;
 
-{ Silme: view, exception, domain, generator (baska tur verilmez). }
+{ Silme: tablo (3g-4), view, exception, domain, generator (baska tur verilmez). }
 function SilmeKomutu(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string): string;
 { Onay penceresinin metni: ne silinecek, geri alinamaz, yedek, kullananlar (en cok 10). }
 function SilmeOnayMetni(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string): string;
@@ -55,6 +55,9 @@ function GeneratorDegerAyarla(Bag: TAcikBaglanti; const Ad: string; Yeni: Int64)
 { Yeni generator: CREATE SEQUENCE ad. Sonuc.Ad olusan adi tasir. }
 function GeneratorOlustur(Bag: TAcikBaglanti; const Ad: string): TProsedurSonucu;
 
+{ Yazilan degerin basindaki anahtar sozcugu atar: "DEFAULT 5" -> "5", "CHECK (VALUE > 0)" -> "(VALUE > 0)". }
+function SozcuguAt(const Deger, Sozcuk: string): string;
+
 { Domain'in yazi kutusuna konacak mevcut degeri (varsayilan ifade, CHECK ifadesi, ad). }
 function DomainMevcutDeger(Bag: TAcikBaglanti; const Ad: string; Islem: TDomainIslemi): string;
 { Calisacak komut(lar), "; " ile ayrilmis tek metin olarak (onay penceresinde de gosterilir). Deger bos:
@@ -68,6 +71,7 @@ implementation
 function TurSqlAdi(Tur: TNesneTuru): string;
 begin
   case Tur of
+    ntTablo: Result := 'TABLE';
     ntView: Result := 'VIEW';
     ntIstisna: Result := 'EXCEPTION';
     ntDomain: Result := 'DOMAIN';
@@ -80,24 +84,12 @@ end;
 function TurYazisi(Tur: TNesneTuru): string;
 begin
   case Tur of
+    ntTablo: Result := T('TUR_TABLO');
     ntView: Result := T('TUR_VIEW');
     ntIstisna: Result := T('TUR_ISTISNA');
     ntDomain: Result := T('TUR_DOMAIN');
   else
     Result := T('TUR_GENERATOR');
-  end;
-end;
-
-function BagimlilikTuruYazisi(Tur: Integer): string;
-begin
-  case Tur of
-    BAG_KOLON: Result := T('BAG_TUR_KOLON');
-    1: Result := T('BAG_TUR_VIEW');
-    2: Result := T('BAG_TUR_TETIKLEYICI');
-    3: Result := T('BAG_TUR_HESAPLANAN');
-    5: Result := T('BAG_TUR_PROSEDUR');
-  else
-    Result := T('BAG_TUR_DIGER');
   end;
 end;
 
@@ -115,14 +107,14 @@ begin
     end;
     if i > 0 then
       Result := Result + sLineBreak;
-    Result := Result + '- ' + BagimlilikTuruYazisi(Liste[i].Tur) + ': ' + Liste[i].Ad;
+    Result := Result + '- ' + BagimlilikTuruAdi(Liste[i].Tur) + ': ' + Liste[i].Ad;
   end;
 end;
 
 function HedefBul(Tur: TNesneTuru): TBagimlilikHedefi;
 begin
   case Tur of
-    ntView: Result := bhView;
+    ntTablo, ntView: Result := bhView;
     ntIstisna: Result := bhIstisna;
     ntDomain: Result := bhDomain;
   else
@@ -135,12 +127,37 @@ begin
   Result := 'DROP ' + TurSqlAdi(Tur) + ' ' + AdiYaz(Bag, Ad);
 end;
 
+{ Tabloyu silmeyi engelleyenler: onu kullanan view/trigger/prosedur ve yabanci anahtariyla ona bagli baska tablolar.
+  (Tablonun kendi yabanci anahtarlari tabloyla birlikte gider, engel degil.) }
+function TabloSilmeEngelleri(Bag: TAcikBaglanti; const Ad: string): TArray<TBagimlilik>;
+var
+  Satir: TBagimlilik;
+  Liste: TList<TBagimlilik>;
+begin
+  Liste := TList<TBagimlilik>.Create;
+  try
+    for Satir in TabloBagimliliklariniOku(Bag, Ad) do
+      if Satir.Tur <> BAG_FK_HEDEF then
+        Liste.Add(Satir);
+    Result := Liste.ToArray;
+  finally
+    Liste.Free;
+  end;
+end;
+
 function SilmeOnayMetni(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string): string;
 var
   Kullananlar: TArray<TBagimlilik>;
 begin
   Result := TF('ONAY_SIL', [TurYazisi(Tur), Ad]);
-  Kullananlar := BagimliNesneler(Bag, HedefBul(Tur), Ad);
+  if Tur = ntTablo then
+  begin
+    { Tabloda satir sayisi ve "veri yedeklenmez" uyarisi; engeller view/trigger/prosedur ve FK'li tablolari da icerir. }
+    Result := Result + sLineBreak + sLineBreak + TF('ONAY_SIL_TABLO_VERI', [TabloSatirSayisi(Bag, Ad)]);
+    Kullananlar := TabloSilmeEngelleri(Bag, Ad);
+  end
+  else
+    Kullananlar := BagimliNesneler(Bag, HedefBul(Tur), Ad);
   if Length(Kullananlar) = 0 then
     Result := Result + sLineBreak + sLineBreak + T('ONAY_SIL_BAGIMLI_YOK')
   else
@@ -154,11 +171,18 @@ begin
   if not EskiTanimiYedekle(Bag, Tur, Ad, True, Result) then
     Exit;
   MetniCalistir(Bag, SilmeKomutu(Bag, Tur, Ad), Result);
+  { Tabloyu baska tablonun yabanci anahtari kullaniyorsa Firebird PK'nin silinemeyecegini soyler (olculdu); tablo icin
+    daha dogru cumle. }
+  if (Tur = ntTablo) and not Result.Basarili and (Result.Cumle = T('ERR_KISIT_FK_BAGLI')) then
+    Result.Cumle := T('ERR_TABLO_FK_BAGLI');
 end;
 
 function YeniNesneSablonu(Tur: TNesneTuru): string;
 begin
-  if Tur = ntDomain then
+  if Tur = ntTablo then
+    Result := 'CREATE TABLE YENI_TABLO (' + sLineBreak + '  ID INTEGER NOT NULL PRIMARY KEY,' + sLineBreak +
+      '  AD VARCHAR(50)' + sLineBreak + ');' + sLineBreak
+  else if Tur = ntDomain then
     Result := 'CREATE DOMAIN YENI_DOMAIN AS VARCHAR(50);' + sLineBreak
   else
     Result := 'CREATE EXCEPTION YENI_EXCEPTION ''' + T('EXC_SABLON_MESAJ') + ''';' + sLineBreak;

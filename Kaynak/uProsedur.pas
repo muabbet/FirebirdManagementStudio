@@ -64,6 +64,9 @@ function YeniNesneKaydet(Bag: TAcikBaglanti; Tur: TNesneTuru; const Metin: strin
 function EskiTanimiYedekle(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string; Tam: Boolean;
   var Sonuc: TProsedurSonucu): Boolean;
 
+{ Tablonun tam CREATE script'ini yedekler (tablo yapisi islemlerinden once, 3g). Tablo VERISI yedeklenmez. }
+function TabloYapisiniYedekle(Bag: TAcikBaglanti; const Tablo: string; var Sonuc: TProsedurSonucu): Boolean;
+
 { Metindeki komutlari tek ACIK islemde calistirir (commit / hatada rollback); sonucu ve calisan komutlari Sonuc'a yazar. }
 procedure MetniCalistir(Bag: TAcikBaglanti; const Metin: string; var Sonuc: TProsedurSonucu);
 
@@ -95,6 +98,7 @@ begin
     ntView: Result := 'VIEW';
     ntIstisna: Result := 'EXCEPTION';
     ntDomain: Result := 'DOMAIN';
+    ntTablo: Result := 'TABLE';
   else
     Result := 'PROCEDURE';
   end;
@@ -108,6 +112,7 @@ begin
     ntIstisna: Result := 'EXC';
     ntDomain: Result := 'DOM';
     ntGenerator: Result := 'GEN';
+    ntTablo: Result := 'TBL';
   else
     Result := 'PRS';
   end;
@@ -121,6 +126,7 @@ begin
     ntIstisna: Result := 'exception_';
     ntDomain: Result := 'domain_';
     ntGenerator: Result := 'generator_';
+    ntTablo: Result := 'tablo_';
   else
     Result := 'prosedur_';
   end;
@@ -258,7 +264,8 @@ end;
 
 { Eski tanimi yedek dosyasina yazar, dosyanin yolunu verir. Her hata EProsedurYedek olarak gelir.
   Tam = False: duzenleme metni (CREATE OR ALTER); True: tam CREATE script'i (silmeden once; view tetikleyicileri dahil). }
-function YedekDosyasiYaz(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string; Tam: Boolean): string;
+function YedekDosyasiYaz(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string; Tam: Boolean;
+  const OnEk, BaslikAnahtari: string): string;
 var
   Klasor, Dosya, Metin: string;
   Kodlama: TEncoding;
@@ -273,16 +280,16 @@ begin
     ForceDirectories(Klasor);
     if not DirectoryExists(Klasor) then
       raise EProsedurYedek.Create(Klasor);
-    Dosya := TPath.Combine(Klasor, DosyaOnEki(Tur) + ReplaceStr(ReplaceStr(Ad, '"', '_'), ' ', '_') + '_' +
+    Dosya := TPath.Combine(Klasor, OnEk + ReplaceStr(ReplaceStr(Ad, '"', '_'), ' ', '_') + '_' +
       FormatDateTime('yyyymmdd_hhnnss', Now) + '.sql');
     No := 1;
     while FileExists(Dosya) do
     begin
       Inc(No);
-      Dosya := TPath.Combine(Klasor, DosyaOnEki(Tur) + ReplaceStr(ReplaceStr(Ad, '"', '_'), ' ', '_') + '_' +
+      Dosya := TPath.Combine(Klasor, OnEk + ReplaceStr(ReplaceStr(Ad, '"', '_'), ' ', '_') + '_' +
         FormatDateTime('yyyymmdd_hhnnss', Now) + '_' + IntToStr(No) + '.sql');
     end;
-    Metin := '-- ' + T(TurOnEki(Tur) + '_YEDEK_BASLIK') + ': ' + Ad + ' (' + Bag.Tanim.Ad + ')  ' +
+    Metin := '-- ' + T(BaslikAnahtari) + ': ' + Ad + ' (' + Bag.Tanim.Ad + ')  ' +
       FormatDateTime('yyyy-mm-dd hh:nn:ss', Now) + sLineBreak +
       'SET NAMES ' + ScriptKarakterSeti(Bag) + ';' + sLineBreak + sLineBreak + Metin;
     Kodlama := ScriptKodlamasiOlustur(Bag);
@@ -318,11 +325,12 @@ begin
       Inc(Result);
 end;
 
-function EskiTanimiYedekle(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string; Tam: Boolean;
-  var Sonuc: TProsedurSonucu): Boolean;
+{ Yedek yazma + hata cumleleri: EskiTanimiYedekle ve TabloYapisiniYedekle ortak. }
+function YedekleIc(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string; Tam: Boolean;
+  const OnEk, BaslikAnahtari: string; var Sonuc: TProsedurSonucu): Boolean;
 begin
   try
-    Sonuc.YedekDosyasi := YedekDosyasiYaz(Bag, Tur, Ad, Tam);
+    Sonuc.YedekDosyasi := YedekDosyasiYaz(Bag, Tur, Ad, Tam, OnEk, BaslikAnahtari);
     Result := True;
   except
     on E: EProsedurYedek do
@@ -337,6 +345,17 @@ begin
       Result := False;
     end;
   end;
+end;
+
+function EskiTanimiYedekle(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string; Tam: Boolean;
+  var Sonuc: TProsedurSonucu): Boolean;
+begin
+  Result := YedekleIc(Bag, Tur, Ad, Tam, DosyaOnEki(Tur), TurOnEki(Tur) + '_YEDEK_BASLIK', Sonuc);
+end;
+
+function TabloYapisiniYedekle(Bag: TAcikBaglanti; const Tablo: string; var Sonuc: TProsedurSonucu): Boolean;
+begin
+  Result := YedekleIc(Bag, ntTablo, Tablo, True, 'tablo_', 'TBL_YEDEK_BASLIK', Sonuc);
 end;
 
 { Metindeki komutlari tek ACIK islemde sirayla calistirir; hepsi basariliysa commit, biri hata verirse rollback.

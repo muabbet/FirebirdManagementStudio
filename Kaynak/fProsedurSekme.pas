@@ -1,5 +1,6 @@
 { fProsedurSekme.pas - Sakli prosedur (3e-1), tetikleyici (3e-2) ve view (3f-2) duzenleme sekmesi: ustte "Kaydet" dugmesi, altta SQL editoru.
-  Hangisi oldugu Tur alanindadir (ntTetikleyici, ntView; aksi halde prosedur); Yukle'den once atanir.
+  Hangisi oldugu Tur alanindadir (ntTetikleyici, ntView, ntIstisna, ntDomain, "Yeni tablo" icin ntTablo; varsayilan
+  ntProsedur); Yukle'den once atanir.
   Frame sadece arayuzu bilir; yedekleme ve calistirma uProsedur'dedir.
 
   Bu sekmede tek yol: Kaydet dugmesi ve Ctrl+S (ikisi de Kaydet'i cagirir). F5 bu sekmede bir sey calistirmaz,
@@ -43,6 +44,8 @@ type
     SqlYaz: TSqlGoster;
     { Yeni nesne basariyla olusturulunca cagrilir (ana pencere agaci yeniler, sekmeyi kapatir). }
     OnOlusturuldu: TNotifyEvent;
+    { Varsayilan tur ntProsedur (Delphi'de enum'un ilk degeri ntTablo oldugu icin acikca atanir; ntTablo yalniz "Yeni tablo"). }
+    constructor Create(AOwner: TComponent); override;
     { Nesnenin (prosedur/tetikleyici/view/exception) CREATE OR ALTER metnini editore koyar. Hata verirse istisna firlar, cagiran gosterir. }
     procedure Yukle(Bag: TAcikBaglanti; const Ad: string);
     { Yeni nesne sekmesi: editore bos sablon (CREATE EXCEPTION|DOMAIN ...) konur. }
@@ -79,6 +82,12 @@ begin
   OneriHazirla(Bag);
   FEditor.MetinYaz(Metin);
   YazilariYenile;
+end;
+
+constructor TProsedurSekme.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+  Tur := ntProsedur;
 end;
 
 procedure TProsedurSekme.Yukle(Bag: TAcikBaglanti; const Ad: string);
