@@ -111,7 +111,7 @@ procedure TProsedurSekme.OneriHazirla(Bag: TAcikBaglanti);
 var
   Adlar, Gecici: TStringList;
 begin
-  FEditor.AnahtarKelimeleriYukle(PaketKlasoru + '\anahtar_kelimeler.txt', Bag.Surum);
+  FEditor.AnahtarKelimeleriYukle(PaketKlasoru + '\anahtar_kelimeler.txt', Bag.Surum);
   Adlar := TStringList.Create;
   Gecici := TStringList.Create;
   try

@@ -90,7 +90,7 @@ begin
   Bag := FbAcikBaglanti(BaglantiAd);
   if Bag = nil then
     Exit;
-  FEditor.AnahtarKelimeleriYukle(PaketKlasoru + '\anahtar_kelimeler.txt', Bag.Surum);
+  FEditor.AnahtarKelimeleriYukle(PaketKlasoru + '\anahtar_kelimeler.txt', Bag.Surum);
   Adlar := TStringList.Create;
   Gecici := TStringList.Create;
   try
