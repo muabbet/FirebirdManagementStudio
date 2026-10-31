@@ -185,9 +185,9 @@ Bu bir "boş zamanda yavaş yavaş" projesidir, acele yoktur. **Her aşama bitin
 - [x] Tüm veritabanının metadata çıkarımı (IBExpert "Extract Metadata" gibi: dosyaya veya panoya, hepsi birden, seçenekler: CREATE DATABASE, CONNECT, şifre)
 - [x] Veri dışa aktarma (yalnızca CSV; Excel'de açılır, `.xlsx` yazılmaz)
 - [x] Yedek/geri yükleme (`gbak` çağırma)
-- [ ] Kullanıcı ve yetki yönetimi (3d-1 kullanıcılar tamam, sahibi denedi; 3d-2 yetki görüntüleme ve 3d-3 yetki verme/geri alma sonra)
+- [x] Kullanıcı ve yetki yönetimi: 3d-1 kullanıcılar, 3d-2 yetki görüntüleme ve 3d-3 yetki verme/geri alma tamam (`ASAMA3D2_RAPOR.md`, onaylandı 2026-10-31). Rol yönetimi ve kolon düzeyi yetki bilerek yok (basitlik)
 - [x] Trigger ve saklı prosedür düzenleme ve kaydetme (sahibinin isteği 2026-10-27): 3e-1 prosedür ve 3e-2 trigger tamam, sahibi denedi ve onayladı
-- [x] 3f: View düzenleme; Domain, Exception ve Generator yönetimi (ağaç dalları, oluştur, düzenle, sil; ayrıntı: `GOREV_ASAMA3F.md`), sahibi denedi ve onayladı (2026-10-29). Görsel düzeltme (SSMS örneği `Referans/ssms.png`, StokluBulut ikonu) tamam ve onaylandı (2026-10-30, `GORSEL_RAPOR.md`). 3g tablo yapısı (kolon, index, kısıt, yeni tablo, tablo sil, bağımlılıklar; `GOREV_ASAMA3G.md`, `ASAMA3G_RAPOR.md`) tamam ve onaylandı (2026-10-30). Sıradaki: 3d-2/3d-3 yetkiler
+- [x] 3f: View düzenleme; Domain, Exception ve Generator yönetimi (ağaç dalları, oluştur, düzenle, sil; ayrıntı: `GOREV_ASAMA3F.md`), sahibi denedi ve onayladı (2026-10-29). Görsel düzeltme (SSMS örneği `Referans/ssms.png`, StokluBulut ikonu) tamam ve onaylandı (2026-10-30, `GORSEL_RAPOR.md`). 3g tablo yapısı (kolon, index, kısıt, yeni tablo, tablo sil, bağımlılıklar; `GOREV_ASAMA3G.md`, `ASAMA3G_RAPOR.md`) tamam ve onaylandı (2026-10-30). Sıradaki: Aşama 4 (çoklu veritabanı)
 
 ### Aşama 4: Çoklu Veritabanı (sahibinin özel ihtiyacı)
 - [ ] Bir sorguyu seçilen birçok veritabanında çalıştırma, sonuçları birleştirme
