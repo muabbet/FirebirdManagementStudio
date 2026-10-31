@@ -141,7 +141,7 @@ begin
   GAnahtarKelimeler := TStringList.Create;
   GAnahtarKelimeler.Sorted := True;
   GAnahtarKelimeler.Duplicates := dupIgnore;
-  AnahtarKelimeleriOku(PaketKlasoru + '\anahtar_kelimeler.txt', Surum, GAnahtarKelimeler);
+  AnahtarKelimeleriOku(PaketKlasoru + '\anahtar_kelimeler.txt', Surum, GAnahtarKelimeler);
 end;
 
 procedure AnahtarKelimeleriBirak;
