@@ -22,7 +22,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "Add-Type -AssemblyName S
 if not exist "%ZIP%" goto :zip_hata
 
 rem Paket.rc'nin zamani guncellenir: Delphi .res'i yalniz .rc yenilendiyse yeniden uretir.
-copy /b "%KOK%Kaynak\Paket.rc" +,, >nul
+pushd "%KOK%Kaynak"
+copy /b Paket.rc+,, >nul
+popd
 exit /b 0
 
 :sonderleme_hata
