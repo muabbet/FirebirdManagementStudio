@@ -93,6 +93,8 @@ begin
   try
     Yurut(Sql);
   except
+    on E: Exception do
+      Cikti.Add('      (temizlik) ' + Sql + ' -> ' + TekSatirMetin(E.Message));
   end;
 end;
 
@@ -657,11 +659,36 @@ begin
   Kontrol('Duman: kolon ve index/kisit pencereleri olusuyor (dfm hatasi yok)', True);
 end;
 
+{ Sunucuda WIN1251 karakter setli bos bir veritabani olusturur. }
+procedure WinVeritabaniOlustur(const T: TBaglantiTanimi);
+var
+  Baglanti: TFDConnection;
+begin
+  Baglanti := TFDConnection.Create(nil);
+  try
+    Baglanti.DriverName := 'FB';
+    Baglanti.LoginPrompt := False;
+    Baglanti.Params.Values['Server'] := T.Sunucu;
+    Baglanti.Params.Values['Port'] := IntToStr(T.Port);
+    Baglanti.Params.Values['Protocol'] := 'TCPIP';
+    Baglanti.Params.Values['Database'] := T.VeritabaniYolu;
+    Baglanti.Params.Values['User_Name'] := T.Kullanici;
+    Baglanti.Params.Values['Password'] := T.Sifre;
+    Baglanti.Params.Values['OpenMode'] := 'Create';
+    Baglanti.Params.Values['CharacterSet'] := 'WIN1251';
+    Baglanti.Open;
+    Baglanti.Close;
+  finally
+    Baglanti.Free;
+  end;
+end;
+
 procedure KarakterSetiBolumu;
 var
   Beklenen, Bulunan: string;
   Baska: TBaglantiTanimi;
   Hata: string;
+  Otomatik: TAcikBaglanti;
 begin
   Cikti.Add('');
   Cikti.Add('=== G) Karakter seti algila (' + Bag.Surum + ') ===');
@@ -676,6 +703,42 @@ begin
   Baska.KarakterSeti := 'WIN1251';
   Kontrol('Algila: girilen (yanlis) karakter setinden bagimsiz', KarakterSetiAlgila(Baska) = Bulunan);
   Kontrol('Algila: baglanti listesine eklenmez', FbAcikBaglanti('baska_ad_gecici') = nil);
+  { FbBaglan karakter setini kendisi algilar: tanimda yanlis set yazili olsa da veritabaninin seti kullanilir;
+    veritabaninin varsayilani yoksa (NONE) tanimdaki deger kalir. }
+  Baska := Tanim;
+  Baska.Ad := 'baska_ad_otomatik';
+  Baska.KarakterSeti := 'WIN1251';
+  if not Gomulu then
+  begin
+    Otomatik := FbBaglan(Baska);
+    try
+      if Bulunan = 'NONE' then
+        Kontrol('Otomatik: veritabani NONE ise tanimdaki karakter seti kalir', Otomatik.Tanim.KarakterSeti = 'WIN1251')
+      else
+        Kontrol('Otomatik: tanimda WIN1251 yazili olsa da veritabaninin seti (' + Bulunan + ') ile baglanir',
+          Otomatik.Tanim.KarakterSeti = Bulunan);
+    finally
+      FbBaglantiyiKes(Otomatik);
+    end;
+  end;
+  { Asil durum: veritabani WIN1251, tanimda varsayilan WIN1254 yazili (yanlislikla farkli karakter seti). Sunucuda yeni
+    bir WIN1251 veritabani olusturulur (C:\Temp, silinmez). }
+  if not Gomulu then
+  begin
+    Baska := Tanim;
+    Baska.Ad := 'baska_ad_win1251';
+    Baska.VeritabaniYolu := 'C:\Temp\YAPITEST_WIN1251_' + FormatDateTime('yyyymmdd_hhnnss', Now) + '.FDB';
+    Baska.KarakterSeti := 'WIN1254';
+    WinVeritabaniOlustur(Baska);
+    Kontrol('WIN1251 veritabani: algila WIN1251 verir', KarakterSetiAlgila(Baska) = 'WIN1251');
+    Otomatik := FbBaglan(Baska);
+    try
+      Kontrol('WIN1251 veritabani: tanimda WIN1254 yazili olsa da WIN1251 ile baglanir',
+        Otomatik.Tanim.KarakterSeti = 'WIN1251');
+    finally
+      FbBaglantiyiKes(Otomatik);
+    end;
+  end;
   Hata := '';
   Baska := Tanim;
   Baska.Sifre := 'yanlis_sifre_xyz';

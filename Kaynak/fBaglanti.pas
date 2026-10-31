@@ -273,11 +273,19 @@ begin
   finally
     Screen.Cursor := crDefault;
   end;
-  cmbKarakter.Text := Bulunan;
+  { Karakter seti kutusu kapalidir; yalniz veritabaninin varsayilan karakter seti yoksa (NONE) kullanici secebilir. }
   if SameText(Bulunan, 'NONE') then
-    UyariGoster(T('MSG_KARAKTER_NONE'))
+  begin
+    cmbKarakter.Text := VARSAYILAN_KARAKTER_SETI;
+    cmbKarakter.Enabled := True;
+    UyariGoster(TF('MSG_KARAKTER_NONE', [VARSAYILAN_KARAKTER_SETI]));
+  end
   else
+  begin
+    cmbKarakter.Text := Bulunan;
+    cmbKarakter.Enabled := False;
     UyariGoster(TF('MSG_KARAKTER_ALGILANDI', [Bulunan]));
+  end;
 end;
 
 procedure TfrmBaglanti.btnKaydetClick(Sender: TObject);
@@ -311,7 +319,9 @@ begin
   Screen.Cursor := crHourGlass;
   try
     try
-      FbBaglan(Tanim);
+      { Karakter seti baglanirken otomatik algilanir; kullanilan set kutuda gorunur ve kayda yazilir. }
+      Tanim.KarakterSeti := FbBaglan(Tanim).Tanim.KarakterSeti;
+      cmbKarakter.Text := Tanim.KarakterSeti;
     except
       on E: Exception do
       begin

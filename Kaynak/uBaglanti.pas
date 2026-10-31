@@ -609,16 +609,32 @@ function FbBaglan(const Tanim: TBaglantiTanimi): TAcikBaglanti;
 var
   Yeni: TFDConnection;
   Bag: TAcikBaglanti;
+  Karakter, Bulunan: string;
 begin
   Result := FbAcikBaglanti(Tanim.Ad);
   if Result <> nil then
     Exit;
-  Yeni := YeniBaglantiNesnesi(Tanim, Tanim.KarakterSeti);
+  { Yanlis karakter setiyle baglanilmasin: once veritabaninin kendi karakter seti okunur ve onunla baglanilir.
+    Veritabaninin varsayilani yoksa (NONE) tanimdaki deger kullanilir. Okunamazsa (sunucu kapali, sifre yanlis)
+    asil baglanti ayni hatayi verir.
+    Sunucusuz yerel baglantida (yerlesik motor, yalniz gelistirme/deneme) algilama yapilmaz: Firebird 5.0 yerlesik
+    motorunda gecici baglanti sonrasi tabloda "object in use" hatasi olculdu. Paketle gelen istemci zaten yalniz
+    sunucuya baglanir. }
+  Karakter := Tanim.KarakterSeti;
+  if Tanim.Sunucu <> '' then
+    try
+      Bulunan := KarakterSetiAlgila(Tanim);
+      if (Bulunan <> '') and not SameText(Bulunan, 'NONE') then
+        Karakter := Bulunan;
+    except
+    end;
+  Yeni := YeniBaglantiNesnesi(Tanim, Karakter);
   try
     Yeni.Open;
     Bag := TAcikBaglanti.Create;
     Bag.Baglanti := Yeni;
     Bag.Tanim := Tanim;
+    Bag.Tanim.KarakterSeti := Karakter;
     Bag.Surum := VarToStr(Yeni.ExecSQLScalar(
       'SELECT RDB$GET_CONTEXT(''SYSTEM'', ''ENGINE_VERSION'') FROM RDB$DATABASE'));
     Bag.Dialect := VARSAYILAN_DIALECT;
