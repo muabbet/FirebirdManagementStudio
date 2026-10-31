@@ -56,6 +56,7 @@
         <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <Icon_MainIcon>FirebirdYonetici_Icon.ico</Icon_MainIcon>
         <Manifest_File>(None)</Manifest_File>
+        <PreBuildEvent><![CDATA["$(MSBuildProjectDirectory)\..\PaketHazirla.bat"]]></PreBuildEvent>
         <PostBuildEvent><![CDATA["$(MSBuildProjectDirectory)\..\SonDerleme.bat" "$(MSBuildProjectDirectory)\..\bin\$(Platform)\$(Config)"]]></PostBuildEvent>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Win64)'!=''">
@@ -81,6 +82,10 @@
         <RcCompile Include="Manifest.rc">
             <Form>Manifest.res</Form>
         </RcCompile>
+        <RcCompile Include="Paket.rc">
+            <Form>Paket.res</Form>
+        </RcCompile>
+        <DCCReference Include="uPaket.pas"/>
         <DCCReference Include="uDil.pas"/>
         <DCCReference Include="uIkon.pas"/>
         <DCCReference Include="uSerit.pas"/>

@@ -13,7 +13,7 @@ uses
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.Comp.Client, FireDAC.Phys.FB,
   FireDAC.ConsoleUI.Wait,
   Vcl.Forms, Vcl.Controls,
-  uDil, uBaglanti, uMetadata, uKullanici, uDDL, uProsedur, uNesneYonet, uKolon, uIndeksKisit, fProsedurSekme;
+  uDil, uBaglanti, uMetadata, uKullanici, uDDL, uProsedur, uNesneYonet, uKolon, uIndeksKisit, uPaket, fProsedurSekme, fKolonIslem, fYapiIslem;
 
 const
   ANA = 'FBY_TEST_ANA';
@@ -151,7 +151,9 @@ begin
     'ONAY_KISIT_FK_KULLANANLAR', 'ERR_YAPI_TEKRAR', 'ERR_YAPI_YETIM', 'ERR_PK_VAR', 'ERR_KISIT_FK_BAGLI',
     'ONAY_KISIT_CHECK_NOT', 'MENU_YENI_TABLO', 'TUR_TABLO', 'TBL_YENI_SEKME', 'TBL_YENI_BILGI', 'ONAY_TBL_YENI',
     'ERR_TBL_YENI_BASLIK_YOK', 'MSG_TBL_YENI_ACILDI', 'MSG_TBL_OLUSTURULDU', 'ERR_TBL_OLUSTURULAMADI', 'ONAY_SIL_TABLO_VERI',
-    'SIL_TABLO_AD_BASLIK', 'SIL_TABLO_AD_ETIKET', 'ERR_SIL_TABLO_AD_UYMADI', 'ERR_TABLO_FK_BAGLI'];
+    'SIL_TABLO_AD_BASLIK', 'SIL_TABLO_AD_ETIKET', 'ERR_SIL_TABLO_AD_UYMADI', 'ERR_TABLO_FK_BAGLI',
+    'KOLON_ETIKET_UZUNLUK', 'KOLON_ETIKET_HASSASIYET', 'KOLON_ETIKET_OLCEK', 'KOLON_TIP_DOMAIN', 'KOLON_TIP_MEVCUT',
+    'ERR_TIP_UZUNLUK', 'ERR_TIP_HASSASIYET', 'ERR_TIP_OLCEK'];
   for Dil in ['tr', 'en', 'de'] do
   begin
     DilYukle(Dil);
@@ -533,6 +535,127 @@ begin
 end;
 
 
+procedure VeriTipiBolumu;
+const
+  DM1 = 'FBY_TEST_TIPDM';
+var
+  Tipler: TArray<TVeriTipi>;
+  Sira, S1, S2: Integer;
+  Surum: Integer;
+  Eski, Yeni: TKolonGirdisi;
+  Sonuc: TProsedurSonucu;
+  Dosya: string;
+
+  function Ayri(const Tip: string; out Ad: string): Boolean;
+  begin
+    Result := TipAyristir(Tip, Tipler, Sira, S1, S2);
+    if Result then
+      Ad := Tipler[Sira].Ad
+    else
+      Ad := '';
+  end;
+
+var
+  Ad: string;
+  Bulundu: Boolean;
+  Tip: TVeriTipi;
+begin
+  Cikti.Add('');
+  Cikti.Add('=== F) Kolon veri tipi listesi (' + Bag.Surum + ') ===');
+  Surum := StrToIntDef(Copy(Bag.Surum, 1, Pos('.', Bag.Surum) - 1), 0);
+  Dosya := PaketKlasoru + '\veri_tipleri.txt';
+  Kontrol('Dosya: veri_tipleri.txt bulundu (' + Dosya + ')', FileExists(Dosya));
+  Dene('drop table ' + ANA);
+  Dene('drop domain ' + DM1);
+  Yurut('create domain ' + DM1 + ' as varchar(20)');
+  Tipler := KolonTipleri(Bag);
+  { Surume gore liste: 2.5 = 14, 3.0 = +BOOLEAN, 4.0 ve 5.0 = +5 (INT128, DECFLOAT x2, saat dilimli iki tip); + domain'ler }
+  case Surum of
+    2: Kontrol('Liste: 2.5 icin 14 tip (BOOLEAN yok)', (Length(Tipler) >= 14) and (Tipler[13].Ad = 'BLOB SUB_TYPE BINARY'));
+    3: Kontrol('Liste: 3.0 icin BOOLEAN var, INT128 yok', (Ayri('BOOLEAN', Ad)) and not Ayri('INT128', Ad));
+  else
+    Kontrol('Liste: 4.0+ icin BOOLEAN, INT128, DECFLOAT(34), TIMESTAMP WITH TIME ZONE var',
+      Ayri('BOOLEAN', Ad) and Ayri('INT128', Ad) and Ayri('DECFLOAT(34)', Ad) and Ayri('TIMESTAMP WITH TIME ZONE', Ad));
+  end;
+  if Surum < 3 then
+    Kontrol('Liste: 2.5 icin BOOLEAN YOK', not Ayri('BOOLEAN', Ad));
+  Bulundu := False;
+  for Tip in Tipler do
+    if Tip.Domain and (Tip.Ad = DM1) then
+      Bulundu := True;
+  Kontrol('Liste: veritabaninin domain''i de listede', Bulundu);
+
+  { Ayristirma (liste tum tipleri iceren 5.0 dosyasi ile) }
+  Tipler := VeriTipleriniOku(Dosya, '5.0.4');
+  Kontrol('Ayristir: VARCHAR(50)', Ayri('VARCHAR(50)', Ad) and (Ad = 'VARCHAR') and (S1 = 50));
+  Kontrol('Ayristir: CHARACTER SET eki olan VARCHAR(50)', Ayri('VARCHAR(50) CHARACTER SET UTF8', Ad) and (Ad = 'VARCHAR') and (S1 = 50));
+  Kontrol('Ayristir: NUMERIC(18, 2)', Ayri('NUMERIC(18, 2)', Ad) and (Ad = 'NUMERIC') and (S1 = 18) and (S2 = 2));
+  Kontrol('Ayristir: DOUBLE PRECISION', Ayri('DOUBLE PRECISION', Ad) and (Ad = 'DOUBLE PRECISION'));
+  Kontrol('Ayristir: INT128 INTEGER ile karismaz', Ayri('INT128', Ad) and (Ad = 'INT128'));
+  Kontrol('Ayristir: TIMESTAMP WITH TIME ZONE, TIMESTAMP ile karismaz', Ayri('TIMESTAMP WITH TIME ZONE', Ad) and (Ad = 'TIMESTAMP WITH TIME ZONE'));
+  Kontrol('Ayristir: BLOB SUB_TYPE TEXT', Ayri('BLOB SUB_TYPE TEXT', Ad) and (Ad = 'BLOB SUB_TYPE TEXT'));
+  Kontrol('Ayristir: listede olmayan tip (BLOB SUB_TYPE 1) bulunamaz, koruma icin "mevcut" maddesi gerekir', not Ayri('BLOB SUB_TYPE 1', Ad));
+
+  { Metin olusturma }
+  Tipler := VeriTipleriniOku(Dosya, '5.0.4');
+  Ayri('VARCHAR(10)', Ad);
+  Kontrol('Olustur: VARCHAR(30)', TipMetniOlustur(Tipler[Sira], 30, 0) = 'VARCHAR(30)');
+  Ayri('NUMERIC(9,2)', Ad);
+  Kontrol('Olustur: NUMERIC(10,3)', TipMetniOlustur(Tipler[Sira], 10, 3) = 'NUMERIC(10,3)');
+  Ayri('INTEGER', Ad);
+  Kontrol('Olustur: INTEGER parametresiz', TipMetniOlustur(Tipler[Sira], 5, 5) = 'INTEGER');
+
+  { Dogrulama }
+  Ayri('VARCHAR(10)', Ad);
+  Kontrol('Dogrula: uzunluk 0 reddedilir', TipSayilariniDogrula(Bag, Tipler[Sira], 0, 0) <> '');
+  Kontrol('Dogrula: uzunluk 32766 reddedilir', TipSayilariniDogrula(Bag, Tipler[Sira], 32766, 0) <> '');
+  Kontrol('Dogrula: uzunluk 32765 kabul', TipSayilariniDogrula(Bag, Tipler[Sira], 32765, 0) = '');
+  Ayri('NUMERIC(9,2)', Ad);
+  Kontrol('Dogrula: olcek > hassasiyet reddedilir', TipSayilariniDogrula(Bag, Tipler[Sira], 5, 6) <> '');
+  Kontrol('Dogrula: hassasiyet 18 kabul', TipSayilariniDogrula(Bag, Tipler[Sira], 18, 2) = '');
+  if Surum >= 4 then
+    Kontrol('Dogrula: hassasiyet 38 kabul (4.0+)', TipSayilariniDogrula(Bag, Tipler[Sira], 38, 2) = '')
+  else
+    Kontrol('Dogrula: hassasiyet 19 reddedilir (4.0 oncesi)', TipSayilariniDogrula(Bag, Tipler[Sira], 19, 2) <> '');
+
+  { Uc uca: listeden uretilen tiplerle kolon eklenir }
+  Yurut('create table ' + ANA + ' (ID integer not null primary key)');
+  Tipler := VeriTipleriniOku(Dosya, Bag.Surum);
+  Ayri('VARCHAR(10)', Ad);
+  Eski := Default(TKolonGirdisi);
+  Eski.Islem := kiEkle;
+  Eski.Tablo := ANA;
+  Yeni := Eski;
+  Yeni.YeniAd := 'ZT1';
+  Yeni.Tip := TipMetniOlustur(Tipler[Sira], 30, 0);
+  Sonuc := KolonUygula(Bag, Eski, Yeni);
+  Kontrol('Uc uca: VARCHAR(30) kolonu eklendi', Sonuc.Basarili);
+  Ayri('NUMERIC(9,2)', Ad);
+  Yeni.YeniAd := 'ZT2';
+  Yeni.Tip := TipMetniOlustur(Tipler[Sira], 12, 4);
+  Sonuc := KolonUygula(Bag, Eski, Yeni);
+  Kontrol('Uc uca: NUMERIC(12,4) kolonu eklendi', Sonuc.Basarili);
+  Yeni.YeniAd := 'ZT3';
+  Yeni.Tip := DM1;
+  Sonuc := KolonUygula(Bag, Eski, Yeni);
+  Kontrol('Uc uca: domain tipli kolon eklendi', Sonuc.Basarili);
+  Eski := KolonGirdisiOku(Bag, ANA, 'ZT3', kiDegistir);
+  Tipler := KolonTipleri(Bag);
+  Kontrol('Uc uca: domain tipli kolon "degistir" penceresinde domain olarak taninir',
+    TipAyristir(Eski.Tip, Tipler, Sira, S1, S2) and Tipler[Sira].Domain and (Tipler[Sira].Ad = DM1));
+  Eski := KolonGirdisiOku(Bag, ANA, 'ZT2', kiDegistir);
+  Kontrol('Uc uca: NUMERIC(12,4) kolonu okununca tip ayristirilir',
+    TipAyristir(Eski.Tip, Tipler, Sira, S1, S2) and (Tipler[Sira].Ad = 'NUMERIC') and (S1 = 12) and (S2 = 4));
+  Dene('drop table ' + ANA);
+  Dene('drop domain ' + DM1);
+  { Arayuz duman testi: pencerelerin .dfm'leri hatasiz yuklenir (gosterilmez) }
+  with TfrmKolonIslem.Create(nil) do
+    Free;
+  with TfrmYapiIslem.Create(nil) do
+    Free;
+  Kontrol('Duman: kolon ve index/kisit pencereleri olusuyor (dfm hatasi yok)', True);
+end;
+
 function TabloVarMi(const Ad: string): Boolean;
 var
   Yok: string;
@@ -691,6 +814,7 @@ begin
           KolonBolumu;
           IndeksKisitBolumu;
           YeniTabloSilBolumu;
+          VeriTipiBolumu;
         finally
           Temizle;
         end;

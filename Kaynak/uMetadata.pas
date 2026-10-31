@@ -280,6 +280,25 @@ function DesteklenmeyenNesneSayisi(Bag: TAcikBaglanti): Integer;
 { CREATE DATABASE icin: sayfa boyutu ve varsayilan karakter seti ('' = NONE). }
 function VeritabaniSayfaBoyutu(Bag: TAcikBaglanti): Integer;
 function VeritabaniVarsayilanKarakterSeti(Bag: TAcikBaglanti): string;
+type
+  { Tip adindan sonra ne sorulur: hicbir sey, uzunluk (CHAR/VARCHAR), hassasiyet ve olcek (NUMERIC/DECIMAL). }
+  TTipParametresi = (tpYok, tpUzunluk, tpHassasiyet);
+
+  { Kolon veri tipi listesinin bir satiri (veri_tipleri.txt). Domain: True ise Ad bir domain adidir. }
+  TVeriTipi = record
+    Ad: string;
+    Parametre: TTipParametresi;
+    { Pencerede onceden yazili gelen degerler (VARCHAR 50, NUMERIC 18 ve 2) }
+    Varsayilan1: Integer;
+    Varsayilan2: Integer;
+    Domain: Boolean;
+  end;
+
+{ veri_tipleri.txt dosyasindan, Surum ("5.0.4") icin gecerli veri tiplerini okur (bolumler anahtar_kelimeler.txt gibi). }
+function VeriTipleriniOku(const Dosya, Surum: string): TArray<TVeriTipi>;
+{ NUMERIC / DECIMAL icin en cok toplam basamak: Firebird 4.0'dan once 18, sonra 38. }
+function SayiHassasiyetiAzami(Bag: TAcikBaglanti): Integer;
+
 { anahtar_kelimeler.txt dosyasindan, Surum ("5.0.4") icin gecerli kelimeleri okur. }
 procedure AnahtarKelimeleriOku(const Dosya, Surum: string; Hedef: TStrings);
 
@@ -1073,6 +1092,63 @@ end;
 
 { Satir basina bir kelime. '#FB3' gibi baslik, sonraki kelimelerin o surumde ve sonrasinda
   gecerli oldugunu gosterir; diger '#' satirlari yorumdur. }
+function SayiHassasiyetiAzami(Bag: TAcikBaglanti): Integer;
+begin
+  if SurumNo(Bag) >= 4 then
+    Result := 38
+  else
+    Result := 18;
+end;
+
+function VeriTipleriniOku(const Dosya, Surum: string): TArray<TVeriTipi>;
+var
+  Satirlar: TStringList;
+  Liste: TList<TVeriTipi>;
+  Satir: string;
+  Parcalar, Sayilar: TArray<string>;
+  Tip: TVeriTipi;
+  Sunucu, Bolum: Integer;
+begin
+  Liste := TList<TVeriTipi>.Create;
+  Satirlar := TStringList.Create;
+  try
+    if FileExists(Dosya) then
+    begin
+      Sunucu := StrToIntDef(Copy(Surum, 1, Pos('.', Surum) - 1), 99);
+      Bolum := 0;
+      Satirlar.LoadFromFile(Dosya, TEncoding.UTF8);
+      for Satir in Satirlar do
+      begin
+        if (Length(Trim(Satir)) = 4) and (Copy(Trim(Satir), 1, 3) = '#FB') then
+          Bolum := StrToIntDef(Copy(Trim(Satir), 4, 1), Bolum)
+        else if (Trim(Satir) <> '') and (Trim(Satir)[1] <> '#') and (Bolum <= Sunucu) then
+        begin
+          Parcalar := Trim(Satir).Split(['|']);
+          Tip := Default(TVeriTipi);
+          Tip.Ad := Trim(Parcalar[0]);
+          if (Length(Parcalar) > 1) and SameText(Trim(Parcalar[1]), 'uzunluk') then
+            Tip.Parametre := tpUzunluk
+          else if (Length(Parcalar) > 1) and SameText(Trim(Parcalar[1]), 'hassasiyet') then
+            Tip.Parametre := tpHassasiyet;
+          if Length(Parcalar) > 2 then
+          begin
+            Sayilar := Trim(Parcalar[2]).Split([',']);
+            if Length(Sayilar) > 0 then
+              Tip.Varsayilan1 := StrToIntDef(Trim(Sayilar[0]), 0);
+            if Length(Sayilar) > 1 then
+              Tip.Varsayilan2 := StrToIntDef(Trim(Sayilar[1]), 0);
+          end;
+          Liste.Add(Tip);
+        end;
+      end;
+    end;
+    Result := Liste.ToArray;
+  finally
+    Satirlar.Free;
+    Liste.Free;
+  end;
+end;
+
 procedure AnahtarKelimeleriOku(const Dosya, Surum: string; Hedef: TStrings);
 var
   Satirlar: TStringList;

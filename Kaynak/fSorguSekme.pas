@@ -11,7 +11,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes, System.Generics.Collections, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
   Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids,
   FireDAC.Comp.Client,
-  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uSonucGrid, fCsvAktar;
+  uDil, uPaket, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uSonucGrid, fCsvAktar;
 
 type
   TSorguSekme = class(TFrame)
@@ -90,7 +90,7 @@ begin
   Bag := FbAcikBaglanti(BaglantiAd);
   if Bag = nil then
     Exit;
-  FEditor.AnahtarKelimeleriYukle(ExtractFilePath(ParamStr(0)) + 'anahtar_kelimeler.txt', Bag.Surum);
+  FEditor.AnahtarKelimeleriYukle(PaketKlasoru + '\anahtar_kelimeler.txt', Bag.Surum);
   Adlar := TStringList.Create;
   Gecici := TStringList.Create;
   try

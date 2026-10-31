@@ -1,0 +1,29 @@
+# Kolon veri tipleri (Tablo > Kolon ekle / Tip degistir penceresindeki liste). Her satir:  AD|parametre|varsayilan
+#   AD         : SQL'de yazilan tip adi (birden cok sozcuk olabilir).
+#   parametre  : - (yok), uzunluk (CHAR/VARCHAR: karakter sayisi sorulur), hassasiyet (NUMERIC/DECIMAL: toplam basamak ve olcek sorulur)
+#   varsayilan : pencerede onceden yazili gelen deger ("50" ya da "18,2"); kullanici degistirir. Bos birakilabilir.
+# '#' ile baslayan satirlar yorumdur. Bolum basliklari anahtar_kelimeler.txt ile ayni: #FB3, #FB4, #FB5. Baslik, ondan
+# sonraki tiplerin o surumde ve sonrasinda gecerli oldugunu gosterir; baslik yoksa (ilk bolum) 2.5 ve sonrasi icindir.
+# Yeni surumde ek bolum acin (#FB6). Uyeleri bagli sunucunun surumune gore listelenir.
+SMALLINT|-|
+INTEGER|-|
+BIGINT|-|
+FLOAT|-|
+DOUBLE PRECISION|-|
+NUMERIC|hassasiyet|18,2
+DECIMAL|hassasiyet|18,2
+CHAR|uzunluk|10
+VARCHAR|uzunluk|50
+DATE|-|
+TIME|-|
+TIMESTAMP|-|
+BLOB SUB_TYPE TEXT|-|
+BLOB SUB_TYPE BINARY|-|
+#FB3
+BOOLEAN|-|
+#FB4
+INT128|-|
+DECFLOAT(16)|-|
+DECFLOAT(34)|-|
+TIME WITH TIME ZONE|-|
+TIMESTAMP WITH TIME ZONE|-|

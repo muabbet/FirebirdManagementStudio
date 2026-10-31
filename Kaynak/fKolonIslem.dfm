@@ -2,7 +2,7 @@ object frmKolonIslem: TfrmKolonIslem
   Left = 0
   Top = 0
   BorderStyle = bsDialog
-  ClientHeight = 420
+  ClientHeight = 600
   ClientWidth = 520
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -27,7 +27,7 @@ object frmKolonIslem: TfrmKolonIslem
   object edtAd: TEdit
     AlignWithMargins = True
     Left = 12
-    Top = 31
+    Top = 37
     Width = 496
     Height = 25
     Margins.Left = 12
@@ -39,7 +39,7 @@ object frmKolonIslem: TfrmKolonIslem
   object lblTip: TLabel
     AlignWithMargins = True
     Left = 12
-    Top = 62
+    Top = 68
     Width = 496
     Height = 17
     Margins.Left = 12
@@ -48,22 +48,99 @@ object frmKolonIslem: TfrmKolonIslem
     Margins.Bottom = 2
     Align = alTop
   end
-  object edtTip: TEdit
+  object cmbTip: TComboBox
     AlignWithMargins = True
     Left = 12
-    Top = 81
+    Top = 93
     Width = 496
     Height = 25
     Margins.Left = 12
     Margins.Right = 12
     Align = alTop
+    Style = csDropDownList
+    DropDownCount = 20
     TabOrder = 1
+    OnChange = TipDegisti
+  end
+  object lblUzunluk: TLabel
+    AlignWithMargins = True
+    Left = 12
+    Top = 124
+    Width = 496
+    Height = 17
+    Margins.Left = 12
+    Margins.Top = 6
+    Margins.Right = 12
+    Margins.Bottom = 2
+    Align = alTop
+  end
+  object edtUzunluk: TEdit
+    AlignWithMargins = True
+    Left = 12
+    Top = 149
+    Width = 496
+    Height = 25
+    Margins.Left = 12
+    Margins.Right = 12
+    Align = alTop
+    NumbersOnly = True
+    TabOrder = 2
+    OnChange = AlanDegisti
+  end
+  object lblHassasiyet: TLabel
+    AlignWithMargins = True
+    Left = 12
+    Top = 180
+    Width = 496
+    Height = 17
+    Margins.Left = 12
+    Margins.Top = 6
+    Margins.Right = 12
+    Margins.Bottom = 2
+    Align = alTop
+  end
+  object edtHassasiyet: TEdit
+    AlignWithMargins = True
+    Left = 12
+    Top = 205
+    Width = 496
+    Height = 25
+    Margins.Left = 12
+    Margins.Right = 12
+    Align = alTop
+    NumbersOnly = True
+    TabOrder = 3
+    OnChange = AlanDegisti
+  end
+  object lblOlcek: TLabel
+    AlignWithMargins = True
+    Left = 12
+    Top = 236
+    Width = 496
+    Height = 17
+    Margins.Left = 12
+    Margins.Top = 6
+    Margins.Right = 12
+    Margins.Bottom = 2
+    Align = alTop
+  end
+  object edtOlcek: TEdit
+    AlignWithMargins = True
+    Left = 12
+    Top = 261
+    Width = 496
+    Height = 25
+    Margins.Left = 12
+    Margins.Right = 12
+    Align = alTop
+    NumbersOnly = True
+    TabOrder = 4
     OnChange = AlanDegisti
   end
   object lblVarsayilan: TLabel
     AlignWithMargins = True
     Left = 12
-    Top = 112
+    Top = 292
     Width = 496
     Height = 17
     Margins.Left = 12
@@ -75,44 +152,45 @@ object frmKolonIslem: TfrmKolonIslem
   object edtVarsayilan: TEdit
     AlignWithMargins = True
     Left = 12
-    Top = 131
+    Top = 317
     Width = 496
     Height = 25
     Margins.Left = 12
     Margins.Right = 12
     Align = alTop
-    TabOrder = 2
+    TabOrder = 5
     OnChange = AlanDegisti
   end
   object chkBosOlmaz: TCheckBox
     AlignWithMargins = True
     Left = 12
-    Top = 162
+    Top = 348
     Width = 496
     Height = 21
     Margins.Left = 12
     Margins.Top = 6
     Margins.Right = 12
     Align = alTop
-    TabOrder = 3
+    TabOrder = 6
     OnClick = AlanDegisti
   end
   object lblNot: TLabel
     AlignWithMargins = True
     Left = 12
-    Top = 189
+    Top = 375
     Width = 496
     Height = 17
     Margins.Left = 12
     Margins.Top = 4
     Margins.Right = 12
+    Margins.Bottom = 2
     Align = alTop
     WordWrap = True
   end
   object lblKomut: TLabel
     AlignWithMargins = True
     Left = 12
-    Top = 212
+    Top = 400
     Width = 496
     Height = 17
     Margins.Left = 12
@@ -123,12 +201,12 @@ object frmKolonIslem: TfrmKolonIslem
   end
   object pnlAlt: TPanel
     Left = 0
-    Top = 368
+    Top = 548
     Width = 520
     Height = 52
     Align = alBottom
     BevelOuter = bvNone
-    TabOrder = 5
+    TabOrder = 8
     object btnIptal: TButton
       AlignWithMargins = True
       Left = 432
@@ -165,15 +243,15 @@ object frmKolonIslem: TfrmKolonIslem
   object memKomut: TMemo
     AlignWithMargins = True
     Left = 12
-    Top = 231
+    Top = 425
     Width = 496
-    Height = 133
+    Height = 100
     Margins.Left = 12
     Margins.Right = 12
     Margins.Bottom = 4
     Align = alClient
     ReadOnly = True
     ScrollBars = ssVertical
-    TabOrder = 4
+    TabOrder = 7
   end
 end

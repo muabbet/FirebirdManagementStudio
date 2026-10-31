@@ -9,6 +9,7 @@ uses
   Vcl.Forms,
   Vcl.Themes,
   Vcl.Styles,
+  uPaket in 'uPaket.pas',
   uDil in 'uDil.pas',
   uIkon in 'uIkon.pas',
   uSerit in 'uSerit.pas',
@@ -44,13 +45,14 @@ uses
 
 {$R *.res}
 {$R 'Manifest.res' 'Manifest.rc'}
+{$R 'Paket.res' 'Paket.rc'}
 
 { Acik tema: Stiller klasorundeki Windows10.vsf yuklenir. Dosya yoksa standart gorunum kalir. }
 procedure StilYukle;
 var
   Dosya: string;
 begin
-  Dosya := ExtractFilePath(ParamStr(0)) + 'Stiller\Windows10.vsf';
+  Dosya := PaketKlasoru + '\Stiller\Windows10.vsf';
   if FileExists(Dosya) and TStyleManager.IsValidStyle(Dosya) then
   begin
     TStyleManager.LoadFromFile(Dosya);

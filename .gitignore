@@ -41,3 +41,7 @@ fbclient.dll
 
 # Ajan arsivi ve gecici dosyalar
 _arsiv/
+
+# Gomulu paket (PaketHazirla.bat uretir)
+Kaynak/Paket.zip
+obj/

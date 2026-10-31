@@ -12,7 +12,7 @@ interface
 uses
   System.SysUtils, System.Classes, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls, Vcl.StdCtrls,
   FireDAC.Comp.Client,
-  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uKullanici, uDDL, uProsedur, uNesneYonet;
+  uDil, uPaket, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uKullanici, uDDL, uProsedur, uNesneYonet;
 
 type
   TProsedurSekme = class(TFrame)
@@ -111,7 +111,7 @@ procedure TProsedurSekme.OneriHazirla(Bag: TAcikBaglanti);
 var
   Adlar, Gecici: TStringList;
 begin
-  FEditor.AnahtarKelimeleriYukle(ExtractFilePath(ParamStr(0)) + 'anahtar_kelimeler.txt', Bag.Surum);
+  FEditor.AnahtarKelimeleriYukle(PaketKlasoru + '\anahtar_kelimeler.txt', Bag.Surum);
   Adlar := TStringList.Create;
   Gecici := TStringList.Create;
   try

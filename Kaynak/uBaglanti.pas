@@ -20,7 +20,7 @@ uses
   FireDAC.Phys.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool, FireDAC.Stan.Async,
   FireDAC.Phys, FireDAC.Phys.FB, FireDAC.Phys.FBDef, FireDAC.Phys.IBBase,
   FireDAC.VCLUI.Wait, FireDAC.DApt, FireDAC.Comp.Client,
-  uDil;
+  uDil, uPaket;
 
 type
   TBaglantiTanimi = record
@@ -533,7 +533,7 @@ end;
 
 function IstemciDosyasi: string;
 begin
-  Result := TPath.Combine(ExtractFilePath(ParamStr(0)), 'istemci\fbclient.dll');
+  Result := TPath.Combine(PaketKlasoru, 'istemci\fbclient.dll');
 end;
 
 procedure SurucuyuHazirla;

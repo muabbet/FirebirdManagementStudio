@@ -10,7 +10,7 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.JSON, System.IOUtils,
-  System.Generics.Collections;
+  System.Generics.Collections, uPaket;
 
 type
   TDilBilgisi = record
@@ -42,7 +42,7 @@ var
 
 function DilKlasoru: string;
 begin
-  Result := TPath.Combine(ExtractFilePath(ParamStr(0)), 'Diller');
+  Result := TPath.Combine(PaketKlasoru, 'Diller');
 end;
 
 { Deneme programlari baska bir klasor secebilsin diye. Bos birakilirsa

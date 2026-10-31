@@ -81,7 +81,7 @@ function AltIslemCalistir(const Exe, Argumanlar, Sifre: string; Cikti: TYedekCik
 implementation
 
 uses
-  Winapi.Windows, System.IOUtils, System.StrUtils, System.Diagnostics, uDil;
+  Winapi.Windows, System.IOUtils, System.StrUtils, System.Diagnostics, uDil, uPaket;
 
 const
   YARIM_UZANTI = '.yarim';
@@ -98,7 +98,7 @@ begin
   if GGbakYolu <> '' then
     Result := GGbakYolu
   else
-    Result := TPath.Combine(ExtractFilePath(ParamStr(0)), 'istemci\gbak.exe');
+    Result := TPath.Combine(PaketKlasoru, 'istemci\gbak.exe');
 end;
 
 function GbakVarMi: Boolean;
