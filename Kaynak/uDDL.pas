@@ -74,7 +74,7 @@ function MetadataCikar(Bag: TAcikBaglanti; const Secenekler: TCikarSecenekleri; 
 implementation
 
 uses
-  System.StrUtils, System.Generics.Collections, uDil, uMetadata;
+  System.StrUtils, System.Generics.Collections, uDil, uMetadata, uPaket;
 
 var
   { Script uretirken kurulur: tirnak gerektiren (anahtar kelime) adlari bilmek icin. }
@@ -141,7 +141,7 @@ begin
   GAnahtarKelimeler := TStringList.Create;
   GAnahtarKelimeler.Sorted := True;
   GAnahtarKelimeler.Duplicates := dupIgnore;
-  AnahtarKelimeleriOku(ExtractFilePath(ParamStr(0)) + 'anahtar_kelimeler.txt', Surum, GAnahtarKelimeler);
+  AnahtarKelimeleriOku(PaketKlasoru + '\anahtar_kelimeler.txt', Surum, GAnahtarKelimeler);
 end;
 
 procedure AnahtarKelimeleriBirak;

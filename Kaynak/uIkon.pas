@@ -8,7 +8,7 @@ interface
 
 uses
   System.SysUtils, System.IOUtils, Vcl.Graphics, Vcl.ImageCollection, Vcl.VirtualImageList, Vcl.ImgList,
-  uDil;
+  uDil, uPaket;
 
 const
   IKON_BAGLAN = 0;
@@ -53,7 +53,7 @@ procedure IkonlariKoleksiyonaYukle(Koleksiyon: TImageCollection);
 var
   Klasor, Dosya, Ad: string;
 begin
-  Klasor := TPath.Combine(ExtractFilePath(ParamStr(0)), 'Ikonlar');
+  Klasor := TPath.Combine(PaketKlasoru, 'Ikonlar');
   for Ad in IKON_DOSYALARI do
   begin
     Dosya := TPath.Combine(Klasor, Ad + '.png');
