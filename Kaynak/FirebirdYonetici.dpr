@@ -40,6 +40,8 @@ uses
   fMetadataCikar in 'fMetadataCikar.pas' {frmMetadataCikar},
   fCsvAktar in 'fCsvAktar.pas' {frmCsvAktar},
   fYedek in 'fYedek.pas' {frmYedek},
+  uCokluSorgu in 'uCokluSorgu.pas',
+  fCokluSorgu in 'fCokluSorgu.pas' {CokluSorguSekme: TFrame},
   uYetki in 'uYetki.pas',
   fYetkiVer in 'fYetkiVer.pas' {frmYetkiVer},
   fYetkiler in 'fYetkiler.pas' {frmYetkiler},

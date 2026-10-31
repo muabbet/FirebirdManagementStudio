@@ -70,6 +70,9 @@ function BozukDosyaUyarisiAl: string;
 
 { Acik baglantilar }
 function FbBaglan(const Tanim: TBaglantiTanimi): TAcikBaglanti;
+{ Acik baglanti listesine EKLENMEYEN baglanti (coklu veritabani sorgusu icin): isi bitince cagiran Free eder.
+  Karakter seti FbBaglan gibi otomatik algilanir. }
+function FbGeciciBaglan(const Tanim: TBaglantiTanimi): TAcikBaglanti;
 { Veritabaninin kendi varsayilan karakter seti ("WIN1251", "UTF8", hic yoksa "NONE"); gecici baglantiyla okunur,
   baglanti listesine girmez. Baglanamazsa FbBaglan gibi istisna firlatir. }
 function KarakterSetiAlgila(const Tanim: TBaglantiTanimi): string;
@@ -605,15 +608,14 @@ begin
   end;
 end;
 
-function FbBaglan(const Tanim: TBaglantiTanimi): TAcikBaglanti;
+{ Baglantiyi kurar ve acik tutar (listeye EKLEMEZ). Cagiran ya listeye ekler (FbBaglan) ya da isi bitince Free eder
+  (FbGeciciBaglan). }
+function BaglantiKur(const Tanim: TBaglantiTanimi): TAcikBaglanti;
 var
   Yeni: TFDConnection;
   Bag: TAcikBaglanti;
   Karakter, Bulunan: string;
 begin
-  Result := FbAcikBaglanti(Tanim.Ad);
-  if Result <> nil then
-    Exit;
   { Yanlis karakter setiyle baglanilmasin: once veritabaninin kendi karakter seti okunur ve onunla baglanilir.
     Veritabaninin varsayilani yoksa (NONE) tanimdaki deger kullanilir. Okunamazsa (sunucu kapali, sifre yanlis)
     asil baglanti ayni hatayi verir.
@@ -648,8 +650,21 @@ begin
     Yeni.Free;
     raise;
   end;
-  GAcikBaglantilar.Add(Bag);
   Result := Bag;
+end;
+
+function FbBaglan(const Tanim: TBaglantiTanimi): TAcikBaglanti;
+begin
+  Result := FbAcikBaglanti(Tanim.Ad);
+  if Result <> nil then
+    Exit;
+  Result := BaglantiKur(Tanim);
+  GAcikBaglantilar.Add(Result);
+end;
+
+function FbGeciciBaglan(const Tanim: TBaglantiTanimi): TAcikBaglanti;
+begin
+  Result := BaglantiKur(Tanim);
 end;
 
 { Cagiran once bu baglantiya ait sekmeleri kapatmis olmalidir. }

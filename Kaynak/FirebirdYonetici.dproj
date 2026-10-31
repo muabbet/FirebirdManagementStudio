@@ -159,6 +159,12 @@
             <Form>frmYedek</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="uCokluSorgu.pas"/>
+        <DCCReference Include="fCokluSorgu.pas">
+            <Form>CokluSorguSekme</Form>
+            <FormType>dfm</FormType>
+            <DesignClass>TFrame</DesignClass>
+        </DCCReference>
         <DCCReference Include="uYetki.pas"/>
         <DCCReference Include="fYetkiVer.pas">
             <Form>frmYetkiVer</Form>
