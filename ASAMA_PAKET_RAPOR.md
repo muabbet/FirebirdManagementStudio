@@ -35,3 +35,16 @@ Dil dosyaları, ikonlar, `anahtar_kelimeler.txt`, tema (`Windows10.vsf`) ve Fire
 ## Müşteriye verme
 
 Yalnızca `bin\Win64\Release\FirebirdYonetici.exe` dosyasını verin. İlk açılışta birkaç saniye sürebilir (dosyalar açılır).
+
+---
+
+# Kolon veri tipi: listeden seçim, zorunlu boyut (aynı dal)
+
+**İstek (sahibi):** "Kolon eklerken veri tipi combobox ile gelsin, Firebird sürümüne göre; zorunlu alanları (uzunluk vb.) sorsun, `varchar(50)` yazmak amatörce."
+
+- **Liste:** `veri_tipleri.txt` (yeni; `anahtar_kelimeler.txt` ile aynı `#FB3/#FB4` bölüm düzeni, sürüme bağlı kısım kodda değil dosyada). 2.5: 14 tip; 3.0: + BOOLEAN; 4.0/5.0: + INT128, DECFLOAT(16/34), TIME/TIMESTAMP WITH TIME ZONE. Veritabanının domain'leri listenin sonuna "(domain)" ekiyle eklenir.
+- **Boyut:** VARCHAR / CHAR seçilince "Uzunluk" kutusu (önceden 50 / 10 yazılı, değiştirilebilir, 1–32765); NUMERIC / DECIMAL seçilince "Toplam basamak" ve "Virgülden sonraki basamak" (önceden 18 ve 2; en çok 18, Firebird 4.0+'da 38). Geçersiz sayı anlaşılır cümleyle reddedilir. Diğer tiplerde boyut kutusu çıkmaz.
+- **Değiştir penceresi:** kolonun mevcut tipi listede seçili gelir, sayılar açılır. Değişmediyse eski tip metni aynen korunur (CHARACTER SET gibi ekler kaybolmaz). Listede olmayan tip (örn. `BLOB SUB_TYPE 1`) "(mevcut, değişmez) ..." maddesi olarak görünür.
+- **Kod:** `uMetadata` (`VeriTipleriniOku`, `SayiHassasiyetiAzami`), `uKolon` (`KolonTipleri`, `TipAyristir`, `TipMetniOlustur`, `TipSayilariniDogrula`), `fKolonIslem` (yalnız alanlar). Üç dilde yeni anahtarlar (540).
+- **Test (`TabloYapiTest` bölüm F, 128 kontrol):** 5.0.4 gömülü 128/0, 3.0.14 gömülü 127/0, 4.0.7 sunucu 127/0, 2.5.9 sunucu 126/0 (liste sürüme göre, ayrıştırma, metin üretme, doğrulama, listeden üretilen tiplerle kolon ekleme, domain tipli kolon, pencere .dfm duman testi). **Pencerenin görünümü ve combo'nun gözle kullanımı denenmedi.**
+- Karakter seti (CHAR/VARCHAR için `CHARACTER SET`) sorulmaz, veritabanı varsayılanı kullanılır; istenirse eklenir.

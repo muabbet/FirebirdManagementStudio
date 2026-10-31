@@ -13,8 +13,8 @@ unit uKolon;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.StrUtils,
-  uDil, uBaglanti, uMetadata, uDDL, uProsedur, uNesneYonet;
+  System.SysUtils, System.Classes, System.StrUtils, System.Generics.Collections,
+  uDil, uPaket, uBaglanti, uMetadata, uDDL, uProsedur, uNesneYonet;
 
 type
   TKolonIslemi = (kiEkle, kiAd, kiDegistir, kiSil);
@@ -31,6 +31,16 @@ type
     BosOlmaz: Boolean;
   end;
 
+{ Kolon veri tipi listesi: veri_tipleri.txt (bagli surume gore) ve ardindan veritabaninin domain'leri. }
+function KolonTipleri(Bag: TAcikBaglanti): TArray<TVeriTipi>;
+{ Mevcut tip metnini ("VARCHAR(50)", "NUMERIC(18, 2)", domain adi) listedeki tiple eslestirir: Sira (listede yoksa -1) ve
+  parantez icindeki sayilar. Listede olmayan tip (ornegin "BLOB SUB_TYPE 1") False doner. }
+function TipAyristir(const Tip: string; const Tipler: TArray<TVeriTipi>; out Sira, Sayi1, Sayi2: Integer): Boolean;
+{ Secilen tip ve sayilardan SQL tip metni: "VARCHAR(50)", "NUMERIC(18,2)", parametresizlerde yalniz ad. }
+function TipMetniOlustur(const Tip: TVeriTipi; Sayi1, Sayi2: Integer): string;
+{ Sayilar gecersizse anlasilir cumle (uzunluk 1..32765, hassasiyet 1..en cok, olcek 0..hassasiyet), tamamsa bos. }
+function TipSayilariniDogrula(Bag: TAcikBaglanti; const Tip: TVeriTipi; Sayi1, Sayi2: Integer): string;
+
 { Mevcut kolonun degerleriyle dolu girdi (duzenleme penceresinin baslangici). Hesaplanan kolonda EMetadataHatasi. }
 function KolonGirdisiOku(Bag: TAcikBaglanti; const Tablo, Kolon: string; Islem: TKolonIslemi): TKolonGirdisi;
 { Eksik / gecersiz girdide anlasilir cumle, tamamsa bos. }
@@ -42,6 +52,100 @@ function KolonOnayMetni(Bag: TAcikBaglanti; const Eski, Yeni: TKolonGirdisi; con
 function KolonUygula(Bag: TAcikBaglanti; const Eski, Yeni: TKolonGirdisi): TProsedurSonucu;
 
 implementation
+
+function KolonTipleri(Bag: TAcikBaglanti): TArray<TVeriTipi>;
+var
+  Liste: TList<TVeriTipi>;
+  Domainler: TStringList;
+  Tip: TVeriTipi;
+  Ad: string;
+begin
+  Liste := TList<TVeriTipi>.Create;
+  Domainler := TStringList.Create;
+  try
+    Liste.AddRange(VeriTipleriniOku(PaketKlasoru + '\veri_tipleri.txt', Bag.Surum));
+    DomainleriGetir(Bag, Domainler);
+    for Ad in Domainler do
+    begin
+      Tip := Default(TVeriTipi);
+      Tip.Ad := Ad;
+      Tip.Domain := True;
+      Liste.Add(Tip);
+    end;
+    Result := Liste.ToArray;
+  finally
+    Domainler.Free;
+    Liste.Free;
+  end;
+end;
+
+function TipAyristir(const Tip: string; const Tipler: TArray<TVeriTipi>; out Sira, Sayi1, Sayi2: Integer): Boolean;
+var
+  Buyuk, Icindekiler: string;
+  i, Acik, Kapali, EnUzun: Integer;
+  Sayilar: TArray<string>;
+begin
+  Sira := -1;
+  Sayi1 := 0;
+  Sayi2 := 0;
+  Buyuk := UpperCase(Trim(Tip));
+  EnUzun := 0;
+  for i := 0 to High(Tipler) do
+    if Tipler[i].Domain then
+    begin
+      if SameText(Tipler[i].Ad, Buyuk) then
+      begin
+        Sira := i;
+        Exit(True);
+      end;
+    end
+    else if (Length(Tipler[i].Ad) > EnUzun) and ((Buyuk = Tipler[i].Ad) or StartsText(Tipler[i].Ad + '(', Buyuk) or
+      StartsText(Tipler[i].Ad + ' ', Buyuk)) then
+    begin
+      Sira := i;
+      EnUzun := Length(Tipler[i].Ad);
+    end;
+  Result := Sira >= 0;
+  if Result and (Tipler[Sira].Parametre <> tpYok) then
+  begin
+    Acik := Pos('(', Buyuk);
+    Kapali := Pos(')', Buyuk);
+    if (Acik > 0) and (Kapali > Acik) then
+    begin
+      Icindekiler := Copy(Buyuk, Acik + 1, Kapali - Acik - 1);
+      Sayilar := Icindekiler.Split([',']);
+      if Length(Sayilar) > 0 then
+        Sayi1 := StrToIntDef(Trim(Sayilar[0]), 0);
+      if Length(Sayilar) > 1 then
+        Sayi2 := StrToIntDef(Trim(Sayilar[1]), 0);
+    end;
+  end;
+end;
+
+function TipMetniOlustur(const Tip: TVeriTipi; Sayi1, Sayi2: Integer): string;
+begin
+  case Tip.Parametre of
+    tpUzunluk: Result := Tip.Ad + '(' + IntToStr(Sayi1) + ')';
+    tpHassasiyet: Result := Tip.Ad + '(' + IntToStr(Sayi1) + ',' + IntToStr(Sayi2) + ')';
+  else
+    Result := Tip.Ad;
+  end;
+end;
+
+function TipSayilariniDogrula(Bag: TAcikBaglanti; const Tip: TVeriTipi; Sayi1, Sayi2: Integer): string;
+begin
+  Result := '';
+  case Tip.Parametre of
+    tpUzunluk:
+      if (Sayi1 < 1) or (Sayi1 > 32765) then
+        Result := TF('ERR_TIP_UZUNLUK', [32765]);
+    tpHassasiyet:
+      if (Sayi1 < 1) or (Sayi1 > SayiHassasiyetiAzami(Bag)) then
+        Result := TF('ERR_TIP_HASSASIYET', [SayiHassasiyetiAzami(Bag)])
+      else if (Sayi2 < 0) or (Sayi2 > Sayi1) then
+        Result := T('ERR_TIP_OLCEK');
+  end;
+end;
 
 function KolonGirdisiOku(Bag: TAcikBaglanti; const Tablo, Kolon: string; Islem: TKolonIslemi): TKolonGirdisi;
 var
