@@ -27,6 +27,20 @@ object Kullanicilar: TKullanicilar
       Layout = tlCenter
       WordWrap = True
     end
+    object btnYetki: TButton
+      AlignWithMargins = True
+      Left = 520
+      Top = 6
+      Width = 92
+      Height = 28
+      Margins.Top = 6
+      Margins.Right = 4
+      Margins.Bottom = 6
+      Align = alRight
+      Constraints.MinWidth = 92
+      TabOrder = 1
+      OnClick = btnYetkiClick
+    end
     object btnYeni: TButton
       AlignWithMargins = True
       Left = 620
