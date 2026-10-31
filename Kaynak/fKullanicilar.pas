@@ -9,13 +9,14 @@ uses
   System.SysUtils, System.Classes, Data.DB, Winapi.Windows, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
   Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.Menus,
   FireDAC.Comp.Client,
-  uDil, uOnay, uBaglanti, uMetadata, uKullanici, fKullaniciDuzenle;
+  uDil, uOnay, uBaglanti, uMetadata, uKullanici, uYetki, fKullaniciDuzenle, fYetkiler;
 
 type
   TKullanicilar = class(TFrame)
     pnlUst: TPanel;
     lblBilgi: TLabel;
     btnYeni: TButton;
+    btnYetki: TButton;
     gridKullanicilar: TDBGrid;
     dsKullanicilar: TDataSource;
     pmKullanici: TPopupMenu;
@@ -26,6 +27,7 @@ type
     miYenile: TMenuItem;
     miSil: TMenuItem;
     procedure btnYeniClick(Sender: TObject);
+    procedure btnYetkiClick(Sender: TObject);
     procedure gridKullanicilarMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure pmKullaniciPopup(Sender: TObject);
     procedure miSifreClick(Sender: TObject);
@@ -165,6 +167,8 @@ begin
   lblBilgi.Caption := T('KUL_BILGI');
   btnYeni.Caption := T('KUL_YENI');
   DugmeyiYaziyaUydur(btnYeni);
+  btnYetki.Caption := T('KUL_YETKILER');
+  DugmeyiYaziyaUydur(btnYetki);
   miSifre.Caption := T('KUL_MENU_SIFRE');
   miAdSoyad.Caption := T('KUL_MENU_ADSOYAD');
   miYenile.Caption := T('MENU_YENILE');
@@ -224,6 +228,16 @@ begin
     miAktif.Caption := T('KUL_MENU_PASIF_YAP');
   miYenile.Enabled := True;
   miSil.Enabled := Secili and not Sysdba and not Kendi;
+end;
+
+{ Secili kullanicinin yetkileri penceresi (3d-2); "Hepsini geri al" orada. Bos satirda dugme bir sey yapmaz. }
+procedure TKullanicilar.btnYetkiClick(Sender: TObject);
+var
+  Bag: TAcikBaglanti;
+begin
+  Bag := Baglanti;
+  if (Bag <> nil) and (SeciliAd <> '') then
+    YetkiPenceresiniGoster(Bag, ykKullanici, SeciliAd, ynTablo, AnaSonuc, SqlYaz);
 end;
 
 procedure TKullanicilar.btnYeniClick(Sender: TObject);

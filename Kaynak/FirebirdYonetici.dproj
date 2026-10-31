@@ -159,6 +159,15 @@
             <Form>frmYedek</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="uYetki.pas"/>
+        <DCCReference Include="fYetkiVer.pas">
+            <Form>frmYetkiVer</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="fYetkiler.pas">
+            <Form>frmYetkiler</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <DCCReference Include="uSunucuBul.pas"/>
         <DCCReference Include="fSunucuSec.pas">
             <Form>frmSunucuSec</Form>

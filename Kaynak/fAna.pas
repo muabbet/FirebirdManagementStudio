@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -48,6 +48,7 @@ type
     pmNesne: TPopupMenu;
     miAc: TMenuItem;
     miBagimliliklar: TMenuItem;
+    miYetkiler: TMenuItem;
     miScriptUret: TMenuItem;
     miNesneDuzenle: TMenuItem;
     miYeniNesne: TMenuItem;
@@ -95,6 +96,7 @@ type
     procedure pmNesnePopup(Sender: TObject);
     procedure miAcClick(Sender: TObject);
     procedure miBagimliliklarClick(Sender: TObject);
+    procedure miYetkilerClick(Sender: TObject);
     procedure miScriptUretClick(Sender: TObject);
     procedure miNesneDuzenleClick(Sender: TObject);
     procedure miYeniNesneClick(Sender: TObject);
@@ -290,6 +292,7 @@ begin
   pnlUst.Height := FSerit.Yukseklik;
   miAc.Caption := T('MENU_AC');
   miBagimliliklar.Caption := T('MENU_BAGIMLILIKLAR');
+  miYetkiler.Caption := T('MENU_YETKILER');
   miScriptUret.Caption := T('MENU_SCRIPT_URET');
   miNesneDuzenle.Caption := T('MENU_PROSEDUR_DUZENLE');
   miDomVarsayilan.Caption := T('MENU_DOM_VARSAYILAN');
@@ -1904,6 +1907,8 @@ begin
   { DDL tetikleyicisinde (script uretilmeyen tur) Script uret ve Duzenle gizlenir; Yenile kalir. }
   Uretilebilir := (not Bos) and (Tur = atNesne) and not OgeAl(Dugme).Duzenlenemez;
   miScriptUret.Visible := Uretilebilir;
+  { Yetkiler: tablo, view ve prosedur (kimde ne yetkisi var, ver / geri al). }
+  miYetkiler.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_TABLO, DAL_VIEW, DAL_PROSEDUR]);
   miNesneDuzenle.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_VIEW, DAL_PROSEDUR, DAL_TETIKLEYICI, DAL_ISTISNA]);
   { Domain: CREATE OR ALTER yok; yalniz uc kucuk is (varsayilan, CHECK, ad). Sil: view, exception, domain, generator. }
   miDomVarsayilan.Visible := Uretilebilir and (OgeAl(Dugme).DalNo = DAL_DOMAIN);
@@ -1930,6 +1935,26 @@ procedure TfrmAna.miAcClick(Sender: TObject);
 begin
   if tvNesneler.Selected <> nil then
     TabloAc(tvNesneler.Selected);
+end;
+
+{ Secili tablo / view / prosedurun yetkiler penceresi. }
+procedure TfrmAna.miYetkilerClick(Sender: TObject);
+var
+  Oge: TAgacOgesi;
+  Bag: TAcikBaglanti;
+  Tur: TYetkiNesnesi;
+begin
+  if tvNesneler.Selected = nil then
+    Exit;
+  Oge := OgeAl(tvNesneler.Selected);
+  Bag := FbAcikBaglanti(Oge.BaglantiAd);
+  if Bag = nil then
+    Exit;
+  if Oge.DalNo = DAL_PROSEDUR then
+    Tur := ynProsedur
+  else
+    Tur := ynTablo;
+  YetkiPenceresiniGoster(Bag, ykNesne, Oge.Ad, Tur, memSonuc.Lines, SqlMesajiYaz);
 end;
 
 { Tabloyu acar ve "Bagimliliklar" alt sekmesini one getirir. }

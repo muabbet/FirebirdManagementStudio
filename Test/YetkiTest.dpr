@@ -13,7 +13,8 @@ uses
   System.SysUtils, System.Classes, System.StrUtils, System.IOUtils, Data.DB,
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.Comp.Client, FireDAC.Phys.FB,
   FireDAC.ConsoleUI.Wait,
-  uDil, uBaglanti, uMetadata, uKullanici, uProsedur, uYetki;
+  Vcl.Forms, Vcl.Controls,
+  uDil, uBaglanti, uMetadata, uKullanici, uProsedur, uYetki, fYetkiVer, fYetkiler;
 
 const
   TB = 'FBY_TEST_YTB';
@@ -156,7 +157,13 @@ begin
   Cikti.Add('');
   Cikti.Add('=== A) Dil anahtarlari ===');
   Anahtarlar := ['ERR_YETKI_AD_BOS', 'ERR_YETKI_SECIM_BOS', 'ERR_YETKI_YOK_ALINACAK', 'YETKI_HERKES', 'ONAY_YETKI_VER',
-    'ONAY_YETKI_AL', 'ONAY_YETKI_HERKES', 'ONAY_YETKI_SECENEK'];
+    'ONAY_YETKI_AL', 'ONAY_YETKI_HERKES', 'ONAY_YETKI_SECENEK', 'MENU_YETKILER', 'KUL_YETKILER', 'YETKI_BASLIK_NESNE',
+    'YETKI_BASLIK_KULLANICI', 'YETKI_BILGI_NESNE', 'YETKI_BILGI_KULLANICI', 'YETKI_SUTUN_YETKILI', 'YETKI_SUTUN_NESNE',
+    'YETKI_SUTUN_TUR', 'YETKI_SUTUN_YETKILER', 'YETKI_SUTUN_VEREBILIR', 'YETKI_TUR_KULLANICI', 'YETKI_TUR_ROL',
+    'YETKI_TUR_HERKES', 'YETKI_TUR_TABLO', 'YETKI_TUR_PROSEDUR', 'YETKI_TUR_ROL_UYELIK', 'YETKI_TUR_DIGER', 'BTN_YETKI_VER',
+    'BTN_YETKI_AL', 'BTN_YETKI_HEPSI', 'YETKI_VER_BASLIK', 'YETKI_AL_BASLIK', 'YETKI_ETIKET_TUR', 'YETKI_ETIKET_AD',
+    'YETKI_ETIKET_YETKILER', 'YETKI_ETIKET_SECENEK', 'ONAY_YETKI_HEPSI', 'MSG_YETKI_VAZGECILDI', 'MSG_YETKI_VERILDI',
+    'MSG_YETKI_ALINDI', 'ERR_YETKI_VERILEMEDI', 'ERR_YETKI_ALINAMADI', 'MSG_YETKI_GERI_ALINDI'];
   for Dil in ['tr', 'en', 'de'] do
   begin
     DilYukle(Dil);
@@ -180,6 +187,12 @@ var
 begin
   Cikti.Add('');
   Cikti.Add('=== B) Yetki goruntule, ver, geri al (' + Bag.Surum + ') ===');
+  { Arayuz duman testi: pencerelerin .dfm'leri hatasiz yuklenir (gosterilmez) }
+  with TfrmYetkiVer.Create(nil) do
+    Free;
+  with TfrmYetkiler.Create(nil) do
+    Free;
+  Kontrol('Duman: yetki pencereleri olusuyor (dfm hatasi yok)', True);
   Temizle;
   Yurut('create table ' + TB + ' (ID integer not null primary key, AD varchar(30))');
   Yurut('create view ' + VW + ' as select ID, AD from ' + TB);
