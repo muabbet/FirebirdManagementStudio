@@ -194,19 +194,11 @@ Bu bir "boş zamanda yavaş yavaş" projesidir, acele yoktur. **Her aşama bitin
 - [ ] Şema farkı bulma (iki veritabanını karşılaştırma)
 - [ ] Toplu güncelleme (onay ve önizleme ile)
 
-### Aşama 5: PostgreSQL (küçük kapsam, sahibinin ihtiyacı: pgAdmin'e hızlı alternatif)
-Aşama 3 ve 4 bitmeden başlanmaz. Yalnızca bağlan, gez, SQL çalıştır. Script üretme ve yönetim özellikleri bu aşamada yok.
+### Aşama 5: PostgreSQL — İPTAL EDİLDİ (karar 2026-10-31)
 
-**Bulgu (sahibi ölçtü, 2026-10-13):** Windows Server'da pgAdmin 4 (PostgreSQL 18 ile gelen sürüm) 2 dk 44 sn'de açılıyordu. Neden Windows Defender'ın gerçek zamanlı taramasıydı: pgAdmin'in kurulum klasörü ve `%APPDATA%\pgadmin` klasörü Defender dışlamasına eklenince açılış 30 sn'ye (ikinci açılış 25 sn) düştü. Log önce yalnızca tek uyarı satırı içeriyordu, ilk log satırı açılıştan 77 sn sonra yazılmıştı (Python sunucusu geç ayağa kalkıyordu). Bu aşamanın çıkış nedeni pgAdmin yavaşlığı olduğundan, kendi aracımız da bu ortamda ölçülmeli: açılış süresi Defender dışlamasıyla ve dışlamasız karşılaştırılır, yavaşsa README'ye "program klasörünü Defender dışlamasına ekleyin" notu konur.
-- [ ] Hazırlık: sürüme/motora bağlı kodu `uMetadata.pas` içinde motor seçimi arkasına almak (Firebird davranışı değişmeden, mevcut testler geçmeli)
-- [ ] FireDAC PostgreSQL sürücüsü ile bağlantı (`libpq.dll` 32/64 bit uyumu ve sürümü belgelenir), şifre DPAPI ile
-- [ ] Ağaçta Tablolar, View'lar, Prosedür/Fonksiyonlar, Sequence'lar dalları (`pg_catalog` / `information_schema`)
-- [ ] Tabloya çift tıklayınca kolonlar ve ilk satırlar
-- [ ] SQL editörü ve sonuç ızgarası PostgreSQL'de çalışır (F5, çoklu komut, hata cümleleri tr/en/de)
-- [ ] Sorgu planı (`EXPLAIN`)
-- [ ] PostgreSQL anahtar kelime/tip listesi ayrı metin dosyasında
+Sahibi PostgreSQL desteğini **yapmama** kararı verdi: araç yalnızca Firebird'e özel kalacak. Gerekçe: pgAdmin iyi bir alternatif, iki veritabanını aynı araçta karıştırmak kafa karışıklığı yaratır; pgAdmin'in yavaş açılma sorunu Windows Defender dışlaması ile çözüldü (üretimde hızlı açılıyor). **Ana ilke:** basit ama Firebird için her şeyi yapabilen bir program. Motor seçimi, PostgreSQL sürücüsü, `libpq.dll` gibi hiçbir şey eklenmeyecek; `uMetadata.pas` Firebird'e özel kalır.
 
-**Bitiş ölçütü:** pgAdmin'in yavaş açıldığı bir sunucuya bağlanıp tabloları görebiliyor, SQL ve script çalıştırabiliyorum.
+Eski plan (yapılmayacak, kayıt için): bağlan, gez, SQL çalıştır; `pg_catalog` / `information_schema`; `EXPLAIN`; PostgreSQL anahtar kelime listesi.
 
 ---
 
