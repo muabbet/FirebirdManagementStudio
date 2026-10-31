@@ -40,6 +40,8 @@ uses
   fMetadataCikar in 'fMetadataCikar.pas' {frmMetadataCikar},
   fCsvAktar in 'fCsvAktar.pas' {frmCsvAktar},
   fYedek in 'fYedek.pas' {frmYedek},
+  uSunucuBul in 'uSunucuBul.pas',
+  fSunucuSec in 'fSunucuSec.pas' {frmSunucuSec},
   fBaglanti in 'fBaglanti.pas' {frmBaglanti},
   fAna in 'fAna.pas' {frmAna};
 

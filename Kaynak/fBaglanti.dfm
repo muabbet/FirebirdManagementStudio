@@ -147,9 +147,18 @@ object frmBaglanti: TfrmBaglanti
     object edtSunucu: TEdit
       Left = 12
       Top = 85
-      Width = 340
+      Width = 226
       Height = 25
       TabOrder = 1
+    end
+    object btnSunucular: TButton
+      Left = 244
+      Top = 84
+      Width = 108
+      Height = 27
+      Constraints.MinWidth = 108
+      TabOrder = 9
+      OnClick = btnSunucularClick
     end
     object lblPort: TLabel
       Left = 364

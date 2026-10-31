@@ -159,6 +159,11 @@
             <Form>frmYedek</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="uSunucuBul.pas"/>
+        <DCCReference Include="fSunucuSec.pas">
+            <Form>frmSunucuSec</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <DCCReference Include="fBaglanti.pas">
             <Form>frmBaglanti</Form>
             <FormType>dfm</FormType>

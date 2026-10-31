@@ -8,7 +8,7 @@ interface
 uses
   System.SysUtils, System.Classes, Vcl.Controls, Vcl.Forms, Vcl.StdCtrls,
   Vcl.ExtCtrls, Vcl.Dialogs,
-  uDil, uBaglanti, uOnay;
+  uDil, uBaglanti, uOnay, uSunucuBul, fSunucuSec;
 
 type
   TBaglantiSonucu = (bsIptal, bsKaydedildi, bsBaglandi);
@@ -19,6 +19,7 @@ type
     edtAd: TEdit;
     lblSunucu: TLabel;
     edtSunucu: TEdit;
+    btnSunucular: TButton;
     lblPort: TLabel;
     edtPort: TEdit;
     lblYol: TLabel;
@@ -45,6 +46,7 @@ type
     procedure btnGozatClick(Sender: TObject);
     procedure btnAyrintiClick(Sender: TObject);
     procedure btnAlgilaClick(Sender: TObject);
+    procedure btnSunucularClick(Sender: TObject);
     procedure btnKaydetClick(Sender: TObject);
     procedure btnBaglanClick(Sender: TObject);
     procedure btnKapatClick(Sender: TObject);
@@ -55,6 +57,7 @@ type
     procedure YazilariYenile;
     procedure DugmeyiYaziyaUydur(Dugme: TButton);
     procedure AlanlariBosalt;
+    procedure IlkSunucuyuBul;
     procedure AlanlaraYaz(const Tanim: TBaglantiTanimi);
     function AlanlardanOku(out Tanim: TBaglantiTanimi; AdKontrolu: Boolean = True): Boolean;
     function AdKullanilabilirMi(const Ad: string): Boolean;
@@ -112,7 +115,10 @@ begin
     Exit;
   end;
   if DuzenlenecekAd = '' then
+  begin
+    IlkSunucuyuBul;
     Exit;
+  end;
   Caption := T('BAGLANTI_DUZENLE_BASLIK');
   if KayitliBaglantiBul(DuzenlenecekAd, Tanim) then
     AlanlaraYaz(Tanim);
@@ -131,12 +137,14 @@ begin
   chkSifreKaydet.Caption := T('CHK_SIFRE_KAYDET');
   btnAyrinti.Caption := T('AYRINTI');
   btnAlgila.Caption := T('BTN_KARAKTER_ALGILA');
+  btnSunucular.Caption := T('BTN_SUNUCULAR');
   btnBaglan.Caption := T('BTN_BAGLAN');
   btnKaydet.Caption := T('BTN_KAYDET');
   btnKapat.Caption := T('BTN_KAPAT');
   dlgAc.Filter := T('DOSYA_FILTRE');
   DugmeyiYaziyaUydur(btnAyrinti);
   DugmeyiYaziyaUydur(btnAlgila);
+  DugmeyiYaziyaUydur(btnSunucular);
   DugmeyiYaziyaUydur(btnBaglan);
   DugmeyiYaziyaUydur(btnKaydet);
   DugmeyiYaziyaUydur(btnKapat);
@@ -161,6 +169,42 @@ begin
   cmbKarakter.Text := VARSAYILAN_KARAKTER_SETI;
   chkSifreKaydet.Checked := False;
   HatayiGizle;
+end;
+
+{ Yeni baglanti acilirken bu bilgisayardaki Firebird sunucularina bakilir: varsayilan port (3050) bir Firebird sunucusu
+  degilse ve baska bir sunucu bulunduysa port onunla doldurulur (kullanici bilmeden bos porta baglanmaya calismasin).
+  Birden fazla sunucu varsa "Sunucular" dugmesiyle secilir. }
+procedure TfrmBaglanti.IlkSunucuyuBul;
+var
+  Bulunanlar: TArray<TBulunanSunucu>;
+  Kayit: TBulunanSunucu;
+begin
+  Screen.Cursor := crHourGlass;
+  try
+    Bulunanlar := SunuculariBul('localhost');
+  finally
+    Screen.Cursor := crDefault;
+  end;
+  if Length(Bulunanlar) = 0 then
+    Exit;
+  for Kayit in Bulunanlar do
+    if Kayit.Port = VARSAYILAN_PORT then
+      Exit;
+  edtPort.Text := IntToStr(Bulunanlar[0].Port);
+end;
+
+{ "Sunucular": yazilan sunucuda (bos = bu bilgisayar) calisan Firebird sunuculari listelenir, secilen sunucu ve port
+  alanlara yazilir. }
+procedure TfrmBaglanti.btnSunucularClick(Sender: TObject);
+var
+  Sunucu: string;
+  Port: Integer;
+begin
+  if SunucuSec(Trim(edtSunucu.Text), Sunucu, Port) then
+  begin
+    edtSunucu.Text := Sunucu;
+    edtPort.Text := IntToStr(Port);
+  end;
 end;
 
 procedure TfrmBaglanti.AlanlaraYaz(const Tanim: TBaglantiTanimi);

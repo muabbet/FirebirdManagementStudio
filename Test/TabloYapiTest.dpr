@@ -13,7 +13,7 @@ uses
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.Comp.Client, FireDAC.Phys.FB,
   FireDAC.ConsoleUI.Wait,
   Vcl.Forms, Vcl.Controls,
-  uDil, uBaglanti, uMetadata, uKullanici, uDDL, uProsedur, uNesneYonet, uKolon, uIndeksKisit, uPaket, fProsedurSekme, fKolonIslem, fYapiIslem;
+  uDil, uBaglanti, uMetadata, uKullanici, uDDL, uProsedur, uNesneYonet, uKolon, uIndeksKisit, uPaket, fProsedurSekme, fKolonIslem, fYapiIslem, fSunucuSec, fBaglanti;
 
 const
   ANA = 'FBY_TEST_ANA';
@@ -653,6 +653,10 @@ begin
   Dene('drop domain ' + DM1);
   { Arayuz duman testi: pencerelerin .dfm'leri hatasiz yuklenir (gosterilmez) }
   with TfrmKolonIslem.Create(nil) do
+    Free;
+  with TfrmSunucuSec.Create(nil) do
+    Free;
+  with TfrmBaglanti.Create(nil) do
     Free;
   with TfrmYapiIslem.Create(nil) do
     Free;
