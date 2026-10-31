@@ -18,7 +18,8 @@ Kapsam: sorgu denetimi, üç veritabanı, eksik tablo hatası, kayıtlı şifre 
 
 ## Bulgu (önemli, ayrı iş): WIN1251 bağlantıda Kiril harfler bozuk geliyor
 Ölçüm: WIN1251 veritabanına doğru baytlarla (CF F0 E8 E2 E5 F2) yazılan "Привет", FireDAC `CharacterSet=WIN1251` bağlantısıyla okununca WIN1254 gibi çözülüyor (Ï ğ è…). Aynı veri `CharacterSet=UTF8` bağlantısıyla doğru geliyor. Yani veri sunucuda sağlam, sorun FireDAC'ın WIN1251 çözümlemesinde. Çoklu sorguya özgü değil, uygulamanın her yerini etkiler (Windows'un varsayılan kod sayfası 1254 olduğu için WIN1254 veritabanlarında fark edilmez).
-Olası çözüm: veritabanı karakter seti NONE değilse UTF8 ile bağlanmak (sunucu çevirir). Etkisi geniş olduğu için sahibine sorulmadan yapılmadı. Testte bu kontrol çıkarıldı, yerine not düşüldü.
+Sahibi gerçek veritabanında (FABRIKA 2026, WIN1251 tanımlı, Firebird 2.5.9) denedi: Türkçe harfler bizde ve IBExpert'te aynı, doğru görünüyor. Karar (2026-10-31): düzeltme yapılmaz, bilinen sınır olarak kalır; tanıtım sayfasına "Kiril test edilmedi, test eden yazsın" notu konur (CLAUDE.md Aşama 6).
+(Yapılmamış olası çözüm:) veritabanı karakter seti NONE değilse UTF8 ile bağlanmak (sunucu çevirir). Etkisi geniş olduğu için sahibine sorulmadan yapılmadı. Testte bu kontrol çıkarıldı, yerine not düşüldü.
 
 ## Eksik / görülmedi
 - Arayüz (çoklu sorgu sekmesi) gözle denenmedi, yalnızca dfm'nin hatasız oluştuğu test edildi.
