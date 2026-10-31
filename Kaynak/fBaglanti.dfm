@@ -225,13 +225,60 @@ object frmBaglanti: TfrmBaglanti
       Top = 247
       Width = 220
       Height = 25
+      DropDownCount = 16
       TabOrder = 7
       Items.Strings = (
         'WIN1254'
         'UTF8'
         'NONE'
         'WIN1252'
-        'ISO8859_9')
+        'ISO8859_9'
+        'WIN1250'
+        'WIN1251'
+        'WIN1253'
+        'WIN1255'
+        'WIN1256'
+        'WIN1257'
+        'WIN1258'
+        'ISO8859_1'
+        'ISO8859_2'
+        'ISO8859_3'
+        'ISO8859_4'
+        'ISO8859_5'
+        'ISO8859_6'
+        'ISO8859_7'
+        'ISO8859_8'
+        'ISO8859_13'
+        'ASCII'
+        'OCTETS'
+        'UNICODE_FSS'
+        'DOS437'
+        'DOS737'
+        'DOS775'
+        'DOS850'
+        'DOS852'
+        'DOS857'
+        'DOS858'
+        'DOS860'
+        'DOS861'
+        'DOS862'
+        'DOS863'
+        'DOS864'
+        'DOS865'
+        'DOS866'
+        'DOS869'
+        'KOI8R'
+        'KOI8U'
+        'CYRL'
+        'TIS620'
+        'BIG_5'
+        'GB_2312'
+        'GBK'
+        'GB18030'
+        'EUCJ_0208'
+        'SJIS_0208'
+        'KSC_5601'
+        'NEXT')
     end
     object chkSifreKaydet: TCheckBox
       Left = 12
