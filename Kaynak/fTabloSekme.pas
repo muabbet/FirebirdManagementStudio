@@ -115,7 +115,6 @@ var
   Bag: TAcikBaglanti;
   Eski, Yeni: TKolonGirdisi;
   Komutlar: string;
-  Sonuc: TProsedurSonucu;
 begin
   Bag := FbAcikBaglanti(BaglantiAd);
   if Bag = nil then
