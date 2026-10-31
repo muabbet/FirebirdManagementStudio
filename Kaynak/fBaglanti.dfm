@@ -280,6 +280,15 @@ object frmBaglanti: TfrmBaglanti
         'KSC_5601'
         'NEXT')
     end
+    object btnAlgila: TButton
+      Left = 244
+      Top = 246
+      Width = 100
+      Height = 27
+      Constraints.MinWidth = 100
+      TabOrder = 8
+      OnClick = btnAlgilaClick
+    end
     object chkSifreKaydet: TCheckBox
       Left = 12
       Top = 288

@@ -153,7 +153,8 @@ begin
     'ERR_TBL_YENI_BASLIK_YOK', 'MSG_TBL_YENI_ACILDI', 'MSG_TBL_OLUSTURULDU', 'ERR_TBL_OLUSTURULAMADI', 'ONAY_SIL_TABLO_VERI',
     'SIL_TABLO_AD_BASLIK', 'SIL_TABLO_AD_ETIKET', 'ERR_SIL_TABLO_AD_UYMADI', 'ERR_TABLO_FK_BAGLI',
     'KOLON_ETIKET_UZUNLUK', 'KOLON_ETIKET_HASSASIYET', 'KOLON_ETIKET_OLCEK', 'KOLON_TIP_DOMAIN', 'KOLON_TIP_MEVCUT',
-    'ERR_TIP_UZUNLUK', 'ERR_TIP_HASSASIYET', 'ERR_TIP_OLCEK'];
+    'ERR_TIP_UZUNLUK', 'ERR_TIP_HASSASIYET', 'ERR_TIP_OLCEK', 'BTN_KARAKTER_ALGILA', 'MSG_KARAKTER_ALGILANDI',
+    'MSG_KARAKTER_NONE'];
   for Dil in ['tr', 'en', 'de'] do
   begin
     DilYukle(Dil);
@@ -656,6 +657,40 @@ begin
   Kontrol('Duman: kolon ve index/kisit pencereleri olusuyor (dfm hatasi yok)', True);
 end;
 
+procedure KarakterSetiBolumu;
+var
+  Beklenen, Bulunan: string;
+  Baska: TBaglantiTanimi;
+  Hata: string;
+begin
+  Cikti.Add('');
+  Cikti.Add('=== G) Karakter seti algila (' + Bag.Surum + ') ===');
+  Beklenen := VeritabaniVarsayilanKarakterSeti(Bag);
+  if Beklenen = '' then
+    Beklenen := 'NONE';
+  Bulunan := KarakterSetiAlgila(Tanim);
+  Cikti.Add('      algilanan: ' + Bulunan);
+  Kontrol('Algila: veritabaninin karakter setini verir (' + Bulunan + ')', Bulunan = Beklenen);
+  Baska := Tanim;
+  Baska.Ad := 'baska_ad_gecici';
+  Baska.KarakterSeti := 'WIN1251';
+  Kontrol('Algila: girilen (yanlis) karakter setinden bagimsiz', KarakterSetiAlgila(Baska) = Bulunan);
+  Kontrol('Algila: baglanti listesine eklenmez', FbAcikBaglanti('baska_ad_gecici') = nil);
+  Hata := '';
+  Baska := Tanim;
+  Baska.Sifre := 'yanlis_sifre_xyz';
+  try
+    KarakterSetiAlgila(Baska);
+  except
+    on E: Exception do
+      Hata := HataMetniniCevir(E);
+  end;
+  Cikti.Add('      yanlis sifre cumlesi: ' + TekSatirMetin(Hata));
+  { Yerlesik (embedded) kipte sifre sorulmaz; yalniz sunucuda denenir. }
+  if not Gomulu then
+    Kontrol('Algila: yanlis sifrede hata verir, anlasilir cumle', (Hata <> '') and (Hata <> T('ERR_GENEL')));
+end;
+
 function TabloVarMi(const Ad: string): Boolean;
 var
   Yok: string;
@@ -815,6 +850,7 @@ begin
           IndeksKisitBolumu;
           YeniTabloSilBolumu;
           VeriTipiBolumu;
+          KarakterSetiBolumu;
         finally
           Temizle;
         end;

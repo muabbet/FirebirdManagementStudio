@@ -70,6 +70,9 @@ function BozukDosyaUyarisiAl: string;
 
 { Acik baglantilar }
 function FbBaglan(const Tanim: TBaglantiTanimi): TAcikBaglanti;
+{ Veritabaninin kendi varsayilan karakter seti ("WIN1251", "UTF8", hic yoksa "NONE"); gecici baglantiyla okunur,
+  baglanti listesine girmez. Baglanamazsa FbBaglan gibi istisna firlatir. }
+function KarakterSetiAlgila(const Tanim: TBaglantiTanimi): string;
 { Servis API'si (2.5 kullanici listesi) icin ayni surucu baglantisi; ikinci bir surucu acilmaz. }
 function FbSurucu: TFDPhysFBDriverLink;
 procedure FbBaglantiyiKes(Bag: TAcikBaglanti);
@@ -564,6 +567,44 @@ end;
 
 { Yeni baglanti listeye eklenir, digerleri acik kalir. Ayni adli baglanti zaten
   aciksa onu verir. Kurulamazsa hata verir ve listeye bir sey eklenmez. }
+{ Acilmamis bir FireDAC baglantisi; FbBaglan ve KarakterSetiAlgila ayni ayarlari kullanir. }
+function YeniBaglantiNesnesi(const Tanim: TBaglantiTanimi; const KarakterSeti: string): TFDConnection;
+begin
+  SurucuyuHazirla;
+  Result := TFDConnection.Create(nil);
+  Result.DriverName := 'FB';
+  Result.LoginPrompt := False;
+  { Sunucu bos birakilirsa yerel baglanti (ag kullanilmaz). }
+  if Tanim.Sunucu <> '' then
+  begin
+    Result.Params.Values['Server'] := Tanim.Sunucu;
+    Result.Params.Values['Port'] := IntToStr(Tanim.Port);
+    Result.Params.Values['Protocol'] := 'TCPIP';
+  end;
+  Result.Params.Values['Database'] := Tanim.VeritabaniYolu;
+  Result.Params.Values['User_Name'] := Tanim.Kullanici;
+  Result.Params.Values['Password'] := Tanim.Sifre;
+  Result.Params.Values['CharacterSet'] := KarakterSeti;
+  Result.Params.Values['SQLDialect'] := IntToStr(VARSAYILAN_DIALECT);
+  Result.Params.Values['Pooled'] := 'False';
+end;
+
+{ Gecici bir baglantiyla veritabaninin varsayilan karakter setini okur ve baglantiyi kapatir. NONE karakter setiyle
+  baglanilir (okunan ad ASCII, hangi sette olursa olsun dogru gelir). Baglanti listesine eklenmez. }
+function KarakterSetiAlgila(const Tanim: TBaglantiTanimi): string;
+var
+  Gecici: TFDConnection;
+begin
+  Gecici := YeniBaglantiNesnesi(Tanim, 'NONE');
+  try
+    Gecici.Open;
+    Result := Trim(VarToStr(Gecici.ExecSQLScalar('SELECT RDB$CHARACTER_SET_NAME FROM RDB$DATABASE')));
+    Gecici.Close;
+  finally
+    Gecici.Free;
+  end;
+end;
+
 function FbBaglan(const Tanim: TBaglantiTanimi): TAcikBaglanti;
 var
   Yeni: TFDConnection;
@@ -572,24 +613,8 @@ begin
   Result := FbAcikBaglanti(Tanim.Ad);
   if Result <> nil then
     Exit;
-  SurucuyuHazirla;
-  Yeni := TFDConnection.Create(nil);
+  Yeni := YeniBaglantiNesnesi(Tanim, Tanim.KarakterSeti);
   try
-    Yeni.DriverName := 'FB';
-    Yeni.LoginPrompt := False;
-    { Sunucu bos birakilirsa yerel baglanti (ag kullanilmaz). }
-    if Tanim.Sunucu <> '' then
-    begin
-      Yeni.Params.Values['Server'] := Tanim.Sunucu;
-      Yeni.Params.Values['Port'] := IntToStr(Tanim.Port);
-      Yeni.Params.Values['Protocol'] := 'TCPIP';
-    end;
-    Yeni.Params.Values['Database'] := Tanim.VeritabaniYolu;
-    Yeni.Params.Values['User_Name'] := Tanim.Kullanici;
-    Yeni.Params.Values['Password'] := Tanim.Sifre;
-    Yeni.Params.Values['CharacterSet'] := Tanim.KarakterSeti;
-    Yeni.Params.Values['SQLDialect'] := IntToStr(VARSAYILAN_DIALECT);
-    Yeni.Params.Values['Pooled'] := 'False';
     Yeni.Open;
     Bag := TAcikBaglanti.Create;
     Bag.Baglanti := Yeni;

@@ -30,6 +30,7 @@ type
     edtSifre: TEdit;
     lblKarakter: TLabel;
     cmbKarakter: TComboBox;
+    btnAlgila: TButton;
     chkSifreKaydet: TCheckBox;
     pnlHata: TPanel;
     lblHata: TLabel;
@@ -43,6 +44,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure btnGozatClick(Sender: TObject);
     procedure btnAyrintiClick(Sender: TObject);
+    procedure btnAlgilaClick(Sender: TObject);
     procedure btnKaydetClick(Sender: TObject);
     procedure btnBaglanClick(Sender: TObject);
     procedure btnKapatClick(Sender: TObject);
@@ -54,7 +56,7 @@ type
     procedure DugmeyiYaziyaUydur(Dugme: TButton);
     procedure AlanlariBosalt;
     procedure AlanlaraYaz(const Tanim: TBaglantiTanimi);
-    function AlanlardanOku(out Tanim: TBaglantiTanimi): Boolean;
+    function AlanlardanOku(out Tanim: TBaglantiTanimi; AdKontrolu: Boolean = True): Boolean;
     function AdKullanilabilirMi(const Ad: string): Boolean;
     procedure HataGoster(const Anlasilir, Ayrinti: string);
     procedure HatayiGizle;
@@ -128,11 +130,13 @@ begin
   lblKarakter.Caption := T('LBL_KARAKTER_SETI');
   chkSifreKaydet.Caption := T('CHK_SIFRE_KAYDET');
   btnAyrinti.Caption := T('AYRINTI');
+  btnAlgila.Caption := T('BTN_KARAKTER_ALGILA');
   btnBaglan.Caption := T('BTN_BAGLAN');
   btnKaydet.Caption := T('BTN_KAYDET');
   btnKapat.Caption := T('BTN_KAPAT');
   dlgAc.Filter := T('DOSYA_FILTRE');
   DugmeyiYaziyaUydur(btnAyrinti);
+  DugmeyiYaziyaUydur(btnAlgila);
   DugmeyiYaziyaUydur(btnBaglan);
   DugmeyiYaziyaUydur(btnKaydet);
   DugmeyiYaziyaUydur(btnKapat);
@@ -173,7 +177,7 @@ begin
 end;
 
 { Alanlari kontrol eder. Hata varsa pencerede yazar ve False doner. }
-function TfrmBaglanti.AlanlardanOku(out Tanim: TBaglantiTanimi): Boolean;
+function TfrmBaglanti.AlanlardanOku(out Tanim: TBaglantiTanimi; AdKontrolu: Boolean): Boolean;
 var
   Port: Integer;
 begin
@@ -199,7 +203,7 @@ begin
   Tanim.Ad := Trim(edtAd.Text);
   if Tanim.Ad = '' then
     Tanim.Ad := Tanim.Sunucu + ' - ' + ExtractFileName(StringReplace(Tanim.VeritabaniYolu, '/', '\', [rfReplaceAll]));
-  if not AdKullanilabilirMi(Tanim.Ad) then
+  if AdKontrolu and not AdKullanilabilirMi(Tanim.Ad) then
     Exit;
   Result := True;
 end;
@@ -243,6 +247,37 @@ end;
 procedure TfrmBaglanti.btnAyrintiClick(Sender: TObject);
 begin
   memAyrinti.Visible := not memAyrinti.Visible;
+end;
+
+{ "Algila": girilen sunucu, yol, kullanici ve sifreyle veritabanina gecici baglanir, karakter setini okuyup kutuya yazar
+  (yanlis karakter setiyle baglanilmasin). Baglanti kaydedilmez ve acik birakilmaz. }
+procedure TfrmBaglanti.btnAlgilaClick(Sender: TObject);
+var
+  Tanim: TBaglantiTanimi;
+  Bulunan: string;
+begin
+  if not AlanlardanOku(Tanim, False) then
+    Exit;
+  HatayiGizle;
+  Screen.Cursor := crHourGlass;
+  try
+    try
+      Bulunan := KarakterSetiAlgila(Tanim);
+    except
+      on E: Exception do
+      begin
+        HataGoster(HataMetniniCevir(E), E.Message);
+        Exit;
+      end;
+    end;
+  finally
+    Screen.Cursor := crDefault;
+  end;
+  cmbKarakter.Text := Bulunan;
+  if SameText(Bulunan, 'NONE') then
+    UyariGoster(T('MSG_KARAKTER_NONE'))
+  else
+    UyariGoster(TF('MSG_KARAKTER_ALGILANDI', [Bulunan]));
 end;
 
 procedure TfrmBaglanti.btnKaydetClick(Sender: TObject);
