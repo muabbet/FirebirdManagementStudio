@@ -202,6 +202,10 @@ Tablo verisi gridinde (şu an salt okunur) bir hücreyi çift tıklayıp düzelt
 - [ ] Karakter seti: WIN1251 veritabanında Türkçe harf yazma önce kopyada test edilir (bilinen sınır, `ASAMA4A_RAPOR.md`)
 - [ ] 3 dil anahtarı, test
 
+### Hakkında ve Fikir/Öneri (karar 2026-11-01)
+- [x] Hakkında penceresi: yönetici rozetine tıklayınca açılır (ad, sürüm, platform, yetki, lisans, "Sürümü kopyala"); yönetici değilse rozet "Yönetici olarak aç" olur ve sorup yeniden başlatır. Kod: `uYonetici.pas`, `fHakkinda.pas`
+- [ ] **İleride:** "Fikir ve öneri" düğmesi (sahibi için fikirler çok önemli). GitHub yayınlanınca Issues sayfasını açar; o zamana kadar yapılmaz
+
 ### Aşama 5: PostgreSQL — İPTAL EDİLDİ (karar 2026-10-31)
 
 Sahibi PostgreSQL desteğini **yapmama** kararı verdi: araç yalnızca Firebird'e özel kalacak. Gerekçe: pgAdmin iyi bir alternatif, iki veritabanını aynı araçta karıştırmak kafa karışıklığı yaratır; pgAdmin'in yavaş açılma sorunu Windows Defender dışlaması ile çözüldü (üretimde hızlı açılıyor). **Ana ilke:** basit ama Firebird için her şeyi yapabilen bir program. Motor seçimi, PostgreSQL sürücüsü, `libpq.dll` gibi hiçbir şey eklenmeyecek; `uMetadata.pas` Firebird'e özel kalır.

@@ -189,6 +189,10 @@
             <Form>frmAcilis</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="fHakkinda.pas">
+            <Form>frmHakkinda</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <DCCReference Include="fAna.pas">
             <Form>frmAna</Form>
             <FormType>dfm</FormType>

@@ -51,6 +51,7 @@ uses
   fSunucuSec in 'fSunucuSec.pas' {frmSunucuSec},
   fBaglanti in 'fBaglanti.pas' {frmBaglanti},
   fAcilis in 'fAcilis.pas' {frmAcilis},
+  fHakkinda in 'fHakkinda.pas' {frmHakkinda},
   fAna in 'fAna.pas' {frmAna};
 
 {$R *.res}

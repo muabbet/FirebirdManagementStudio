@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, uYonetici;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fHakkinda, uYonetici;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -1850,7 +1850,7 @@ procedure TfrmAna.btnYoneticiClick(Sender: TObject);
 begin
   if YoneticiMi then
   begin
-    UyariGoster(T('YONETICI_ZATEN'));
+    HakkindaGoster(True);
     Exit;
   end;
   if not OnayIste(T('YONETICI_SOR')) then
