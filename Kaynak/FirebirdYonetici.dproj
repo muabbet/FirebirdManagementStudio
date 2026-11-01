@@ -53,7 +53,7 @@
         <DCC_F>false</DCC_F>
         <DCC_K>false</DCC_K>
         <VerInfo_Locale>1055</VerInfo_Locale>
-        <VerInfo_Keys>CompanyName=;FileDescription=$(MSBuildProjectName);FileVersion=1.0.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=$(MSBuildProjectName);ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=;FileDescription=Firebird Management Studio;FileVersion=0.4.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=Firebird Management Studio;ProductVersion=0.4.0.0;Comments=</VerInfo_Keys>
         <Icon_MainIcon>FirebirdYonetici_Icon.ico</Icon_MainIcon>
         <Manifest_File>(None)</Manifest_File>
         <PreBuildEvent><![CDATA["$(MSBuildProjectDirectory)\..\PaketHazirla.bat"]]></PreBuildEvent>
@@ -86,6 +86,8 @@
             <Form>Paket.res</Form>
         </RcCompile>
         <DCCReference Include="uPaket.pas"/>
+        <DCCReference Include="uUygulama.pas"/>
+        <DCCReference Include="uYonetici.pas"/>
         <DCCReference Include="uDil.pas"/>
         <DCCReference Include="uIkon.pas"/>
         <DCCReference Include="uSerit.pas"/>
@@ -159,6 +161,12 @@
             <Form>frmYedek</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="uCokluSorgu.pas"/>
+        <DCCReference Include="fCokluSorgu.pas">
+            <Form>CokluSorguSekme</Form>
+            <FormType>dfm</FormType>
+            <DesignClass>TFrame</DesignClass>
+        </DCCReference>
         <DCCReference Include="uYetki.pas"/>
         <DCCReference Include="fYetkiVer.pas">
             <Form>frmYetkiVer</Form>
@@ -175,6 +183,20 @@
         </DCCReference>
         <DCCReference Include="fBaglanti.pas">
             <Form>frmBaglanti</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="uSemaFark.pas"/>
+        <DCCReference Include="fSemaFark.pas">
+            <Form>SemaFarkSekme</Form>
+            <FormType>dfm</FormType>
+            <DesignClass>TFrame</DesignClass>
+        </DCCReference>
+        <DCCReference Include="fAcilis.pas">
+            <Form>frmAcilis</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
+        <DCCReference Include="fHakkinda.pas">
+            <Form>frmHakkinda</Form>
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="fAna.pas">

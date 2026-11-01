@@ -1,6 +1,6 @@
 program FirebirdYonetici;
 
-{ Firebird Yoneticisi - Win64, Delphi (RAD Studio 12), VCL + FireDAC.
+{ Firebird Management Studio - Win64, Delphi (RAD Studio 12), VCL + FireDAC.
   Hedeflenen Firebird surumleri: 2.5, 3.0, 4.0, 5.0
   Denenen Firebird surumleri: 2.5.9, 5.0.4 }
 
@@ -10,6 +10,8 @@ uses
   Vcl.Themes,
   Vcl.Styles,
   uPaket in 'uPaket.pas',
+  uUygulama in 'uUygulama.pas',
+  uYonetici in 'uYonetici.pas',
   uDil in 'uDil.pas',
   uIkon in 'uIkon.pas',
   uSerit in 'uSerit.pas',
@@ -40,12 +42,18 @@ uses
   fMetadataCikar in 'fMetadataCikar.pas' {frmMetadataCikar},
   fCsvAktar in 'fCsvAktar.pas' {frmCsvAktar},
   fYedek in 'fYedek.pas' {frmYedek},
+  uCokluSorgu in 'uCokluSorgu.pas',
+  fCokluSorgu in 'fCokluSorgu.pas' {CokluSorguSekme: TFrame},
   uYetki in 'uYetki.pas',
   fYetkiVer in 'fYetkiVer.pas' {frmYetkiVer},
   fYetkiler in 'fYetkiler.pas' {frmYetkiler},
   uSunucuBul in 'uSunucuBul.pas',
   fSunucuSec in 'fSunucuSec.pas' {frmSunucuSec},
   fBaglanti in 'fBaglanti.pas' {frmBaglanti},
+  uSemaFark in 'uSemaFark.pas',
+  fSemaFark in 'fSemaFark.pas' {SemaFarkSekme: TFrame},
+  fAcilis in 'fAcilis.pas' {frmAcilis},
+  fHakkinda in 'fHakkinda.pas' {frmHakkinda},
   fAna in 'fAna.pas' {frmAna};
 
 {$R *.res}
@@ -69,6 +77,8 @@ begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
   StilYukle;
+  AcilisGoster;
   Application.CreateForm(TfrmAna, frmAna);
+  AcilisKapat;
   Application.Run;
 end.

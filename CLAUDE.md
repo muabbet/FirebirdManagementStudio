@@ -190,15 +190,36 @@ Bu bir "boş zamanda yavaş yavaş" projesidir, acele yoktur. **Her aşama bitin
 - [x] 3f: View düzenleme; Domain, Exception ve Generator yönetimi (ağaç dalları, oluştur, düzenle, sil; ayrıntı: `GOREV_ASAMA3F.md`), sahibi denedi ve onayladı (2026-10-29). Görsel düzeltme (SSMS örneği `Referans/ssms.png`, StokluBulut ikonu) tamam ve onaylandı (2026-10-30, `GORSEL_RAPOR.md`). 3g tablo yapısı (kolon, index, kısıt, yeni tablo, tablo sil, bağımlılıklar; `GOREV_ASAMA3G.md`, `ASAMA3G_RAPOR.md`) tamam ve onaylandı (2026-10-30). Sıradaki: Aşama 4 (çoklu veritabanı)
 
 ### Aşama 4: Çoklu Veritabanı (sahibinin özel ihtiyacı)
-- [ ] Bir sorguyu seçilen birçok veritabanında çalıştırma, sonuçları birleştirme
-- [ ] Şema farkı bulma (iki veritabanını karşılaştırma)
+- [x] Bir sorguyu seçilen birçok veritabanında çalıştırma, sonuçları birleştirme (4a, `ASAMA4A_RAPOR.md`, sahibi denedi ve onayladı 2026-11-01)
+- [x] Şema farkı bulma (iki veritabanını karşılaştırma) (4b, `ASAMA4B_RAPOR.md`, onaylandı 2026-11-01)
 - [ ] Toplu güncelleme (onay ve önizleme ile)
+
+### Aşama 4d: Gridden Kayıt Düzeltme (fikir 2026-10-31, Aşama 4'ten sonra)
+Tablo verisi gridinde (şu an salt okunur) bir hücreyi çift tıklayıp düzeltme, ayrı ve açık bir "Düzenle" kipiyle. Basitlik ve güvenlik için:
+- [ ] Yalnızca birincil anahtarı olan tablolarda; "Düzenle" düğmesine basınca açılır, varsayılan salt okunur kalır
+- [ ] Kaydetmeden önce onay penceresi: hangi tablo, hangi kayıt, eski ve yeni değer, çalışacak `UPDATE` (SQL karşılığı alt alanda, bkz. `SqlMesajiYaz`)
+- [ ] Transaction açık/kapalı durumu görünür, "Kaydet" ve "Geri al" düğmeleri
+- [ ] Karakter seti: WIN1251 veritabanında Türkçe harf yazma önce kopyada test edilir (bilinen sınır, `ASAMA4A_RAPOR.md`)
+- [ ] 3 dil anahtarı, test
+
+### Hakkında ve Fikir/Öneri (karar 2026-11-01)
+- [x] Hakkında penceresi: yönetici rozetine tıklayınca açılır (ad, sürüm, platform, yetki, lisans, "Sürümü kopyala"); yönetici değilse rozet "Yönetici olarak aç" olur ve sorup yeniden başlatır. Kod: `uYonetici.pas`, `fHakkinda.pas`
+- [ ] **İleride:** "Fikir ve öneri" düğmesi (sahibi için fikirler çok önemli). GitHub yayınlanınca Issues sayfasını açar; o zamana kadar yapılmaz
 
 ### Aşama 5: PostgreSQL — İPTAL EDİLDİ (karar 2026-10-31)
 
 Sahibi PostgreSQL desteğini **yapmama** kararı verdi: araç yalnızca Firebird'e özel kalacak. Gerekçe: pgAdmin iyi bir alternatif, iki veritabanını aynı araçta karıştırmak kafa karışıklığı yaratır; pgAdmin'in yavaş açılma sorunu Windows Defender dışlaması ile çözüldü (üretimde hızlı açılıyor). **Ana ilke:** basit ama Firebird için her şeyi yapabilen bir program. Motor seçimi, PostgreSQL sürücüsü, `libpq.dll` gibi hiçbir şey eklenmeyecek; `uMetadata.pas` Firebird'e özel kalır.
 
 Eski plan (yapılmayacak, kayıt için): bağlan, gez, SQL çalıştır; `pg_catalog` / `information_schema`; `EXPLAIN`; PostgreSQL anahtar kelime listesi.
+
+### Aşama 6: Tanıtım ve İndirme Sayfası (fikir 2026-10-31, Aşama 4 bitince)
+Tek sayfalık, sade, hızlı yüklenen statik HTML sayfası; GitHub Pages ile ücretsiz yayınlanır, exe GitHub Releases'ten indirilir. Yayın (GitHub'a gönderme) sahibinin kararıdır.
+- [ ] Tek HTML dosyası (`docs/index.html`): başlık, büyük "İndir" düğmesi (Windows 64 bit, sürüm, boyut), ekran görüntüsü
+- [ ] "Windows 64 bit gerekir" uyarısı indirme düğmesinin hemen yanında (program yalnızca 64 bit; 32 bit Windows'ta açılmaz)
+- [ ] 5-6 kısa madde: tek exe, Firebird 2.5/3.0/4.0/5.0, tr/en/de, sunucu bulma, ücretsiz ve açık kaynak
+- [ ] Sayfada dil seçimi (tr/en/de), mobilde düzgün görünüm, animasyon yok
+- [ ] Bilinen sınır notu: Kiril alfabesi (WIN1251'de gerçek Kiril metin) sorunlu olabilir, FireDAC bozuk çözüyor; test eden olursa GitHub'dan yazsın (ayrıntı: `ASAMA4A_RAPOR.md`)
+- [ ] GitHub bağlantısı, lisans, "kişisel proje, destek sınırlı" notu
 
 ---
 
