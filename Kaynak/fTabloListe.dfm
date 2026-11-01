@@ -78,6 +78,10 @@ object TabloListeSekme: TTabloListeSekme
       Align = alClient
       Columns = <
         item
+          Alignment = taRightJustify
+          Width = 60
+        end
+        item
           Width = 220
         end
         item

@@ -77,6 +77,7 @@ begin
 end;
 
 begin
+  UygulamaKimliginiAyarla;
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
   StilYukle;

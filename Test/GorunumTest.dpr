@@ -133,15 +133,26 @@ begin
     { Tabloya tiklayinca alanlar }
     Sekme.lvTablolarSelectItem(nil, Sekme.lvTablolar.FindCaption(0, 'FBY_L1', False, True, False), True);
     Kontrol('Alanlar: FBY_L1 icin uc alan', Sekme.lvAlanlar.Items.Count = 3);
+    Kontrol('Alanlar: ilk kolon veritabani sirasi (1, 2, 3) ve liste bu sirada',
+      (Sekme.lvAlanlar.Items[0].Caption = '1') and (Sekme.lvAlanlar.Items[1].Caption = '2') and
+      (Sekme.lvAlanlar.Items[2].Caption = '3') and (Sekme.lvAlanlar.Items[0].SubItems[0] = 'ID'));
     Kontrol('Alanlar: ad, tip, bos olabilir, varsayilan',
-      (Sekme.lvAlanlar.Items[0].Caption = 'ID') and (Pos('INTEGER', UpperCase(Sekme.lvAlanlar.Items[0].SubItems[0])) > 0) and
-      (Sekme.lvAlanlar.Items[0].SubItems[1] = T('LISTE_HAYIR')) and (Sekme.lvAlanlar.Items[1].SubItems[1] = T('LISTE_EVET')) and
-      (Pos('DEFAULT', UpperCase(Sekme.lvAlanlar.Items[2].SubItems[2])) > 0));
+      (Pos('INTEGER', UpperCase(Sekme.lvAlanlar.Items[0].SubItems[1])) > 0) and
+      (Sekme.lvAlanlar.Items[0].SubItems[2] = T('LISTE_HAYIR')) and (Sekme.lvAlanlar.Items[1].SubItems[2] = T('LISTE_EVET')) and
+      (Pos('DEFAULT', UpperCase(Sekme.lvAlanlar.Items[2].SubItems[3])) > 0));
+    Sekme.lvAlanlarColumnClick(nil, Sekme.lvAlanlar.Columns[1]);
+    Kontrol('Alanlar: Alan basligina tiklayinca ada gore artan (AD, ID, TUTAR)',
+      (Sekme.lvAlanlar.Items[0].SubItems[0] = 'AD') and (Sekme.lvAlanlar.Items[2].SubItems[0] = 'TUTAR'));
+    Sekme.lvAlanlarColumnClick(nil, Sekme.lvAlanlar.Columns[1]);
+    Kontrol('Alanlar: ikinci tiklayinca ters (TUTAR, ID, AD)',
+      (Sekme.lvAlanlar.Items[0].SubItems[0] = 'TUTAR') and (Sekme.lvAlanlar.Items[2].SubItems[0] = 'AD'));
     Sekme.lvAlanlarColumnClick(nil, Sekme.lvAlanlar.Columns[0]);
+    Kontrol('Alanlar: Sira basligina tiklayinca eklenme sirasina doner (ID, AD, TUTAR)',
+      (Sekme.lvAlanlar.Items[0].SubItems[0] = 'ID') and (Sekme.lvAlanlar.Items[1].SubItems[0] = 'AD') and
+      (Sekme.lvAlanlar.Items[2].SubItems[0] = 'TUTAR'));
     Sekme.lvAlanlarColumnClick(nil, Sekme.lvAlanlar.Columns[0]);
-    Kontrol('Alanlar: basliga tiklayinca ters siralama (TUTAR, ID, AD ada gore azalan)',
-      (Sekme.lvAlanlar.Items[0].Caption = 'TUTAR') and (Sekme.lvAlanlar.Items[2].Caption = 'AD'));
-
+    Kontrol('Alanlar: Sira ters (3, 2, 1)',
+      (Sekme.lvAlanlar.Items[0].Caption = '3') and (Sekme.lvAlanlar.Items[2].Caption = '1'));
     { Ayrinti goster/kapat }
     Kontrol('Ayrinti: baslangicta acik', Sekme.AyrintiAcik);
     Sekme.AyrintiAyarla(False);
@@ -173,7 +184,7 @@ end;
 
 procedure DilBolumu;
 const
-  Anahtarlar: array[0..25] of string = ('GRUP_GORUNUM', 'BTN_AYRINTI_KAPAT', 'BTN_AYRINTI_GOSTER', 'BTN_TUM_KAPAT',
+  Anahtarlar: array[0..26] of string = ('LISTE_SUTUN_SIRA', 'GRUP_GORUNUM', 'BTN_AYRINTI_KAPAT', 'BTN_AYRINTI_GOSTER', 'BTN_TUM_KAPAT',
     'MENU_SEKME_YENILE', 'MENU_TUM_SEKMELERI_KAPAT', 'MSG_SEKME_YENILENDI', 'SEKME_TUMU_SOR', 'LISTE_SEKME',
     'LISTE_ALANLAR', 'LISTE_SUTUN_TABLO', 'LISTE_SUTUN_ALAN_SAYISI', 'LISTE_SUTUN_ACIKLAMA', 'LISTE_SUTUN_ALAN',
     'LISTE_SUTUN_TIP', 'LISTE_SUTUN_BOS_OLABILIR', 'LISTE_SUTUN_VARSAYILAN', 'LISTE_EVET', 'LISTE_HAYIR',

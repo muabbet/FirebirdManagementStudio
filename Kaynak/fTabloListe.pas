@@ -58,7 +58,7 @@ begin
   BaglantiAd := Bag.Tanim.Ad;
   FTabloKolon := 0;
   FTabloArtan := True;
-  FAlanKolon := -1;
+  FAlanKolon := 0;
   FAlanArtan := True;
   Yenile;
 end;
@@ -123,8 +123,8 @@ end;
 procedure TTabloListeSekme.BasliklariYaz;
 const
   TabloBasliklari: array[0..2] of string = ('LISTE_SUTUN_TABLO', 'LISTE_SUTUN_ALAN_SAYISI', 'LISTE_SUTUN_ACIKLAMA');
-  AlanBasliklari: array[0..3] of string = ('LISTE_SUTUN_ALAN', 'LISTE_SUTUN_TIP', 'LISTE_SUTUN_BOS_OLABILIR',
-    'LISTE_SUTUN_VARSAYILAN');
+  AlanBasliklari: array[0..4] of string = ('LISTE_SUTUN_SIRA', 'LISTE_SUTUN_ALAN', 'LISTE_SUTUN_TIP',
+    'LISTE_SUTUN_BOS_OLABILIR', 'LISTE_SUTUN_VARSAYILAN');
 var
   i: Integer;
   Ok: string;
@@ -136,7 +136,7 @@ begin
       Ok := IfThen(FTabloArtan, OK_ARTAN, OK_AZALAN);
     lvTablolar.Columns[i].Caption := T(TabloBasliklari[i]) + Ok;
   end;
-  for i := 0 to 3 do
+  for i := 0 to 4 do
   begin
     Ok := '';
     if i = FAlanKolon then
@@ -195,7 +195,11 @@ end;
 procedure TTabloListeSekme.lvAlanlarCompare(Sender: TObject; Item1, Item2: TListItem; Data: Integer;
   var Compare: Integer);
 begin
-  Compare := CompareText(DegerAl(Item1, Data), DegerAl(Item2, Data));
+  { Sira (kolon 0) sayi olarak, digerleri yazi olarak karsilastirilir. }
+  if Data = 0 then
+    Compare := StrToIntDef(DegerAl(Item1, Data), 0) - StrToIntDef(DegerAl(Item2, Data), 0)
+  else
+    Compare := CompareText(DegerAl(Item1, Data), DegerAl(Item2, Data));
   if not FAlanArtan then
     Compare := -Compare;
 end;
@@ -206,25 +210,28 @@ begin
     AlanlariGoster(Item.Caption);
 end;
 
-{ Secili tablonun alanlari (veritabani sirasiyla); onceki siralama oku sifirlanir. }
+{ Secili tablonun alanlari: ilk kolon alanin veritabanindaki sirasi (1, 2, 3 ...), liste de bu sirayla gelir; basliga tiklayinca siralama degisir, Sira basligina tiklayinca ilk haline doner. }
 procedure TTabloListeSekme.AlanlariGoster(const Tablo: string);
 var
   Bag: TAcikBaglanti;
   Kolon: TKolonBilgisi;
   Satir: TListItem;
   TipMetni: string;
+  Sira: Integer;
 begin
   FSeciliTablo := Tablo;
   lvAlanlar.Items.Clear;
-  FAlanKolon := -1;
+  FAlanKolon := 0;
   FAlanArtan := True;
   Bag := FbAcikBaglanti(BaglantiAd);
   if Bag = nil then
     Exit;
   lvAlanlar.Items.BeginUpdate;
   try
+    Sira := 0;
     for Kolon in KolonlariOku(Bag, Tablo) do
     begin
+      Inc(Sira);
       if Kolon.Hesaplanan <> '' then
         TipMetni := 'COMPUTED BY ' + Kolon.Hesaplanan
       else if Kolon.Domain <> '' then
@@ -232,7 +239,8 @@ begin
       else
         TipMetni := Kolon.Tip;
       Satir := lvAlanlar.Items.Add;
-      Satir.Caption := Kolon.Ad;
+      Satir.Caption := IntToStr(Sira);
+      Satir.SubItems.Add(Kolon.Ad);
       Satir.SubItems.Add(TipMetni);
       Satir.SubItems.Add(IfThen(Kolon.BosOlmaz, T('LISTE_HAYIR'), T('LISTE_EVET')));
       Satir.SubItems.Add(Kolon.Varsayilan);
