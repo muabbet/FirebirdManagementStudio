@@ -192,7 +192,7 @@ Bu bir "boş zamanda yavaş yavaş" projesidir, acele yoktur. **Her aşama bitin
 ### Aşama 4: Çoklu Veritabanı (sahibinin özel ihtiyacı)
 - [x] Bir sorguyu seçilen birçok veritabanında çalıştırma, sonuçları birleştirme (4a, `ASAMA4A_RAPOR.md`, sahibi denedi ve onayladı 2026-11-01)
 - [x] Şema farkı bulma (iki veritabanını karşılaştırma) (4b, `ASAMA4B_RAPOR.md`, onaylandı 2026-11-01)
-- [x] Toplu güncelleme (onay ve önizleme ile) (4c, `ASAMA4C_RAPOR.md`, yapıldı 2026-11-01, sahibinin denemesi ve onayı bekleniyor)
+- [x] Toplu güncelleme (onay ve önizleme ile) (4c, `ASAMA4C_RAPOR.md`, sahibi denedi ve onayladı, main'e birleştirildi 2026-11-01)
 
 ### Aşama 4d: Gridden Kayıt Düzeltme (fikir 2026-10-31, Aşama 4'ten sonra)
 Tablo verisi gridinde (şu an salt okunur) bir hücreyi çift tıklayıp düzeltme, ayrı ve açık bir "Düzenle" kipiyle. Basitlik ve güvenlik için:
@@ -222,7 +222,7 @@ Eski plan (yapılmayacak, kayıt için): bağlan, gez, SQL çalıştır; `pg_cat
 
 ### Aşama 6: Tanıtım ve İndirme Sayfası (fikir 2026-10-31, Aşama 4 bitince)
 Tek sayfalık, sade, hızlı yüklenen statik HTML sayfası; GitHub Pages ile ücretsiz yayınlanır, exe GitHub Releases'ten indirilir. Yayın (GitHub'a gönderme) sahibinin kararıdır.
-- [ ] Tek HTML dosyası (`docs/index.html`): başlık, büyük "İndir" düğmesi (Windows 64 bit, sürüm, boyut), ekran görüntüsü
+- [x] Tek HTML dosyası (`docs/index.html`, taslak hazır 2026-11-01; İndir ve GitHub bağlantıları ile `docs/ekran.png` yayında doldurulacak): başlık, büyük "İndir" düğmesi (Windows 64 bit, sürüm, boyut), ekran görüntüsü
 - [ ] "Windows 64 bit gerekir" uyarısı indirme düğmesinin hemen yanında (program yalnızca 64 bit; 32 bit Windows'ta açılmaz)
 - [ ] 5-6 kısa madde: tek exe, Firebird 2.5/3.0/4.0/5.0, tr/en/de, sunucu bulma, ücretsiz ve açık kaynak
 - [ ] Sayfada dil seçimi (tr/en/de), mobilde düzgün görünüm, animasyon yok
