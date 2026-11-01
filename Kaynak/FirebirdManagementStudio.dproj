@@ -8,7 +8,7 @@
         <Platform Condition="'$(Platform)'==''">Win64</Platform>
         <TargetedPlatform>2</TargetedPlatform>
         <AppType>Application</AppType>
-        <MainSource>FirebirdYonetici.dpr</MainSource>
+        <MainSource>FirebirdManagementStudio.dpr</MainSource>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Config)'=='Base' or '$(Base)'!=''">
         <Base>true</Base>
@@ -41,7 +41,7 @@
         <Base>true</Base>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
-        <SanitizedProjectName>FirebirdYonetici</SanitizedProjectName>
+        <SanitizedProjectName>FirebirdManagementStudio</SanitizedProjectName>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;Vcl;Vcl.Imaging;Vcl.Touch;Vcl.Samples;Vcl.Shell;Winapi;System.Win;Data.Win;Datasnap.Win;Web.Win;Soap.Win;Xml.Win;Bde;$(DCC_Namespace)</DCC_Namespace>
         <DCC_ExeOutput>..\bin\$(Platform)\$(Config)</DCC_ExeOutput>
         <DCC_DcuOutput>..\obj\$(Platform)\$(Config)</DCC_DcuOutput>
@@ -54,7 +54,7 @@
         <DCC_K>false</DCC_K>
         <VerInfo_Locale>1055</VerInfo_Locale>
         <VerInfo_Keys>CompanyName=;FileDescription=Firebird Management Studio;FileVersion=0.4.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=Firebird Management Studio;ProductVersion=0.4.0.0;Comments=</VerInfo_Keys>
-        <Icon_MainIcon>FirebirdYonetici_Icon.ico</Icon_MainIcon>
+        <Icon_MainIcon>FirebirdManagementStudio_Icon.ico</Icon_MainIcon>
         <Manifest_File>(None)</Manifest_File>
         <PreBuildEvent><![CDATA["$(MSBuildProjectDirectory)\..\PaketHazirla.bat"]]></PreBuildEvent>
         <PostBuildEvent><![CDATA["$(MSBuildProjectDirectory)\..\SonDerleme.bat" "$(MSBuildProjectDirectory)\..\bin\$(Platform)\$(Config)"]]></PostBuildEvent>
@@ -232,7 +232,7 @@
         <BorlandProject>
             <Delphi.Personality>
                 <Source>
-                    <Source Name="MainSource">FirebirdYonetici.dpr</Source>
+                    <Source Name="MainSource">FirebirdManagementStudio.dpr</Source>
                 </Source>
                 <Excluded_Packages/>
             </Delphi.Personality>

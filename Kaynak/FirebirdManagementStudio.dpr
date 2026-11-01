@@ -1,4 +1,4 @@
-program FirebirdYonetici;
+program FirebirdManagementStudio;
 
 { Firebird Management Studio - Win64, Delphi (RAD Studio 12), VCL + FireDAC.
   Hedeflenen Firebird surumleri: 2.5, 3.0, 4.0, 5.0
