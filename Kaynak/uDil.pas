@@ -46,7 +46,7 @@ begin
 end;
 
 { Deneme programlari baska bir klasor secebilsin diye. Bos birakilirsa
-  uygulama verisi (Roaming AppData altindaki FirebirdYonetici klasoru) kullanilir. }
+  uygulama verisi (Roaming AppData altindaki FirebirdYonetici klasoru) kullanilir. Klasor adi, program yeniden adlandirilsa da\n  ayni kalir: kullanicilarin kayitli baglantilari kaybolmasin. }
 procedure VeriKlasoruAyarla(const Yol: string);
 begin
   GVeriKlasoru := Yol;

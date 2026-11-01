@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-  <assemblyIdentity type="win32" name="FirebirdYonetici" version="1.0.0.0" processorArchitecture="*"/>
+  <assemblyIdentity type="win32" name="FirebirdManagementStudio" version="1.0.0.0" processorArchitecture="*"/>
   <description>Firebird Yoneticisi</description>
   <!-- Ortak denetimler v6: ikon listelerinde saydamlik (alfa) icin gerekli -->
   <dependency>

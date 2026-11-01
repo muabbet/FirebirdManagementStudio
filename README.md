@@ -8,7 +8,7 @@ Firebird için sade, ücretsiz ve açık kaynak yönetim aracı. SSMS'e (SQL Ser
 
 ## İndirme ve çalıştırma
 
-[Son sürümü indirin](https://github.com/muabbet/FirebirdYonetici/releases/latest), zip dosyasını açın, `FirebirdYonetici.exe` dosyasını çalıştırın. Kurulum yok; Firebird istemcisi, diller ve ikonlar exe'nin içindedir.
+[Son sürümü indirin](https://github.com/muabbet/FirebirdManagementStudio/releases/latest), zip dosyasını açın, `FirebirdManagementStudio.exe` dosyasını çalıştırın. Kurulum yok; Firebird istemcisi, diller ve ikonlar exe'nin içindedir.
 
 - **Windows 10/11, 64 bit gerekir.** 32 bit Windows'ta çalışmaz. Windows 7 denenmedi.
 - Bağlanmak için ağda ya da yerelde çalışan bir Firebird sunucusu gerekir (2.5, 3.0, 4.0 veya 5.0).
@@ -36,8 +36,8 @@ Firebird için sade, ücretsiz ve açık kaynak yönetim aracı. SSMS'e (SQL Ser
 
 RAD Studio 12 (Athens) gerekir. SQL editörü için **SynEdit (TurboPack)** kütüphane yolunda olmalıdır (kaynak: https://github.com/TurboPack/SynEdit, depoda yer almaz). Firebird 5.0 64 bit istemci dosyaları `SonDerleme.bat` başındaki `FBKAYNAK` yolundan alınır; kendi bilgisayarınıza göre değiştirin.
 
-- IDE: `Kaynak\FirebirdYonetici.dproj` dosyasını açın, **Win64 / Release** derleyin.
-- Komut satırı: `Derle.bat` (rsvars.bat + msbuild). Önce `PaketHazirla.bat` çalışır: diller, ikonlar, tema ve Firebird istemcisi `Kaynak\Paket.zip` olur ve exe'nin içine gömülür. Çıktı `bin\Win64\Release\FirebirdYonetici.exe`.
+- IDE: `Kaynak\FirebirdManagementStudio.dproj` dosyasını açın, **Win64 / Release** derleyin.
+- Komut satırı: `Derle.bat` (rsvars.bat + msbuild). Önce `PaketHazirla.bat` çalışır: diller, ikonlar, tema ve Firebird istemcisi `Kaynak\Paket.zip` olur ve exe'nin içine gömülür. Çıktı `bin\Win64\Release\FirebirdManagementStudio.exe`.
 - Dağıtım paketi: `Dagit.bat` (derlenmiş exe ile lisans dosyalarını zipler, `dagitim\` klasörüne koyar).
 
 Tek bir `fbclient.dll` (5.0, 64 bit) yüklenir; 2.5, 3.0, 4.0 ve 5.0 sunuculara onunla bağlanılır.
