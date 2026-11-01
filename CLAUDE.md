@@ -192,7 +192,7 @@ Bu bir "boş zamanda yavaş yavaş" projesidir, acele yoktur. **Her aşama bitin
 ### Aşama 4: Çoklu Veritabanı (sahibinin özel ihtiyacı)
 - [x] Bir sorguyu seçilen birçok veritabanında çalıştırma, sonuçları birleştirme (4a, `ASAMA4A_RAPOR.md`, sahibi denedi ve onayladı 2026-11-01)
 - [x] Şema farkı bulma (iki veritabanını karşılaştırma) (4b, `ASAMA4B_RAPOR.md`, onaylandı 2026-11-01)
-- [ ] Toplu güncelleme (onay ve önizleme ile)
+- [x] Toplu güncelleme (onay ve önizleme ile) (4c, `ASAMA4C_RAPOR.md`, yapıldı 2026-11-01, sahibinin denemesi ve onayı bekleniyor)
 
 ### Aşama 4d: Gridden Kayıt Düzeltme (fikir 2026-10-31, Aşama 4'ten sonra)
 Tablo verisi gridinde (şu an salt okunur) bir hücreyi çift tıklayıp düzeltme, ayrı ve açık bir "Düzenle" kipiyle. Basitlik ve güvenlik için:

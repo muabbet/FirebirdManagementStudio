@@ -52,6 +52,9 @@ const
 { Yazi tek bir SELECT (ya da WITH) mi? Degilse anlasilir cumle, tamamsa bos. }
 function CokluSorguKontrol(const Sql: string): string;
 
+{ Komutun ilk sozcugu (basindaki bosluk ve yorumlar atlanir), BUYUK harf. Toplu guncelleme (uTopluGuncelle) de kullanir. }
+function IlkSozcuk(const Komut: string): string;
+
 { Bu adli baglanti simdi kullanilabilir mi: acik, ya da kayitli ve sifresi kayitli. }
 function CokluBaglantiKullanilabilir(const Ad: string): Boolean;
 
