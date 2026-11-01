@@ -48,3 +48,8 @@ obj/
 
 # Dagitim zipleri (Dagit.bat uretir, GitHub Releases'e elle yuklenir)
 dagitim/
+
+# Gelistirme notlari ve raporlar GitHub'a gitmez (diskte kalir). Yalniz README ve LISANSLAR kalir.
+*.md
+!README.md
+!LISANSLAR.md
