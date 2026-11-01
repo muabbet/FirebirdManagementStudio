@@ -1,6 +1,6 @@
 program FirebirdYonetici;
 
-{ Firebird Yoneticisi - Win64, Delphi (RAD Studio 12), VCL + FireDAC.
+{ Firebird Management Studio - Win64, Delphi (RAD Studio 12), VCL + FireDAC.
   Hedeflenen Firebird surumleri: 2.5, 3.0, 4.0, 5.0
   Denenen Firebird surumleri: 2.5.9, 5.0.4 }
 
@@ -10,6 +10,7 @@ uses
   Vcl.Themes,
   Vcl.Styles,
   uPaket in 'uPaket.pas',
+  uUygulama in 'uUygulama.pas',
   uDil in 'uDil.pas',
   uIkon in 'uIkon.pas',
   uSerit in 'uSerit.pas',
@@ -48,6 +49,7 @@ uses
   uSunucuBul in 'uSunucuBul.pas',
   fSunucuSec in 'fSunucuSec.pas' {frmSunucuSec},
   fBaglanti in 'fBaglanti.pas' {frmBaglanti},
+  fAcilis in 'fAcilis.pas' {frmAcilis},
   fAna in 'fAna.pas' {frmAna};
 
 {$R *.res}
@@ -71,6 +73,8 @@ begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
   StilYukle;
+  AcilisGoster;
   Application.CreateForm(TfrmAna, frmAna);
+  AcilisKapat;
   Application.Run;
 end.

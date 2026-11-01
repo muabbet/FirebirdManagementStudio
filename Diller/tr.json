@@ -1,6 +1,9 @@
 {
   "DIL_ADI": "Türkçe",
-  "APP_BASLIK": "Firebird Yöneticisi",
+  "APP_BASLIK": "Firebird Management Studio",
+  "ACILIS_ALT": "Firebird için sade yönetim aracı",
+  "ACILIS_SURUM": "Sürüm %s",
+  "ACILIS_YUKLENIYOR": "Yükleniyor...",
 
   "BTN_YENI_BAGLANTI": "Yeni Bağlantı",
   "BTN_BAGLAN": "Bağlan",

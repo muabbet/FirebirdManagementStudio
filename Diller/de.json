@@ -1,6 +1,9 @@
 {
   "DIL_ADI": "Deutsch",
-  "APP_BASLIK": "Firebird-Verwaltung",
+  "APP_BASLIK": "Firebird Management Studio",
+  "ACILIS_ALT": "Ein schlichtes Verwaltungswerkzeug für Firebird",
+  "ACILIS_SURUM": "Version %s",
+  "ACILIS_YUKLENIYOR": "Wird geladen...",
 
   "BTN_YENI_BAGLANTI": "Neue Verbindung",
   "BTN_BAGLAN": "Verbinden",
