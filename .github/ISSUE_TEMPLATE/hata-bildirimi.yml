@@ -1,0 +1,45 @@
+name: "Hata bildirimi (Bug report / Fehlermeldung)"
+description: "Bir şey beklediğiniz gibi çalışmadı"
+title: "[Hata] "
+labels: ["hata"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Teşekkürler! Türkçe, İngilizce veya Almanca yazabilirsiniz.
+        **Şifre, müşteri adı ya da gerçek veri paylaşmayın.** Ekran görüntüsündeki bu bilgileri kapatın.
+  - type: textarea
+    id: ne
+    attributes:
+      label: "Ne oldu?"
+      description: "Ne yapmaya çalışıyordunuz, ne bekliyordunuz, ne oldu? Hata mesajı varsa 'Ayrıntı' bölümünü de yapıştırın."
+    validations:
+      required: true
+  - type: textarea
+    id: adimlar
+    attributes:
+      label: "Nasıl tekrar edilir?"
+      description: "Adım adım yazabilirseniz çok yardımcı olur."
+    validations:
+      required: false
+  - type: input
+    id: surum
+    attributes:
+      label: "Program sürümü (Hakkında penceresinden)"
+      description: "Ör. 0.4. Hakkında penceresindeki 'Sürümü kopyala' düğmesini kullanabilirsiniz."
+    validations:
+      required: true
+  - type: input
+    id: firebird
+    attributes:
+      label: "Firebird sürümü ve karakter seti"
+      description: "Ör. Firebird 2.5.9, WIN1254. Alt çubukta sürüm görünür."
+    validations:
+      required: false
+  - type: input
+    id: windows
+    attributes:
+      label: "Windows sürümü"
+      description: "Ör. Windows 11 64 bit"
+    validations:
+      required: false

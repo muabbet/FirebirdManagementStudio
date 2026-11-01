@@ -88,6 +88,14 @@ object frmHakkinda: TfrmHakkinda
     TabOrder = 0
     OnClick = btnKopyalaClick
   end
+  object btnFikir: TButton
+    Left = 380
+    Top = 140
+    Width = 156
+    Height = 30
+    TabOrder = 2
+    OnClick = btnFikirClick
+  end
   object lblLisansBaslik: TLabel
     Left = 24
     Top = 190
