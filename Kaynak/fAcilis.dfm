@@ -49,10 +49,10 @@ object frmAcilis: TfrmAcilis
         Pen.Style = psClear
       end
       object imgLogo: TImage
-        Left = 48
-        Top = 84
-        Width = 64
-        Height = 64
+        Left = 44
+        Top = 72
+        Width = 80
+        Height = 80
         Proportional = True
         Stretch = True
         Transparent = True

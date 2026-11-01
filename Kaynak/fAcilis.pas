@@ -46,7 +46,8 @@ begin
   GAcilis.lblAlt.Caption := T('ACILIS_ALT');
   GAcilis.lblSurum.Caption := TF('ACILIS_SURUM', [UYGULAMA_SURUMU]);
   GAcilis.lblDurum.Caption := T('ACILIS_YUKLENIYOR');
-  GAcilis.imgLogo.Picture.Icon.Assign(Application.Icon);
+  { Uygulama ikonunun buyuk (96 piksel) cercevesi: Application.Icon kucuk cerceveyi verir, logo orada okunmaz. }
+  GAcilis.imgLogo.Picture.Icon.Handle := LoadImage(HInstance, 'MAINICON', IMAGE_ICON, 96, 96, LR_DEFAULTCOLOR);
   GAcilis.Show;
   GAcilis.Update;
   GBaslangic := GetTickCount64;
