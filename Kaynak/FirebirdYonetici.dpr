@@ -50,6 +50,8 @@ uses
   uSunucuBul in 'uSunucuBul.pas',
   fSunucuSec in 'fSunucuSec.pas' {frmSunucuSec},
   fBaglanti in 'fBaglanti.pas' {frmBaglanti},
+  uSemaFark in 'uSemaFark.pas',
+  fSemaFark in 'fSemaFark.pas' {SemaFarkSekme: TFrame},
   fAcilis in 'fAcilis.pas' {frmAcilis},
   fHakkinda in 'fHakkinda.pas' {frmHakkinda},
   fAna in 'fAna.pas' {frmAna};

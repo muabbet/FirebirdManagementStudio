@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fHakkinda, uYonetici;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fSemaFark, fHakkinda, uYonetici;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -79,6 +79,7 @@ type
     procedure btnBaglanClick(Sender: TObject);
     procedure btnYeniSorguClick(Sender: TObject);
     procedure btnCokluSorguClick(Sender: TObject);
+    procedure btnSemaFarkiClick(Sender: TObject);
     procedure btnCalistirClick(Sender: TObject);
     procedure btnPlanClick(Sender: TObject);
     procedure btnMetadataClick(Sender: TObject);
@@ -128,6 +129,7 @@ type
     btnYenile: TSeritDugmesi;
     btnYeniSorgu: TSeritDugmesi;
     btnCokluSorgu: TSeritDugmesi;
+    btnSemaFarki: TSeritDugmesi;
     btnCalistir: TSeritDugmesi;
     btnPlan: TSeritDugmesi;
     btnMetadata: TSeritDugmesi;
@@ -183,6 +185,8 @@ type
     function AktifSorguSekmesi: TSorguSekme;
     function CokluSekmeAl(Sayfa: TTabSheet): TCokluSorguSekme;
     function AktifCokluSekme: TCokluSorguSekme;
+    function FarkSekmeAl(Sayfa: TTabSheet): TSemaFarkSekme;
+    procedure SemaFarkiAc;
     procedure CokluSorguAc;
     procedure SorguDurumuYaz(Sender: TObject);
     procedure YeniSorgu(const Metin: string = '');
@@ -267,6 +271,7 @@ begin
   btnMetadata := FSerit.Ekle('GRUP_YONETIM', 'MENU_METADATA_CIKAR', IKON_METADATA, btnMetadataClick);
   btnYedek := FSerit.Ekle('GRUP_YONETIM', 'MENU_YEDEK', IKON_YEDEK, btnYedekClick);
   btnKullanicilar := FSerit.Ekle('GRUP_YONETIM', 'BTN_KULLANICILAR', IKON_KULLANICI, btnKullanicilarClick);
+  btnSemaFarki := FSerit.Ekle('GRUP_YONETIM', 'BTN_SEMA_FARKI', IKON_PLAN, btnSemaFarkiClick);
   btnKullanicilar.ShowHint := True;
 end;
 
@@ -295,6 +300,7 @@ var
   KullaniciSekme: TKullanicilar;
   ProsedurSekme: TProsedurSekme;
   CokluSekme: TCokluSorguSekme;
+  FarkSekme: TSemaFarkSekme;
 begin
   Caption := T('APP_BASLIK');
   FSerit.YazilariYenile;
@@ -355,6 +361,12 @@ begin
     begin
       pcCalisma.Pages[i].Caption := T('COKLU_SEKME');
       CokluSekme.YazilariYenile;
+    end;
+    FarkSekme := FarkSekmeAl(pcCalisma.Pages[i]);
+    if FarkSekme <> nil then
+    begin
+      pcCalisma.Pages[i].Caption := T('FARK_SEKME');
+      FarkSekme.YazilariYenile;
     end;
   end;
   DurumuGuncelle;
@@ -1648,6 +1660,43 @@ end;
 procedure TfrmAna.btnCokluSorguClick(Sender: TObject);
 begin
   CokluSorguAc;
+end;
+
+function TfrmAna.FarkSekmeAl(Sayfa: TTabSheet): TSemaFarkSekme;
+begin
+  Result := nil;
+  if (Sayfa.ControlCount > 0) and (Sayfa.Controls[0] is TSemaFarkSekme) then
+    Result := TSemaFarkSekme(Sayfa.Controls[0]);
+end;
+
+{ Sema farki sekmesi (bir tane); aciksa one gelir. Veritabanlari sekmede secilir. }
+procedure TfrmAna.SemaFarkiAc;
+var
+  i: Integer;
+  Sayfa: TTabSheet;
+  Sekme: TSemaFarkSekme;
+begin
+  for i := 0 to pcCalisma.PageCount - 1 do
+    if FarkSekmeAl(pcCalisma.Pages[i]) <> nil then
+    begin
+      pcCalisma.ActivePage := pcCalisma.Pages[i];
+      Exit;
+    end;
+  Sayfa := TTabSheet.Create(pcCalisma);
+  Sayfa.PageControl := pcCalisma;
+  Sayfa.ImageIndex := IKON_PLAN;
+  Sayfa.Caption := T('FARK_SEKME');
+  Sekme := TSemaFarkSekme.Create(Sayfa);
+  Sekme.Parent := Sayfa;
+  Sekme.Align := alClient;
+  Sekme.AnaSonuc := memSonuc.Lines;
+  Sekme.Hazirla;
+  pcCalisma.ActivePage := Sayfa;
+end;
+
+procedure TfrmAna.btnSemaFarkiClick(Sender: TObject);
+begin
+  SemaFarkiAc;
 end;
 
 procedure TfrmAna.PlaniGoster;
