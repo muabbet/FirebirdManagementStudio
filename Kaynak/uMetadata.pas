@@ -193,6 +193,13 @@ type
   end;
 
 type
+  { Tablo listesi icin ozet satiri: ad, kolon sayisi, aciklama (yoksa bos). }
+  TTabloOzeti = record
+    Ad: string;
+    AlanSayisi: Integer;
+    Aciklama: string;
+  end;
+
   { Bir nesneyi (view, exception, domain, generator) kullananlar. Tur: Firebird'in RDB$DEPENDENT_TYPE kodu
     (1 view, 2 tetikleyici, 3 hesaplanan kolon, 5 prosedur); domain'in tablo kolonlarinda kullanimi icin
     Tur = BAG_KOLON ve Ad = 'TABLO.KOLON'. }
@@ -269,6 +276,8 @@ function IstisnalariOku(Bag: TAcikBaglanti): TArray<TIstisnaBilgisi>;
 function GeneratorAdlari(Bag: TAcikBaglanti): TArray<string>;
 function DomainleriOku(Bag: TAcikBaglanti): TArray<TDomainBilgisi>;
 function TabloAdlari(Bag: TAcikBaglanti): TArray<string>;
+{ Kullanici tablolari: ad, kolon sayisi ve aciklama (tablo listesi sekmesi icin). Ada gore sirali. }
+function TabloOzetleriniOku(Bag: TAcikBaglanti): TArray<TTabloOzeti>;
 function ProsedurAdlari(Bag: TAcikBaglanti): TArray<string>;
 { View adlari, birbirine bagimliligina gore (once bagimlilik olmayanlar). Sirada cozulemeyenler
   (dongu) sona eklenir ve Dongu'ye de yazilir. }
@@ -1590,6 +1599,33 @@ begin
     Result.Post;
   end;
   Result.First;
+end;
+
+function TabloOzetleriniOku(Bag: TAcikBaglanti): TArray<TTabloOzeti>;
+var
+  Sorgu: TFDQuery;
+  Liste: TList<TTabloOzeti>;
+  Ozet: TTabloOzeti;
+begin
+  Liste := TList<TTabloOzeti>.Create;
+  Sorgu := SorguAc(Bag, 'select r.rdb$relation_name as AD, ' +
+    '(select count(*) from rdb$relation_fields rf where rf.rdb$relation_name = r.rdb$relation_name) as ALAN, ' +
+    'r.rdb$description as ACIKLAMA from rdb$relations r ' +
+    'where r.rdb$view_blr is null and coalesce(r.rdb$system_flag, 0) = 0 order by r.rdb$relation_name', '');
+  try
+    while not Sorgu.Eof do
+    begin
+      Ozet.Ad := Trim(Sorgu.FieldByName('AD').AsString);
+      Ozet.AlanSayisi := Sorgu.FieldByName('ALAN').AsInteger;
+      Ozet.Aciklama := Trim(Sorgu.FieldByName('ACIKLAMA').AsString);
+      Liste.Add(Ozet);
+      Sorgu.Next;
+    end;
+    Result := Liste.ToArray;
+  finally
+    Sorgu.Free;
+    Liste.Free;
+  end;
 end;
 
 function TabloAdlari(Bag: TAcikBaglanti): TArray<string>;

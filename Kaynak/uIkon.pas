@@ -26,6 +26,7 @@ const
   IKON_CALISTIR = 11;
   IKON_PLAN = 12;
   IKON_METADATA = 13;
+  IKON_KAPAT = 14;
   { Yedek icin ayri ikon yok; gecici olarak klasor ikonu (rapora yazildi). }
   IKON_YEDEK = IKON_KLASOR;
   { Kullanicilar icin ayri ikon yok (Ikonlar\svg icinde kullanici ikonu yok); gecici olarak liste ikonu (rapora yazildi). }
@@ -42,10 +43,10 @@ procedure IkonlariYukle(Koleksiyon: TImageCollection; Liste: TVirtualImageList);
 implementation
 
 const
-  IKON_DOSYALARI: array[0..13] of string = (
+  IKON_DOSYALARI: array[0..14] of string = (
     'plug', 'plug-off', 'refresh', 'database', 'table', 'eye', 'code',
     'list-numbers', 'folder', 'copy', 'trash', 'player-play', 'list-tree',
-    'file-plus');
+    'file-plus', 'x');
 
 { PNG dosyalarini koleksiyona sirayla ekler. Serit kendi koleksiyonunu kullanir:
   agacin ortak koleksiyonuna baska boyutta cizim yapmak agac ikonlarini bozuyor. }

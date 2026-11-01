@@ -73,6 +73,8 @@ type
     { Yonetim islemlerinin SQL'i buraya verilir (ana pencerenin SQL mesaji); ana pencere atar. }
     SqlYaz: TSqlGoster;
     procedure Yukle(Bag: TAcikBaglanti; const Tablo: string);
+    { Sag tik "Yenile": kolonlar, yapi ve ilk satirlar veritabanindan yeniden okunur. }
+    procedure Yenile;
     procedure YazilariYenile;
     { Sag tik "Bagimliliklar": ustteki alt sekmeyi Bagimliliklar'a getirir. }
     procedure BagimliliklariGoster;
@@ -89,6 +91,15 @@ begin
   FVeriGrid := TSonucGrid.Create(gridVeri);
   YenidenYukle(Bag);
   btnDisaAktar.Enabled := True;
+end;
+
+procedure TTabloSekme.Yenile;
+var
+  Bag: TAcikBaglanti;
+begin
+  Bag := FbAcikBaglanti(BaglantiAd);
+  if Bag <> nil then
+    YenidenYukle(Bag);
 end;
 
 { Kolonlar, yapi sekmeleri ve ilk satirlar bastan okunur (acilista ve kolon islemlerinden sonra). }

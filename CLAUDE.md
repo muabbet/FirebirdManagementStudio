@@ -192,7 +192,7 @@ Bu bir "boş zamanda yavaş yavaş" projesidir, acele yoktur. **Her aşama bitin
 ### Aşama 4: Çoklu Veritabanı (sahibinin özel ihtiyacı)
 - [x] Bir sorguyu seçilen birçok veritabanında çalıştırma, sonuçları birleştirme (4a, `ASAMA4A_RAPOR.md`, sahibi denedi ve onayladı 2026-11-01)
 - [x] Şema farkı bulma (iki veritabanını karşılaştırma) (4b, `ASAMA4B_RAPOR.md`, onaylandı 2026-11-01)
-- [ ] Toplu güncelleme (onay ve önizleme ile)
+- [x] Toplu güncelleme (onay ve önizleme ile) (4c, `ASAMA4C_RAPOR.md`, yapıldı 2026-11-01, sahibinin denemesi ve onayı bekleniyor)
 
 ### Aşama 4d: Gridden Kayıt Düzeltme (fikir 2026-10-31, Aşama 4'ten sonra)
 Tablo verisi gridinde (şu an salt okunur) bir hücreyi çift tıklayıp düzeltme, ayrı ve açık bir "Düzenle" kipiyle. Basitlik ve güvenlik için:
@@ -205,6 +205,14 @@ Tablo verisi gridinde (şu an salt okunur) bir hücreyi çift tıklayıp düzelt
 ### Hakkında ve Fikir/Öneri (karar 2026-11-01)
 - [x] Hakkında penceresi: yönetici rozetine tıklayınca açılır (ad, sürüm, platform, yetki, lisans, "Sürümü kopyala"); yönetici değilse rozet "Yönetici olarak aç" olur ve sorup yeniden başlatır. Kod: `uYonetici.pas`, `fHakkinda.pas`
 - [ ] **İleride:** "Fikir ve öneri" düğmesi (sahibi için fikirler çok önemli). GitHub yayınlanınca Issues sayfasını açar; o zamana kadar yapılmaz
+
+### Görünüm düzenlemeleri (sahibinin isteği 2026-11-01, 4c denemesinden sonra)
+- [x] Fare bir bağlantının üstüne gelince veritabanı yolu ipucu; durum çubuğunda seçili bağlantının yolu
+- [x] Sekme sağ tık menüsü: Yenile (veriyi yeniden yükler), Sekmeyi kapat, Tüm sekmeleri kapat (onaylı); sağ tıklanan sekme seçilir
+- [x] "Tablolar" dalına çift tıklayınca tablo listesi sekmesi (IBExpert gibi): ad, alan sayısı, açıklama; başlığa tıklayınca sıralar; listede tabloya tıklayınca altta alanları; çift tıklayınca tablo kendi sekmesinde açılır. Kod: `fTabloListe.pas`
+- [x] Şeritte **Görünüm** sekmesi: Ayrıntıyı göster/kapat (alan bölümü), Tüm pencereleri kapat
+- [x] Alan listesinde **Sıra** kolonu (veritabanındaki eklenme sırası); başlığa tıklayınca sıralanır, Sıra başlığı ilk sıraya döndürür
+- [x] Görev çubuğunda eski ikon: Windows ikon önbelleği; çözüm: programa yeni uygulama kimliği (`uUygulama.pas`, `UygulamaKimliginiAyarla`). Sahibi doğruladı: düzeldi (2026-11-01)
 
 ### Aşama 5: PostgreSQL — İPTAL EDİLDİ (karar 2026-10-31)
 
