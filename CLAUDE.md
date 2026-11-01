@@ -214,6 +214,13 @@ Tablo verisi gridinde (şu an salt okunur) bir hücreyi çift tıklayıp düzelt
 - [x] Alan listesinde **Sıra** kolonu (veritabanındaki eklenme sırası); başlığa tıklayınca sıralanır, Sıra başlığı ilk sıraya döndürür
 - [x] Görev çubuğunda eski ikon: Windows ikon önbelleği; çözüm: programa yeni uygulama kimliği (`uUygulama.pas`, `UygulamaKimliginiAyarla`). Sahibi doğruladı: düzeldi (2026-11-01)
 
+### Yayın hazırlığı (2026-11-01)
+- [x] Lisans: MIT (`LICENSE`, Telif: Barış Başpınar); `LISANSLAR.md` güncellendi
+- [x] `README.md` yeniden yazıldı (indirme, özellikler, bilinen sınırlar, derleme, lisans)
+- [x] `Dagit.bat`: exe + lisans dosyaları tek zip (`dagitim\FirebirdManagementStudio-SURUM-win64.zip`); zipten çıkan exe yalnız başına açılıp çalıştı (denendi)
+- [x] Tanıtım sayfasında GitHub ve indirme bağlantıları (`github.com/muabbet/FirebirdYonetici`), lisans satırı
+- [ ] GitHub'a gönderme, GitHub Pages ayarı (docs klasörü), Releases'e zip yükleme ve ekran görüntüsü (`docs/ekran.png`, sahte verili veritabanıyla): sahibinin kararı ve işi
+
 ### Aşama 5: PostgreSQL — İPTAL EDİLDİ (karar 2026-10-31)
 
 Sahibi PostgreSQL desteğini **yapmama** kararı verdi: araç yalnızca Firebird'e özel kalacak. Gerekçe: pgAdmin iyi bir alternatif, iki veritabanını aynı araçta karıştırmak kafa karışıklığı yaratır; pgAdmin'in yavaş açılma sorunu Windows Defender dışlaması ile çözüldü (üretimde hızlı açılıyor). **Ana ilke:** basit ama Firebird için her şeyi yapabilen bir program. Motor seçimi, PostgreSQL sürücüsü, `libpq.dll` gibi hiçbir şey eklenmeyecek; `uMetadata.pas` Firebird'e özel kalır.

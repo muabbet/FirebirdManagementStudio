@@ -1,41 +1,60 @@
-# Firebird Yöneticisi
+# Firebird Management Studio
 
-Firebird için sade, kolay kullanımlı, SSMS'e benzeyen yönetim aracı. Delphi (RAD Studio 12), VCL, FireDAC. Win64.
+Firebird için sade, ücretsiz ve açık kaynak yönetim aracı. SSMS'e (SQL Server Management Studio) benzer bir görünüm, ama "kafa karışmasın" ilkesiyle: bir iş için tek yol, kısa menüler, anlaşılır Türkçe / İngilizce / Almanca mesajlar.
 
-> **Kişisel proje, destek sınırlı.** Boş zamanda yavaş yavaş geliştirilir.
+*English: a simple, free and open-source management tool for Firebird (2.5 - 5.0), inspired by SSMS. One exe, no installation, Windows 64-bit. The interface is available in Turkish, English and German.*
 
-Hedeflenen Firebird sürümleri: 2.5, 3.0, 4.0, 5.0. Denenen: 2.5.9 ve 5.0.4 (3.0 ve 4.0 henüz denenmedi).
+> **Kişisel proje, destek sınırlı.** Boş zamanda yavaş yavaş geliştirilir. Fikir ve önerileriniz çok değerlidir (GitHub Issues).
 
-## Durum
+## İndirme ve çalıştırma
 
-Aşama 1 (iskelet ve ağaç): bağlantı penceresi, kayıtlı bağlantılar (şifreler DPAPI ile şifreli), sürüm algılama, Tablolar / View'lar / Prosedürler / Generator'lar ağacı, tabloya çift tıklayınca kolonlar ve ilk 100 satır, üç dil (tr, en, de). Ayrıntılar `CLAUDE.md` içinde.
+[Son sürümü indirin](https://github.com/muabbet/FirebirdYonetici/releases/latest), zip dosyasını açın, `FirebirdYonetici.exe` dosyasını çalıştırın. Kurulum yok; Firebird istemcisi, diller ve ikonlar exe'nin içindedir.
 
-Aşama 1b (çoklu bağlantı ağacı): kayıtlı bağlantılar ağaçta görünür, aynı anda birden fazla bağlantı açık kalabilir, bağlantılar klasörlere konabilir (sürükle-bırak) ve "Kayıttan Kaldır" ile listeden çıkarılır (veritabanına dokunulmaz). Şifresi kayıtlı olmayan bağlantıda şifre sorulur (şifre kaydedilmez). `baglantilar.json` içinde her bağlantının `Klasor` alanı ve boş klasörler için `Klasorler` listesi tutulur; eski biçimdeki dosya okunmaya devam eder.
+- **Windows 10/11, 64 bit gerekir.** 32 bit Windows'ta çalışmaz. Windows 7 denenmedi.
+- Bağlanmak için ağda ya da yerelde çalışan bir Firebird sunucusu gerekir (2.5, 3.0, 4.0 veya 5.0).
+- Bağlantı penceresindeki **Sunucular** düğmesi ağdaki Firebird sunucularını bulur.
 
-Aşama 2 (SQL editörü): sorgu sekmeleri (SynEdit, SQL renklendirme), `F5` ile çalıştırma, sonuç 500'er satır parça parça yüklenir, sonuç ızgarasında sıralama / zebra / NULL gösterimi / otomatik genişlik / Ctrl+C / uzun metin ve BLOB kısaltma. Her sorgu sekmesi kendi işleminde ve otomatik onay (autocommit) modunda çalışır. DROP ve WHERE'siz DELETE/UPDATE onay ister. `Ctrl+L` ile sorgu planı (komut çalıştırılmaz). `Ctrl+Boşluk` ile otomatik tamamlama (anahtar kelimeler `anahtar_kelimeler.txt` dosyasından, nesne adları, `ad.` yazınca kolon adları; `ad` takma ad da olabilir). Editörde birden fazla komut varsa (veya seçili kısımda) hepsi sırayla çalışır, `SET TERM` desteklenir, ilk hatada durulur; her komut ayrı otomatik onaylandığı için önceki komutlar geri alınmaz.
+## Neler yapar?
+
+- **Gezme:** Kayıtlı bağlantılar (klasörlere konabilir, aynı anda birden fazlası açık kalabilir). Tablolar, View'lar, Prosedürler, Trigger'lar, Domain'ler, Exception'lar, Generator'lar. Tablolar dalına çift tıklayınca tüm tablolar listesi (ad, alan sayısı, açıklama, başlığa tıklayınca sıralama, alt bölümde alanlar).
+- **SQL editörü:** Renklendirme, `F5` ile çalıştırma, çoklu komut, `Ctrl+Boşluk` otomatik tamamlama, sorgu planı. Sonuçlar parça parça yüklenir; ızgarada sıralama, zebra, NULL gösterimi, otomatik genişlik, `Ctrl+C` (Excel'e yapıştırılır), uzun metin ve BLOB kısaltma.
+- **Tablo yapısı:** Kolon ekle, adını ve tipini değiştir, sil; index ve kısıt (PK, UNIQUE, FK, CHECK) ekle ve sil; yeni tablo, tablo sil; bağımlılıklar. Her yönetim işleminin SQL'i alt alanda görünür.
+- **Nesne yönetimi:** Prosedür, trigger ve view düzenleme; domain, exception ve generator oluşturma, düzenleme, silme. Script üretme (`CREATE`) ve tüm veritabanının metadata çıkarımı.
+- **Kullanıcılar ve yetkiler:** Kullanıcı yönetimi; tablo, view ve prosedür yetkilerini görüntüleme, verme ve geri alma.
+- **Yedek ve dışa aktarma:** `gbak` ile yedekleme ve geri yükleme; tablo verisini CSV olarak dışa aktarma.
+- **Çoklu veritabanı:** Aynı `SELECT`'i birçok veritabanında çalıştırıp sonuçları tek tabloda birleştirme; iki veritabanının şema farkı; birçok veritabanında `UPDATE` (önce önizleme, sonra net bir onay penceresi).
+- **Güvenlik ilkeleri:** Tehlikeli işlemler (silme, `WHERE`'siz güncelleme, toplu işlem) net bir onay penceresi ister. Hiçbir şey sessizce silinmez.
+
+## Bilinen sınırlar
+
+- **Kiril alfabesi:** WIN1251 karakter setli veritabanında gerçek Kiril metin bozuk görünebilir (FireDAC, WIN1251'i Windows'un kod sayfasıyla çözüyor). Denerseniz sonucu Issues'a yazmanız çok yardımcı olur. Türkçe karakterler (WIN1254 ve gerçek veritabanlarında denenen biçimler) sorunsuz.
+- **Toplu güncelleme önizlemesi** satır verisini geri alır ama tetikleyicilerin dış etkilerini (generator değeri, dış dosya, UDF) geri alamaz.
+- Hedeflenen Firebird sürümleri 2.5, 3.0, 4.0 ve 5.0'dır. Gerçek veritabanında 2.5.9 ve 5.0.4 ile, mantık testleriyle 3.0.14 ve 4.0.7 ile de denendi. Ayrıntı: `ASAMA*_RAPOR.md` dosyaları.
+- Arayüzün bazı pencereleri yalnızca sahibi tarafından elle denendi; her aşamanın raporunda neyin denenmediği yazılıdır.
 
 ## Derleme
 
-RAD Studio 12 gerekir. SQL editörü için **SynEdit (TurboPack)** (`TSynCompletionProposal` dahil) kütüphane yolunda olmalıdır (RAD Studio 12 GetIt sürümü kurulu olmayabilir); kaynak https://github.com/TurboPack/SynEdit adresindedir ve depoda yer almaz.
+RAD Studio 12 (Athens) gerekir. SQL editörü için **SynEdit (TurboPack)** kütüphane yolunda olmalıdır (kaynak: https://github.com/TurboPack/SynEdit, depoda yer almaz). Firebird 5.0 64 bit istemci dosyaları `SonDerleme.bat` başındaki `FBKAYNAK` yolundan alınır; kendi bilgisayarınıza göre değiştirin.
 
 - IDE: `Kaynak\FirebirdYonetici.dproj` dosyasını açın, **Win64 / Release** derleyin.
-- Komut satırı: `Derle.bat` (rsvars.bat + msbuild).
+- Komut satırı: `Derle.bat` (rsvars.bat + msbuild). Önce `PaketHazirla.bat` çalışır: diller, ikonlar, tema ve Firebird istemcisi `Kaynak\Paket.zip` olur ve exe'nin içine gömülür. Çıktı `bin\Win64\Release\FirebirdYonetici.exe`.
+- Dağıtım paketi: `Dagit.bat` (derlenmiş exe ile lisans dosyalarını zipler, `dagitim\` klasörüne koyar).
 
-Çıktı `bin\Win64\Release\` klasörüne gider. Derleme sonrası `SonDerleme.bat` şunları oraya kopyalar: `Diller`, `Ikonlar`, `Stiller\Windows10.vsf`, `anahtar_kelimeler.txt` ve `istemci\` (Firebird 5.0 64 bit `fbclient.dll` ve yan dosyaları). Firebird istemcisinin kaynağı `SonDerleme.bat` başındaki `FBKAYNAK` satırındadır, kendi bilgisayarınıza göre değiştirin.
-
-Tek bir `fbclient.dll` (5.0) yüklenir; 2.5 ve 5.0 sunuculara onunla bağlanılır.
+Tek bir `fbclient.dll` (5.0, 64 bit) yüklenir; 2.5, 3.0, 4.0 ve 5.0 sunuculara onunla bağlanılır.
 
 ## Güvenlik
 
-- Şifreler diske düz yazılmaz. İstenirse Windows DPAPI ile şifrelenir ve sadece aynı Windows kullanıcısı çözebilir.
-- Bağlantı dosyası `%APPDATA%\FirebirdYonetici\baglantilar.json`. `.gitignore` bunu, `*.fdb` ve derleme çıktılarını dışarıda tutar.
+- Bağlantı şifreleri diske düz yazılmaz. İstenirse Windows DPAPI ile şifrelenir ve yalnızca aynı Windows kullanıcısı çözebilir.
+- Bağlantı dosyası `%APPDATA%\FirebirdYonetici\baglantilar.json`. `.gitignore` bunu, `*.fdb` dosyalarını ve derleme çıktılarını dışarıda tutar.
 
 ## Deneme
 
-`Test\MetadataTest.dpr`: arayüz açmadan bağlantı, metadata ve ilk satırları dener. Şifre ortam değişkeninden (`FBTEST_SIFRE`) okunur, hiçbir dosyaya yazılmaz. `FBTEST_YOL2` verilirse ikinci bir veritabanına da bağlanıp iki bağlantının aynı anda açık kalabildiğini dener.
+`Test` klasöründe komut satırı deneme programları vardır (`SorguTest`, `DDLTest`, `CokluSorguTest`, `SemaFarkTest`, `TopluGuncelleTest`, `GorunumTest` vb.). Her biri kendi `...Derle.bat` dosyasıyla derlenir, kendi geçici veritabanını açar, gerçek verilere dokunmaz ve hata sayısını çıkış kodu olarak verir. Kullanıcı için gerekmez.
 
-`Test\BaglantiDosyasiTest.dpr`: kayıtlı bağlantı dosyasının güvenliğini (bozuk dosyanın silinmeden yanına taşınması, atomik yazma, DPAPI şifre gidiş-dönüş, eski biçim okuma, klasör gidiş-dönüşü) geçici bir klasörde dener, gerçek verilere dokunmaz. Bu iki deneme programı için `.dproj` yoktur; `dcc64` ile derlenir (örnek: `dcc64 Test\BaglantiDosyasiTest.dpr -UKaynak`).
+## Katkı ve geri bildirim
 
-`Test` klasörü: geliştirici ölçüm ve testleri (`SorguTest`, `Adim0Olcum` vb.), kullanıcı için gerekmez.
+Hata, fikir ve öneri için GitHub Issues kullanın. Proje kişisel olduğundan yanıt süresi garanti edilmez. Kod yazım ilkeleri (basit, sade, formlar ince) `CLAUDE.md` dosyasındadır.
 
-Lisanslar: `LISANSLAR.md`.
+## Lisans
+
+Projenin kendi kodu **MIT** lisansıdır (`LICENSE`). Kullanılan harici bileşenlerin lisansları `LISANSLAR.md` dosyasında listelenir (SynEdit: MPL 1.1, Firebird istemcisi: IDPL, Tabler Icons: MIT).
