@@ -4,6 +4,12 @@
   "ACILIS_ALT": "Firebird için sade yönetim aracı",
   "ACILIS_SURUM": "Sürüm %s",
   "ACILIS_YUKLENIYOR": "Yükleniyor...",
+  "YONETICI_ROZET": "YÖNETİCİ",
+  "YONETICI_YUKSELT": "Yönetici olarak aç",
+  "YONETICI_IPUCU": "Program yönetici olarak çalışıyorsa YÖNETİCİ yazar. Değilse buna tıklayınca program kapanıp yönetici olarak yeniden açılır.",
+  "YONETICI_ZATEN": "Program zaten yönetici olarak çalışıyor.",
+  "YONETICI_SOR": "Program kapatılıp yönetici olarak yeniden açılacak. Açık bağlantılar ve sekmeler kapanır, kaydedilmemiş yazılar kaybolur.\n\nDevam edilsin mi?",
+  "YONETICI_BASLATILAMADI": "Program yönetici olarak açılamadı (Windows yetki penceresi onaylanmadı).",
 
   "BTN_YENI_BAGLANTI": "Yeni Bağlantı",
   "BTN_BAGLAN": "Bağlan",

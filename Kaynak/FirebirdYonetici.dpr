@@ -11,6 +11,7 @@ uses
   Vcl.Styles,
   uPaket in 'uPaket.pas',
   uUygulama in 'uUygulama.pas',
+  uYonetici in 'uYonetici.pas',
   uDil in 'uDil.pas',
   uIkon in 'uIkon.pas',
   uSerit in 'uSerit.pas',

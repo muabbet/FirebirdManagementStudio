@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, uYonetici;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -36,6 +36,7 @@ type
     pnlUst: TPanel;
     pnlDil: TPanel;
     cmbDil: TComboBox;
+    btnYonetici: TButton;
     stbDurum: TStatusBar;
     tvNesneler: TTreeView;
     bolSol: TSplitter;
@@ -85,6 +86,7 @@ type
     procedure btnKullanicilarClick(Sender: TObject);
     procedure btnYenileClick(Sender: TObject);
     procedure cmbDilChange(Sender: TObject);
+    procedure btnYoneticiClick(Sender: TObject);
     procedure tvNesnelerChange(Sender: TObject; Node: TTreeNode);
     procedure tvNesnelerCustomDrawItem(Sender: TCustomTreeView; Node: TTreeNode; State: TCustomDrawState;
       var DefaultDraw: Boolean);
@@ -319,6 +321,11 @@ begin
   miYeniKlasor.Caption := T('BTN_YENI_KLASOR');
   miSekmeKapat.Caption := T('MENU_SEKME_KAPAT');
   cmbDil.Hint := T('LBL_DIL');
+  if YoneticiMi then
+    btnYonetici.Caption := T('YONETICI_ROZET')
+  else
+    btnYonetici.Caption := T('YONETICI_YUKSELT');
+  btnYonetici.Hint := T('YONETICI_IPUCU');
   AgacYazilariniYenile;
   for i := 0 to pcCalisma.PageCount - 1 do
   begin
@@ -1835,6 +1842,23 @@ begin
   DilYukle(FDilKodlari[cmbDil.ItemIndex]);
   SonKullanilanDiliKaydet;
   YazilariYenile;
+end;
+
+{ Yonetici degilse: once sorar, evet denirse yonetici olarak yeniden acar ve bu pencereyi kapatir.
+  Acik baglantilar ve sekmeler kapanir, bu yuzden soru bunu yazar. }
+procedure TfrmAna.btnYoneticiClick(Sender: TObject);
+begin
+  if YoneticiMi then
+  begin
+    UyariGoster(T('YONETICI_ZATEN'));
+    Exit;
+  end;
+  if not OnayIste(T('YONETICI_SOR')) then
+    Exit;
+  if YoneticiOlarakYenidenBaslat then
+    Application.Terminate
+  else
+    UyariGoster(T('YONETICI_BASLATILAMADI'));
 end;
 
 procedure TfrmAna.tvNesnelerChange(Sender: TObject; Node: TTreeNode);

@@ -87,6 +87,7 @@
         </RcCompile>
         <DCCReference Include="uPaket.pas"/>
         <DCCReference Include="uUygulama.pas"/>
+        <DCCReference Include="uYonetici.pas"/>
         <DCCReference Include="uDil.pas"/>
         <DCCReference Include="uIkon.pas"/>
         <DCCReference Include="uSerit.pas"/>

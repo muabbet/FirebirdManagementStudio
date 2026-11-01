@@ -4,6 +4,12 @@
   "ACILIS_ALT": "A simple management tool for Firebird",
   "ACILIS_SURUM": "Version %s",
   "ACILIS_YUKLENIYOR": "Loading...",
+  "YONETICI_ROZET": "ADMINISTRATOR",
+  "YONETICI_YUKSELT": "Open as administrator",
+  "YONETICI_IPUCU": "Shows ADMINISTRATOR when the program runs as administrator. If not, clicking this closes the program and reopens it as administrator.",
+  "YONETICI_ZATEN": "The program is already running as administrator.",
+  "YONETICI_SOR": "The program will be closed and reopened as administrator. Open connections and tabs will be closed and unsaved text will be lost.\n\nContinue?",
+  "YONETICI_BASLATILAMADI": "The program could not be opened as administrator (the Windows permission prompt was not confirmed).",
 
   "BTN_YENI_BAGLANTI": "New Connection",
   "BTN_BAGLAN": "Connect",

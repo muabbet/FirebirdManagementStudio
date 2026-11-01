@@ -46,6 +46,21 @@ object frmAna: TfrmAna
         TabOrder = 0
         OnChange = cmbDilChange
       end
+      object btnYonetici: TButton
+        AlignWithMargins = True
+        Left = 8
+        Top = 41
+        Width = 174
+        Height = 25
+        Margins.Left = 8
+        Margins.Top = 0
+        Margins.Right = 8
+        Margins.Bottom = 8
+        Align = alTop
+        ShowHint = True
+        TabOrder = 1
+        OnClick = btnYoneticiClick
+      end
     end
   end
   object stbDurum: TStatusBar
