@@ -190,8 +190,8 @@ Bu bir "boş zamanda yavaş yavaş" projesidir, acele yoktur. **Her aşama bitin
 - [x] 3f: View düzenleme; Domain, Exception ve Generator yönetimi (ağaç dalları, oluştur, düzenle, sil; ayrıntı: `GOREV_ASAMA3F.md`), sahibi denedi ve onayladı (2026-10-29). Görsel düzeltme (SSMS örneği `Referans/ssms.png`, StokluBulut ikonu) tamam ve onaylandı (2026-10-30, `GORSEL_RAPOR.md`). 3g tablo yapısı (kolon, index, kısıt, yeni tablo, tablo sil, bağımlılıklar; `GOREV_ASAMA3G.md`, `ASAMA3G_RAPOR.md`) tamam ve onaylandı (2026-10-30). Sıradaki: Aşama 4 (çoklu veritabanı)
 
 ### Aşama 4: Çoklu Veritabanı (sahibinin özel ihtiyacı)
-- [ ] Bir sorguyu seçilen birçok veritabanında çalıştırma, sonuçları birleştirme
-- [ ] Şema farkı bulma (iki veritabanını karşılaştırma)
+- [x] Bir sorguyu seçilen birçok veritabanında çalıştırma, sonuçları birleştirme (4a, `ASAMA4A_RAPOR.md`, sahibi denedi ve onayladı 2026-11-01)
+- [x] Şema farkı bulma (iki veritabanını karşılaştırma) (4b, `ASAMA4B_RAPOR.md`, onaylandı 2026-11-01)
 - [ ] Toplu güncelleme (onay ve önizleme ile)
 
 ### Aşama 4d: Gridden Kayıt Düzeltme (fikir 2026-10-31, Aşama 4'ten sonra)
