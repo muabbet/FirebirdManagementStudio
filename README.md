@@ -53,7 +53,7 @@ Tek bir `fbclient.dll` (5.0, 64 bit) yüklenir; 2.5, 3.0, 4.0 ve 5.0 sunuculara 
 
 ## Katkı ve geri bildirim
 
-Hata, fikir ve öneri için GitHub Issues kullanın. Proje kişisel olduğundan yanıt süresi garanti edilmez. Kod yazım ilkeleri (basit, sade, formlar ince) `CLAUDE.md` dosyasındadır.
+Hata, fikir ve öneri için GitHub Issues kullanın: [Fikir ve öneri yaz](https://github.com/muabbet/FirebirdManagementStudio/issues/new/choose) (hazır şablonlar var). Programda **Hakkında** penceresindeki **Fikir ve öneri** düğmesi de aynı sayfayı açar. Proje kişisel olduğundan yanıt süresi garanti edilmez. Kod yazım ilkeleri (basit, sade, formlar ince) `CLAUDE.md` dosyasındadır.
 
 ## Lisans
 

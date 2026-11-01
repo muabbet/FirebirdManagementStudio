@@ -19,11 +19,13 @@ type
     lblYetkiEtiket: TLabel;
     lblYetkiDeger: TLabel;
     btnKopyala: TButton;
+    btnFikir: TButton;
     lblLisansBaslik: TLabel;
     lblLisans: TLabel;
     pnlAlt: TPanel;
     btnTamam: TButton;
     procedure btnKopyalaClick(Sender: TObject);
+    procedure btnFikirClick(Sender: TObject);
   end;
 
 procedure HakkindaGoster(YoneticiMi: Boolean);
@@ -35,6 +37,11 @@ implementation
 procedure TfrmHakkinda.btnKopyalaClick(Sender: TObject);
 begin
   Clipboard.AsText := UYGULAMA_ADI + ' ' + UYGULAMA_SURUMU;
+end;
+
+procedure TfrmHakkinda.btnFikirClick(Sender: TObject);
+begin
+  AdresiAc(GERI_BILDIRIM_ADRESI);
 end;
 
 procedure HakkindaGoster(YoneticiMi: Boolean);
@@ -57,6 +64,8 @@ begin
       Pencere.lblYetkiDeger.Caption := T('HAKKINDA_YETKI_NORMAL');
     Pencere.btnKopyala.Caption := T('BTN_SURUMU_KOPYALA');
     DugmeyiYaziyaUydur(Pencere.btnKopyala);
+    Pencere.btnFikir.Caption := T('BTN_FIKIR_ONERI');
+    DugmeyiYaziyaUydur(Pencere.btnFikir);
     Pencere.lblLisansBaslik.Caption := T('HAKKINDA_LISANS_BASLIK');
     Pencere.lblLisans.Caption := T('HAKKINDA_LISANS_METIN');
     Pencere.btnTamam.Caption := T('BTN_TAMAM');

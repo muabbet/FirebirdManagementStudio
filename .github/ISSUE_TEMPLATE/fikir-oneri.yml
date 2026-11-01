@@ -1,0 +1,31 @@
+name: "Fikir / öneri (Idea / suggestion / Idee)"
+description: "Programda görmek istediğiniz bir özellik ya da iyileştirme"
+title: "[Fikir] "
+labels: ["fikir"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Fikirleriniz çok değerli, teşekkürler! Türkçe, İngilizce veya Almanca yazabilirsiniz.
+        Proje kişisel bir projedir; her fikir hemen yapılamayabilir ama hepsi okunur.
+  - type: textarea
+    id: ne
+    attributes:
+      label: "Ne olsun istiyorsunuz?"
+      description: "Kısaca anlatın. Hangi işi yapmaya çalışıyorsunuz?"
+    validations:
+      required: true
+  - type: textarea
+    id: neden
+    attributes:
+      label: "Bu size nasıl yardım eder?"
+      description: "Şu an bu işi nasıl yapıyorsunuz, neresi zor?"
+    validations:
+      required: false
+  - type: input
+    id: surum
+    attributes:
+      label: "Program sürümü"
+      description: "Hakkında penceresindeki sürüm (ör. 0.4). İsterseniz Firebird sürümünüzü de yazın."
+    validations:
+      required: false

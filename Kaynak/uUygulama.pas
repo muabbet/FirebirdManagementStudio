@@ -10,18 +10,28 @@ const
   UYGULAMA_KIMLIGI = 'FirebirdManagementStudio.Ana';
   UYGULAMA_ADI = 'Firebird Management Studio';
   UYGULAMA_SURUMU = '0.4';
+  { Fikir, oneri ve hata bildirimi: GitHub Issues (hazir sablonlar var). Hakkinda penceresindeki dugme acar. }
+  GERI_BILDIRIM_ADRESI = 'https://github.com/muabbet/FirebirdManagementStudio/issues/new/choose';
 
 { Program acilirken, ilk form olusmadan once cagrilir. }
 procedure UygulamaKimliginiAyarla;
 
+{ Adresi kullanicinin varsayilan tarayicisinda acar. }
+procedure AdresiAc(const Adres: string);
+
 implementation
 
 uses
-  Winapi.ShlObj;
+  Winapi.Windows, Winapi.ShellAPI, Winapi.ShlObj;
 
 procedure UygulamaKimliginiAyarla;
 begin
   SetCurrentProcessExplicitAppUserModelID(UYGULAMA_KIMLIGI);
+end;
+
+procedure AdresiAc(const Adres: string);
+begin
+  ShellExecute(0, 'open', PChar(Adres), nil, nil, SW_SHOWNORMAL);
 end;
 
 end.
