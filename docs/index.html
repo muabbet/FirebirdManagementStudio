@@ -63,8 +63,11 @@
   .indir:hover { background: var(--vurgu-koyu); }
   .gereksinim { margin-top: 12px; color: var(--soluk); font-size: .95rem; }
   .gereksinim strong { color: var(--yazi); }
-  .ekran { margin: 28px auto 8px; text-align: center; }
-  .ekran img { max-width: 100%; border: 1px solid var(--cizgi); border-radius: 8px; }
+  .galeri { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .galeri figure { margin: 0; background: var(--kart); border: 1px solid var(--cizgi); border-radius: 10px; overflow: hidden; }
+  .galeri a { display: block; }
+  .galeri img { display: block; width: 100%; height: auto; }
+  .galeri figcaption { padding: 10px 14px; font-size: .92rem; color: var(--soluk); }
   h2 { font-size: 1.4rem; font-weight: 600; margin: 40px 0 16px; text-align: center; }
   .izgara { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
   .kart { background: var(--kart); border: 1px solid var(--cizgi); border-radius: 10px; padding: 16px 18px; }
@@ -106,7 +109,15 @@
     <p class="gereksinim"><strong data-k="gereksinim64"></strong> <span data-k="gereksinimAyrinti"></span></p>
   </section>
 
-  <div class="ekran"><img src="ekran.png" alt="" onerror="this.parentNode.style.display='none'"></div>
+  <h2 data-k="galeriBaslik"></h2>
+  <section class="galeri">
+    <figure><a href="ekran-tablolar.png" target="_blank" rel="noopener"><img src="ekran-tablolar.png" alt="" loading="lazy"></a><figcaption data-k="e1"></figcaption></figure>
+    <figure><a href="ekran-sorgu.png" target="_blank" rel="noopener"><img src="ekran-sorgu.png" alt="" loading="lazy"></a><figcaption data-k="e2"></figcaption></figure>
+    <figure><a href="ekran-coklu.png" target="_blank" rel="noopener"><img src="ekran-coklu.png" alt="" loading="lazy"></a><figcaption data-k="e3"></figcaption></figure>
+    <figure><a href="ekran-sema.png" target="_blank" rel="noopener"><img src="ekran-sema.png" alt="" loading="lazy"></a><figcaption data-k="e4"></figcaption></figure>
+    <figure><a href="ekran-toplu.png" target="_blank" rel="noopener"><img src="ekran-toplu.png" alt="" loading="lazy"></a><figcaption data-k="e5"></figcaption></figure>
+    <figure><a href="ekran-onay.png" target="_blank" rel="noopener"><img src="ekran-onay.png" alt="" loading="lazy"></a><figcaption data-k="e6"></figcaption></figure>
+  </section>
 
   <h2 data-k="ozelliklerBaslik"></h2>
   <section class="izgara">
@@ -152,6 +163,13 @@
       fikirBaslik: "Fikriniz mi var?",
       fikirMetin: "Eksik bir özellik, hata ya da kafa karıştıran bir yer mi buldunuz? Yazın, hepsi okunur. GitHub hesabı gerekir.",
       fikirDugme: "Fikir ve öneri yaz",
+      galeriBaslik: "Ekran görüntüleri",
+      e1: "Tablo listesi ve alanları. Başlığa tıklayınca sıralar.",
+      e2: "SQL editörü ve sonuç ızgarası.",
+      e3: "Çoklu sorgu: aynı sorgu üç veritabanında, sonuçlar tek tabloda.",
+      e4: "Şema farkı: iki veritabanının farklarını gösterir.",
+      e5: "Toplu güncelleme: önce önizleme, veri değişmez.",
+      e6: "Toplu güncelleme: uygulamadan önce net bir onay penceresi.",
       kiril: "Bilinen sınır: Kiril alfabesi (WIN1251 veritabanında gerçek Kiril metin) denenmedi ve bozuk görünebilir. Denerseniz sonucu GitHub'dan yazmanız çok yardımcı olur.",
       lisans: "Lisans: MIT. Harici bileşenlerin lisansları LISANSLAR.md dosyasında.",
       alt2: "Kişisel proje, ücretsiz ve açık kaynak. Destek sınırlıdır; fikir ve önerileriniz çok değerlidir.",
@@ -173,6 +191,13 @@
       fikirBaslik: "Got an idea?",
       fikirMetin: "Found a missing feature, a bug or something confusing? Write to us, everything is read. A GitHub account is needed.",
       fikirDugme: "Write an idea or suggestion",
+      galeriBaslik: "Screenshots",
+      e1: "Table list and fields. Click a header to sort.",
+      e2: "SQL editor and result grid.",
+      e3: "Multi query: the same query on three databases, results in one table.",
+      e4: "Schema diff: shows the differences between two databases.",
+      e5: "Bulk update: preview first, no data changes.",
+      e6: "Bulk update: a clear confirmation before applying.",
       kiril: "Known limit: Cyrillic (real Cyrillic text in a WIN1251 database) is untested and may look garbled. If you try it, please report the result on GitHub.",
       lisans: "License: MIT. Third-party licenses are listed in LISANSLAR.md.",
       alt2: "A personal project, free and open source. Support is limited; your ideas and suggestions are very welcome.",
@@ -194,6 +219,13 @@
       fikirBaslik: "Haben Sie eine Idee?",
       fikirMetin: "Eine fehlende Funktion, einen Fehler oder etwas Verwirrendes gefunden? Schreiben Sie uns, alles wird gelesen. Ein GitHub-Konto ist nötig.",
       fikirDugme: "Idee oder Vorschlag schreiben",
+      galeriBaslik: "Screenshots",
+      e1: "Tabellenliste und Felder. Klick auf die Überschrift sortiert.",
+      e2: "SQL-Editor und Ergebnisraster.",
+      e3: "Mehrfachabfrage: dieselbe Abfrage auf drei Datenbanken, Ergebnisse in einer Tabelle.",
+      e4: "Schemavergleich: zeigt die Unterschiede zweier Datenbanken.",
+      e5: "Sammelaktualisierung: zuerst Vorschau, keine Daten ändern sich.",
+      e6: "Sammelaktualisierung: eine klare Bestätigung vor dem Anwenden.",
       kiril: "Bekannte Grenze: Kyrillisch (echter kyrillischer Text in einer WIN1251-Datenbank) ist ungetestet und kann fehlerhaft aussehen. Wenn Sie es ausprobieren, melden Sie das Ergebnis bitte auf GitHub.",
       lisans: "Lizenz: MIT. Lizenzen der Fremdkomponenten stehen in LISANSLAR.md.",
       alt2: "Ein privates Projekt, kostenlos und Open Source. Support ist begrenzt; Ihre Ideen und Vorschläge sind sehr willkommen.",
