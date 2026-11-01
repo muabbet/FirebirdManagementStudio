@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Firebird Management Studio</title>
+<meta name="description" content="Firebird için sade, ücretsiz ve açık kaynak yönetim aracı. Tek exe, kurulum yok.">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<style>
+  :root {
+    --bg: #f3f3f3;
+    --kart: #ffffff;
+    --yazi: #263140;
+    --soluk: #5d6978;
+    --cizgi: #dadada;
+    --vurgu: #2b7dd1;
+    --vurgu-koyu: #1f64ad;
+    --vurgu-yazi: #ffffff;
+    --uyari-zemin: #fff6e5;
+    --uyari-yazi: #6b4a00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #2c3643;
+      --kart: #36424f;
+      --yazi: #eef2f6;
+      --soluk: #b4bfcb;
+      --cizgi: #4b5866;
+      --vurgu: #5aa0e6;
+      --vurgu-koyu: #7bb4ee;
+      --vurgu-yazi: #14202c;
+      --uyari-zemin: #4a4128;
+      --uyari-yazi: #f3e2b5;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--yazi);
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  .sar { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+  header { display: flex; align-items: center; gap: 12px; padding: 20px 0; }
+  header img { width: 40px; height: 40px; }
+  header .ad { font-size: 1.15rem; font-weight: 600; }
+  header .dil { margin-left: auto; display: flex; gap: 6px; }
+  .dil button {
+    border: 1px solid var(--cizgi); background: var(--kart); color: var(--soluk);
+    border-radius: 6px; padding: 4px 10px; font: inherit; font-size: .85rem; cursor: pointer;
+  }
+  .dil button[aria-pressed="true"] { color: var(--vurgu-yazi); background: var(--vurgu); border-color: var(--vurgu); }
+  .hero { text-align: center; padding: 36px 0 24px; }
+  .hero img.buyuk { width: 120px; height: 120px; }
+  h1 { font-size: 2.2rem; line-height: 1.2; margin: 16px 0 8px; font-weight: 600; }
+  .alt { color: var(--soluk); font-size: 1.15rem; max-width: 36em; margin: 0 auto 28px; }
+  .indir {
+    display: inline-block; background: var(--vurgu); color: var(--vurgu-yazi); text-decoration: none;
+    font-size: 1.2rem; font-weight: 600; padding: 14px 34px; border-radius: 8px;
+  }
+  .indir:hover { background: var(--vurgu-koyu); }
+  .gereksinim { margin-top: 12px; color: var(--soluk); font-size: .95rem; }
+  .gereksinim strong { color: var(--yazi); }
+  .ekran { margin: 28px auto 8px; text-align: center; }
+  .ekran img { max-width: 100%; border: 1px solid var(--cizgi); border-radius: 8px; }
+  h2 { font-size: 1.4rem; font-weight: 600; margin: 40px 0 16px; text-align: center; }
+  .izgara { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+  .kart { background: var(--kart); border: 1px solid var(--cizgi); border-radius: 10px; padding: 16px 18px; }
+  .kart h3 { margin: 0 0 4px; font-size: 1.05rem; font-weight: 600; }
+  .kart p { margin: 0; color: var(--soluk); font-size: .95rem; }
+  .not {
+    margin: 28px auto 0; max-width: 40em; background: var(--uyari-zemin); color: var(--uyari-yazi);
+    border-radius: 8px; padding: 12px 16px; font-size: .92rem;
+  }
+  footer { margin: 40px 0 32px; padding-top: 18px; border-top: 1px solid var(--cizgi); color: var(--soluk); font-size: .9rem; text-align: center; }
+  footer a { color: var(--vurgu); }
+  @media (max-width: 520px) {
+    h1 { font-size: 1.7rem; }
+    .indir { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="sar">
+  <header>
+    <img src="logo.svg" alt="">
+    <span class="ad">Firebird Management Studio</span>
+    <div class="dil" role="group" aria-label="Dil / Language / Sprache">
+      <button type="button" data-dil="tr">TR</button>
+      <button type="button" data-dil="en">EN</button>
+      <button type="button" data-dil="de">DE</button>
+    </div>
+  </header>
+
+  <section class="hero">
+    <img class="buyuk" src="logo.svg" alt="Firebird Management Studio">
+    <h1 data-k="baslik"></h1>
+    <p class="alt" data-k="alt"></p>
+    <a class="indir" id="indir" href="INDIRME_BAGLANTISI" data-k="indir"></a>
+    <p class="gereksinim"><strong data-k="gereksinim64"></strong> <span data-k="gereksinimAyrinti"></span></p>
+  </section>
+
+  <div class="ekran"><img src="ekran.png" alt="" onerror="this.parentNode.style.display='none'"></div>
+
+  <h2 data-k="ozelliklerBaslik"></h2>
+  <section class="izgara">
+    <div class="kart"><h3 data-k="o1b"></h3><p data-k="o1"></p></div>
+    <div class="kart"><h3 data-k="o2b"></h3><p data-k="o2"></p></div>
+    <div class="kart"><h3 data-k="o3b"></h3><p data-k="o3"></p></div>
+    <div class="kart"><h3 data-k="o4b"></h3><p data-k="o4"></p></div>
+    <div class="kart"><h3 data-k="o5b"></h3><p data-k="o5"></p></div>
+    <div class="kart"><h3 data-k="o6b"></h3><p data-k="o6"></p></div>
+  </section>
+
+  <p class="not" data-k="kiril"></p>
+
+  <footer>
+    <p data-k="alt2"></p>
+    <p><a id="github" href="GITHUB_BAGLANTISI" data-k="github"></a></p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  var M = {
+    tr: {
+      baslik: "Firebird için sade yönetim aracı",
+      alt: "Tablolarınıza bakın, sorgu yazın, yapıyı düzenleyin. Tek exe, kurulum yok, ücretsiz.",
+      indir: "Windows için indir",
+      gereksinim64: "Windows 10/11, 64 bit gerekir.",
+      gereksinimAyrinti: "32 bit Windows'ta çalışmaz. Windows 7 denenmedi.",
+      ozelliklerBaslik: "Neler yapar?",
+      o1b: "Tek exe", o1: "Firebird istemcisi, diller ve ikonlar exe'nin içinde. Çalıştırmak için başka dosya gerekmez.",
+      o2b: "Firebird 2.5, 3.0, 4.0, 5.0", o2: "Aynı programla eski ve yeni sürümlere bağlanın. Sunucuları ağda kendisi bulur.",
+      o3b: "Türkçe, İngilizce, Almanca", o3: "Dili program açıkken değiştirin. Hata mesajları anlaşılır cümlelerle gelir.",
+      o4b: "SQL editörü ve tablolar", o4: "Renkli editör, sonuç ızgarası, tablo yapısı, index, kısıt ve script üretimi.",
+      o5b: "Birçok veritabanında tek işlem", o5: "Aynı sorguyu birçok veritabanında çalıştırın, şemaları karşılaştırın, önizleyerek toplu güncelleyin.",
+      o6b: "Güvenli", o6: "Tehlikeli işlemler önce önizlenir ve net bir onay penceresi ister. İşlemin SQL'ini görürsünüz.",
+      kiril: "Bilinen sınır: Kiril alfabesi (WIN1251 veritabanında gerçek Kiril metin) denenmedi ve bozuk görünebilir. Denerseniz sonucu GitHub'dan yazmanız çok yardımcı olur.",
+      alt2: "Kişisel proje, ücretsiz ve açık kaynak. Destek sınırlıdır; fikir ve önerileriniz çok değerlidir.",
+      github: "Kaynak kodu ve geri bildirim (GitHub)"
+    },
+    en: {
+      baslik: "A simple management tool for Firebird",
+      alt: "Browse your tables, write queries, edit structure. One exe, no installation, free.",
+      indir: "Download for Windows",
+      gereksinim64: "Windows 10/11, 64-bit required.",
+      gereksinimAyrinti: "It does not run on 32-bit Windows. Windows 7 is untested.",
+      ozelliklerBaslik: "What does it do?",
+      o1b: "A single exe", o1: "The Firebird client, languages and icons are inside the exe. No other files needed.",
+      o2b: "Firebird 2.5, 3.0, 4.0, 5.0", o2: "Connect to old and new versions with one program. It finds servers on your network.",
+      o3b: "Turkish, English, German", o3: "Switch the language while the program runs. Errors come as clear sentences.",
+      o4b: "SQL editor and tables", o4: "Colored editor, result grid, table structure, indexes, constraints and script generation.",
+      o5b: "One action on many databases", o5: "Run the same query on many databases, compare schemas, bulk update with a preview.",
+      o6b: "Safe", o6: "Dangerous actions are previewed first and ask for a clear confirmation. You see the SQL of every action.",
+      kiril: "Known limit: Cyrillic (real Cyrillic text in a WIN1251 database) is untested and may look garbled. If you try it, please report the result on GitHub.",
+      alt2: "A personal project, free and open source. Support is limited; your ideas and suggestions are very welcome.",
+      github: "Source code and feedback (GitHub)"
+    },
+    de: {
+      baslik: "Ein schlichtes Verwaltungswerkzeug für Firebird",
+      alt: "Tabellen ansehen, Abfragen schreiben, Struktur bearbeiten. Eine Exe, keine Installation, kostenlos.",
+      indir: "Für Windows herunterladen",
+      gereksinim64: "Windows 10/11, 64 Bit erforderlich.",
+      gereksinimAyrinti: "Läuft nicht unter 32-Bit-Windows. Windows 7 ist ungetestet.",
+      ozelliklerBaslik: "Was kann es?",
+      o1b: "Eine einzige Exe", o1: "Firebird-Client, Sprachen und Symbole stecken in der Exe. Keine weiteren Dateien nötig.",
+      o2b: "Firebird 2.5, 3.0, 4.0, 5.0", o2: "Mit einem Programm alte und neue Versionen verbinden. Server im Netzwerk werden gefunden.",
+      o3b: "Türkisch, Englisch, Deutsch", o3: "Die Sprache während der Laufzeit wechseln. Fehler kommen als klare Sätze.",
+      o4b: "SQL-Editor und Tabellen", o4: "Farbiger Editor, Ergebnisraster, Tabellenstruktur, Indizes, Constraints und Skripterzeugung.",
+      o5b: "Eine Aktion auf vielen Datenbanken", o5: "Dieselbe Abfrage auf vielen Datenbanken ausführen, Schemas vergleichen, per Vorschau sammelaktualisieren.",
+      o6b: "Sicher", o6: "Gefährliche Aktionen werden zuerst in einer Vorschau gezeigt und verlangen eine klare Bestätigung. Sie sehen das SQL jeder Aktion.",
+      kiril: "Bekannte Grenze: Kyrillisch (echter kyrillischer Text in einer WIN1251-Datenbank) ist ungetestet und kann fehlerhaft aussehen. Wenn Sie es ausprobieren, melden Sie das Ergebnis bitte auf GitHub.",
+      alt2: "Ein privates Projekt, kostenlos und Open Source. Support ist begrenzt; Ihre Ideen und Vorschläge sind sehr willkommen.",
+      github: "Quellcode und Feedback (GitHub)"
+    }
+  };
+
+  function ayarla(dil) {
+    var s = M[dil] || M.tr;
+    document.documentElement.lang = dil;
+    var ogeler = document.querySelectorAll("[data-k]");
+    for (var i = 0; i < ogeler.length; i++) {
+      var k = ogeler[i].getAttribute("data-k");
+      if (s[k] !== undefined) ogeler[i].textContent = s[k];
+    }
+    var dugmeler = document.querySelectorAll(".dil button");
+    for (var j = 0; j < dugmeler.length; j++) {
+      dugmeler[j].setAttribute("aria-pressed", dugmeler[j].getAttribute("data-dil") === dil ? "true" : "false");
+    }
+    try { localStorage.setItem("dil", dil); } catch (e) {}
+  }
+
+  function ilkDil() {
+    var kayitli = null;
+    try { kayitli = localStorage.getItem("dil"); } catch (e) {}
+    if (kayitli && M[kayitli]) return kayitli;
+    var t = (navigator.language || "tr").slice(0, 2).toLowerCase();
+    return M[t] ? t : "en";
+  }
+
+  var dugmeler = document.querySelectorAll(".dil button");
+  for (var i = 0; i < dugmeler.length; i++) {
+    dugmeler[i].addEventListener("click", function () { ayarla(this.getAttribute("data-dil")); });
+  }
+  ayarla(ilkDil());
+})();
+</script>
+</body>
+</html>
