@@ -73,6 +73,9 @@ function FbBaglan(const Tanim: TBaglantiTanimi): TAcikBaglanti;
 { Acik baglanti listesine EKLENMEYEN baglanti (coklu veritabani sorgusu icin): isi bitince cagiran Free eder.
   Karakter seti FbBaglan gibi otomatik algilanir. }
 function FbGeciciBaglan(const Tanim: TBaglantiTanimi): TAcikBaglanti;
+
+{ Ekranda gosterilecek yol: sunucusuz ise dosya yolu, sunuculuysa sunucu:port ve yol (ornek: 192.168.1.5/3050:C:\Veri\FABRIKA.FDB). }
+function BaglantiYolu(const Tanim: TBaglantiTanimi): string;
 { Veritabaninin kendi varsayilan karakter seti ("WIN1251", "UTF8", hic yoksa "NONE"); gecici baglantiyla okunur,
   baglanti listesine girmez. Baglanamazsa FbBaglan gibi istisna firlatir. }
 function KarakterSetiAlgila(const Tanim: TBaglantiTanimi): string;
@@ -665,6 +668,14 @@ end;
 function FbGeciciBaglan(const Tanim: TBaglantiTanimi): TAcikBaglanti;
 begin
   Result := BaglantiKur(Tanim);
+end;
+
+function BaglantiYolu(const Tanim: TBaglantiTanimi): string;
+begin
+  if Tanim.Sunucu = '' then
+    Result := Tanim.VeritabaniYolu
+  else
+    Result := Tanim.Sunucu + '/' + IntToStr(Tanim.Port) + ':' + Tanim.VeritabaniYolu;
 end;
 
 { Cagiran once bu baglantiya ait sekmeleri kapatmis olmalidir. }

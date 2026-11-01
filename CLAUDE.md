@@ -206,6 +206,13 @@ Tablo verisi gridinde (şu an salt okunur) bir hücreyi çift tıklayıp düzelt
 - [x] Hakkında penceresi: yönetici rozetine tıklayınca açılır (ad, sürüm, platform, yetki, lisans, "Sürümü kopyala"); yönetici değilse rozet "Yönetici olarak aç" olur ve sorup yeniden başlatır. Kod: `uYonetici.pas`, `fHakkinda.pas`
 - [ ] **İleride:** "Fikir ve öneri" düğmesi (sahibi için fikirler çok önemli). GitHub yayınlanınca Issues sayfasını açar; o zamana kadar yapılmaz
 
+### Görünüm düzenlemeleri (sahibinin isteği 2026-11-01, 4c denemesinden sonra)
+- [x] Fare bir bağlantının üstüne gelince veritabanı yolu ipucu; durum çubuğunda seçili bağlantının yolu
+- [x] Sekme sağ tık menüsü: Yenile (veriyi yeniden yükler), Sekmeyi kapat, Tüm sekmeleri kapat (onaylı); sağ tıklanan sekme seçilir
+- [x] "Tablolar" dalına çift tıklayınca tablo listesi sekmesi (IBExpert gibi): ad, alan sayısı, açıklama; başlığa tıklayınca sıralar; listede tabloya tıklayınca altta alanları; çift tıklayınca tablo kendi sekmesinde açılır. Kod: `fTabloListe.pas`
+- [x] Şeritte **Görünüm** sekmesi: Ayrıntıyı göster/kapat (alan bölümü), Tüm pencereleri kapat
+- [ ] Sahibinin denemesi ve onayı bekleniyor. Görev çubuğunda eski ikon görünmesi: program yeni ikonu kullanıyor (ölçüldü); görev çubuğuna sabitlenmiş eski kısayol ya da Windows ikon önbelleği
+
 ### Aşama 5: PostgreSQL — İPTAL EDİLDİ (karar 2026-10-31)
 
 Sahibi PostgreSQL desteğini **yapmama** kararı verdi: araç yalnızca Firebird'e özel kalacak. Gerekçe: pgAdmin iyi bir alternatif, iki veritabanını aynı araçta karıştırmak kafa karışıklığı yaratır; pgAdmin'in yavaş açılma sorunu Windows Defender dışlaması ile çözüldü (üretimde hızlı açılıyor). **Ana ilke:** basit ama Firebird için her şeyi yapabilen bir program. Motor seçimi, PostgreSQL sürücüsü, `libpq.dll` gibi hiçbir şey eklenmeyecek; `uMetadata.pas` Firebird'e özel kalır.

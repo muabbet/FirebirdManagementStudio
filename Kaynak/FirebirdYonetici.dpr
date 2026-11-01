@@ -50,6 +50,7 @@ uses
   uSunucuBul in 'uSunucuBul.pas',
   fSunucuSec in 'fSunucuSec.pas' {frmSunucuSec},
   fBaglanti in 'fBaglanti.pas' {frmBaglanti},
+  fTabloListe in 'fTabloListe.pas' {TabloListeSekme: TFrame},
   uTopluGuncelle in 'uTopluGuncelle.pas',
   fTopluGuncelle in 'fTopluGuncelle.pas' {TopluGuncelleSekme: TFrame},
   uSemaFark in 'uSemaFark.pas',

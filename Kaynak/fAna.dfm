@@ -70,7 +70,7 @@ object frmAna: TfrmAna
     Height = 19
     Panels = <
       item
-        Width = 420
+        Width = 560
       end
       item
         Width = 160
@@ -97,6 +97,7 @@ object frmAna: TfrmAna
     PopupMenu = pmNesne
     ReadOnly = True
     RightClickSelect = True
+    ShowHint = True
     TabOrder = 1
     OnChange = tvNesnelerChange
     OnCustomDrawItem = tvNesnelerCustomDrawItem
@@ -104,6 +105,7 @@ object frmAna: TfrmAna
     OnDragDrop = tvNesnelerDragDrop
     OnDragOver = tvNesnelerDragOver
     OnMouseDown = tvNesnelerMouseDown
+    OnMouseMove = tvNesnelerMouseMove
   end
   object bolSol: TSplitter
     Left = 270
@@ -129,6 +131,7 @@ object frmAna: TfrmAna
       PopupMenu = pmSekme
       TabOrder = 0
       OnChange = pcCalismaChange
+      OnMouseDown = pcCalismaMouseDown
     end
     object bolAlt: TSplitter
       Left = 0
@@ -230,10 +233,17 @@ object frmAna: TfrmAna
     end
   end
   object pmSekme: TPopupMenu
+    OnPopup = pmSekmePopup
     Left = 220
     Top = 560
+    object miSekmeYenile: TMenuItem
+      OnClick = miSekmeYenileClick
+    end
     object miSekmeKapat: TMenuItem
       OnClick = miSekmeKapatClick
+    end
+    object miTumSekmeleriKapat: TMenuItem
+      OnClick = miTumSekmeleriKapatClick
     end
   end
 end
