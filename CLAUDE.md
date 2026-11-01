@@ -211,7 +211,8 @@ Tablo verisi gridinde (şu an salt okunur) bir hücreyi çift tıklayıp düzelt
 - [x] Sekme sağ tık menüsü: Yenile (veriyi yeniden yükler), Sekmeyi kapat, Tüm sekmeleri kapat (onaylı); sağ tıklanan sekme seçilir
 - [x] "Tablolar" dalına çift tıklayınca tablo listesi sekmesi (IBExpert gibi): ad, alan sayısı, açıklama; başlığa tıklayınca sıralar; listede tabloya tıklayınca altta alanları; çift tıklayınca tablo kendi sekmesinde açılır. Kod: `fTabloListe.pas`
 - [x] Şeritte **Görünüm** sekmesi: Ayrıntıyı göster/kapat (alan bölümü), Tüm pencereleri kapat
-- [ ] Sahibinin denemesi ve onayı bekleniyor. Görev çubuğunda eski ikon görünmesi: program yeni ikonu kullanıyor (ölçüldü); görev çubuğuna sabitlenmiş eski kısayol ya da Windows ikon önbelleği
+- [x] Alan listesinde **Sıra** kolonu (veritabanındaki eklenme sırası); başlığa tıklayınca sıralanır, Sıra başlığı ilk sıraya döndürür
+- [x] Görev çubuğunda eski ikon: Windows ikon önbelleği; çözüm: programa yeni uygulama kimliği (`uUygulama.pas`, `UygulamaKimliginiAyarla`). Sahibi doğruladı: düzeldi (2026-11-01)
 
 ### Aşama 5: PostgreSQL — İPTAL EDİLDİ (karar 2026-10-31)
 
