@@ -57,6 +57,7 @@ type
     miDomKontrol: TMenuItem;
     miDomAd: TMenuItem;
     miGenDeger: TMenuItem;
+    miTabloBosalt: TMenuItem;
     miNesneSil: TMenuItem;
     miBaglan: TMenuItem;
     miKes: TMenuItem;
@@ -112,6 +113,7 @@ type
     procedure miDomAdClick(Sender: TObject);
     procedure miGenDegerClick(Sender: TObject);
     procedure miNesneSilClick(Sender: TObject);
+    procedure miTabloBosaltClick(Sender: TObject);
     procedure miBaglanClick(Sender: TObject);
     procedure miKesClick(Sender: TObject);
     procedure miYenileClick(Sender: TObject);
@@ -185,6 +187,7 @@ type
     procedure BaglantiyiAc(Dugme: TTreeNode);
     procedure BaglantiyiKapat(Dugme: TTreeNode);
     procedure AgaciYenile(Dugme: TTreeNode);
+    procedure TabloyuBosalt(Dugme: TTreeNode);
     procedure YeniBaglanti(const KlonAd: string);
     procedure BaglantiyiDuzenle(Dugme: TTreeNode);
     procedure KayittanKaldir(Dugme: TTreeNode);
@@ -347,6 +350,7 @@ begin
   miDomAd.Caption := T('MENU_DOM_AD');
   miGenDeger.Caption := T('MENU_GEN_DEGER');
   miNesneSil.Caption := T('MENU_SIL');
+  miTabloBosalt.Caption := T('MENU_TABLO_BOSALT');
   miBaglan.Caption := T('BTN_BAGLAN');
   miKes.Caption := T('BTN_KES');
   miYenile.Caption := T('MENU_YENILE');
@@ -1405,6 +1409,76 @@ begin
   end;
 end;
 
+{ Sag tik "Tum kayitlari sil": net onay (satir sayisi, DELETE komutu, geri alinamaz) + tablo adini yazdirma; sonra tek islemde
+  DELETE FROM. Hata olursa hicbir satir silinmez. Acik tablo sekmeleri yeniden okunur. }
+procedure TfrmAna.TabloyuBosalt(Dugme: TTreeNode);
+var
+  Oge: TAgacOgesi;
+  Bag: TAcikBaglanti;
+  Onay, Yazilan: string;
+  Sayi: Int64;
+  Sonuc: TProsedurSonucu;
+  i: Integer;
+  TabloSekmesi: TTabloSekme;
+begin
+  Oge := OgeAl(Dugme);
+  Bag := FbAcikBaglanti(Oge.BaglantiAd);
+  if Bag = nil then
+    Exit;
+  try
+    Sayi := TabloSatirSayisi(Bag, Oge.Ad);
+    Onay := BosaltmaOnayMetni(Bag, Oge.Ad);
+  except
+    on E: Exception do
+    begin
+      HataYaz(HataMetniniCevir(E), E.Message);
+      Exit;
+    end;
+  end;
+  if Sayi = 0 then
+  begin
+    MesajYaz(TF('MSG_BOSALT_ZATEN_BOS', [Oge.Ad]));
+    Exit;
+  end;
+  if not OnayIste(Onay) then
+  begin
+    MesajYaz(T('MSG_BOSALT_VAZGECILDI'));
+    Exit;
+  end;
+  { Yanlislikla bosaltilmasin diye tablonun adi yazdirilir (tablo silmedeki gibi). }
+  Yazilan := '';
+  if not MetinSor(T('BOSALT_AD_BASLIK'), TF('BOSALT_AD_ETIKET', [Oge.Ad]), Yazilan, False) then
+  begin
+    MesajYaz(T('MSG_BOSALT_VAZGECILDI'));
+    Exit;
+  end;
+  if not SameText(Trim(Yazilan), Oge.Ad) then
+  begin
+    UyariGoster(T('ERR_BOSALT_AD_UYMADI'));
+    MesajYaz(T('MSG_BOSALT_VAZGECILDI'));
+    Exit;
+  end;
+  Sonuc := TabloBosalt(Bag, Oge.Ad);
+  if Sonuc.Basarili then
+  begin
+    MesajYaz(TF('MSG_BOSALT_YAPILDI', [Oge.Ad, Sayi]));
+    { Acik tablo sekmeleri bos tabloyu gostersin. }
+    for i := 0 to pcCalisma.PageCount - 1 do
+    begin
+      TabloSekmesi := SekmeAl(pcCalisma.Pages[i]);
+      if (TabloSekmesi <> nil) and SameText(TabloSekmesi.BaglantiAd, Oge.BaglantiAd) and (TabloSekmesi.TabloAdi = Oge.Ad) then
+        TabloSekmesi.Yenile;
+    end;
+  end
+  else
+  begin
+    HataYaz(TF('ERR_BOSALT_YAPILAMADI', [Oge.Ad]) + ' ' + Sonuc.Cumle, Sonuc.Ayrinti);
+    MesajYaz(T('MSG_BOSALT_GERI_ALINDI'));
+  end;
+  SqlMesajiYaz(Sonuc.Komutlar);
+  DurumuGuncelle;
+end;
+
 { Sag tik "Sil": net onay (nesne, geri alinamaz, yedek, kullananlar), yedek + DROP, sonuc ve SQL mesaj alaninda. }
 procedure TfrmAna.NesneyiSil(Dugme: TTreeNode);
 var
@@ -2166,6 +2240,7 @@ begin
   miDomKontrol.Visible := miDomVarsayilan.Visible;
   miDomAd.Visible := miDomVarsayilan.Visible;
   miNesneSil.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_TABLO, DAL_VIEW, DAL_DOMAIN, DAL_ISTISNA, DAL_GENERATOR]);
+  miTabloBosalt.Visible := Uretilebilir and (OgeAl(Dugme).DalNo = DAL_TABLO);
   { Dala sag tik: yeni exception / domain. }
   miYeniNesne.Visible := (not Bos) and (Tur = atDal) and Acik and (OgeAl(Dugme).DalNo in [DAL_TABLO, DAL_DOMAIN, DAL_ISTISNA, DAL_GENERATOR]);
   if miYeniNesne.Visible then
@@ -2272,6 +2347,12 @@ procedure TfrmAna.miNesneSilClick(Sender: TObject);
 begin
   if tvNesneler.Selected <> nil then
     NesneyiSil(tvNesneler.Selected);
+end;
+
+procedure TfrmAna.miTabloBosaltClick(Sender: TObject);
+begin
+  if tvNesneler.Selected <> nil then
+    TabloyuBosalt(tvNesneler.Selected);
 end;
 
 procedure TfrmAna.miBaglanClick(Sender: TObject);

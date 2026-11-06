@@ -30,6 +30,11 @@ function SilmeKomutu(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string): str
 { Onay penceresinin metni: ne silinecek, geri alinamaz, yedek, kullananlar (en cok 10). }
 function SilmeOnayMetni(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string): string;
 function NesneSil(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string): TProsedurSonucu;
+{ Tablonun TUM satirlarini siler (Firebird'de TRUNCATE yok: DELETE FROM). Tek islemde calisir; hata olursa (baska tablo bu
+  satirlara bagliysa vb.) hicbir satir silinmez. Veri yedeklenmez, tablonun yapisi kalir. }
+function TabloBosalt(Bag: TAcikBaglanti; const Ad: string): TProsedurSonucu;
+{ Bosaltma onayi: satir sayisi, calisacak komut, geri alinamaz uyarisi. }
+function BosaltmaOnayMetni(Bag: TAcikBaglanti; const Ad: string): string;
 
 { Bagimlilik listesini onay metnine yazilacak satirlara cevirir (en cok EN_COK_BAGIMLI, sonra "ve N tane daha"). }
 function BagimlilikMetni(const Liste: TArray<TBagimlilik>): string;
@@ -175,6 +180,22 @@ begin
     daha dogru cumle. }
   if (Tur = ntTablo) and not Result.Basarili and (Result.Cumle = T('ERR_KISIT_FK_BAGLI')) then
     Result.Cumle := T('ERR_TABLO_FK_BAGLI');
+end;
+
+function BosaltmaKomutu(Bag: TAcikBaglanti; const Ad: string): string;
+begin
+  Result := 'DELETE FROM ' + AdiYaz(Bag, Ad);
+end;
+
+function BosaltmaOnayMetni(Bag: TAcikBaglanti; const Ad: string): string;
+begin
+  Result := TF('ONAY_BOSALT', [Ad, TabloSatirSayisi(Bag, Ad), BosaltmaKomutu(Bag, Ad) + ';']);
+end;
+
+function TabloBosalt(Bag: TAcikBaglanti; const Ad: string): TProsedurSonucu;
+begin
+  Result := Default(TProsedurSonucu);
+  MetniCalistir(Bag, BosaltmaKomutu(Bag, Ad), Result);
 end;
 
 function YeniNesneSablonu(Tur: TNesneTuru): string;

@@ -774,5 +774,15 @@
   "MSG_ICE_TAMAM": "In Tabelle %0:s wurden %1:d Zeilen eingefügt (Transaktion bestätigt: Commit).",
   "MSG_ICE_IPTAL": "Import abgebrochen, es wurden keine Zeilen eingefügt.",
   "ERR_ICE_UYGULANAMADI": "Der Import in Tabelle %s ist fehlgeschlagen, es wurden keine Zeilen eingefügt (Transaktion zurückgerollt).",
-  "ERR_ICE_DUZENLEME_ACIK": "Während der Bearbeitung ist kein Import möglich. Erst Speichern oder Rückgängig, dann Bearbeiten beenden."
+  "ERR_ICE_DUZENLEME_ACIK": "Während der Bearbeitung ist kein Import möglich. Erst Speichern oder Rückgängig, dann Bearbeiten beenden.",
+  "MENU_TABLO_BOSALT": "Alle Datensätze löschen",
+  "ONAY_BOSALT": "ALLE Datensätze der Tabelle %s werden gelöscht.\n\nDie Tabelle hat derzeit %d Zeilen. Gelöschte Zeilen können nicht wiederhergestellt werden (Daten werden nicht gesichert); Struktur, Indizes und Constraints der Tabelle bleiben.\n\nAuszuführender Befehl:\n%s\n\nHat die Tabelle Trigger, laufen diese beim Löschen ebenfalls. Hängen andere Tabellen von Datensätzen dieser Tabelle ab, verweigert Firebird das Löschen und es wird keine Zeile gelöscht.\n\nWirklich alle Datensätze löschen?",
+  "BOSALT_AD_BASLIK": "Löschen aller Datensätze bestätigen",
+  "BOSALT_AD_ETIKET": "Geben Sie zum Löschen aller Datensätze den Tabellennamen exakt ein: %s",
+  "ERR_BOSALT_AD_UYMADI": "Der eingegebene Name stimmt nicht mit dem Tabellennamen überein; es wurde kein Datensatz gelöscht.",
+  "MSG_BOSALT_VAZGECILDI": "Abgebrochen, es wurde kein Datensatz gelöscht.",
+  "MSG_BOSALT_ZATEN_BOS": "Tabelle %s ist bereits leer.",
+  "MSG_BOSALT_YAPILDI": "Aus Tabelle %0:s wurden %1:d Datensätze gelöscht (Transaktion bestätigt: Commit).",
+  "ERR_BOSALT_YAPILAMADI": "Die Datensätze der Tabelle %s konnten nicht gelöscht werden.",
+  "MSG_BOSALT_GERI_ALINDI": "Transaktion zurückgerollt; es wurde kein Datensatz gelöscht."
 }

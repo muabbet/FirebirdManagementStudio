@@ -774,5 +774,15 @@
   "MSG_ICE_TAMAM": "%1:d rows inserted into table %0:s (transaction committed).",
   "MSG_ICE_IPTAL": "Import cancelled, no rows were inserted.",
   "ERR_ICE_UYGULANAMADI": "The import into table %s failed, no rows were inserted (transaction rolled back).",
-  "ERR_ICE_DUZENLEME_ACIK": "Importing is not possible while editing is on. First Save or Undo, then Finish editing."
+  "ERR_ICE_DUZENLEME_ACIK": "Importing is not possible while editing is on. First Save or Undo, then Finish editing.",
+  "MENU_TABLO_BOSALT": "Delete all records",
+  "ONAY_BOSALT": "ALL records in table %s will be deleted.\n\nThe table currently has %d rows. Deleted rows cannot be restored (data is not backed up); the table's structure, indexes and constraints stay.\n\nCommand to run:\n%s\n\nIf the table has triggers they also run during the delete. If other tables depend on records in this table, Firebird refuses the delete and no row is deleted.\n\nReally delete all records?",
+  "BOSALT_AD_BASLIK": "Confirm deleting all records",
+  "BOSALT_AD_ETIKET": "To delete all records, type the table name exactly: %s",
+  "ERR_BOSALT_AD_UYMADI": "The name you typed does not match the table name; no record was deleted.",
+  "MSG_BOSALT_VAZGECILDI": "Cancelled, no record was deleted.",
+  "MSG_BOSALT_ZATEN_BOS": "Table %s is already empty.",
+  "MSG_BOSALT_YAPILDI": "%1:d records deleted from table %0:s (transaction committed).",
+  "ERR_BOSALT_YAPILAMADI": "The records of table %s could not be deleted.",
+  "MSG_BOSALT_GERI_ALINDI": "Transaction rolled back; no record was deleted."
 }

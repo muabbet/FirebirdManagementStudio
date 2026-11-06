@@ -13,7 +13,7 @@ uses
   System.SysUtils, System.Classes, System.StrUtils, System.IOUtils, System.Variants, Data.DB,
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.Comp.Client, FireDAC.Phys.FB,
   FireDAC.ConsoleUI.Wait,
-  uDil, uBaglanti, uSorgu, uKayitDuzelt;
+  uDil, uBaglanti, uSorgu, uKayitDuzelt, uProsedur, uNesneYonet;
 
 const
   { c g i(noktasiz) o s u I(noktali) }
@@ -507,9 +507,43 @@ begin
   end;
 end;
 
+{ Tabloyu bosalt: tum satirlar tek islemde silinir, yapi kalir; baska tablo bagliysa hicbiri silinmez. }
+procedure BosaltTesti;
+var
+  Sonuc: TProsedurSonucu;
+  Onay: string;
+begin
+  Komut('CREATE TABLE T_BOS (ID INTEGER NOT NULL PRIMARY KEY, AD VARCHAR(10))');
+  Komut('CREATE TABLE T_BOS_ALT (ID INTEGER NOT NULL PRIMARY KEY, BOS_ID INTEGER REFERENCES T_BOS (ID))');
+  Komut('INSERT INTO T_BOS VALUES (1, ''a'')');
+  Komut('INSERT INTO T_BOS VALUES (2, ''b'')');
+  Komut('INSERT INTO T_BOS VALUES (3, ''c'')');
+  Onay := BosaltmaOnayMetni(Bag, 'T_BOS');
+  Kontrol('onay metni tablo adini, satir sayisini ve DELETE komutunu soyler',
+    (Pos('T_BOS', Onay) > 0) and (Pos('3', Onay) > 0) and (Pos('DELETE FROM T_BOS;', Onay) > 0));
+  Cikti.Add('      ' + StringReplace(Copy(Onay, Pos('DELETE', Onay), 40), #10, ' | ', [rfReplaceAll]));
+  { Bagli kayit varken: reddedilir, hicbiri silinmez }
+  Komut('INSERT INTO T_BOS_ALT VALUES (1, 2)');
+  Sonuc := TabloBosalt(Bag, 'T_BOS');
+  Kontrol('bagli kayit varken bosaltma basarisiz', not Sonuc.Basarili);
+  Kontrol('hata cumlesi anlasilir', Sonuc.Cumle <> '');
+  Kontrol('hicbir satir silinmedi (3 satir)', Oku('select count(*) from t_bos') = '3');
+  Komut('DELETE FROM T_BOS_ALT');
+  { Bagimlilik kalkinca basarili }
+  Sonuc := TabloBosalt(Bag, 'T_BOS');
+  Kontrol('bosaltma basarili', Sonuc.Basarili);
+  if not Sonuc.Basarili then
+    Cikti.Add('      ' + Sonuc.Cumle + ' | ' + Sonuc.Ayrinti);
+  Kontrol('tum satirlar silindi', Oku('select count(*) from t_bos') = '0');
+  Kontrol('tablo yapisi duruyor', Oku('select count(*) from rdb$relation_fields where rdb$relation_name = ''T_BOS''') = '2');
+  Kontrol('calisan komut kaydedildi', (Length(Sonuc.Komutlar) = 1) and (Pos('DELETE FROM', Sonuc.Komutlar[0]) > 0));
+  Komut('INSERT INTO T_BOS VALUES (1, ''yeni'')');
+  Kontrol('bosaltilan tabloya yeniden ekleme calisir', Oku('select ad from t_bos where id = 1') = 'yeni');
+end;
+
 procedure DilAnahtarTesti;
 const
-  Anahtarlar: array[0..16] of string = ('BTN_KAYIT_SIL', 'ONAY_DUZ_SILINECEK', 'BTN_YENI_KAYIT', 'BTN_DUZENLE', 'BTN_DUZ_BITIR', 'BTN_GERI_AL', 'LBL_DUZ_DURUM',
+  Anahtarlar: array[0..26] of string = ('MENU_TABLO_BOSALT', 'ONAY_BOSALT', 'BOSALT_AD_BASLIK', 'BOSALT_AD_ETIKET', 'ERR_BOSALT_AD_UYMADI', 'MSG_BOSALT_VAZGECILDI', 'MSG_BOSALT_ZATEN_BOS', 'MSG_BOSALT_YAPILDI', 'ERR_BOSALT_YAPILAMADI', 'MSG_BOSALT_GERI_ALINDI', 'BTN_KAYIT_SIL', 'ONAY_DUZ_SILINECEK', 'BTN_YENI_KAYIT', 'BTN_DUZENLE', 'BTN_DUZ_BITIR', 'BTN_GERI_AL', 'LBL_DUZ_DURUM',
     'ONAY_DUZ_ATIL', 'ONAY_DUZ_KAYDET', 'MSG_DUZ_DAHA_FAZLA', 'MSG_DUZ_DEGISIKLIK_YOK', 'MSG_DUZ_VAZGECILDI',
     'MSG_DUZ_TAMAM', 'ERR_DUZ_UYGULANAMADI', 'MSG_DUZ_GERI_ALINDI', 'ERR_DUZ_ANAHTAR_YOK', 'ERR_DUZ_SATIR_SAYISI');
 var
@@ -575,6 +609,8 @@ begin
       CokluTesti;
       Cikti.Add('--- Silme ---');
       SilmeTesti;
+      Cikti.Add('--- Bosaltma ---');
+      BosaltTesti;
       Cikti.Add('--- Dil anahtarlari ---');
       DilAnahtarTesti;
       FbBaglantiyiKes(Bag);

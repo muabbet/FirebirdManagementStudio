@@ -774,5 +774,15 @@
   "MSG_ICE_TAMAM": "%s tablosuna %d satır eklendi (işlem onaylandı: commit).",
   "MSG_ICE_IPTAL": "İçe aktarma iptal edildi, hiçbir satır eklenmedi.",
   "ERR_ICE_UYGULANAMADI": "%s tablosuna içe aktarma yapılamadı, hiçbir satır eklenmedi (işlem geri alındı).",
-  "ERR_ICE_DUZENLEME_ACIK": "Düzenleme açıkken içe aktarma yapılamaz. Önce Kaydet ya da Geri al, sonra Düzenlemeyi bitir."
+  "ERR_ICE_DUZENLEME_ACIK": "Düzenleme açıkken içe aktarma yapılamaz. Önce Kaydet ya da Geri al, sonra Düzenlemeyi bitir.",
+  "MENU_TABLO_BOSALT": "Tüm kayıtları sil",
+  "ONAY_BOSALT": "%s tablosundaki TÜM kayıtlar silinecek.\n\nTabloda şu an %d satır var. Silinen satırlar geri getirilemez (veriler yedeklenmez); tablonun yapısı, index'leri ve kısıtları kalır.\n\nÇalışacak komut:\n%s\n\nTabloda tetikleyici (trigger) varsa silme sırasında o da çalışır. Başka tablolar bu tablodaki kayıtlara bağlıysa Firebird silmeyi reddeder ve hiçbir satır silinmez.\n\nGerçekten tüm kayıtlar silinsin mi?",
+  "BOSALT_AD_BASLIK": "Tüm kayıtların silinmesini onaylayın",
+  "BOSALT_AD_ETIKET": "Tüm kayıtları silmek için tablonun adını aynen yazın: %s",
+  "ERR_BOSALT_AD_UYMADI": "Yazılan ad tablonun adıyla uyuşmuyor; hiçbir kayıt silinmedi.",
+  "MSG_BOSALT_VAZGECILDI": "Vazgeçildi, hiçbir kayıt silinmedi.",
+  "MSG_BOSALT_ZATEN_BOS": "%s tablosu zaten boş.",
+  "MSG_BOSALT_YAPILDI": "%s tablosundaki %d kayıt silindi (işlem onaylandı: commit).",
+  "ERR_BOSALT_YAPILAMADI": "%s tablosundaki kayıtlar silinemedi.",
+  "MSG_BOSALT_GERI_ALINDI": "İşlem geri alındı (rollback); hiçbir kayıt silinmedi."
 }
