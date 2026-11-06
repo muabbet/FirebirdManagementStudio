@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fTabloKopya, fAktifBaglanti;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fTabloKopya, fAktifBaglanti, fTabloTasarim;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -52,6 +52,7 @@ type
     miYetkiler: TMenuItem;
     miScriptUret: TMenuItem;
     miNesneDuzenle: TMenuItem;
+    miYeniTabloTasarim: TMenuItem;
     miYeniNesne: TMenuItem;
     miDomVarsayilan: TMenuItem;
     miDomKontrol: TMenuItem;
@@ -110,6 +111,7 @@ type
     procedure miScriptUretClick(Sender: TObject);
     procedure miNesneDuzenleClick(Sender: TObject);
     procedure miYeniNesneClick(Sender: TObject);
+    procedure miYeniTabloTasarimClick(Sender: TObject);
     procedure miDomVarsayilanClick(Sender: TObject);
     procedure miDomKontrolClick(Sender: TObject);
     procedure miDomAdClick(Sender: TObject);
@@ -192,6 +194,7 @@ type
     procedure BaglantiyiKapat(Dugme: TTreeNode);
     procedure AgaciYenile(Dugme: TTreeNode);
     procedure TabloyuBosalt(Dugme: TTreeNode);
+    procedure TabloyuTasarla(Dal: TTreeNode);
     procedure TabloyuKopyala(Dugme: TTreeNode);
     procedure BaglantiAgaciniYenile(const BaglantiAd: string);
     procedure YeniBaglanti(const KlonAd: string);
@@ -359,6 +362,7 @@ begin
   miNesneSil.Caption := T('MENU_SIL');
   miTabloBosalt.Caption := T('MENU_TABLO_BOSALT');
   miTabloKopyala.Caption := T('MENU_TABLO_KOPYALA');
+  miYeniTabloTasarim.Caption := T('MENU_YENI_TABLO_TASARIM');
   miBaglan.Caption := T('BTN_BAGLAN');
   miKes.Caption := T('BTN_KES');
   miYenile.Caption := T('MENU_YENILE');
@@ -456,6 +460,20 @@ begin
       AgaciYenile(tvNesneler.Items[i]);
       Exit;
     end;
+end;
+
+{ Tablolar dalina sag tik "Yeni tablo (tasarimla)": kolonlar gridde duzenlenir, olusacak SQL altta gorunur; tablo olusunca dal yenilenir. }
+procedure TfrmAna.TabloyuTasarla(Dal: TTreeNode);
+var
+  Bag: TAcikBaglanti;
+  YeniTablo: string;
+begin
+  Bag := FbAcikBaglanti(OgeAl(Dal).BaglantiAd);
+  if Bag = nil then
+    Exit;
+  if TabloTasarimPenceresiniGoster(Bag, SqlMesajiYaz, memSonuc.Lines, YeniTablo) then
+    DalYenile(Dal);
+  DurumuGuncelle;
 end;
 
 { Sag tik "Baska veritabanina kopyala": pencere (hedef veritabani ve ad, net onay, tek islem); sonra hedef baglantinin agaci yenilenir. }
@@ -2287,6 +2305,7 @@ begin
   miTabloKopyala.Visible := miTabloBosalt.Visible;
   { Dala sag tik: yeni exception / domain. }
   miYeniNesne.Visible := (not Bos) and (Tur = atDal) and Acik and (OgeAl(Dugme).DalNo in [DAL_TABLO, DAL_DOMAIN, DAL_ISTISNA, DAL_GENERATOR]);
+  miYeniTabloTasarim.Visible := miYeniNesne.Visible and (OgeAl(Dugme).DalNo = DAL_TABLO);
   if miYeniNesne.Visible then
     case OgeAl(Dugme).DalNo of
       DAL_TABLO: miYeniNesne.Caption := T('MENU_YENI_TABLO');
@@ -2391,6 +2410,12 @@ procedure TfrmAna.miNesneSilClick(Sender: TObject);
 begin
   if tvNesneler.Selected <> nil then
     NesneyiSil(tvNesneler.Selected);
+end;
+
+procedure TfrmAna.miYeniTabloTasarimClick(Sender: TObject);
+begin
+  if tvNesneler.Selected <> nil then
+    TabloyuTasarla(tvNesneler.Selected);
 end;
 
 procedure TfrmAna.miTabloKopyalaClick(Sender: TObject);

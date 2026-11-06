@@ -183,6 +183,9 @@ object frmAna: TfrmAna
     object miNesneDuzenle: TMenuItem
       OnClick = miNesneDuzenleClick
     end
+    object miYeniTabloTasarim: TMenuItem
+      OnClick = miYeniTabloTasarimClick
+    end
     object miYeniNesne: TMenuItem
       OnClick = miYeniNesneClick
     end

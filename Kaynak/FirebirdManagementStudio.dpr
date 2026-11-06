@@ -59,6 +59,8 @@ uses
   fTabloKopya in 'fTabloKopya.pas' {frmTabloKopya},
   uAktifBaglanti in 'uAktifBaglanti.pas',
   fAktifBaglanti in 'fAktifBaglanti.pas' {frmAktifBaglanti},
+  uTabloTasarim in 'uTabloTasarim.pas',
+  fTabloTasarim in 'fTabloTasarim.pas' {frmTabloTasarim},
   fTopluGuncelle in 'fTopluGuncelle.pas' {TopluGuncelleSekme: TFrame},
   uSemaFark in 'uSemaFark.pas',
   fSemaFark in 'fSemaFark.pas' {SemaFarkSekme: TFrame},
