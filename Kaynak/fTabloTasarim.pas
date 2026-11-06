@@ -7,7 +7,7 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes, System.Types, Vcl.Controls, Vcl.Forms, Vcl.StdCtrls,
-  Vcl.ExtCtrls, Vcl.Grids, Vcl.Dialogs,
+  Vcl.ExtCtrls, Vcl.Grids, Vcl.Dialogs, Vcl.Menus, Vcl.Graphics,
   uDil, uOnay, uBaglanti, uKullanici, uMetadata, uKolon, uProsedur, uTabloTasarim;
 
 type
@@ -16,7 +16,7 @@ type
     edtTablo: TEdit;
     lblIpucu: TLabel;
     gridKolon: TStringGrid;
-    cmbHucre: TComboBox;
+    pmListe: TPopupMenu;
     pnlDugme: TPanel;
     btnEkle: TButton;
     btnCikar: TButton;
@@ -29,11 +29,12 @@ type
     btnKapat: TButton;
     btnOlustur: TButton;
     procedure TabloAdiDegisti(Sender: TObject);
+    procedure gridKolonDrawCell(Sender: TObject; ACol, ARow: Integer; Rect: TRect; State: TGridDrawState);
     procedure gridKolonKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+    procedure gridKolonMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure gridKolonSelectCell(Sender: TObject; ACol, ARow: Integer; var CanSelect: Boolean);
     procedure gridKolonSetEditText(Sender: TObject; ACol, ARow: Integer; const Value: string);
-    procedure gridKolonTopLeftChanged(Sender: TObject);
-    procedure HucreSecildi(Sender: TObject);
+    procedure ListeOgesiSecildi(Sender: TObject);
     procedure btnEkleClick(Sender: TObject);
     procedure btnCikarClick(Sender: TObject);
     procedure btnYukariClick(Sender: TObject);
@@ -47,6 +48,9 @@ type
     FKimlik: Boolean;
     FOlustu: Boolean;
     FYeniAd: string;
+    { Acik listenin (menunun) hangi hucre icin acildigi. }
+    FListeSutun: Integer;
+    FListeSatir: Integer;
     procedure YazilariYaz;
     procedure SatiriYaz(Satir: Integer; const Ad, Tip, Boyut: string; Bos, Birincil, Oto: Boolean);
     procedure SatirEkle(const Ad, Tip, Boyut: string; Bos, Birincil, Oto: Boolean);
@@ -56,9 +60,11 @@ type
     function EvetHayir(Deger: Boolean): string;
     function EvetMi(const Metin: string): Boolean;
     function KutuSutunuMu(Sutun: Integer): Boolean;
-    procedure KutuyuKonumla(Sutun, Satir: Integer);
-    procedure KutuyuAc(Sutun, Satir: Integer);
+    procedure ListeyiAc(Sutun, Satir: Integer);
     procedure Guncelle;
+  public
+    { Hucreye liste degeri yazar (tip secilirse boyut varsayilana doner, birincil anahtar bos olamaz olur). Liste menusu ve testler kullanir. }
+    procedure DegerSec(Sutun, Satir: Integer; const Deger: string);
   end;
 
 { Pencereyi gosterir. SqlYaz: calisan CREATE TABLE'in SQL karsiligi; Sonuc: ana pencerenin sonuc alani.
@@ -263,45 +269,97 @@ begin
   Guncelle;
 end;
 
-{ ---------- Hucredeki acilir liste ---------- }
+{ ---------- Hucredeki acilir liste (menu) ---------- }
 
-procedure TfrmTabloTasarim.KutuyuKonumla(Sutun, Satir: Integer);
+{ Liste sutunlarinda hucreyi tiklayinca ya da Bosluk / Enter'a basinca, degerler hucrenin altinda acilir menu olarak cikar. Secilen deger
+  dogrudan hucreye yazilir (ust uste binen bilesen, odak ya da duzenleyici sorunu yok). }
+procedure TfrmTabloTasarim.ListeyiAc(Sutun, Satir: Integer);
 var
+  Ogeler: TStringList;
+  Tip: TVeriTipi;
+  Oge: TMenuItem;
   Alan: TRect;
+  Nokta: TPoint;
+  i: Integer;
 begin
   if (Satir < 1) or not KutuSutunuMu(Sutun) then
-  begin
-    cmbHucre.Visible := False;
     Exit;
+  Ogeler := TStringList.Create;
+  try
+    if Sutun = SUTUN_TIP then
+      for Tip in FTipler do
+        Ogeler.Add(Tip.Ad)
+    else
+    begin
+      Ogeler.Add(T('TAS_EVET'));
+      Ogeler.Add(T('TAS_HAYIR'));
+    end;
+    pmListe.Items.Clear;
+    FListeSutun := Sutun;
+    FListeSatir := Satir;
+    for i := 0 to Ogeler.Count - 1 do
+    begin
+      Oge := TMenuItem.Create(pmListe);
+      Oge.Caption := Ogeler[i];
+      Oge.Checked := SameText(Ogeler[i], gridKolon.Cells[Sutun, Satir]);
+      Oge.OnClick := ListeOgesiSecildi;
+      { Cok uzun listede (tipler) ikinci sutuna gecsin, ekrandan tasmasin. }
+      if (Ogeler.Count > 20) and (i > 0) and (i mod 20 = 0) then
+        Oge.Break := mbBarBreak;
+      pmListe.Items.Add(Oge);
+    end;
+  finally
+    Ogeler.Free;
   end;
   Alan := gridKolon.CellRect(Sutun, Satir);
-  if (Alan.Right <= Alan.Left) or (Alan.Bottom <= Alan.Top) then
-  begin
-    cmbHucre.Visible := False;
-    Exit;
-  end;
-  cmbHucre.Left := Alan.Left;
-  cmbHucre.Top := Alan.Top;
-  cmbHucre.Width := Alan.Right - Alan.Left;
+  Nokta := gridKolon.ClientToScreen(Point(Alan.Left, Alan.Bottom));
+  pmListe.Popup(Nokta.X, Nokta.Y);
 end;
 
-{ Verilen hucre icin liste doldurulur ve hucrenin ustunde gosterilir (hucre sutunu liste sutunu degilse gizlenir). }
-procedure TfrmTabloTasarim.KutuyuAc(Sutun, Satir: Integer);
+procedure TfrmTabloTasarim.ListeOgesiSecildi(Sender: TObject);
+begin
+  DegerSec(FListeSutun, FListeSatir, TMenuItem(Sender).Caption);
+end;
+
+{ Liste degeri hucreye yazilir. Tip degisince boyut varsayilana doner; birincil anahtar ya da otomatik artan secilince bos olamaz olur. }
+procedure TfrmTabloTasarim.DegerSec(Sutun, Satir: Integer; const Deger: string);
 var
   Tip: TVeriTipi;
 begin
-  cmbHucre.Items.Clear;
+  gridKolon.Cells[Sutun, Satir] := Deger;
   if Sutun = SUTUN_TIP then
-    for Tip in FTipler do
-      cmbHucre.Items.Add(Tip.Ad)
-  else
   begin
-    cmbHucre.Items.Add(T('TAS_EVET'));
-    cmbHucre.Items.Add(T('TAS_HAYIR'));
-  end;
-  cmbHucre.ItemIndex := cmbHucre.Items.IndexOf(gridKolon.Cells[Sutun, Satir]);
-  cmbHucre.Visible := (Satir >= 1) and KutuSutunuMu(Sutun);
-  KutuyuKonumla(Sutun, Satir);
+    if TasarimTipiBul(Deger, FTipler, Tip) then
+      gridKolon.Cells[SUTUN_BOYUT, Satir] := TasarimBoyutVarsayilani(Tip);
+  end
+  else if ((Sutun = SUTUN_BIRINCIL) or (Sutun = SUTUN_OTO)) and EvetMi(Deger) then
+    gridKolon.Cells[SUTUN_BOS, Satir] := T('TAS_EVET');
+  Guncelle;
+end;
+
+procedure TfrmTabloTasarim.gridKolonMouseUp(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
+var
+  Hucre: TGridCoord;
+begin
+  if Button <> mbLeft then
+    Exit;
+  Hucre := gridKolon.MouseCoord(X, Y);
+  if (Hucre.Y >= 1) and KutuSutunuMu(Hucre.X) then
+    ListeyiAc(Hucre.X, Hucre.Y);
+end;
+
+{ Liste sutunlarindaki hucrelere kucuk bir asagi ok cizilir: tiklayinca liste acilir. }
+procedure TfrmTabloTasarim.gridKolonDrawCell(Sender: TObject; ACol, ARow: Integer; Rect: TRect; State: TGridDrawState);
+var
+  Orta, Ust: Integer;
+begin
+  if (ARow < 1) or not KutuSutunuMu(ACol) then
+    Exit;
+  Orta := Rect.Right - 12;
+  Ust := (Rect.Top + Rect.Bottom) div 2 - 2;
+  gridKolon.Canvas.Brush.Color := clGrayText;
+  gridKolon.Canvas.Pen.Color := clGrayText;
+  gridKolon.Canvas.Polygon([Point(Orta - 4, Ust), Point(Orta + 4, Ust), Point(Orta, Ust + 5)]);
 end;
 
 procedure TfrmTabloTasarim.gridKolonSelectCell(Sender: TObject; ACol, ARow: Integer; var CanSelect: Boolean);
@@ -311,48 +369,16 @@ begin
     gridKolon.Options := gridKolon.Options - [goEditing]
   else
     gridKolon.Options := gridKolon.Options + [goEditing];
-  { Secim henuz tasinmadi: liste, hedef hucreye (ACol, ARow) gore acilir. }
-  KutuyuAc(ACol, ARow);
 end;
 
-procedure TfrmTabloTasarim.gridKolonTopLeftChanged(Sender: TObject);
-begin
-  KutuyuKonumla(gridKolon.Col, gridKolon.Row);
-end;
-
-{ Bosluk ya da Enter: listeye gec ve ac (klavyeyle secim). }
+{ Bosluk ya da Enter: liste sutununda listeyi ac (klavyeyle secim). }
 procedure TfrmTabloTasarim.gridKolonKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
 begin
-  if ((Key = VK_SPACE) or (Key = VK_RETURN)) and KutuSutunuMu(gridKolon.Col) and (gridKolon.Row >= 1) and cmbHucre.Visible then
+  if ((Key = VK_SPACE) or (Key = VK_RETURN)) and (gridKolon.Row >= 1) and KutuSutunuMu(gridKolon.Col) then
   begin
-    cmbHucre.SetFocus;
-    cmbHucre.DroppedDown := True;
+    ListeyiAc(gridKolon.Col, gridKolon.Row);
     Key := 0;
   end;
-end;
-
-{ Listeden secilen deger hucreye yazilir. Tip degisince boyut varsayilana doner; birincil anahtar bos olamaz sayilir. }
-procedure TfrmTabloTasarim.HucreSecildi(Sender: TObject);
-var
-  Tip: TVeriTipi;
-  Satir, Sutun: Integer;
-begin
-  if cmbHucre.ItemIndex < 0 then
-    Exit;
-  Satir := gridKolon.Row;
-  Sutun := gridKolon.Col;
-  gridKolon.Cells[Sutun, Satir] := cmbHucre.Text;
-  if Sutun = SUTUN_TIP then
-  begin
-    if TasarimTipiBul(cmbHucre.Text, FTipler, Tip) then
-      gridKolon.Cells[SUTUN_BOYUT, Satir] := TasarimBoyutVarsayilani(Tip);
-  end
-  else if (Sutun = SUTUN_BIRINCIL) and EvetMi(cmbHucre.Text) then
-    gridKolon.Cells[SUTUN_BOS, Satir] := T('TAS_EVET')
-  else if (Sutun = SUTUN_OTO) and EvetMi(cmbHucre.Text) then
-    gridKolon.Cells[SUTUN_BOS, Satir] := T('TAS_EVET');
-  Guncelle;
-  gridKolon.SetFocus;
 end;
 
 procedure TfrmTabloTasarim.gridKolonSetEditText(Sender: TObject; ACol, ARow: Integer; const Value: string);
@@ -390,7 +416,6 @@ begin
     end;
     gridKolon.RowCount := gridKolon.RowCount - 1;
   end;
-  KutuyuAc(gridKolon.Col, gridKolon.Row);
   Guncelle;
 end;
 
@@ -400,7 +425,6 @@ begin
   begin
     SatirlariTasi(gridKolon.Row, gridKolon.Row - 1);
     gridKolon.Row := gridKolon.Row - 1;
-    KutuyuAc(gridKolon.Col, gridKolon.Row);
     Guncelle;
   end;
 end;
@@ -411,7 +435,6 @@ begin
   begin
     SatirlariTasi(gridKolon.Row, gridKolon.Row + 1);
     gridKolon.Row := gridKolon.Row + 1;
-    KutuyuAc(gridKolon.Col, gridKolon.Row);
     Guncelle;
   end;
 end;

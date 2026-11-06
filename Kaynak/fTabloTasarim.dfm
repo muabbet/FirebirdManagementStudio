@@ -49,20 +49,16 @@ object frmTabloTasarim: TfrmTabloTasarim
     RowCount = 2
     Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goColSizing, goTabs, goEditing, goThumbTracking]
     TabOrder = 1
+    OnDrawCell = gridKolonDrawCell
     OnKeyDown = gridKolonKeyDown
+    OnMouseUp = gridKolonMouseUp
     OnSelectCell = gridKolonSelectCell
     OnSetEditText = gridKolonSetEditText
-    OnTopLeftChanged = gridKolonTopLeftChanged
-    object cmbHucre: TComboBox
-      Left = 0
-      Top = 0
-      Width = 120
-      Height = 25
-      Style = csDropDownList
-      TabOrder = 0
-      Visible = False
-      OnChange = HucreSecildi
-    end
+  end
+  object pmListe: TPopupMenu
+    AutoHotkeys = maManual
+    Left = 700
+    Top = 140
   end
   object pnlDugme: TPanel
     Left = 12
