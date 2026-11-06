@@ -727,7 +727,7 @@
   "LBL_DUZ_DURUM": "Bearbeitung aktiv: %d Änderung(en) ausstehend",
   "LBL_DUZ_IPUCU": "BEARBEITUNG AKTIV. Transaktion: geschlossen. %d Änderung(en) ausstehend (noch nicht in die Datenbank geschrieben)",
   "ONAY_DUZ_ATIL": "%d nicht gespeicherte Änderung(en) werden verworfen. Es wurde nichts in die Datenbank geschrieben.\n\nFortfahren?",
-  "ONAY_DUZ_KAYDET": "%s: %d Datensatz/Datensätze werden eingefügt oder aktualisiert. Alles läuft in einer Transaktion; schlägt einer fehl, wird keiner angewendet.\n\nAuszuführende Befehle:",
+  "ONAY_DUZ_KAYDET": "%s: %d Befehl(e) werden ausgeführt (Einfügen, Aktualisieren oder Löschen). Alles läuft in einer Transaktion; schlägt einer fehl, wird keiner angewendet.\n\nAuszuführende Befehle:",
   "MSG_DUZ_DAHA_FAZLA": "... und %d weitere(r) Befehl(e).",
   "MSG_DUZ_DEGISIKLIK_YOK": "Es gibt keine Änderungen zu speichern.",
   "MSG_DUZ_VAZGECILDI": "Abgebrochen, die Datenbank wurde nicht verändert. Die Änderungen warten weiter im Raster.",

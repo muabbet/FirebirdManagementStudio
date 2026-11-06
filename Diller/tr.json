@@ -727,7 +727,7 @@
   "LBL_DUZ_DURUM": "Düzenleme açık: %d değişiklik bekliyor",
   "LBL_DUZ_IPUCU": "DÜZENLEME AÇIK. İşlem: kapalı. %d değişiklik bekliyor (henüz veritabanına yazılmadı)",
   "ONAY_DUZ_ATIL": "%d kaydedilmemiş değişiklik atılacak. Veritabanına hiçbir şey yazılmadı.\n\nDevam edilsin mi?",
-  "ONAY_DUZ_KAYDET": "%s tablosunda %d kayıt eklenecek veya güncellenecek. Hepsi tek işlemde çalışır; biri başarısız olursa hiçbiri uygulanmaz.\n\nÇalışacak komutlar:",
+  "ONAY_DUZ_KAYDET": "%s tablosunda %d komut çalışacak (ekleme, güncelleme veya silme). Hepsi tek işlemde çalışır; biri başarısız olursa hiçbiri uygulanmaz.\n\nÇalışacak komutlar:",
   "MSG_DUZ_DAHA_FAZLA": "... ve %d komut daha.",
   "MSG_DUZ_DEGISIKLIK_YOK": "Kaydedilecek değişiklik yok.",
   "MSG_DUZ_VAZGECILDI": "Vazgeçildi, veritabanına dokunulmadı. Değişiklikler gridde bekliyor.",
