@@ -18,7 +18,9 @@ Firebird için sade, ücretsiz ve açık kaynak yönetim aracı. SSMS'e (SQL Ser
 
 - **Gezme:** Kayıtlı bağlantılar (klasörlere konabilir, aynı anda birden fazlası açık kalabilir). Tablolar, View'lar, Prosedürler, Trigger'lar, Domain'ler, Exception'lar, Generator'lar. Tablolar dalına çift tıklayınca tüm tablolar listesi (ad, alan sayısı, açıklama, başlığa tıklayınca sıralama, alt bölümde alanlar).
 - **SQL editörü:** Renklendirme, `F5` ile çalıştırma, çoklu komut, `Ctrl+Boşluk` otomatik tamamlama, sorgu planı. Sonuçlar parça parça yüklenir; ızgarada sıralama, zebra, NULL gösterimi, otomatik genişlik, `Ctrl+C` (Excel'e yapıştırılır), uzun metin ve BLOB kısaltma.
-- **Tablo yapısı:** Kolon ekle, adını ve tipini değiştir, sil; index ve kısıt (PK, UNIQUE, FK, CHECK) ekle ve sil; yeni tablo, tablo sil; bağımlılıklar. Her yönetim işleminin SQL'i alt alanda görünür.
+- **Tablo yapısı:** Kolon ekle, adını ve tipini değiştir, sil; index ve kısıt (PK, UNIQUE, FK, CHECK) ekle ve sil; yeni tablo (SQL ile ya da **gridde kolonları tasarlayarak**, canlı SQL önizlemesiyle), tablo sil; bağımlılıklar. Her yönetim işleminin SQL'i alt alanda görünür.
+- **Tablo verisi:** Tablo sekmesinde **Düzenle** kipiyle hücre düzeltme, yeni kayıt ekleme ve kayıt silme (değişiklikler önce bellekte bekler; **Kaydet**'te net onayla tek işlemde çalışır, hata olursa hiçbiri uygulanmaz); **CSV'den içe aktarma** (ayraç ve kodlama tahmini, önizleme, kolon eşleme, tek işlem); tüm kayıtları silme (tablo adını yazdırarak); tabloyu **başka bir veritabanına kopyalama** (yapı ve veri).
+- **Veritabanı:** Yeni veritabanı oluşturma (karakter seti seçilir, var olan dosya ezilmez); sorguda `CREATE`/`ALTER`/`DROP` sonrası ağacın kendiliğinden yenilenmesi; **aktif bağlantılar** (kim bağlı, ne çalışıyor, en eski işlem; onaylı bağlantı koparma).
 - **Nesne yönetimi:** Prosedür, trigger ve view düzenleme; domain, exception ve generator oluşturma, düzenleme, silme. Script üretme (`CREATE`) ve tüm veritabanının metadata çıkarımı.
 - **Kullanıcılar ve yetkiler:** Kullanıcı yönetimi; tablo, view ve prosedür yetkilerini görüntüleme, verme ve geri alma.
 - **Yedek ve dışa aktarma:** `gbak` ile yedekleme ve geri yükleme; tablo verisini CSV olarak dışa aktarma.
@@ -29,7 +31,9 @@ Firebird için sade, ücretsiz ve açık kaynak yönetim aracı. SSMS'e (SQL Ser
 
 - **Kiril alfabesi:** WIN1251 karakter setli veritabanında gerçek Kiril metin bozuk görünebilir (FireDAC, WIN1251'i Windows'un kod sayfasıyla çözüyor). Denerseniz sonucu Issues'a yazmanız çok yardımcı olur. Türkçe karakterler (WIN1254 ve gerçek veritabanlarında denenen biçimler) sorunsuz.
 - **Toplu güncelleme önizlemesi** satır verisini geri alır ama tetikleyicilerin dış etkilerini (generator değeri, dış dosya, UDF) geri alamaz.
-- Hedeflenen Firebird sürümleri 2.5, 3.0, 4.0 ve 5.0'dır. Gerçek veritabanında 2.5.9 ve 5.0.4 ile, mantık testleriyle 3.0.14 ve 4.0.7 ile de denendi. Ayrıntı: `ASAMA*_RAPOR.md` dosyaları.
+- **Tablo kopyalama** yabancı anahtarları, tetikleyicileri, yetkileri ve generator değerlerini kopyalamaz (pencerede yazar). Tablo tasarımında yabancı anahtar ve index yoktur, tablo oluştuktan sonra tablo sekmesinden eklenir.
+- **Düzenleme kipi** yalnızca birincil anahtarı olan tablolarda açılır. Boş metin hücresi boş yazı (`''`) olarak kalır, NULL yapmanın ayrı yolu yoktur; CSV içe aktarmada boş hücre NULL olur.
+- Hedeflenen Firebird sürümleri 2.5, 3.0, 4.0 ve 5.0'dır. Gerçek veritabanında 2.5.9 ve 5.0.4 ile denendi; önceki sürümlerdeki özellikler mantık testleriyle 3.0.14 ve 4.0.7 ile de denendi. **0.5 sürümündeki yeni özellikler (veri düzenleme, içe aktarma, tablo kopyalama, tasarım, aktif bağlantılar) yalnızca 2.5.9 ve 5.0.4'te denendi; 3.0 ve 4.0'da henüz denenmedi.**
 - Arayüzün bazı pencereleri yalnızca sahibi tarafından elle denendi; her aşamanın raporunda neyin denenmediği yazılıdır.
 
 ## Derleme

@@ -53,7 +53,7 @@
         <DCC_F>false</DCC_F>
         <DCC_K>false</DCC_K>
         <VerInfo_Locale>1055</VerInfo_Locale>
-        <VerInfo_Keys>CompanyName=;FileDescription=Firebird Management Studio;FileVersion=0.4.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=Firebird Management Studio;ProductVersion=0.4.0.0;Comments=</VerInfo_Keys>
+        <VerInfo_Keys>CompanyName=;FileDescription=Firebird Management Studio;FileVersion=0.5.0.0;InternalName=;LegalCopyright=;LegalTrademarks=;OriginalFilename=;ProductName=Firebird Management Studio;ProductVersion=0.5.0.0;Comments=</VerInfo_Keys>
         <Icon_MainIcon>FirebirdManagementStudio_Icon.ico</Icon_MainIcon>
         <Manifest_File>(None)</Manifest_File>
         <PreBuildEvent><![CDATA["$(MSBuildProjectDirectory)\..\PaketHazirla.bat"]]></PreBuildEvent>
