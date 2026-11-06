@@ -192,6 +192,11 @@
         </DCCReference>
         <DCCReference Include="uTopluGuncelle.pas"/>
         <DCCReference Include="uKayitDuzelt.pas"/>
+        <DCCReference Include="uIceAktar.pas"/>
+        <DCCReference Include="fIceAktar.pas">
+            <Form>frmIceAktar</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <DCCReference Include="fTopluGuncelle.pas">
             <Form>TopluGuncelleSekme</Form>
             <FormType>dfm</FormType>

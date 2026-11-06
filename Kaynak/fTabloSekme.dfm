@@ -310,6 +310,21 @@ object TabloSekme: TTabloSekme
         TabOrder = 1
         OnClick = btnDuzenleClick
       end
+      object btnIceAktar: TButton
+        AlignWithMargins = True
+        Left = 570
+        Top = 2
+        Width = 92
+        Height = 25
+        Margins.Top = 2
+        Margins.Right = 4
+        Margins.Bottom = 2
+        Align = alRight
+        Constraints.MinWidth = 92
+        Enabled = False
+        TabOrder = 6
+        OnClick = btnIceAktarClick
+      end
       object btnYeniKayit: TButton
         AlignWithMargins = True
         Left = 220

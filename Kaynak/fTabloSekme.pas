@@ -7,7 +7,7 @@ interface
 uses
   System.SysUtils, System.Classes, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
   Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls, FireDAC.Comp.Client,
-  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uSonucGrid, uKayitDuzelt, uKullanici, uProsedur, uKolon, uIndeksKisit, fKolonIslem, fYapiIslem, fCsvAktar;
+  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uSonucGrid, uKayitDuzelt, uKullanici, uProsedur, uKolon, uIndeksKisit, fKolonIslem, fYapiIslem, fCsvAktar, fIceAktar;
 
 type
   TTabloSekme = class(TFrame)
@@ -39,6 +39,7 @@ type
     lblVeri: TLabel;
     btnDisaAktar: TButton;
     btnDuzenle: TButton;
+    btnIceAktar: TButton;
     btnYeniKayit: TButton;
     btnSil: TButton;
     btnKaydet: TButton;
@@ -51,6 +52,7 @@ type
     dsBagimliliklar: TDataSource;
     procedure btnDisaAktarClick(Sender: TObject);
     procedure btnDuzenleClick(Sender: TObject);
+    procedure btnIceAktarClick(Sender: TObject);
     procedure btnYeniKayitClick(Sender: TObject);
     procedure btnSilClick(Sender: TObject);
     procedure btnKaydetClick(Sender: TObject);
@@ -110,6 +112,7 @@ begin
   YenidenYukle(Bag);
   btnDisaAktar.Enabled := True;
   btnDuzenle.Enabled := True;
+  btnIceAktar.Enabled := True;
 end;
 
 destructor TTabloSekme.Destroy;
@@ -572,6 +575,24 @@ begin
 end;
 
 { Dugme: sekmede yalniz ilk 100 satir gorunse de tablonun TUM satirlarini CSV'ye yazar (bkz. uAktar). }
+{ Dugme: CSV dosyasindan bu tabloya satir ekler (onizleme, kolon esleme, net onay, tek islem; bkz. fIceAktar, uIceAktar).
+  Duzeltme kipi aciksken kapali: ice aktarma sonunda veri yeniden okunur, bekleyen degisiklikler kaybolurdu. }
+procedure TTabloSekme.btnIceAktarClick(Sender: TObject);
+var
+  Bag: TAcikBaglanti;
+begin
+  if FDuzelt <> nil then
+  begin
+    UyariGoster(T('ERR_ICE_DUZENLEME_ACIK'));
+    Exit;
+  end;
+  Bag := BaglantiAl;
+  if Bag = nil then
+    Exit;
+  if IceAktarPenceresiniGoster(Bag, TabloAdi, SqlYaz, AnaSonuc) then
+    VeriyiYukle(Bag);
+end;
+
 procedure TTabloSekme.btnDisaAktarClick(Sender: TObject);
 var
   Bag: TAcikBaglanti;
@@ -618,6 +639,8 @@ begin
   DugmeyiYaziyaUydur(btnKisitSil);
   DuzenlemeDurumunuYaz;
   btnDisaAktar.Caption := T('AKTAR_DUGME');
+  btnIceAktar.Caption := T('BTN_ICE_AKTAR');
+  DugmeyiYaziyaUydur(btnIceAktar);
   if FDuzelt = nil then
     btnDuzenle.Caption := T('BTN_DUZENLE')
   else
