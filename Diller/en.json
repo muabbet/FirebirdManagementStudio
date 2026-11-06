@@ -724,7 +724,7 @@
   "BTN_DUZ_BITIR": "Finish editing",
   "BTN_YENI_KAYIT": "New record",
   "BTN_GERI_AL": "Undo",
-  "LBL_DUZ_DURUM": "Editing on: %d change(s) pending",
+  "LBL_DUZ_DURUM": "Editing on",
   "LBL_DUZ_IPUCU": "EDITING ON. Transaction: closed. %d change(s) pending (not written to the database yet)",
   "ONAY_DUZ_ATIL": "%d unsaved change(s) will be discarded. Nothing has been written to the database.\n\nContinue?",
   "ONAY_DUZ_KAYDET": "%s: %d command(s) will run (insert, update or delete). All run in one transaction; if one fails, none is applied.\n\nCommands to run:",

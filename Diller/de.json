@@ -724,7 +724,7 @@
   "BTN_DUZ_BITIR": "Bearbeiten beenden",
   "BTN_YENI_KAYIT": "Neuer Datensatz",
   "BTN_GERI_AL": "Rückgängig",
-  "LBL_DUZ_DURUM": "Bearbeitung aktiv: %d Änderung(en) ausstehend",
+  "LBL_DUZ_DURUM": "Bearbeitung aktiv",
   "LBL_DUZ_IPUCU": "BEARBEITUNG AKTIV. Transaktion: geschlossen. %d Änderung(en) ausstehend (noch nicht in die Datenbank geschrieben)",
   "ONAY_DUZ_ATIL": "%d nicht gespeicherte Änderung(en) werden verworfen. Es wurde nichts in die Datenbank geschrieben.\n\nFortfahren?",
   "ONAY_DUZ_KAYDET": "%s: %d Befehl(e) werden ausgeführt (Einfügen, Aktualisieren oder Löschen). Alles läuft in einer Transaktion; schlägt einer fehl, wird keiner angewendet.\n\nAuszuführende Befehle:",

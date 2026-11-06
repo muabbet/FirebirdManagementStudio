@@ -226,8 +226,14 @@ begin
   end
   else
   begin
-    lblVeri.Caption := TF('LBL_DUZ_DURUM', [FDuzelt.BekleyenSayisi]);
+    lblVeri.Caption := T('LBL_DUZ_DURUM');
     lblVeri.Hint := TF('LBL_DUZ_IPUCU', [FDuzelt.BekleyenSayisi]);
+    { Bekleyen sayi Kaydet dugmesinin uzerinde: "Kaydet (3)". }
+    if FDuzelt.BekleyenSayisi > 0 then
+      btnKaydet.Caption := T('BTN_KAYDET') + ' (' + IntToStr(FDuzelt.BekleyenSayisi) + ')'
+    else
+      btnKaydet.Caption := T('BTN_KAYDET');
+    DugmeyiYaziyaUydur(btnKaydet);
   end;
 end;
 
@@ -619,7 +625,6 @@ begin
   btnYeniKayit.Caption := T('BTN_YENI_KAYIT');
   btnSil.Caption := T('BTN_KAYIT_SIL');
   DugmeyiYaziyaUydur(btnSil);
-  btnKaydet.Caption := T('BTN_KAYDET');
   btnGeriAl.Caption := T('BTN_GERI_AL');
   DugmeyiYaziyaUydur(btnYeniKayit);
   DugmeyiYaziyaUydur(btnDisaAktar);

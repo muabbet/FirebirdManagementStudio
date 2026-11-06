@@ -724,7 +724,7 @@
   "BTN_DUZ_BITIR": "Düzenlemeyi bitir",
   "BTN_YENI_KAYIT": "Yeni kayıt",
   "BTN_GERI_AL": "Geri al",
-  "LBL_DUZ_DURUM": "Düzenleme açık: %d değişiklik bekliyor",
+  "LBL_DUZ_DURUM": "Düzenleme açık",
   "LBL_DUZ_IPUCU": "DÜZENLEME AÇIK. İşlem: kapalı. %d değişiklik bekliyor (henüz veritabanına yazılmadı)",
   "ONAY_DUZ_ATIL": "%d kaydedilmemiş değişiklik atılacak. Veritabanına hiçbir şey yazılmadı.\n\nDevam edilsin mi?",
   "ONAY_DUZ_KAYDET": "%s tablosunda %d komut çalışacak (ekleme, güncelleme veya silme). Hepsi tek işlemde çalışır; biri başarısız olursa hiçbiri uygulanmaz.\n\nÇalışacak komutlar:",
