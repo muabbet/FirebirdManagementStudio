@@ -73,6 +73,11 @@ function FbBaglan(const Tanim: TBaglantiTanimi): TAcikBaglanti;
 { Acik baglanti listesine EKLENMEYEN baglanti (coklu veritabani sorgusu icin): isi bitince cagiran Free eder.
   Karakter seti FbBaglan gibi otomatik algilanir. }
 function FbGeciciBaglan(const Tanim: TBaglantiTanimi): TAcikBaglanti;
+{ YENI, bos bir veritabani olusturur (Tanim.KarakterSeti onun varsayilan karakter seti olur; sayfa boyutu 8192, dialect 3).
+  Dosya zaten varsa Firebird reddeder ve hicbir sey ezilmez. Baglanti listesine eklenmez; hata istisna olarak gelir. }
+procedure FbVeritabaniOlustur(const Tanim: TBaglantiTanimi);
+{ Onay penceresinde gosterilecek karsilik: FbVeritabaniOlustur'un yaptigi isin CREATE DATABASE komutu (sifre ***). }
+function VeritabaniOlusturSql(const Tanim: TBaglantiTanimi): string;
 
 { Ekranda gosterilecek yol: sunucusuz ise dosya yolu, sunuculuysa sunucu:port ve yol (ornek: 192.168.1.5/3050:C:\Veri\FABRIKA.FDB). }
 function BaglantiYolu(const Tanim: TBaglantiTanimi): string;
@@ -670,6 +675,33 @@ begin
   Result := BaglantiKur(Tanim);
 end;
 
+procedure FbVeritabaniOlustur(const Tanim: TBaglantiTanimi);
+var
+  Baglanti: TFDConnection;
+begin
+  Baglanti := YeniBaglantiNesnesi(Tanim, Tanim.KarakterSeti);
+  try
+    Baglanti.Params.Values['OpenMode'] := 'Create';
+    Baglanti.Params.Values['PageSize'] := '8192';
+    Baglanti.Open;
+    Baglanti.Close;
+  finally
+    Baglanti.Free;
+  end;
+end;
+
+function VeritabaniOlusturSql(const Tanim: TBaglantiTanimi): string;
+var
+  Hedef: string;
+begin
+  Hedef := Tanim.VeritabaniYolu;
+  if Tanim.Sunucu <> '' then
+    Hedef := Tanim.Sunucu + '/' + IntToStr(Tanim.Port) + ':' + Hedef;
+  Result := 'CREATE DATABASE ''' + StringReplace(Hedef, '''', '''''', [rfReplaceAll]) + ''' USER ''' +
+    StringReplace(Tanim.Kullanici, '''', '''''', [rfReplaceAll]) + ''' PASSWORD ''***'' PAGE_SIZE 8192 ' +
+    'DEFAULT CHARACTER SET ' + Tanim.KarakterSeti + ';';
+end;
+
 function BaglantiYolu(const Tanim: TBaglantiTanimi): string;
 begin
   if Tanim.Sunucu = '' then
@@ -885,6 +917,10 @@ function HataMetniniCevir(Hata: Exception): string;
 begin
   if Iceriyor(Hata.Message, '" is in use') then
     Exit(T('ERR_NESNE_KULLANIMDA'));
+  { Veritabani olusturma (olcum 5.0.4): dosya var da, klasor yok da ayni ilk cumleyle gelir; ikisini ayiran yazi isletim
+    sisteminin diline bagli oldugu icin tek cumlede ikisi de soylenir. }
+  if Iceriyor(Hata.Message, 'Error while trying to create file') then
+    Exit(T('ERR_VT_OLUSTURULAMADI'));
   { CREATE USER hatalari (3.0+, olcum 3.0.14 ve 4.0.7): iki farkli neden ayni ilk kodu (336723987, "add record error")
     tasir, bu yuzden kodla degil metinle ayrilir. 2.5'in metni farkli olabilir (sunucuda olculmedi). }
   { 3.0+: tablo PLG$SRP_VIEW / PLG$SRP; 2.5 (olcum 2.5.9): tablo USERS / RDB$USERS. }

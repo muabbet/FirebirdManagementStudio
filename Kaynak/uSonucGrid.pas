@@ -16,7 +16,7 @@ unit uSonucGrid;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Types, System.Math, Data.DB,
+  System.SysUtils, System.Classes, System.Types, System.Math, System.Variants, Data.DB,
   Winapi.Windows, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Grids, Vcl.DBGrids,
   Vcl.Clipbrd,
   FireDAC.Comp.DataSet,
@@ -29,6 +29,7 @@ type
     FGrid: TDBGrid;
     FSiraAlan: string;
     FAzalan: Boolean;
+    FDuzenleme: Boolean;
     procedure BaslikTik(Column: TColumn);
     procedure HucreCiz(Sender: TObject; const Rect: TRect; DataCol: Integer;
       Column: TColumn; State: TGridDrawState);
@@ -40,6 +41,8 @@ type
   public
     constructor Create(Grid: TDBGrid); reintroduce;
     procedure YeniSonuc;
+    { Kayit duzeltme kipi (Asama 4d, bkz. uKayitDuzelt): hucre yazilabilir, degisen hucreler sari. }
+    procedure Duzenle(Ac: Boolean);
   end;
 
 implementation
@@ -61,6 +64,8 @@ const
   RENK_BASLIK = $F0F0F0;
   RENK_ZEBRA = $FCF9F7;
   RENK_SECIM = $F7E4CC;
+  RENK_DEGISTI = $B3F0FF;
+  RENK_YENI = $CCF0CC;
 
 function MemoMu(Alan: TField): Boolean;
 begin
@@ -160,6 +165,17 @@ begin
   KolonGenisliginiAyarla;
 end;
 
+procedure TSonucGrid.Duzenle(Ac: Boolean);
+begin
+  FDuzenleme := Ac;
+  FGrid.ReadOnly := not Ac;
+  if Ac then
+    FGrid.Options := FGrid.Options + [dgEditing]
+  else
+    FGrid.Options := FGrid.Options - [dgEditing];
+  FGrid.Invalidate;
+end;
+
 { ---------- 1. Siralama ---------- }
 
 procedure TSonucGrid.BasliklariYaz;
@@ -237,6 +253,13 @@ begin
   FGrid.Canvas.Font.Color := clWindowText;
   if Secili then
     FGrid.Canvas.Brush.Color := RENK_SECIM
+  else if FDuzenleme and (FGrid.DataSource.DataSet is TFDDataSet) and
+    (TFDDataSet(FGrid.DataSource.DataSet).UpdateStatus = usInserted) then
+    FGrid.Canvas.Brush.Color := RENK_YENI
+  else if FDuzenleme and (FGrid.DataSource.DataSet is TFDDataSet) and
+    (TFDDataSet(FGrid.DataSource.DataSet).UpdateStatus = usModified) and
+    not VarSameValue(Alan.OldValue, Alan.Value) then
+    FGrid.Canvas.Brush.Color := RENK_DEGISTI
   else if Odd(FGrid.DataSource.DataSet.RecNo) then
     FGrid.Canvas.Brush.Color := clWindow
   else
@@ -278,6 +301,9 @@ var
   Hucre: TGridCoord;
   Alan: TField;
 begin
+  { Duzeltme kipinde cift tik hucreyi yazmaya acar (DBGrid kendisi yapar), tam metin penceresi acilmaz. }
+  if FDuzenleme then
+    Exit;
   if (FGrid.DataSource = nil) or (FGrid.DataSource.DataSet = nil) or
     not FGrid.DataSource.DataSet.Active then
     Exit;

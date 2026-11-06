@@ -6,8 +6,8 @@ interface
 
 uses
   System.SysUtils, System.Classes, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
-  Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls,
-  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uSonucGrid, uKullanici, uProsedur, uKolon, uIndeksKisit, fKolonIslem, fYapiIslem, fCsvAktar;
+  Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls, FireDAC.Comp.Client,
+  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uSonucGrid, uKayitDuzelt, uKullanici, uProsedur, uKolon, uIndeksKisit, fKolonIslem, fYapiIslem, fCsvAktar;
 
 type
   TTabloSekme = class(TFrame)
@@ -38,6 +38,10 @@ type
     pnlVeriBaslik: TPanel;
     lblVeri: TLabel;
     btnDisaAktar: TButton;
+    btnDuzenle: TButton;
+    btnYeniKayit: TButton;
+    btnKaydet: TButton;
+    btnGeriAl: TButton;
     gridVeri: TDBGrid;
     dsKolonlar: TDataSource;
     dsVeri: TDataSource;
@@ -45,6 +49,10 @@ type
     dsKisitlar: TDataSource;
     dsBagimliliklar: TDataSource;
     procedure btnDisaAktarClick(Sender: TObject);
+    procedure btnDuzenleClick(Sender: TObject);
+    procedure btnYeniKayitClick(Sender: TObject);
+    procedure btnKaydetClick(Sender: TObject);
+    procedure btnGeriAlClick(Sender: TObject);
     procedure btnKolonEkleClick(Sender: TObject);
     procedure btnKolonAdClick(Sender: TObject);
     procedure btnKolonDegistirClick(Sender: TObject);
@@ -56,7 +64,14 @@ type
     procedure btnKisitSilClick(Sender: TObject);
   private
     FVeriGrid: TSonucGrid;
+    { Nil degilse kayit duzeltme kipi acik (Asama 4d). }
+    FDuzelt: TKayitDuzelt;
     procedure Yaz(const Metin: string);
+    procedure VeriyiYukle(Bag: TAcikBaglanti);
+    procedure DuzenlemeyiAc;
+    procedure DuzenlemeyiKapat;
+    procedure DuzenlemeDurumunuYaz;
+    function BekleyenAtilsinMi: Boolean;
     function BaglantiAl: TAcikBaglanti;
     procedure SonucuBildir(Bag: TAcikBaglanti; const Sonuc: TProsedurSonucu);
     procedure KolonIsle(Islem: TKolonIslemi);
@@ -72,6 +87,7 @@ type
     AnaSonuc: TStrings;
     { Yonetim islemlerinin SQL'i buraya verilir (ana pencerenin SQL mesaji); ana pencere atar. }
     SqlYaz: TSqlGoster;
+    destructor Destroy; override;
     procedure Yukle(Bag: TAcikBaglanti; const Tablo: string);
     { Sag tik "Yenile": kolonlar, yapi ve ilk satirlar veritabanindan yeniden okunur. }
     procedure Yenile;
@@ -91,6 +107,13 @@ begin
   FVeriGrid := TSonucGrid.Create(gridVeri);
   YenidenYukle(Bag);
   btnDisaAktar.Enabled := True;
+  btnDuzenle.Enabled := True;
+end;
+
+destructor TTabloSekme.Destroy;
+begin
+  FDuzelt.Free;
+  inherited;
 end;
 
 procedure TTabloSekme.Yenile;
@@ -98,20 +121,193 @@ var
   Bag: TAcikBaglanti;
 begin
   Bag := FbAcikBaglanti(BaglantiAd);
-  if Bag <> nil then
-    YenidenYukle(Bag);
+  if Bag = nil then
+    Exit;
+  if (FDuzelt <> nil) and not BekleyenAtilsinMi then
+    Exit;
+  DuzenlemeyiKapat;
+  YenidenYukle(Bag);
 end;
 
 { Kolonlar, yapi sekmeleri ve ilk satirlar bastan okunur (acilista ve kolon islemlerinden sonra). }
 procedure TTabloSekme.YenidenYukle(Bag: TAcikBaglanti);
 begin
   dsKolonlar.DataSet.Free;
-  dsVeri.DataSet.Free;
   dsKolonlar.DataSet := KolonTablosuOlustur(Bag, TabloAdi, Self);
   YapiyiYukle(Bag);
+  VeriyiYukle(Bag);
+  YazilariYenile;
+end;
+
+{ Yalniz alttaki veri gridi: ilk satirlar salt okunur olarak yeniden okunur. }
+procedure TTabloSekme.VeriyiYukle(Bag: TAcikBaglanti);
+begin
+  dsVeri.DataSet.Free;
   dsVeri.DataSet := TabloVerisiSorgusu(Bag, TabloAdi, ILK_SATIR_SAYISI, Self);
   FVeriGrid.YeniSonuc;
+end;
+
+{ ---------- Kayit duzeltme (Asama 4d, mantik uKayitDuzelt'te) ---------- }
+
+{ Bekleyen degisiklik varsa atilsin mi diye sorar; yoksa (ya da duzeltme kapaliysa) True. }
+function TTabloSekme.BekleyenAtilsinMi: Boolean;
+begin
+  Result := True;
+  if FDuzelt = nil then
+    Exit;
+  FDuzelt.SatiriBitir;
+  if FDuzelt.BekleyenSayisi > 0 then
+    Result := OnayIste(TF('ONAY_DUZ_ATIL', [FDuzelt.BekleyenSayisi]));
+end;
+
+procedure TTabloSekme.DuzenlemeyiAc;
+var
+  Bag: TAcikBaglanti;
+  Veri: TFDQuery;
+  Duzelt: TKayitDuzelt;
+begin
+  Bag := BaglantiAl;
+  if Bag = nil then
+    Exit;
+  try
+    Veri := DuzeltilebilirVeriSorgusu(Bag, TabloAdi, ILK_SATIR_SAYISI, Self);
+    Duzelt := TKayitDuzelt.Create(Bag, TabloAdi, Veri, DuzenlemeDurumunuYaz);
+  except
+    on E: Exception do
+    begin
+      UyariGoster(HataMetniniCevir(E));
+      Exit;
+    end;
+  end;
+  if not Duzelt.AnahtarVar then
+  begin
+    Duzelt.Free;
+    Veri.Free;
+    UyariGoster(TF('ERR_DUZ_ANAHTAR_YOK', [TabloAdi]));
+    Exit;
+  end;
+  dsVeri.DataSet.Free;
+  dsVeri.DataSet := Veri;
+  FDuzelt := Duzelt;
+  FDuzelt.Ac;
+  FVeriGrid.YeniSonuc;
+  FVeriGrid.Duzenle(True);
+  btnYeniKayit.Visible := True;
+  btnKaydet.Visible := True;
+  btnGeriAl.Visible := True;
   YazilariYenile;
+end;
+
+{ Duzeltme kipini kapatir; bekleyenler zaten atilmis ya da kaydedilmis olmalidir. Veriyi yeniden yuklemek cagirana aittir. }
+procedure TTabloSekme.DuzenlemeyiKapat;
+begin
+  if FDuzelt = nil then
+    Exit;
+  FDuzelt.Kapat;
+  FDuzelt.Free;
+  FDuzelt := nil;
+  FVeriGrid.Duzenle(False);
+  btnYeniKayit.Visible := False;
+  btnKaydet.Visible := False;
+  btnGeriAl.Visible := False;
+end;
+
+{ Kipte "islem" bilgisi: islem yalniz Kaydet sirasinda acilir, bekleyenler henuz sadece bellekte. }
+procedure TTabloSekme.DuzenlemeDurumunuYaz;
+begin
+  if FDuzelt = nil then
+  begin
+    lblVeri.Caption := T('LBL_ILK_SATIRLAR');
+    lblVeri.Hint := '';
+  end
+  else
+  begin
+    lblVeri.Caption := TF('LBL_DUZ_DURUM', [FDuzelt.BekleyenSayisi]);
+    lblVeri.Hint := TF('LBL_DUZ_IPUCU', [FDuzelt.BekleyenSayisi]);
+  end;
+end;
+
+{ Dugme: kipi acar; kipteyken "Duzenlemeyi bitir" olur (bekleyen varsa atilsin mi diye sorar). }
+procedure TTabloSekme.btnDuzenleClick(Sender: TObject);
+var
+  Bag: TAcikBaglanti;
+begin
+  if FDuzelt = nil then
+  begin
+    DuzenlemeyiAc;
+    Exit;
+  end;
+  if not BekleyenAtilsinMi then
+    Exit;
+  Bag := BaglantiAl;
+  DuzenlemeyiKapat;
+  if Bag <> nil then
+    VeriyiYukle(Bag);
+  YazilariYenile;
+end;
+
+{ Dugme: gridin sonuna bos yeni kayit ekler ve ona gider; yazilanlar Kaydet'e kadar yalniz bellekte kalir. }
+procedure TTabloSekme.btnYeniKayitClick(Sender: TObject);
+begin
+  if FDuzelt = nil then
+    Exit;
+  FDuzelt.YeniKayit;
+  gridVeri.SetFocus;
+end;
+
+{ Dugme: bekleyen UPDATE/INSERT'ler net onayla tek islemde calisir. Hatada hepsi geri alinir, degisiklikler gridde kalir. }
+procedure TTabloSekme.btnKaydetClick(Sender: TObject);
+var
+  Bag: TAcikBaglanti;
+  Komutlar: TArray<string>;
+  Sonuc: TDuzeltSonucu;
+begin
+  if FDuzelt = nil then
+    Exit;
+  FDuzelt.SatiriBitir;
+  if FDuzelt.BekleyenSayisi = 0 then
+  begin
+    Yaz(T('MSG_DUZ_DEGISIKLIK_YOK'));
+    Exit;
+  end;
+  Bag := BaglantiAl;
+  if Bag = nil then
+    Exit;
+  Komutlar := FDuzelt.OnayKomutlari;
+  if not OnayIste(TF('ONAY_DUZ_KAYDET', [TabloAdi, Length(Komutlar)]) + sLineBreak + sLineBreak + KomutOzeti(Komutlar)) then
+  begin
+    Yaz(T('MSG_DUZ_VAZGECILDI'));
+    Exit;
+  end;
+  Sonuc := FDuzelt.Kaydet;
+  if Sonuc.Basarili then
+  begin
+    Yaz(TF('MSG_DUZ_TAMAM', [TabloAdi, Length(Sonuc.Komutlar)]));
+    DuzenlemeyiKapat;
+    VeriyiYukle(Bag);
+    YazilariYenile;
+  end
+  else
+  begin
+    Yaz(TF('ERR_DUZ_UYGULANAMADI', [TabloAdi]) + ' ' + Sonuc.Cumle);
+    if Sonuc.Ayrinti <> '' then
+      Yaz(T('AYRINTI') + ': ' + Sonuc.Ayrinti);
+    Yaz(T('MSG_DUZ_GERI_ALINDI'));
+  end;
+  if (Length(Sonuc.Komutlar) > 0) and Assigned(SqlYaz) then
+    SqlYaz(Sonuc.Komutlar);
+end;
+
+{ Dugme: bekleyen degisiklikleri atar; veritabanina hicbir sey yazilmadigi icin zararsizdir, yine de sorar. }
+procedure TTabloSekme.btnGeriAlClick(Sender: TObject);
+begin
+  if FDuzelt = nil then
+    Exit;
+  if not BekleyenAtilsinMi then
+    Exit;
+  FDuzelt.GeriAl;
+  DuzenlemeDurumunuYaz;
+  gridVeri.Invalidate;
 end;
 
 procedure TTabloSekme.Yaz(const Metin: string);
@@ -384,9 +580,20 @@ begin
   DugmeyiYaziyaUydur(btnIndeksDurum);
   DugmeyiYaziyaUydur(btnKisitEkle);
   DugmeyiYaziyaUydur(btnKisitSil);
-  lblVeri.Caption := T('LBL_ILK_SATIRLAR');
+  DuzenlemeDurumunuYaz;
   btnDisaAktar.Caption := T('AKTAR_DUGME');
+  if FDuzelt = nil then
+    btnDuzenle.Caption := T('BTN_DUZENLE')
+  else
+    btnDuzenle.Caption := T('BTN_DUZ_BITIR');
+  btnYeniKayit.Caption := T('BTN_YENI_KAYIT');
+  btnKaydet.Caption := T('BTN_KAYDET');
+  btnGeriAl.Caption := T('BTN_GERI_AL');
+  DugmeyiYaziyaUydur(btnYeniKayit);
   DugmeyiYaziyaUydur(btnDisaAktar);
+  DugmeyiYaziyaUydur(btnDuzenle);
+  DugmeyiYaziyaUydur(btnKaydet);
+  DugmeyiYaziyaUydur(btnGeriAl);
   if dsKolonlar.DataSet <> nil then
   begin
     dsKolonlar.DataSet.FieldByName('AD').DisplayLabel := T('KOLON_AD');

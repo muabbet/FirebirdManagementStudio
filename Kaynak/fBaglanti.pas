@@ -41,6 +41,7 @@ type
     btnKapat: TButton;
     btnBaglan: TButton;
     btnKaydet: TButton;
+    btnOlustur: TButton;
     dlgAc: TOpenDialog;
     procedure FormCreate(Sender: TObject);
     procedure btnGozatClick(Sender: TObject);
@@ -48,6 +49,7 @@ type
     procedure btnAlgilaClick(Sender: TObject);
     procedure btnSunucularClick(Sender: TObject);
     procedure btnKaydetClick(Sender: TObject);
+    procedure btnOlusturClick(Sender: TObject);
     procedure btnBaglanClick(Sender: TObject);
     procedure btnKapatClick(Sender: TObject);
   private
@@ -140,8 +142,10 @@ begin
   btnSunucular.Caption := T('BTN_SUNUCULAR');
   btnBaglan.Caption := T('BTN_BAGLAN');
   btnKaydet.Caption := T('BTN_KAYDET');
+  btnOlustur.Caption := T('BTN_VT_OLUSTUR');
   btnKapat.Caption := T('BTN_KAPAT');
   dlgAc.Filter := T('DOSYA_FILTRE');
+  DugmeyiYaziyaUydur(btnOlustur);
   DugmeyiYaziyaUydur(btnAyrinti);
   DugmeyiYaziyaUydur(btnAlgila);
   DugmeyiYaziyaUydur(btnSunucular);
@@ -351,6 +355,38 @@ begin
   FKaydedilenAd := Tanim.Ad;
   FSonuc := bsKaydedildi;
   ModalResult := mrOk;
+end;
+
+{ "Veritabani olustur": yazilan sunucu, yol, kullanici, sifre ve karakter setiyle YENI, bos bir veritabani kurar,
+  sonra "Baglan" gibi baglanir ve kaydeder. Calisacak CREATE DATABASE onay penceresinde yazili gorunur. }
+procedure TfrmBaglanti.btnOlusturClick(Sender: TObject);
+var
+  Tanim: TBaglantiTanimi;
+begin
+  { Karakter seti kutusu mevcut veritabani icin kapalidir; yeni veritabaninda kullanici secer. }
+  cmbKarakter.Enabled := True;
+  if Trim(cmbKarakter.Text) = '' then
+    cmbKarakter.Text := VARSAYILAN_KARAKTER_SETI;
+  if not AlanlardanOku(Tanim) then
+    Exit;
+  HatayiGizle;
+  if not OnayIste(TF('ONAY_VT_OLUSTUR', [VeritabaniOlusturSql(Tanim)])) then
+    Exit;
+  Screen.Cursor := crHourGlass;
+  try
+    try
+      FbVeritabaniOlustur(Tanim);
+    except
+      on E: Exception do
+      begin
+        HataGoster(HataMetniniCevir(E), E.Message);
+        Exit;
+      end;
+    end;
+  finally
+    Screen.Cursor := crDefault;
+  end;
+  btnBaglanClick(Sender);
 end;
 
 procedure TfrmBaglanti.btnBaglanClick(Sender: TObject);

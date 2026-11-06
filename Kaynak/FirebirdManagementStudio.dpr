@@ -52,6 +52,7 @@ uses
   fBaglanti in 'fBaglanti.pas' {frmBaglanti},
   fTabloListe in 'fTabloListe.pas' {TabloListeSekme: TFrame},
   uTopluGuncelle in 'uTopluGuncelle.pas',
+  uKayitDuzelt in 'uKayitDuzelt.pas',
   fTopluGuncelle in 'fTopluGuncelle.pas' {TopluGuncelleSekme: TFrame},
   uSemaFark in 'uSemaFark.pas',
   fSemaFark in 'fSemaFark.pas' {SemaFarkSekme: TFrame},

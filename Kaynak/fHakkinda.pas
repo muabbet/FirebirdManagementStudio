@@ -66,6 +66,11 @@ begin
     DugmeyiYaziyaUydur(Pencere.btnKopyala);
     Pencere.btnFikir.Caption := T('BTN_FIKIR_ONERI');
     DugmeyiYaziyaUydur(Pencere.btnFikir);
+    { Iki dugme ayni genislikte ve alt alta hizali dursun (genislik yaziya gore, ikisinden buyugu). }
+    if Pencere.btnKopyala.Width > Pencere.btnFikir.Width then
+      Pencere.btnFikir.Width := Pencere.btnKopyala.Width
+    else
+      Pencere.btnKopyala.Width := Pencere.btnFikir.Width;
     Pencere.lblLisansBaslik.Caption := T('HAKKINDA_LISANS_BASLIK');
     Pencere.lblLisans.Caption := T('HAKKINDA_LISANS_METIN');
     Pencere.btnTamam.Caption := T('BTN_TAMAM');

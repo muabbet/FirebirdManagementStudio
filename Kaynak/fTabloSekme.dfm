@@ -278,6 +278,7 @@ object TabloSekme: TTabloSekme
         Font.Style = [fsBold]
         ParentFont = False
         Layout = tlCenter
+        ShowHint = True
       end
       object btnDisaAktar: TButton
         AlignWithMargins = True
@@ -293,6 +294,66 @@ object TabloSekme: TTabloSekme
         Enabled = False
         TabOrder = 0
         OnClick = btnDisaAktarClick
+      end
+      object btnDuzenle: TButton
+        AlignWithMargins = True
+        Left = 520
+        Top = 2
+        Width = 92
+        Height = 25
+        Margins.Top = 2
+        Margins.Right = 4
+        Margins.Bottom = 2
+        Align = alRight
+        Constraints.MinWidth = 92
+        Enabled = False
+        TabOrder = 1
+        OnClick = btnDuzenleClick
+      end
+      object btnYeniKayit: TButton
+        AlignWithMargins = True
+        Left = 220
+        Top = 2
+        Width = 92
+        Height = 25
+        Margins.Top = 2
+        Margins.Right = 4
+        Margins.Bottom = 2
+        Align = alRight
+        Constraints.MinWidth = 92
+        TabOrder = 4
+        Visible = False
+        OnClick = btnYeniKayitClick
+      end
+      object btnKaydet: TButton
+        AlignWithMargins = True
+        Left = 320
+        Top = 2
+        Width = 92
+        Height = 25
+        Margins.Top = 2
+        Margins.Right = 4
+        Margins.Bottom = 2
+        Align = alRight
+        Constraints.MinWidth = 92
+        TabOrder = 2
+        Visible = False
+        OnClick = btnKaydetClick
+      end
+      object btnGeriAl: TButton
+        AlignWithMargins = True
+        Left = 420
+        Top = 2
+        Width = 92
+        Height = 25
+        Margins.Top = 2
+        Margins.Right = 4
+        Margins.Bottom = 2
+        Align = alRight
+        Constraints.MinWidth = 92
+        TabOrder = 3
+        Visible = False
+        OnClick = btnGeriAlClick
       end
     end
     object gridVeri: TDBGrid

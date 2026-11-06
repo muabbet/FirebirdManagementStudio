@@ -20,6 +20,21 @@ object frmBaglanti: TfrmBaglanti
     Align = alBottom
     BevelOuter = bvNone
     TabOrder = 2
+    object btnOlustur: TButton
+      AlignWithMargins = True
+      Left = 8
+      Top = 8
+      Width = 80
+      Height = 34
+      Margins.Left = 8
+      Margins.Top = 8
+      Margins.Right = 4
+      Margins.Bottom = 10
+      Align = alLeft
+      Constraints.MinWidth = 80
+      TabOrder = 3
+      OnClick = btnOlusturClick
+    end
     object btnKapat: TButton
       AlignWithMargins = True
       Left = 392

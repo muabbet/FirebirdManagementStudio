@@ -191,6 +191,7 @@
             <DesignClass>TFrame</DesignClass>
         </DCCReference>
         <DCCReference Include="uTopluGuncelle.pas"/>
+        <DCCReference Include="uKayitDuzelt.pas"/>
         <DCCReference Include="fTopluGuncelle.pas">
             <Form>TopluGuncelleSekme</Form>
             <FormType>dfm</FormType>

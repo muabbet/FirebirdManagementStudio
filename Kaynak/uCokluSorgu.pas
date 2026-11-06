@@ -55,6 +55,9 @@ function CokluSorguKontrol(const Sql: string): string;
 { Komutun ilk sozcugu (basindaki bosluk ve yorumlar atlanir), BUYUK harf. Toplu guncelleme (uTopluGuncelle) de kullanir. }
 function IlkSozcuk(const Komut: string): string;
 
+{ Komut veritabaninin yapisini degistirir mi (CREATE, ALTER, DROP, RECREATE)? Sorgu sekmesi bunun uzerine agaci yeniler. }
+function YapiKomutuMu(const Komut: string): Boolean;
+
 { Bu adli baglanti simdi kullanilabilir mi: acik, ya da kayitli ve sifresi kayitli. }
 function CokluBaglantiKullanilabilir(const Ad: string): Boolean;
 
@@ -115,6 +118,14 @@ begin
   while (i <= Length(Komut)) and CharInSet(Komut[i], ['A'..'Z', 'a'..'z', '_']) do
     Inc(i);
   Result := UpperCase(Copy(Komut, Bas, i - Bas));
+end;
+
+function YapiKomutuMu(const Komut: string): Boolean;
+var
+  Sozcuk: string;
+begin
+  Sozcuk := IlkSozcuk(Komut);
+  Result := (Sozcuk = 'CREATE') or (Sozcuk = 'ALTER') or (Sozcuk = 'DROP') or (Sozcuk = 'RECREATE');
 end;
 
 function CokluSorguKontrol(const Sql: string): string;

@@ -214,6 +214,7 @@ type
     procedure AyrintiDugmesiniYaz;
     procedure CokluSorguAc;
     procedure SorguDurumuYaz(Sender: TObject);
+    procedure SorguYapisiDegisti(Sender: TObject);
     procedure YeniSorgu(const Metin: string = '');
     procedure ScriptAc(Dugme: TTreeNode);
     function ProsedurSekmeAl(Sayfa: TTabSheet): TProsedurSekme;
@@ -423,6 +424,20 @@ procedure TfrmAna.SorguDurumuYaz(Sender: TObject);
 begin
   stbDurum.Panels[3].Text := TSorguSekme(Sender).SonSure;
   stbDurum.Panels[4].Text := TSorguSekme(Sender).SonSatir;
+end;
+
+{ Sorgu sekmesinde CREATE/ALTER/DROP calisinca: o baglantinin agaci (Tablolar, View'lar vb.) kendiliginden yenilenir. }
+procedure TfrmAna.SorguYapisiDegisti(Sender: TObject);
+var
+  i: Integer;
+begin
+  for i := 0 to tvNesneler.Items.Count - 1 do
+    if (OgeAl(tvNesneler.Items[i]) <> nil) and (OgeAl(tvNesneler.Items[i]).Tur = atBaglanti) and
+      SameText(OgeAl(tvNesneler.Items[i]).BaglantiAd, TSorguSekme(Sender).BaglantiAd) then
+    begin
+      AgaciYenile(tvNesneler.Items[i]);
+      Exit;
+    end;
 end;
 
 { Durum cubugu ve dugmeler: agacta secili baglantiya gore. }
@@ -1122,6 +1137,7 @@ begin
   Sekme.Align := alClient;
   Sekme.AnaSonuc := memSonuc.Lines;
   Sekme.OnDurum := SorguDurumuYaz;
+  Sekme.OnYapiDegisti := SorguYapisiDegisti;
   Sekme.Hazirla(FSorguNo, Bag.Tanim.Ad);
   if Metin <> '' then
     Sekme.MetinYaz(Metin);

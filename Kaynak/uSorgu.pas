@@ -95,6 +95,9 @@ function SorguPlaniAl(Bag: TAcikBaglanti; const Sql: string): string;
   kaliplarina bakar. Takma ad bulunamazsa Ad'in kendisi tablo adi sayilir. Tirnaksiz ad buyuk harfe cevrilir. }
 function TabloAdiniBul(const Metin, Ad: string): string;
 
+{ Ad cift tirnaga alinir (tirnak icindeki " iki yazilir); tablo/kolon adi SQL metnine konurken kullanilir. }
+function TirnakliAd(const Ad: string): string;
+
 implementation
 
 function TirnakliAd(const Ad: string): string;

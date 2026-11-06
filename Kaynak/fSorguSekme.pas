@@ -11,7 +11,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes, System.Generics.Collections, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
   Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids,
   FireDAC.Comp.Client,
-  uDil, uPaket, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uSonucGrid, fCsvAktar;
+  uDil, uPaket, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uSonucGrid, uCokluSorgu, fCsvAktar;
 
 type
   TSorguSekme = class(TFrame)
@@ -50,6 +50,8 @@ type
     SonSure: string;
     SonSatir: string;
     OnDurum: TNotifyEvent;
+    { Calisan komut veritabaninin yapisini degistirdi (CREATE, ALTER, DROP); ana pencere agaci yeniler. }
+    OnYapiDegisti: TNotifyEvent;
     destructor Destroy; override;
     procedure Hazirla(SekmeNo: Integer; const Baglanti: string);
     procedure Calistir;
@@ -278,6 +280,8 @@ begin
   else
     MesajYaz(TF('MSG_SORGU_TAMAM', [FSonuc.Sure]));
   SatirSayisiniYaz;
+  if YapiKomutuMu(Sql) and Assigned(OnYapiDegisti) then
+    OnYapiDegisti(Self);
 end;
 
 { Bir komutun mesaj kutusundaki satiri. }
@@ -313,10 +317,16 @@ var
   Kayitlar: TList<TKomutKaydi>;
   i: Integer;
   Metin: string;
+  YapiDegisti: Boolean;
 begin
   Kayitlar := TList<TKomutKaydi>.Create;
+  YapiDegisti := False;
   try
     FSonuc := BetikCalistir(Bag, Komutlar, Kayitlar);
+    { Hata sonrasi durulsa bile oncesinde calisan CREATE/ALTER/DROP kalicidir (her komut ayri onaylanir). }
+    for i := 0 to Kayitlar.Count - 1 do
+      if (Kayitlar[i].Durum = kdCalisti) and YapiKomutuMu(Kayitlar[i].Komut) then
+        YapiDegisti := True;
     Metin := '';
     { Hata varsa hata satiri (ve Ayrinti) kutunun en ustunde olur; sonra durma notu, sonra oncekiler. }
     if (Kayitlar.Count > 0) and (Kayitlar.Last.Durum = kdHata) then
@@ -337,6 +347,8 @@ begin
     FGrid.YeniSonuc;
   end;
   SatirSayisiniYaz;
+  if YapiDegisti and Assigned(OnYapiDegisti) then
+    OnYapiDegisti(Self);
 end;
 
 { F5 / Calistir dugmesi: secili yazi varsa onu, yoksa tum editoru calistirir.
