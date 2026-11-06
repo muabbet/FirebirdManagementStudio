@@ -55,6 +55,8 @@ uses
   uKayitDuzelt in 'uKayitDuzelt.pas',
   uIceAktar in 'uIceAktar.pas',
   fIceAktar in 'fIceAktar.pas' {frmIceAktar},
+  uTabloKopya in 'uTabloKopya.pas',
+  fTabloKopya in 'fTabloKopya.pas' {frmTabloKopya},
   fTopluGuncelle in 'fTopluGuncelle.pas' {TopluGuncelleSekme: TFrame},
   uSemaFark in 'uSemaFark.pas',
   fSemaFark in 'fSemaFark.pas' {SemaFarkSekme: TFrame},

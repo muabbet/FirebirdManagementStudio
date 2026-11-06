@@ -39,6 +39,11 @@ function ScriptKodlamasiOlustur(Bag: TAcikBaglanti): TEncoding;
   EMetadataHatasi (uMetadata) verir; mesaji kullaniciya gosterilir. }
 function ScriptUret(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string): string;
 
+{ Tabloyu BASKA bir ada (ve baska veritabanina) kopyalamak icin CREATE TABLE: kolonlar, PRIMARY KEY / UNIQUE / CHECK ve indexler.
+  Yabanci anahtarlar, tetikleyiciler, yetkiler ve dis dosya baglantisi KOPYALANMAZ. Kisit ve index adlari cakismasin diye
+  kisitlar adsiz, indexler yeni adla yazilir. Domain kullanan kolonlar domain adiyla kalir (hedefte domain olmali). }
+function TabloYapiScripti(Bag: TAcikBaglanti; const Ad, YeniAd: string): string;
+
 { Prosedurun duzenlenebilir tanimi: ScriptUret ile ayni metin, yalniz baslik CREATE OR ALTER PROCEDURE
   (Firebird 2.5-5.0). Ayni metin hem duzenleme sekmesinde acilir hem de eski tanim yedegi olarak yazilir. }
 function ProsedurDuzenleScripti(Bag: TAcikBaglanti; const Ad: string): string;
@@ -397,6 +402,33 @@ begin
   Blok := TetikleyiciBlogu(Bilgi.Tetikleyiciler);
   if Blok <> '' then
     Result := Result + sLineBreak + Blok + sLineBreak;
+end;
+
+function TabloYapiScripti(Bag: TAcikBaglanti; const Ad, YeniAd: string): string;
+var
+  Bilgi: TTabloBilgisi;
+  i: Integer;
+begin
+  Bilgi := TabloBilgisiOku(Bag, Ad);
+  Bilgi.GeciciTur := 0;
+  Bilgi.DisDosya := '';
+  for i := 0 to High(Bilgi.Kisitlar) do
+  begin
+    Bilgi.Kisitlar[i].Ad := '';
+    Bilgi.Kisitlar[i].IndeksAdi := '';
+  end;
+  { Adlarin tirnak gerekip gerekmedigini anlamak icin anahtar kelimeler kurulur (ScriptUret ile ayni). }
+  AnahtarKelimeleriKur(Bag.Surum);
+  try
+    Result := TabloOlusturMetni(YeniAd, Bilgi, False);
+    for i := 0 to High(Bilgi.Indeksler) do
+    begin
+      Bilgi.Indeksler[i].Ad := Copy('IX_' + YeniAd + '_' + IntToStr(i + 1), 1, 31);
+      Result := Result + sLineBreak + IndeksMetni(YeniAd, Bilgi.Indeksler[i]) + sLineBreak;
+    end;
+  finally
+    AnahtarKelimeleriBirak;
+  end;
 end;
 
 { ---------- View ---------- }

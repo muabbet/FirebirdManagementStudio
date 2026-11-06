@@ -88,6 +88,8 @@ function KarakterSetiAlgila(const Tanim: TBaglantiTanimi): string;
 function FbSurucu: TFDPhysFBDriverLink;
 procedure FbBaglantiyiKes(Bag: TAcikBaglanti);
 function FbAcikBaglanti(const Ad: string): TAcikBaglanti;
+{ Simdi acik olan baglantilarin adlari (acilis sirasiyla). }
+function FbAcikBaglantiAdlari: TArray<string>;
 function FbIslemAcikMi(Bag: TAcikBaglanti): Boolean;
 { Sunucu bos, localhost ve 127.0.0.1 ayni yerel makine sayilir. }
 function YerelSunucuMu(const Sunucu: string): Boolean;
@@ -714,6 +716,15 @@ end;
 procedure FbBaglantiyiKes(Bag: TAcikBaglanti);
 begin
   GAcikBaglantilar.Remove(Bag);
+end;
+
+function FbAcikBaglantiAdlari: TArray<string>;
+var
+  Bag: TAcikBaglanti;
+begin
+  SetLength(Result, 0);
+  for Bag in GAcikBaglantilar do
+    Result := Result + [Bag.Tanim.Ad];
 end;
 
 function FbIslemAcikMi(Bag: TAcikBaglanti): Boolean;

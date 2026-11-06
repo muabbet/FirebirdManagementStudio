@@ -197,6 +197,11 @@
             <Form>frmIceAktar</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="uTabloKopya.pas"/>
+        <DCCReference Include="fTabloKopya.pas">
+            <Form>frmTabloKopya</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <DCCReference Include="fTopluGuncelle.pas">
             <Form>TopluGuncelleSekme</Form>
             <FormType>dfm</FormType>
