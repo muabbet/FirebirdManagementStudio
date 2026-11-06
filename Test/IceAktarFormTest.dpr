@@ -6,11 +6,12 @@ program IceAktarFormTest;
 {$APPTYPE CONSOLE}
 
 uses
-  System.SysUtils, Vcl.Forms, Vcl.Controls, uDil, fIceAktar, fTabloKopya;
+  System.SysUtils, Vcl.Forms, Vcl.Controls, uDil, fIceAktar, fTabloKopya, fAktifBaglanti;
 
 var
   Pencere: TfrmIceAktar;
   Kopya: TfrmTabloKopya;
+  Aktif: TfrmAktifBaglanti;
 begin
   ExitCode := 1;
   try
@@ -21,7 +22,13 @@ begin
       Kopya := TfrmTabloKopya.Create(nil);
       try
         Writeln('OK    form olusturuldu: ', Kopya.ClassName, ', bilesen sayisi ', Kopya.ComponentCount);
-        ExitCode := 0;
+        Aktif := TfrmAktifBaglanti.Create(nil);
+        try
+          Writeln('OK    form olusturuldu: ', Aktif.ClassName, ', bilesen sayisi ', Aktif.ComponentCount);
+          ExitCode := 0;
+        finally
+          Aktif.Free;
+        end;
       finally
         Kopya.Free;
       end;

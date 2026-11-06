@@ -202,6 +202,11 @@
             <Form>frmTabloKopya</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="uAktifBaglanti.pas"/>
+        <DCCReference Include="fAktifBaglanti.pas">
+            <Form>frmAktifBaglanti</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <DCCReference Include="fTopluGuncelle.pas">
             <Form>TopluGuncelleSekme</Form>
             <FormType>dfm</FormType>

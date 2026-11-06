@@ -57,6 +57,8 @@ uses
   fIceAktar in 'fIceAktar.pas' {frmIceAktar},
   uTabloKopya in 'uTabloKopya.pas',
   fTabloKopya in 'fTabloKopya.pas' {frmTabloKopya},
+  uAktifBaglanti in 'uAktifBaglanti.pas',
+  fAktifBaglanti in 'fAktifBaglanti.pas' {frmAktifBaglanti},
   fTopluGuncelle in 'fTopluGuncelle.pas' {TopluGuncelleSekme: TFrame},
   uSemaFark in 'uSemaFark.pas',
   fSemaFark in 'fSemaFark.pas' {SemaFarkSekme: TFrame},

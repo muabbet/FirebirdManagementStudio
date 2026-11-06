@@ -182,11 +182,15 @@ procedure TSonucGrid.BasliklariYaz;
 var
   i: Integer;
   Kolon: TColumn;
+  Yazi: string;
 begin
   for i := 0 to FGrid.Columns.Count - 1 do
   begin
     Kolon := FGrid.Columns[i];
-    Kolon.Title.Caption := Kolon.FieldName;
+    Yazi := Kolon.FieldName;
+    if Kolon.Field <> nil then
+      Yazi := Kolon.Field.DisplayLabel;
+    Kolon.Title.Caption := Yazi;
     Kolon.Title.Color := RENK_BASLIK;
     Kolon.Title.Font.Assign(FGrid.Font);
     Kolon.Title.Font.Color := clWindowText;
@@ -194,9 +198,9 @@ begin
     if SameText(Kolon.FieldName, FSiraAlan) then
     begin
       if FAzalan then
-        Kolon.Title.Caption := Kolon.FieldName + ' ' + ASAGI_OK
+        Kolon.Title.Caption := Yazi + ' ' + ASAGI_OK
       else
-        Kolon.Title.Caption := Kolon.FieldName + ' ' + YUKARI_OK;
+        Kolon.Title.Caption := Yazi + ' ' + YUKARI_OK;
     end;
   end;
 end;
