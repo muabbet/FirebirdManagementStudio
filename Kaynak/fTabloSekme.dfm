@@ -325,6 +325,21 @@ object TabloSekme: TTabloSekme
         Visible = False
         OnClick = btnYeniKayitClick
       end
+      object btnSil: TButton
+        AlignWithMargins = True
+        Left = 270
+        Top = 2
+        Width = 92
+        Height = 25
+        Margins.Top = 2
+        Margins.Right = 4
+        Margins.Bottom = 2
+        Align = alRight
+        Constraints.MinWidth = 92
+        TabOrder = 5
+        Visible = False
+        OnClick = btnSilClick
+      end
       object btnKaydet: TButton
         AlignWithMargins = True
         Left = 320

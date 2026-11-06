@@ -40,6 +40,7 @@ type
     btnDisaAktar: TButton;
     btnDuzenle: TButton;
     btnYeniKayit: TButton;
+    btnSil: TButton;
     btnKaydet: TButton;
     btnGeriAl: TButton;
     gridVeri: TDBGrid;
@@ -51,6 +52,7 @@ type
     procedure btnDisaAktarClick(Sender: TObject);
     procedure btnDuzenleClick(Sender: TObject);
     procedure btnYeniKayitClick(Sender: TObject);
+    procedure btnSilClick(Sender: TObject);
     procedure btnKaydetClick(Sender: TObject);
     procedure btnGeriAlClick(Sender: TObject);
     procedure btnKolonEkleClick(Sender: TObject);
@@ -193,6 +195,7 @@ begin
   FVeriGrid.YeniSonuc;
   FVeriGrid.Duzenle(True);
   btnYeniKayit.Visible := True;
+  btnSil.Visible := True;
   btnKaydet.Visible := True;
   btnGeriAl.Visible := True;
   YazilariYenile;
@@ -208,6 +211,7 @@ begin
   FDuzelt := nil;
   FVeriGrid.Duzenle(False);
   btnYeniKayit.Visible := False;
+  btnSil.Visible := False;
   btnKaydet.Visible := False;
   btnGeriAl.Visible := False;
 end;
@@ -255,12 +259,35 @@ begin
   gridVeri.SetFocus;
 end;
 
-{ Dugme: bekleyen UPDATE/INSERT'ler net onayla tek islemde calisir. Hatada hepsi geri alinir, degisiklikler gridde kalir. }
+{ Dugme: secili satirlari (Ctrl+tikla ile cok satir; secim yoksa su anki satir) silinmek uzere isaretler. Satirlar gridden
+  kalkar ama veritabanindan SILINMEZ; Kaydet'te net onayla (DELETE komutlari ve sayi yazili) silinir, Geri al geri getirir. }
+procedure TTabloSekme.btnSilClick(Sender: TObject);
+var
+  i: Integer;
+begin
+  if FDuzelt = nil then
+    Exit;
+  if gridVeri.SelectedRows.Count = 0 then
+    FDuzelt.KaydiSil
+  else
+  begin
+    for i := gridVeri.SelectedRows.Count - 1 downto 0 do
+    begin
+      dsVeri.DataSet.GotoBookmark(gridVeri.SelectedRows[i]);
+      FDuzelt.KaydiSil;
+    end;
+    gridVeri.SelectedRows.Clear;
+  end;
+  gridVeri.SetFocus;
+end;
+
+{ Dugme: bekleyen UPDATE/INSERT/DELETE'ler net onayla tek islemde calisir. Hatada hepsi geri alinir, degisiklikler gridde kalir. }
 procedure TTabloSekme.btnKaydetClick(Sender: TObject);
 var
   Bag: TAcikBaglanti;
   Komutlar: TArray<string>;
   Sonuc: TDuzeltSonucu;
+  Uyari: string;
 begin
   if FDuzelt = nil then
     Exit;
@@ -274,7 +301,10 @@ begin
   if Bag = nil then
     Exit;
   Komutlar := FDuzelt.OnayKomutlari;
-  if not OnayIste(TF('ONAY_DUZ_KAYDET', [TabloAdi, Length(Komutlar)]) + sLineBreak + sLineBreak + KomutOzeti(Komutlar)) then
+  Uyari := '';
+  if FDuzelt.SilinecekSayisi > 0 then
+    Uyari := TF('ONAY_DUZ_SILINECEK', [FDuzelt.SilinecekSayisi]) + sLineBreak + sLineBreak;
+  if not OnayIste(Uyari + TF('ONAY_DUZ_KAYDET', [TabloAdi, Length(Komutlar)]) + sLineBreak + sLineBreak + KomutOzeti(Komutlar)) then
   begin
     Yaz(T('MSG_DUZ_VAZGECILDI'));
     Exit;
@@ -587,6 +617,8 @@ begin
   else
     btnDuzenle.Caption := T('BTN_DUZ_BITIR');
   btnYeniKayit.Caption := T('BTN_YENI_KAYIT');
+  btnSil.Caption := T('BTN_KAYIT_SIL');
+  DugmeyiYaziyaUydur(btnSil);
   btnKaydet.Caption := T('BTN_KAYDET');
   btnGeriAl.Caption := T('BTN_GERI_AL');
   DugmeyiYaziyaUydur(btnYeniKayit);

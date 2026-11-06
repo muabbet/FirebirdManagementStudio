@@ -24,6 +24,9 @@ uses
   uDil, uBaglanti, uMetadata, uSorgu;
 
 type
+  { Bekleyen bir satirin veritabaninda ne olacagi. }
+  TSatirTuru = (stGuncelle, stEkle, stSil);
+
   TDuzeltSonucu = record
     Basarili: Boolean;
     Cumle: string;
@@ -42,6 +45,7 @@ type
     { Her zaman kilitli kolonlar: BLOB, hesaplanan, GENERATED ALWAYS kimlik. }
     FKilitli: TArray<string>;
     FEkleniyor: Boolean;
+    FSiliniyor: Boolean;
     FDegisti: TProc;
     procedure EklemeyiEngelle(DataSet: TDataSet);
     procedure SilmeyiEngelle(DataSet: TDataSet);
@@ -49,8 +53,10 @@ type
     procedure SatirDegisti(DataSet: TDataSet);
     procedure AlanlariKilitle;
     function AdVarMi(const Liste: TArray<string>; const Ad: string): Boolean;
-    function SatirAlanlari(out Ekleme: Boolean): TArray<TField>;
-    function SatirMetni(Alanlar: TArray<TField>; Ekleme, Gercek: Boolean): string;
+    function SatirAlanlari(out Tur: TSatirTuru): TArray<TField>;
+    function SatirMetni(Alanlar: TArray<TField>; Tur: TSatirTuru; Gercek: Boolean): string;
+    function AnahtarKosulu(Gercek: Boolean): string;
+    function SilMetni(Gercek: Boolean): string;
     function GuncelleMetni(Alanlar: TArray<TField>; Gercek: Boolean): string;
     function EkleMetni(Alanlar: TArray<TField>; Gercek: Boolean): string;
   public
@@ -63,6 +69,10 @@ type
     procedure Kapat;
     { Yazilmakta olan satiri bellege isler (grid satir degistirince bunu kendisi yapar; Kaydet/Geri al/Bitir oncesi cagrilir). }
     procedure SatiriBitir;
+    { Su anki kaydi silinmek uzere isaretler (grid'den kalkar; veritabaninda Kaydet'e kadar durur, Geri al geri getirir). }
+    procedure KaydiSil;
+    { Kaydet'te SILINECEK kayit sayisi (onay penceresi uyarisi icin). }
+    function SilinecekSayisi: Integer;
     { Gridin sonuna bos bir yeni kayit ekler (bellekte; Kaydet'e kadar veritabanina gitmez). }
     procedure YeniKayit;
     { Bekleyen (kaydedilmemis) degisiklik yapilmis satir sayisi. }
@@ -85,7 +95,7 @@ function DuzeltilebilirVeriSorgusu(Bag: TAcikBaglanti; const Tablo: string; Sati
 implementation
 
 const
-  DEGISEN_KAYITLAR: TFDUpdateRecordTypes = [rtModified, rtInserted];
+  DEGISEN_KAYITLAR: TFDUpdateRecordTypes = [rtModified, rtInserted, rtDeleted];
   TUM_KAYITLAR: TFDUpdateRecordTypes = [rtUnmodified, rtModified, rtInserted];
 
 function DuzeltilebilirVeriSorgusu(Bag: TAcikBaglanti; const Tablo: string; SatirSayisi: Integer;
@@ -243,10 +253,25 @@ begin
   end;
 end;
 
-{ Ctrl+Delete satiri silmeye calisir; burada kesilir. }
+{ Ctrl+Delete satiri silmeye calisir; burada kesilir. Yalniz "Kayit sil" dugmesi (KaydiSil) izin verir. }
 procedure TKayitDuzelt.SilmeyiEngelle(DataSet: TDataSet);
 begin
-  Abort;
+  if not FSiliniyor then
+    Abort;
+end;
+
+procedure TKayitDuzelt.KaydiSil;
+begin
+  if FVeri.IsEmpty then
+    Exit;
+  SatiriBitir;
+  FSiliniyor := True;
+  try
+    FVeri.Delete;
+  finally
+    FSiliniyor := False;
+  end;
+  KayitDegisti(FVeri);
 end;
 
 procedure TKayitDuzelt.KayitDegisti(DataSet: TDataSet);
@@ -268,16 +293,23 @@ end;
 
 { Su anki satirin (degisen ya da yeni) komuta girecek alanlari. Ekleme True ise satir yenidir: bos olmayan,
   kilitli olmayan alanlar. Degilse: degeri ESKI degerinden farkli, kilitli ve anahtar olmayan alanlar. }
-function TKayitDuzelt.SatirAlanlari(out Ekleme: Boolean): TArray<TField>;
+function TKayitDuzelt.SatirAlanlari(out Tur: TSatirTuru): TArray<TField>;
 var
   Alan: TField;
 begin
   SetLength(Result, 0);
-  Ekleme := FVeri.UpdateStatus = usInserted;
+  case FVeri.UpdateStatus of
+    usInserted: Tur := stEkle;
+    usDeleted: Tur := stSil;
+  else
+    Tur := stGuncelle;
+  end;
+  if Tur = stSil then
+    Exit;
   for Alan in FVeri.Fields do
     if AdVarMi(FKilitli, Alan.FieldName) then
       Continue
-    else if Ekleme then
+    else if Tur = stEkle then
     begin
       if not Alan.IsNull then
         Result := Result + [Alan];
@@ -286,12 +318,38 @@ begin
       Result := Result + [Alan];
 end;
 
-function TKayitDuzelt.SatirMetni(Alanlar: TArray<TField>; Ekleme, Gercek: Boolean): string;
+function TKayitDuzelt.SatirMetni(Alanlar: TArray<TField>; Tur: TSatirTuru; Gercek: Boolean): string;
 begin
-  if Ekleme then
-    Result := EkleMetni(Alanlar, Gercek)
+  case Tur of
+    stEkle: Result := EkleMetni(Alanlar, Gercek);
+    stSil: Result := SilMetni(Gercek);
   else
     Result := GuncelleMetni(Alanlar, Gercek);
+  end;
+end;
+
+{ WHERE kismi: birincil anahtar kolonlari, kaydin ESKI degerleriyle. }
+function TKayitDuzelt.AnahtarKosulu(Gercek: Boolean): string;
+var
+  Alan: TField;
+  i: Integer;
+begin
+  Result := '';
+  for i := 0 to High(FAnahtar) do
+  begin
+    if i > 0 then
+      Result := Result + ' AND ';
+    Alan := FVeri.FieldByName(FAnahtar[i]);
+    if Gercek then
+      Result := Result + TirnakliAd(FAnahtar[i]) + ' = :K' + IntToStr(i)
+    else
+      Result := Result + TirnakliAd(FAnahtar[i]) + ' = ' + DegerMetni(Alan, Alan.OldValue);
+  end;
+end;
+
+function TKayitDuzelt.SilMetni(Gercek: Boolean): string;
+begin
+  Result := 'DELETE FROM ' + TirnakliAd(FTablo) + ' WHERE ' + AnahtarKosulu(Gercek);
 end;
 
 { Bos birakilan kolonlar INSERT'e girmez (DEFAULT, generator ve tetikleyici onlari doldurur). }
@@ -321,8 +379,6 @@ end;
 { Gercek=True: parametreli (calistirilacak); False: degerleri yazili (onay penceresi ve SQL mesaji). }
 function TKayitDuzelt.GuncelleMetni(Alanlar: TArray<TField>; Gercek: Boolean): string;
 var
-  Alan: TField;
-  Ad: string;
   i: Integer;
 begin
   Result := '';
@@ -335,17 +391,30 @@ begin
     else
       Result := Result + TirnakliAd(Alanlar[i].FieldName) + ' = ' + DegerMetni(Alanlar[i], Alanlar[i].Value);
   end;
-  Result := 'UPDATE ' + TirnakliAd(FTablo) + ' SET ' + Result + ' WHERE ';
-  for i := 0 to High(FAnahtar) do
-  begin
-    if i > 0 then
-      Result := Result + ' AND ';
-    Alan := FVeri.FieldByName(FAnahtar[i]);
-    Ad := TirnakliAd(FAnahtar[i]);
-    if Gercek then
-      Result := Result + Ad + ' = :K' + IntToStr(i)
-    else
-      Result := Result + Ad + ' = ' + DegerMetni(Alan, Alan.OldValue);
+  Result := 'UPDATE ' + TirnakliAd(FTablo) + ' SET ' + Result + ' WHERE ' + AnahtarKosulu(Gercek);
+end;
+
+function TKayitDuzelt.SilinecekSayisi: Integer;
+var
+  Yer: TBookmark;
+begin
+  Result := 0;
+  FVeri.FilterChanges := [rtDeleted];
+  FVeri.DisableControls;
+  Yer := FVeri.GetBookmark;
+  try
+    FVeri.First;
+    while not FVeri.Eof do
+    begin
+      Inc(Result);
+      FVeri.Next;
+    end;
+  finally
+    FVeri.FilterChanges := TUM_KAYITLAR;
+    if FVeri.BookmarkValid(Yer) then
+      FVeri.GotoBookmark(Yer);
+    FVeri.FreeBookmark(Yer);
+    FVeri.EnableControls;
   end;
 end;
 
@@ -353,7 +422,7 @@ function TKayitDuzelt.OnayKomutlari: TArray<string>;
 var
   Yer: TBookmark;
   Alanlar: TArray<TField>;
-  Ekleme: Boolean;
+  Tur: TSatirTuru;
 begin
   SetLength(Result, 0);
   FVeri.FilterChanges := DEGISEN_KAYITLAR;
@@ -363,9 +432,9 @@ begin
     FVeri.First;
     while not FVeri.Eof do
     begin
-      Alanlar := SatirAlanlari(Ekleme);
-      if Ekleme or (Length(Alanlar) > 0) then
-        Result := Result + [SatirMetni(Alanlar, Ekleme, False) + ';'];
+      Alanlar := SatirAlanlari(Tur);
+      if (Tur <> stGuncelle) or (Length(Alanlar) > 0) then
+        Result := Result + [SatirMetni(Alanlar, Tur, False) + ';'];
       FVeri.Next;
     end;
   finally
@@ -383,7 +452,7 @@ var
   Sorgu: TFDQuery;
   Yer: TBookmark;
   Alanlar: TArray<TField>;
-  Ekleme: Boolean;
+  Tur: TSatirTuru;
   i: Integer;
   Komutlar: TList<string>;
 begin
@@ -405,11 +474,11 @@ begin
         FVeri.First;
         while not FVeri.Eof do
         begin
-          Alanlar := SatirAlanlari(Ekleme);
-          if Ekleme or (Length(Alanlar) > 0) then
+          Alanlar := SatirAlanlari(Tur);
+          if (Tur <> stGuncelle) or (Length(Alanlar) > 0) then
           begin
-            Komutlar.Add(SatirMetni(Alanlar, Ekleme, False) + ';');
-            Sorgu.SQL.Text := SatirMetni(Alanlar, Ekleme, True);
+            Komutlar.Add(SatirMetni(Alanlar, Tur, False) + ';');
+            Sorgu.SQL.Text := SatirMetni(Alanlar, Tur, True);
             for i := 0 to High(Alanlar) do
             begin
               Sorgu.Params[i].DataType := Alanlar[i].DataType;
@@ -418,7 +487,7 @@ begin
               else
                 Sorgu.Params[i].Value := Alanlar[i].Value;
             end;
-            if not Ekleme then
+            if Tur <> stEkle then
               for i := 0 to High(FAnahtar) do
               begin
                 Sorgu.ParamByName('K' + IntToStr(i)).DataType := FVeri.FieldByName(FAnahtar[i]).DataType;

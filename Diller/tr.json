@@ -738,5 +738,7 @@
   "ERR_DUZ_SATIR_SAYISI": "Bir güncelleme %d kayda uyguladı (tam 1 olmalıydı). Kayıt başka biri tarafından silinmiş ya da değiştirilmiş olabilir.",
   "BTN_VT_OLUSTUR": "Veritabanı oluştur",
   "ONAY_VT_OLUSTUR": "Yeni, boş bir veritabanı oluşturulacak. Çalışacak komut:\n\n%s\n\nYol, sunucunun kendi diskindeki yoldur (sunucu başka bilgisayardaysa o bilgisayardaki yol). Dosya zaten varsa hiçbir şey ezilmez, işlem hata verir. Karakter seti farklı olacaksa Hayır deyin ve kutudan seçin.\n\nDevam edilsin mi?",
-  "ERR_VT_OLUSTURULAMADI": "Veritabanı oluşturulamadı. Dosya zaten var olabilir, klasör bulunamayabilir ya da sunucunun o klasöre yazma yetkisi olmayabilir. Yol, sunucunun kendi diskindeki yoldur."
+  "ERR_VT_OLUSTURULAMADI": "Veritabanı oluşturulamadı. Dosya zaten var olabilir, klasör bulunamayabilir ya da sunucunun o klasöre yazma yetkisi olmayabilir. Yol, sunucunun kendi diskindeki yoldur.",
+  "BTN_KAYIT_SIL": "Kayıt sil",
+  "ONAY_DUZ_SILINECEK": "DİKKAT: %d kayıt SİLİNECEK. Kaydet'ten sonra bu geri alınamaz."
 }

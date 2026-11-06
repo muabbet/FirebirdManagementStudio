@@ -420,9 +420,96 @@ begin
   end;
 end;
 
+{ Silme: kayit gridden kalkar ama veritabaninda Kaydet'e kadar durur; DELETE onayda gorunur; Geri al geri getirir;
+  hata (yabanci anahtar) hepsini geri alir; eklenip silinen kayit hicbir komut uretmez. }
+procedure SilmeTesti;
+var
+  Veri: TFDQuery;
+  D: TKayitDuzelt;
+  Komutlar: TArray<string>;
+  Sonuc: TDuzeltSonucu;
+begin
+  Komut('CREATE TABLE T_ANA (ID INTEGER NOT NULL PRIMARY KEY, AD VARCHAR(20))');
+  Komut('CREATE TABLE T_ALT (ID INTEGER NOT NULL PRIMARY KEY, ANA_ID INTEGER REFERENCES T_ANA (ID))');
+  Komut('INSERT INTO T_ANA VALUES (1, ''a1'')');
+  Komut('INSERT INTO T_ANA VALUES (2, ''a2'')');
+  Komut('INSERT INTO T_ANA VALUES (3, ''a3'')');
+  Komut('INSERT INTO T_ANA VALUES (4, ''a4'')');
+  Komut('INSERT INTO T_ALT VALUES (1, 4)');
+  Veri := DuzeltilebilirVeriSorgusu(Bag, 'T_ANA', 100, nil);
+  D := TKayitDuzelt.Create(Bag, 'T_ANA', Veri, nil);
+  try
+    D.Ac;
+    Veri.Locate('ID', 2, []);
+    D.KaydiSil;
+    Kontrol('silinen kayit gridden kalkti (3 satir)', Veri.RecordCount = 3);
+    Kontrol('veritabaninda hala 4 kayit (Kaydet oncesi)', Oku('select count(*) from t_ana') = '4');
+    Kontrol('1 bekleyen, 1 silinecek', (D.BekleyenSayisi = 1) and (D.SilinecekSayisi = 1));
+    Komutlar := D.OnayKomutlari;
+    Kontrol('onay metni DELETE ... WHERE "ID" = 2', (Length(Komutlar) = 1) and (Komutlar[0] = 'DELETE FROM "T_ANA" WHERE "ID" = 2;'));
+    if Length(Komutlar) = 1 then
+      Cikti.Add('      ' + Komutlar[0]);
+    D.GeriAl;
+    Kontrol('Geri al kaydi geri getirdi (4 satir, 0 bekleyen)', (Veri.RecordCount = 4) and (D.BekleyenSayisi = 0));
+
+    { Eklenip silinen kayit hicbir sey uretmez }
+    D.YeniKayit;
+    Veri.FieldByName('ID').AsInteger := 50;
+    Veri.Post;
+    D.KaydiSil;
+    Kontrol('eklenip silinen kayit: 0 bekleyen', D.BekleyenSayisi = 0);
+
+    { Duzenleme + ekleme + silme birlikte tek Kaydet }
+    Veri.Locate('ID', 1, []);
+    Veri.Edit;
+    Veri.FieldByName('AD').AsString := 'a1_yeni';
+    Veri.Post;
+    D.YeniKayit;
+    Veri.FieldByName('ID').AsInteger := 10;
+    Veri.FieldByName('AD').AsString := 'yeni';
+    Veri.Post;
+    Veri.Locate('ID', 3, []);
+    D.KaydiSil;
+    Kontrol('3 bekleyen (duzenle + ekle + sil)', D.BekleyenSayisi = 3);
+    Kontrol('onay metni 3 komut', Length(D.OnayKomutlari) = 3);
+    Sonuc := D.Kaydet;
+    Kontrol('birlesik Kaydet basarili', Sonuc.Basarili);
+    if not Sonuc.Basarili then
+      Cikti.Add('      ' + Sonuc.Cumle + ' | ' + Sonuc.Ayrinti);
+    Kontrol('silinen kayit gitti', Oku('select count(*) from t_ana where id = 3') = '0');
+    Kontrol('duzenleme yazildi', Oku('select ad from t_ana where id = 1') = 'a1_yeni');
+    Kontrol('ekleme yazildi', Oku('select ad from t_ana where id = 10') = 'yeni');
+    Kontrol('toplam 4 kayit (1,2,4,10)', Oku('select count(*) from t_ana') = '4');
+  finally
+    D.Free;
+    Veri.Free;
+  end;
+  { Yabanci anahtarla baglanan kayit silinemez: hata, hepsi geri alinir, gridde bekler. }
+  Veri := DuzeltilebilirVeriSorgusu(Bag, 'T_ANA', 100, nil);
+  D := TKayitDuzelt.Create(Bag, 'T_ANA', Veri, nil);
+  try
+    D.Ac;
+    Veri.Locate('ID', 1, []);
+    Veri.Edit;
+    Veri.FieldByName('AD').AsString := 'GERI_ALINMALI';
+    Veri.Post;
+    Veri.Locate('ID', 4, []);
+    D.KaydiSil;
+    Sonuc := D.Kaydet;
+    Kontrol('yabanci anahtar: Kaydet basarisiz', not Sonuc.Basarili);
+    Kontrol('hata cumlesi var', Sonuc.Cumle <> '');
+    Kontrol('digeri de geri alindi', Oku('select ad from t_ana where id = 1') = 'a1_yeni');
+    Kontrol('kayit 4 duruyor', Oku('select count(*) from t_ana where id = 4') = '1');
+    Kontrol('degisiklikler gridde bekliyor (2)', D.BekleyenSayisi = 2);
+  finally
+    D.Free;
+    Veri.Free;
+  end;
+end;
+
 procedure DilAnahtarTesti;
 const
-  Anahtarlar: array[0..14] of string = ('BTN_YENI_KAYIT', 'BTN_DUZENLE', 'BTN_DUZ_BITIR', 'BTN_GERI_AL', 'LBL_DUZ_DURUM',
+  Anahtarlar: array[0..16] of string = ('BTN_KAYIT_SIL', 'ONAY_DUZ_SILINECEK', 'BTN_YENI_KAYIT', 'BTN_DUZENLE', 'BTN_DUZ_BITIR', 'BTN_GERI_AL', 'LBL_DUZ_DURUM',
     'ONAY_DUZ_ATIL', 'ONAY_DUZ_KAYDET', 'MSG_DUZ_DAHA_FAZLA', 'MSG_DUZ_DEGISIKLIK_YOK', 'MSG_DUZ_VAZGECILDI',
     'MSG_DUZ_TAMAM', 'ERR_DUZ_UYGULANAMADI', 'MSG_DUZ_GERI_ALINDI', 'ERR_DUZ_ANAHTAR_YOK', 'ERR_DUZ_SATIR_SAYISI');
 var
@@ -486,6 +573,8 @@ begin
       EklemeTesti;
       Cikti.Add('--- Coklu ---');
       CokluTesti;
+      Cikti.Add('--- Silme ---');
+      SilmeTesti;
       Cikti.Add('--- Dil anahtarlari ---');
       DilAnahtarTesti;
       FbBaglantiyiKes(Bag);

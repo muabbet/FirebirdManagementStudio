@@ -738,5 +738,7 @@
   "ERR_DUZ_SATIR_SAYISI": "An update affected %d record(s) (exactly 1 was expected). The record may have been deleted or changed by someone else.",
   "BTN_VT_OLUSTUR": "Create database",
   "ONAY_VT_OLUSTUR": "A new, empty database will be created. Command to run:\n\n%s\n\nThe path is on the server's own disk (the other computer's disk if the server is remote). If the file already exists nothing is overwritten and the operation fails. If you need a different character set, choose No and pick it in the box.\n\nContinue?",
-  "ERR_VT_OLUSTURULAMADI": "The database could not be created. The file may already exist, the folder may not be found, or the server may not be allowed to write there. The path is on the server's own disk."
+  "ERR_VT_OLUSTURULAMADI": "The database could not be created. The file may already exist, the folder may not be found, or the server may not be allowed to write there. The path is on the server's own disk.",
+  "BTN_KAYIT_SIL": "Delete record",
+  "ONAY_DUZ_SILINECEK": "WARNING: %d record(s) will be DELETED. After saving this cannot be undone."
 }

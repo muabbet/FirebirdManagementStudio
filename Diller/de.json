@@ -738,5 +738,7 @@
   "ERR_DUZ_SATIR_SAYISI": "Eine Aktualisierung betraf %d Datensatz/Datensätze (genau 1 wurde erwartet). Der Datensatz wurde evtl. von jemand anderem gelöscht oder geändert.",
   "BTN_VT_OLUSTUR": "Datenbank erstellen",
   "ONAY_VT_OLUSTUR": "Es wird eine neue, leere Datenbank erstellt. Auszuführender Befehl:\n\n%s\n\nDer Pfad liegt auf der Festplatte des Servers selbst (bei einem entfernten Server auf dessen Rechner). Existiert die Datei bereits, wird nichts überschrieben und der Vorgang schlägt fehl. Für einen anderen Zeichensatz wählen Sie Nein und wählen ihn im Feld.\n\nFortfahren?",
-  "ERR_VT_OLUSTURULAMADI": "Die Datenbank konnte nicht erstellt werden. Die Datei existiert evtl. bereits, der Ordner wurde nicht gefunden oder der Server darf dort nicht schreiben. Der Pfad liegt auf der Festplatte des Servers selbst."
+  "ERR_VT_OLUSTURULAMADI": "Die Datenbank konnte nicht erstellt werden. Die Datei existiert evtl. bereits, der Ordner wurde nicht gefunden oder der Server darf dort nicht schreiben. Der Pfad liegt auf der Festplatte des Servers selbst.",
+  "BTN_KAYIT_SIL": "Datensatz löschen",
+  "ONAY_DUZ_SILINECEK": "ACHTUNG: %d Datensatz/Datensätze werden GELÖSCHT. Nach dem Speichern ist dies nicht rückgängig zu machen."
 }
