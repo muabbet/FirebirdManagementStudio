@@ -64,6 +64,11 @@ begin
     Exit;
   end;
   P := TfrmBakim(Screen.ActiveForm);
+  if (Adim > 2) and (not P.btnRapor.Enabled) then
+  begin
+    Dec(Adim);
+    Exit;
+  end;
   case Adim of
     1: Resim(P, '1_acilis');
     2: P.btnRapor.Click;
@@ -71,6 +76,7 @@ begin
       begin
         Resim(P, '2_ozet');
         P.pgSekmeler.ActivePage := P.tsTablolar;
+        Writeln(P.memOzet.Text);
         Writeln('tablo satiri: ', P.lvTablolar.Items.Count, ', index satiri: ', P.lvIndeksler.Items.Count);
         if (P.lvTablolar.Items.Count < 2) or (P.lvIndeksler.Items.Count < 3) then
           Inc(Hatalar);
