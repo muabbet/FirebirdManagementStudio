@@ -23,8 +23,8 @@ Firebird için sade, ücretsiz ve açık kaynak yönetim aracı. SSMS'e (SQL Ser
 - **Veritabanı:** Yeni veritabanı oluşturma (karakter seti seçilir, var olan dosya ezilmez); sorguda `CREATE`/`ALTER`/`DROP` sonrası ağacın kendiliğinden yenilenmesi; **aktif bağlantılar** (kim bağlı, ne çalışıyor, en eski işlem; onaylı bağlantı koparma).
 - **Nesne yönetimi:** Prosedür, trigger ve view düzenleme; domain, exception ve generator oluşturma, düzenleme, silme. Script üretme (`CREATE`) ve tüm veritabanının metadata çıkarımı.
 - **Kullanıcılar ve yetkiler:** Kullanıcı yönetimi; tablo, view ve prosedür yetkilerini görüntüleme, verme ve geri alma.
-- **Bakım:** Veritabanı bakımı: önce ayrıntılı rapor (temizlenecek kayıtlar, yeniden kurulacak index'ler, bozuk kayıt taraması), onaydan sonra sweep, index yeniden kurma ve istatistik yenileme (SYSDBA ya da yetkili kullanıcı gerekir).
-- **Yedek ve dışa aktarma:** `gbak` ile yedekleme ve geri yükleme; tablo verisini CSV olarak dışa aktarma.
+- **Bakım:** Veritabanı bakımı: önce ayrıntılı rapor (tablo ve index durumu, temizlenecek kayıtlar, yeniden kurulacak index'ler, bozuk kayıt taraması, işlem sayaçları), onaydan sonra sweep, index yeniden kurma ve istatistik yenileme; bakım sonrası "önce → sonra" farkı. **Yeniden yarat** (yedekle ve yeni dosyaya geri yükle) ile dosya küçülür. İlerleme çubuğu, geçen süre ve iptal vardır. SYSDBA ya da yetkili kullanıcı gerekir.
+- **Yedek ve kopyalama:** `gbak` ile yedekleme ve geri yükleme (2.5, 3.0, 4.0 ve 5.0 sunucularında; ilerleme çubuğu ve dosya boyutuyla); bağlantıya sağ tık > **Veritabanını kopyala** (yedekle ve yeni dosyaya geri yükle; var olan dosya ezilmez) ve **Klonla** (bağlantıyı çoğalt); tablo verisini CSV olarak dışa aktarma.
 - **Çoklu veritabanı:** Aynı `SELECT`'i birçok veritabanında çalıştırıp sonuçları tek tabloda birleştirme; iki veritabanının şema farkı; birçok veritabanında `UPDATE` (önce önizleme, sonra net bir onay penceresi).
 - **Güvenlik ilkeleri:** Tehlikeli işlemler (silme, `WHERE`'siz güncelleme, toplu işlem) net bir onay penceresi ister. Hiçbir şey sessizce silinmez.
 
@@ -34,7 +34,7 @@ Firebird için sade, ücretsiz ve açık kaynak yönetim aracı. SSMS'e (SQL Ser
 - **Toplu güncelleme önizlemesi** satır verisini geri alır ama tetikleyicilerin dış etkilerini (generator değeri, dış dosya, UDF) geri alamaz.
 - **Tablo kopyalama** yabancı anahtarları, tetikleyicileri, yetkileri ve generator değerlerini kopyalamaz (pencerede yazar). Tablo tasarımında yabancı anahtar ve index yoktur, tablo oluştuktan sonra tablo sekmesinden eklenir.
 - **Düzenleme kipi** yalnızca birincil anahtarı olan tablolarda açılır. Boş metin hücresi boş yazı (`''`) olarak kalır, NULL yapmanın ayrı yolu yoktur; CSV içe aktarmada boş hücre NULL olur.
-- Hedeflenen Firebird sürümleri 2.5, 3.0, 4.0 ve 5.0'dır. Gerçek veritabanında 2.5.9 ve 5.0.4 ile denendi; önceki sürümlerdeki özellikler mantık testleriyle 3.0.14 ve 4.0.7 ile de denendi. **0.5 sürümündeki yeni özellikler (veri düzenleme, içe aktarma, tablo kopyalama, tasarım, aktif bağlantılar) yalnızca 2.5.9 ve 5.0.4'te denendi; 3.0 ve 4.0'da henüz denenmedi.**
+- Hedeflenen Firebird sürümleri 2.5, 3.0, 4.0 ve 5.0'dır. Gerçek veritabanında 2.5.9 ve 5.0.4 ile denendi; önceki sürümlerdeki özellikler mantık testleriyle 3.0.14 ve 4.0.7 ile de denendi. **0.6 sürümündeki bakım, veritabanı kopyalama ve yedek 2.5.9, 3.0.14, 4.0.7 ve 5.0.4'te denendi. 0.5 sürümündeki özellikler (veri düzenleme, içe aktarma, tablo kopyalama, tasarım, aktif bağlantılar) yalnızca 2.5.9 ve 5.0.4'te denendi; 3.0 ve 4.0'da henüz denenmedi.**
 - Arayüzün bazı pencereleri yalnızca sahibi tarafından elle denendi; her aşamanın raporunda neyin denenmediği yazılıdır.
 
 ## Derleme
