@@ -11,6 +11,7 @@ object frmAna: TfrmAna
   Font.Style = []
   KeyPreview = True
   Position = poScreenCenter
+  WindowState = wsMaximized
   OnCreate = FormCreate
   OnKeyDown = FormKeyDown
   OnDestroy = FormDestroy

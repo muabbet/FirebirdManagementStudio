@@ -8,14 +8,14 @@ object SorguSekme: TSorguSekme
     Left = 0
     Top = 0
     Width = 720
-    Height = 220
+    Height = 150
     Align = alTop
     BevelOuter = bvNone
     TabOrder = 0
   end
   object Bolucu: TSplitter
     Left = 0
-    Top = 220
+    Top = 150
     Width = 720
     Height = 5
     Cursor = crVSplit
@@ -79,9 +79,9 @@ object SorguSekme: TSorguSekme
     end
     object memMesaj: TMemo
       Left = 0
-      Top = 140
+      Top = 185
       Width = 720
-      Height = 115
+      Height = 70
       Align = alBottom
       ReadOnly = True
       ScrollBars = ssVertical
