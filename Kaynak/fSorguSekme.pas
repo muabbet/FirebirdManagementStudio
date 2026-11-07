@@ -11,7 +11,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes, System.Generics.Collections, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
   Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids,
   FireDAC.Comp.Client,
-  uDil, uPaket, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uSonucGrid, uCokluSorgu, fCsvAktar;
+  uDil, uPaket, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uSonucGrid, uCokluSorgu, fCsvAktar, uKullanici, fIndeksOner;
 
 type
   TSorguSekme = class(TFrame)
@@ -56,6 +56,7 @@ type
     procedure Hazirla(SekmeNo: Integer; const Baglanti: string);
     procedure Calistir;
     procedure PlanGoster;
+    procedure IndeksOner(SqlYaz: TSqlGoster);
     procedure EditoreOdaklan;
     procedure MetinYaz(const Metin: string);
     function Baslik: string;
@@ -380,6 +381,32 @@ begin
     TekKomutCalistir(Bag, Komutlar[0])
   else
     CokluKomutCalistir(Bag, Komutlar);
+end;
+
+{ Index oner dugmesi: tek komutun planina bakar, index'siz taranan buyuk tablolar icin CREATE INDEX onerir (pencere). }
+procedure TSorguSekme.IndeksOner(SqlYaz: TSqlGoster);
+var
+  Komutlar: TArray<string>;
+  Bag: TAcikBaglanti;
+begin
+  Komutlar := KomutlaraBol(FEditor.CalistirilacakMetin);
+  if Length(Komutlar) = 0 then
+  begin
+    MesajYaz(T('ERR_SORGU_BOS'));
+    Exit;
+  end;
+  if Length(Komutlar) > 1 then
+  begin
+    MesajYaz(T('ERR_PLAN_TEK_KOMUT'));
+    Exit;
+  end;
+  Bag := FbAcikBaglanti(BaglantiAd);
+  if Bag = nil then
+  begin
+    MesajYaz(TF('ERR_SORGU_BAGLANTI_YOK', [BaglantiAd]));
+    Exit;
+  end;
+  IndeksOnerPenceresiniGoster(Bag, Komutlar[0], SqlYaz, AnaSonuc);
 end;
 
 { Ctrl+L / Plan dugmesi: komutu calistirmadan planini mesaj kutusuna yazar. }

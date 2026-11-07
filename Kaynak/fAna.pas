@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme, fIndeksOner;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -90,6 +90,7 @@ type
     procedure btnSemaFarkiClick(Sender: TObject);
     procedure btnCalistirClick(Sender: TObject);
     procedure btnPlanClick(Sender: TObject);
+    procedure btnIndeksOnerClick(Sender: TObject);
     procedure btnMetadataClick(Sender: TObject);
     procedure btnYedekClick(Sender: TObject);
     procedure btnKullanicilarClick(Sender: TObject);
@@ -156,6 +157,7 @@ type
     btnTumKapat: TSeritDugmesi;
     btnCalistir: TSeritDugmesi;
     btnPlan: TSeritDugmesi;
+    btnIndeksOner: TSeritDugmesi;
     btnMetadata: TSeritDugmesi;
     btnYedek: TSeritDugmesi;
     btnKullanicilar: TSeritDugmesi;
@@ -314,6 +316,7 @@ begin
   btnTopluGuncelle := FSerit.Ekle('GRUP_SORGU', 'BTN_TOPLU_GUNCELLE', IKON_VERITABANI, btnTopluGuncelleClick);
   btnCalistir := FSerit.Ekle('GRUP_SORGU', 'BTN_CALISTIR', IKON_CALISTIR, btnCalistirClick);
   btnPlan := FSerit.Ekle('GRUP_SORGU', 'BTN_PLAN', IKON_PLAN, btnPlanClick);
+  btnIndeksOner := FSerit.Ekle('GRUP_SORGU', 'BTN_INDEKS_ONER', IKON_PLAN, btnIndeksOnerClick);
   btnMetadata := FSerit.Ekle('GRUP_YONETIM', 'MENU_METADATA_CIKAR', IKON_METADATA, btnMetadataClick);
   btnYedek := FSerit.Ekle('GRUP_YONETIM', 'MENU_YEDEK', IKON_YEDEK, btnYedekClick);
   btnKullanicilar := FSerit.Ekle('GRUP_YONETIM', 'BTN_KULLANICILAR', IKON_KULLANICI, btnKullanicilarClick);
@@ -555,6 +558,7 @@ begin
   btnYeniSorgu.Enabled := Bag <> nil;
   btnCalistir.Enabled := AktifSorguSekmesi <> nil;
   btnPlan.Enabled := AktifSorguSekmesi <> nil;
+  btnIndeksOner.Enabled := AktifSorguSekmesi <> nil;
   btnMetadata.Enabled := Bag <> nil;
   btnYedek.Enabled := Dugme <> nil;
   btnAktifBaglanti.Enabled := Bag <> nil;
@@ -2155,6 +2159,13 @@ end;
 procedure TfrmAna.btnCalistirClick(Sender: TObject);
 begin
   SorguyuCalistir;
+end;
+
+{ Sorgu > Index oner: aktif sorgu sekmesindeki komut icin index onerisi penceresi. }
+procedure TfrmAna.btnIndeksOnerClick(Sender: TObject);
+begin
+  if AktifSorguSekmesi <> nil then
+    AktifSorguSekmesi.IndeksOner(SqlMesajiYaz);
 end;
 
 procedure TfrmAna.btnPlanClick(Sender: TObject);

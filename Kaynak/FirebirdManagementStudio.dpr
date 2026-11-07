@@ -62,6 +62,8 @@ uses
   uBakim in 'uBakim.pas',
   uKlonla in 'uKlonla.pas',
   fIlerleme in 'fIlerleme.pas' {frmIlerleme},
+  uIndeksOner in 'uIndeksOner.pas',
+  fIndeksOner in 'fIndeksOner.pas' {frmIndeksOner},
   fBakim in 'fBakim.pas' {frmBakim},
   uTabloTasarim in 'uTabloTasarim.pas',
   fTabloTasarim in 'fTabloTasarim.pas' {frmTabloTasarim},
