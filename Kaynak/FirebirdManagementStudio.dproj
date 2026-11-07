@@ -207,6 +207,11 @@
             <Form>frmAktifBaglanti</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="uBakim.pas"/>
+        <DCCReference Include="fBakim.pas">
+            <Form>frmBakim</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <DCCReference Include="uTabloTasarim.pas"/>
         <DCCReference Include="fTabloTasarim.pas">
             <Form>frmTabloTasarim</Form>

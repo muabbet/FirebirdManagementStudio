@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fTabloKopya, fAktifBaglanti, fTabloTasarim;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -92,6 +92,7 @@ type
     procedure btnYedekClick(Sender: TObject);
     procedure btnKullanicilarClick(Sender: TObject);
     procedure btnAktifBaglantiClick(Sender: TObject);
+    procedure btnBakimClick(Sender: TObject);
     procedure btnYenileClick(Sender: TObject);
     procedure cmbDilChange(Sender: TObject);
     procedure btnYoneticiClick(Sender: TObject);
@@ -156,6 +157,7 @@ type
     btnYedek: TSeritDugmesi;
     btnKullanicilar: TSeritDugmesi;
     btnAktifBaglanti: TSeritDugmesi;
+    btnBakim: TSeritDugmesi;
     FDilKodlari: TArray<string>;
     FOgeler: TObjectList<TAgacOgesi>;
     FSurukleNode: TTreeNode;
@@ -313,6 +315,7 @@ begin
   btnKullanicilar := FSerit.Ekle('GRUP_YONETIM', 'BTN_KULLANICILAR', IKON_KULLANICI, btnKullanicilarClick);
   btnSemaFarki := FSerit.Ekle('GRUP_YONETIM', 'BTN_SEMA_FARKI', IKON_PLAN, btnSemaFarkiClick);
   btnAktifBaglanti := FSerit.Ekle('GRUP_YONETIM', 'BTN_AKTIF_BAGLANTI', IKON_VERITABANI, btnAktifBaglantiClick);
+  btnBakim := FSerit.Ekle('GRUP_YONETIM', 'BTN_BAKIM', IKON_VERITABANI, btnBakimClick);
   btnKullanicilar.ShowHint := True;
   btnAyrinti := FSerit.Ekle('GRUP_GORUNUM', 'BTN_AYRINTI_KAPAT', IKON_VIEW, btnAyrintiClick);
   btnTumKapat := FSerit.Ekle('GRUP_GORUNUM', 'BTN_TUM_KAPAT', IKON_KAPAT, btnTumKapatClick);
@@ -549,6 +552,7 @@ begin
   btnMetadata.Enabled := Bag <> nil;
   btnYedek.Enabled := Dugme <> nil;
   btnAktifBaglanti.Enabled := Bag <> nil;
+  btnBakim.Enabled := Bag <> nil;
   { Kullanicilar: yalniz acik ve sunucu kipindeki baglantida; gomulu baglantida gerekce arac ipucunda. }
   btnKullanicilar.Enabled := (Bag <> nil) and KullaniciYetenekleri(Bag).YonetimVar;
   if (Bag <> nil) and not KullaniciYetenekleri(Bag).YonetimVar then
@@ -2093,6 +2097,18 @@ begin
   Bag := FbAcikBaglanti(OgeAl(SeciliBaglantiDugmesi).BaglantiAd);
   if Bag <> nil then
     AktifBaglantiPenceresiniGoster(Bag, SqlMesajiYaz, memSonuc.Lines);
+end;
+
+{ Yonetim > Veritabani bakimi: once rapor (veritabanina yazmaz), sonra onayla bakim. }
+procedure TfrmAna.btnBakimClick(Sender: TObject);
+var
+  Bag: TAcikBaglanti;
+begin
+  if SeciliBaglantiDugmesi = nil then
+    Exit;
+  Bag := FbAcikBaglanti(OgeAl(SeciliBaglantiDugmesi).BaglantiAd);
+  if Bag <> nil then
+    BakimPenceresiniGoster(Bag, SqlMesajiYaz, memSonuc.Lines);
 end;
 
 procedure TfrmAna.btnKullanicilarClick(Sender: TObject);

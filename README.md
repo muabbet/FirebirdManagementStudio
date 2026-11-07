@@ -23,6 +23,7 @@ Firebird için sade, ücretsiz ve açık kaynak yönetim aracı. SSMS'e (SQL Ser
 - **Veritabanı:** Yeni veritabanı oluşturma (karakter seti seçilir, var olan dosya ezilmez); sorguda `CREATE`/`ALTER`/`DROP` sonrası ağacın kendiliğinden yenilenmesi; **aktif bağlantılar** (kim bağlı, ne çalışıyor, en eski işlem; onaylı bağlantı koparma).
 - **Nesne yönetimi:** Prosedür, trigger ve view düzenleme; domain, exception ve generator oluşturma, düzenleme, silme. Script üretme (`CREATE`) ve tüm veritabanının metadata çıkarımı.
 - **Kullanıcılar ve yetkiler:** Kullanıcı yönetimi; tablo, view ve prosedür yetkilerini görüntüleme, verme ve geri alma.
+- **Bakım:** Veritabanı bakımı: önce ayrıntılı rapor (temizlenecek kayıtlar, yeniden kurulacak index'ler, bozuk kayıt taraması), onaydan sonra sweep, index yeniden kurma ve istatistik yenileme (SYSDBA ya da yetkili kullanıcı gerekir).
 - **Yedek ve dışa aktarma:** `gbak` ile yedekleme ve geri yükleme; tablo verisini CSV olarak dışa aktarma.
 - **Çoklu veritabanı:** Aynı `SELECT`'i birçok veritabanında çalıştırıp sonuçları tek tabloda birleştirme; iki veritabanının şema farkı; birçok veritabanında `UPDATE` (önce önizleme, sonra net bir onay penceresi).
 - **Güvenlik ilkeleri:** Tehlikeli işlemler (silme, `WHERE`'siz güncelleme, toplu işlem) net bir onay penceresi ister. Hiçbir şey sessizce silinmez.
