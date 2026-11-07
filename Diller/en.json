@@ -961,5 +961,14 @@
   "BAKIM_YENIDEN_YARAT": "Recreate (backup and restore)",
   "BAKIM_YENIDEN_IPUCU": "Backs up the database and restores it into a new file: the file shrinks and all indexes and pages are reorganized. The old file is not touched; when the new file is ready, close the connections and switch to it by renaming the files.",
   "MSG_BAGLANIYOR": "Connecting to %s...",
-  "MSG_AGAC_OKUNUYOR": "Connected to %s, reading objects..."
+  "MSG_AGAC_OKUNUYOR": "Connected to %s, reading objects...",
+  "ILERLEME_ACIKLAMA": "Working. It can take long for a large database; wait until this window closes.",
+  "ILERLEME_SURE": "Elapsed time: %s",
+  "ILERLEME_DOSYA": "File size: %s",
+  "ILERLEME_IPTAL_EDILIYOR": "Cancelling...",
+  "KLON_ILERLEME_BASLIK": "Copying database",
+  "KLON_ADIM_YEDEK": "1/2  Backing up the database",
+  "KLON_ADIM_GERI": "2/2  Restoring the backup into the new file (rebuilding indexes)",
+  "YEDEK_ACIKLAMA_YEDEK": "Reading the database and writing the backup file.",
+  "YEDEK_ACIKLAMA_GERI": "Reading the backup and creating the new database."
 }

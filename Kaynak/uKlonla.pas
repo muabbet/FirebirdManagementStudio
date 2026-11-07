@@ -10,6 +10,9 @@ uses
   System.SysUtils, System.Classes, uBaglanti, uYedek;
 
 type
+  { Yeni adim basliyor: yazi (ornek "1/2 ...") ve boyutu izlenebilecek YEREL dosya (bos = izlenemez) }
+  TKlonAdimi = procedure(const Metin, Dosya: string) of object;
+
   TKlonSonucu = record
     Basarili: Boolean;
     Iptal: Boolean;
@@ -32,7 +35,8 @@ function KlonYedekYolu(const Tanim: TBaglantiTanimi; const YeniYol: string): str
 function KlonOnayMetni(const Tanim: TBaglantiTanimi; const YeniYol, YedekYolu: string): string;
 
 { Yedekle + geri yukle. Cikti: gbak satirlari ve beklerken aralikla cagrilir; Iptal True yapilirsa durur. }
-function VeritabaniKlonla(const Tanim: TBaglantiTanimi; const YeniYol: string; Cikti: TYedekCiktisi): TKlonSonucu;
+function VeritabaniKlonla(const Tanim: TBaglantiTanimi; const YeniYol: string; Cikti: TYedekCiktisi;
+  Adim: TKlonAdimi = nil): TKlonSonucu;
 
 { Yeni veritabanini kayitli baglanti olarak ekler (ayni sunucu, kullanici, sifre ayari); eklenen baglanti adini verir. }
 function KlonBaglantisiniEkle(const Tanim: TBaglantiTanimi; const YeniYol: string): string;
@@ -40,7 +44,7 @@ function KlonBaglantisiniEkle(const Tanim: TBaglantiTanimi; const YeniYol: strin
 implementation
 
 uses
-  System.IOUtils, uDil;
+  System.IOUtils, System.StrUtils, uDil;
 
 function KlonYoluOner(const Yol: string): string;
 var
@@ -87,7 +91,8 @@ begin
   Result := '"' + SunucuAdresi(Tanim.Sunucu) + '/' + IntToStr(Tanim.Port) + ':service_mgr"';
 end;
 
-function ServisIleKlonla(const Tanim: TBaglantiTanimi; const YeniYol, YedekYolu: string; Cikti: TYedekCiktisi): TKlonSonucu;
+function ServisIleKlonla(const Tanim: TBaglantiTanimi; const YeniYol, YedekYolu: string; Cikti: TYedekCiktisi;
+  Adim: TKlonAdimi): TKlonSonucu;
 var
   Ham: string;
   Kod: Cardinal;
@@ -99,6 +104,8 @@ begin
   Result.YedekDosya := YedekYolu;
   Kullanici := ' -user "' + Tanim.Kullanici + '"';
   { 1. yedekle (yedek dosyasi sunucuda) }
+  if Assigned(Adim) then
+    Adim(T('KLON_ADIM_YEDEK'), IfThen(YerelSunucuMu(Tanim.Sunucu), YedekYolu, ''));
   Bitti := AltIslemCalistir(GbakYolu, '-b' + Kullanici + ' -se ' + ServisAdi(Tanim) + ' "' + Tanim.VeritabaniYolu + '" "' + YedekYolu + '"',
     Tanim.Sifre, Cikti, Ham, Kod);
   if not Bitti then
@@ -113,6 +120,8 @@ begin
     Exit;
   end;
   { 2. yeni dosyaya geri yukle (var olan dosya ezilmez: gbak -c reddeder) }
+  if Assigned(Adim) then
+    Adim(T('KLON_ADIM_GERI'), IfThen(YerelSunucuMu(Tanim.Sunucu), YeniYol, ''));
   Bitti := AltIslemCalistir(GbakYolu, '-c' + Kullanici + ' -se ' + ServisAdi(Tanim) + ' "' + YedekYolu + '" "' + YeniYol + '"',
     Tanim.Sifre, Cikti, Ham, Kod);
   if not Bitti then
@@ -129,17 +138,20 @@ begin
   Result.Basarili := True;
 end;
 
-function VeritabaniKlonla(const Tanim: TBaglantiTanimi; const YeniYol: string; Cikti: TYedekCiktisi): TKlonSonucu;
+function VeritabaniKlonla(const Tanim: TBaglantiTanimi; const YeniYol: string; Cikti: TYedekCiktisi;
+  Adim: TKlonAdimi): TKlonSonucu;
 var
   Yedek, Geri: TYedekSonucu;
 begin
   if Tanim.Sunucu <> '' then
-    Exit(ServisIleKlonla(Tanim, YeniYol, KlonYedekYolu(Tanim, YeniYol), Cikti));
+    Exit(ServisIleKlonla(Tanim, YeniYol, KlonYedekYolu(Tanim, YeniYol), Cikti, Adim));
   Result := Default(TKlonSonucu);
   Result.YeniYol := YeniYol;
   Result.YedekDosya := KlonYedekYolu(Tanim, YeniYol);
   ForceDirectories(ExtractFilePath(Result.YedekDosya));
   { 1. yedekle }
+  if Assigned(Adim) then
+    Adim(T('KLON_ADIM_YEDEK'), Result.YedekDosya + '.yarim');
   if not YedekAl(Tanim, Result.YedekDosya, Cikti, Yedek) then
   begin
     Result.Iptal := Yedek.Iptal;
@@ -148,6 +160,8 @@ begin
     Exit;
   end;
   { 2. yeni dosyaya geri yukle }
+  if Assigned(Adim) then
+    Adim(T('KLON_ADIM_GERI'), YeniYol);
   if not GeriYukle(Tanim, Yedek.Dosya, YeniYol, Cikti, Geri) then
   begin
     Result.Iptal := Geri.Iptal;

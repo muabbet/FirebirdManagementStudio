@@ -961,5 +961,14 @@
   "BAKIM_YENIDEN_YARAT": "Neu erstellen (Sichern und Wiederherstellen)",
   "BAKIM_YENIDEN_IPUCU": "Sichert die Datenbank und stellt sie in eine neue Datei wieder her: die Datei wird kleiner, alle Indizes und Seiten werden neu organisiert. Die alte Datei bleibt unberührt; ist die neue Datei fertig, schließen Sie die Verbindungen und wechseln durch Umbenennen der Dateien.",
   "MSG_BAGLANIYOR": "Verbindung zu %s wird hergestellt...",
-  "MSG_AGAC_OKUNUYOR": "Mit %s verbunden, Objekte werden gelesen..."
+  "MSG_AGAC_OKUNUYOR": "Mit %s verbunden, Objekte werden gelesen...",
+  "ILERLEME_ACIKLAMA": "Wird ausgeführt. Bei großen Datenbanken kann es lange dauern; warten Sie, bis dieses Fenster schließt.",
+  "ILERLEME_SURE": "Verstrichene Zeit: %s",
+  "ILERLEME_DOSYA": "Dateigröße: %s",
+  "ILERLEME_IPTAL_EDILIYOR": "Wird abgebrochen...",
+  "KLON_ILERLEME_BASLIK": "Datenbank wird kopiert",
+  "KLON_ADIM_YEDEK": "1/2  Datenbank wird gesichert",
+  "KLON_ADIM_GERI": "2/2  Sicherung wird in die neue Datei wiederhergestellt (Indizes werden neu aufgebaut)",
+  "YEDEK_ACIKLAMA_YEDEK": "Die Datenbank wird gelesen und die Sicherungsdatei geschrieben.",
+  "YEDEK_ACIKLAMA_GERI": "Die Sicherung wird gelesen und die neue Datenbank erstellt."
 }

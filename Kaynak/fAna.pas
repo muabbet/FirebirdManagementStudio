@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -251,7 +251,6 @@ type
     procedure MetadataCikarAc(Dugme: TTreeNode);
     procedure YedekPenceresiAc(Dugme: TTreeNode);
     procedure VeritabaniKopyala(Dugme: TTreeNode);
-    procedure KlonCiktisi(const Satir: string; var Iptal: Boolean);
     procedure SorguyuCalistir;
     procedure PlaniGoster;
   end;
@@ -1785,13 +1784,6 @@ begin
 end;
 
 { Yedek/geri yukleme penceresini acar; baglanti acik olmak zorunda degil. Sifre kayitli degilse sorulur (kaydedilmez). }
-{ gbak beklerken pencere donmasin; Esc tusuna basilirsa islem durdurulur. }
-procedure TfrmAna.KlonCiktisi(const Satir: string; var Iptal: Boolean);
-begin
-  Application.ProcessMessages;
-  Iptal := (GetAsyncKeyState(VK_ESCAPE) and $8000) <> 0;
-end;
-
 { Sag tik > Veritabanini kopyala: yeni dosya yolu sorulur, net onay alinir, yedekle + yeni dosyaya geri yukle; istenirse yeni baglanti eklenir. }
 procedure TfrmAna.VeritabaniKopyala(Dugme: TTreeNode);
 var
@@ -1800,6 +1792,7 @@ var
   Bag: TAcikBaglanti;
   Sonuc: TKlonSonucu;
   Ust: TTreeNode;
+  Ilerleme: TfrmIlerleme;
 begin
   Ad := OgeAl(Dugme).BaglantiAd;
   Bag := FbAcikBaglanti(Ad);
@@ -1829,11 +1822,11 @@ begin
   if not OnayIste(KlonOnayMetni(Tanim, YeniYol, KlonYedekYolu(Tanim, YeniYol))) then
     Exit;
   MesajYaz(TF('MSG_KLON_BASLADI', [Ad, YeniYol]));
-  Screen.Cursor := crHourGlass;
+  Ilerleme := IlerlemeAc(T('KLON_ILERLEME_BASLIK'));
   try
-    Sonuc := VeritabaniKlonla(Tanim, YeniYol, KlonCiktisi);
+    Sonuc := VeritabaniKlonla(Tanim, YeniYol, Ilerleme.Cikti, Ilerleme.AdimBildir);
   finally
-    Screen.Cursor := crDefault;
+    Ilerleme.Bitir;
   end;
   if Sonuc.Iptal then
   begin

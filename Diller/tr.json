@@ -961,5 +961,14 @@
   "BAKIM_YENIDEN_YARAT": "Yeniden yarat (yedekle ve geri yükle)",
   "BAKIM_YENIDEN_IPUCU": "Veritabanını yedekleyip yeni bir dosyaya geri yükler: dosya küçülür, tüm index'ler ve sayfalar yeniden düzenlenir. Eski dosyaya dokunulmaz; yeni dosya hazır olunca bağlantıları kapatıp dosya adlarını değiştirerek ona geçersiniz.",
   "MSG_BAGLANIYOR": "%s bağlanıyor...",
-  "MSG_AGAC_OKUNUYOR": "%s bağlandı, nesneler okunuyor..."
+  "MSG_AGAC_OKUNUYOR": "%s bağlandı, nesneler okunuyor...",
+  "ILERLEME_ACIKLAMA": "İşlem sürüyor. Büyük veritabanında uzun sürebilir; bu pencere kapanana kadar bekleyin.",
+  "ILERLEME_SURE": "Geçen süre: %s",
+  "ILERLEME_DOSYA": "Dosya boyutu: %s",
+  "ILERLEME_IPTAL_EDILIYOR": "İptal ediliyor...",
+  "KLON_ILERLEME_BASLIK": "Veritabanı kopyalanıyor",
+  "KLON_ADIM_YEDEK": "1/2  Veritabanı yedekleniyor",
+  "KLON_ADIM_GERI": "2/2  Yedek yeni dosyaya geri yükleniyor (index'ler yeniden kuruluyor)",
+  "YEDEK_ACIKLAMA_YEDEK": "Veritabanı okunup yedek dosyasına yazılıyor.",
+  "YEDEK_ACIKLAMA_GERI": "Yedek okunup yeni veritabanı oluşturuluyor."
 }

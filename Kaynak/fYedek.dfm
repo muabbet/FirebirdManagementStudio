@@ -26,11 +26,21 @@ object frmYedek: TfrmYedek
     Height = 17
     AutoSize = False
   end
+  object pbYedek: TProgressBar
+    Left = 12
+    Top = 374
+    Width = 616
+    Height = 16
+    MarqueeInterval = 30
+    Style = pbstMarquee
+    TabOrder = 7
+    Visible = False
+  end
   object lblDurum: TLabel
     Left = 12
-    Top = 400
+    Top = 396
     Width = 616
-    Height = 42
+    Height = 48
     AutoSize = False
     WordWrap = True
   end
@@ -79,7 +89,7 @@ object frmYedek: TfrmYedek
     Left = 12
     Top = 196
     Width = 616
-    Height = 196
+    Height = 170
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText
     Font.Height = -12

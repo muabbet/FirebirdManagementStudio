@@ -8,7 +8,7 @@ interface
 
 uses
   Winapi.Windows, System.SysUtils, System.Classes, System.IOUtils, Vcl.Controls, Vcl.Forms,
-  Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.Dialogs,
+  Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.Dialogs, Vcl.ComCtrls,
   uDil, uOnay, uBaglanti, uYedek;
 
 type
@@ -16,6 +16,7 @@ type
     lblKaynak: TLabel;
     lblHedef: TLabel;
     lblDurum: TLabel;
+    pbYedek: TProgressBar;
     rgIslem: TRadioGroup;
     edtKaynak: TEdit;
     btnKaynakSec: TButton;
@@ -41,6 +42,8 @@ type
     FIptalIstendi: Boolean;
     FSonGuncelleme: Cardinal;
     FBaslangic: Cardinal;
+    FAciklama: string;
+    FIzlenen: string;
     procedure YazilariYaz;
     procedure ModuAyarla;
     procedure CalisiyorAyarla(Calisiyor: Boolean);
@@ -123,6 +126,7 @@ procedure TfrmYedek.CalisiyorAyarla(Calisiyor: Boolean);
 begin
   FCalisiyor := Calisiyor;
   FIptalIstendi := False;
+  pbYedek.Visible := Calisiyor;
   rgIslem.Enabled := not Calisiyor;
   edtKaynak.Enabled := not Calisiyor;
   edtHedef.Enabled := not Calisiyor;
@@ -145,7 +149,9 @@ begin
   if GetTickCount - FSonGuncelleme > 80 then
   begin
     FSonGuncelleme := GetTickCount;
-    lblDurum.Caption := TF('YEDEK_SURUYOR', [Format('%.1f', [(GetTickCount - FBaslangic) / 1000])]);
+    lblDurum.Caption := FAciklama + ' ' + TF('YEDEK_SURUYOR', [Format('%.1f', [(GetTickCount - FBaslangic) / 1000])]);
+    if (FIzlenen <> '') and TFile.Exists(FIzlenen) then
+      lblDurum.Caption := lblDurum.Caption + sLineBreak + TF('ILERLEME_DOSYA', [BoyutMetni(TFile.GetSize(FIzlenen))]);
     Application.ProcessMessages;
   end;
   Iptal := FIptalIstendi;
@@ -260,6 +266,8 @@ begin
     Exit;
   memCikti.Clear;
   FBaslangic := GetTickCount;
+  FAciklama := T('YEDEK_ACIKLAMA_YEDEK');
+  FIzlenen := Hedef + '.yarim';
   CalisiyorAyarla(True);
   try
     try
@@ -301,6 +309,10 @@ begin
   end;
   memCikti.Clear;
   FBaslangic := GetTickCount;
+  FAciklama := T('YEDEK_ACIKLAMA_GERI');
+  FIzlenen := '';
+  if YerelSunucuMu(FTanim.Sunucu) then
+    FIzlenen := Hedef;
   CalisiyorAyarla(True);
   try
     try

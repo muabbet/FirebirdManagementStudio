@@ -209,6 +209,10 @@
         </DCCReference>
         <DCCReference Include="uBakim.pas"/>
         <DCCReference Include="uKlonla.pas"/>
+        <DCCReference Include="fIlerleme.pas">
+            <Form>frmIlerleme</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <DCCReference Include="fBakim.pas">
             <Form>frmBakim</Form>
             <FormType>dfm</FormType>
