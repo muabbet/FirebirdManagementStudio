@@ -122,7 +122,8 @@ end;
 { Araclarin ciktisi: son satir durum yazisinda gorunur; pencere donmasin diye mesajlar islenir. }
 procedure TfrmBakim.Izle(const Satir: string; var Iptal: Boolean);
 begin
-  if Trim(Satir) <> '' then
+  { Eski sunucuda gstat'in bilinen "Wrong ODS" satiri hata degildir (rapor yedek kipte surer); ekranda gosterilmez. }
+  if (Trim(Satir) <> '') and (Pos('Wrong ODS', Satir) = 0) then
     lblDurum.Caption := TF('BAKIM_CALISIYOR', [Trim(Satir)]);
   Application.ProcessMessages;
   Iptal := FIptal;
