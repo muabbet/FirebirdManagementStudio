@@ -84,7 +84,7 @@ end;
 { gbak'i sunucunun servis yoluyla calistirir (-se): 2.5, 3.0, 4.0, 5.0 sunucularinin hepsiyle uyumludur. }
 function ServisAdi(const Tanim: TBaglantiTanimi): string;
 begin
-  Result := '"' + Tanim.Sunucu + '/' + IntToStr(Tanim.Port) + ':service_mgr"';
+  Result := '"' + SunucuAdresi(Tanim.Sunucu) + '/' + IntToStr(Tanim.Port) + ':service_mgr"';
 end;
 
 function ServisIleKlonla(const Tanim: TBaglantiTanimi; const YeniYol, YedekYolu: string; Cikti: TYedekCiktisi): TKlonSonucu;

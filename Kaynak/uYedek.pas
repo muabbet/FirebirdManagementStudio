@@ -149,7 +149,7 @@ begin
   if Tanim.Sunucu = '' then
     Result := Yol
   else
-    Result := Tanim.Sunucu + '/' + IntToStr(Tanim.Port) + ':' + Yol;
+    Result := SunucuAdresi(Tanim.Sunucu) + '/' + IntToStr(Tanim.Port) + ':' + Yol;
 end;
 
 { Bosluk ve Turkce karakterli yollar icin. Windows yollarinda " olamaz. }
@@ -499,7 +499,7 @@ end;
 
 function ServisAdi(const Tanim: TBaglantiTanimi): string;
 begin
-  Result := Tirnakla(Tanim.Sunucu + '/' + IntToStr(Tanim.Port) + ':service_mgr');
+  Result := Tirnakla(SunucuAdresi(Tanim.Sunucu) + '/' + IntToStr(Tanim.Port) + ':service_mgr');
 end;
 
 { Onceki bir yarim dosya silinmez, tarihli bir adla yanina tasinir. }

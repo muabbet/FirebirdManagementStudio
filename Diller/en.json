@@ -959,5 +959,7 @@
   "MSG_KLON_EKLENDI": "New connection added: %s",
   "ERR_KLON_AYNI_YOL": "The new file path cannot be empty or the same as the source.",
   "BAKIM_YENIDEN_YARAT": "Recreate (backup and restore)",
-  "BAKIM_YENIDEN_IPUCU": "Backs up the database and restores it into a new file: the file shrinks and all indexes and pages are reorganized. The old file is not touched; when the new file is ready, close the connections and switch to it by renaming the files."
+  "BAKIM_YENIDEN_IPUCU": "Backs up the database and restores it into a new file: the file shrinks and all indexes and pages are reorganized. The old file is not touched; when the new file is ready, close the connections and switch to it by renaming the files.",
+  "MSG_BAGLANIYOR": "Connecting to %s...",
+  "MSG_AGAC_OKUNUYOR": "Connected to %s, reading objects..."
 }

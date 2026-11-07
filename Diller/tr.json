@@ -959,5 +959,7 @@
   "MSG_KLON_EKLENDI": "Yeni bağlantı eklendi: %s",
   "ERR_KLON_AYNI_YOL": "Yeni dosya yolu boş olamaz ve kaynakla aynı olamaz.",
   "BAKIM_YENIDEN_YARAT": "Yeniden yarat (yedekle ve geri yükle)",
-  "BAKIM_YENIDEN_IPUCU": "Veritabanını yedekleyip yeni bir dosyaya geri yükler: dosya küçülür, tüm index'ler ve sayfalar yeniden düzenlenir. Eski dosyaya dokunulmaz; yeni dosya hazır olunca bağlantıları kapatıp dosya adlarını değiştirerek ona geçersiniz."
+  "BAKIM_YENIDEN_IPUCU": "Veritabanını yedekleyip yeni bir dosyaya geri yükler: dosya küçülür, tüm index'ler ve sayfalar yeniden düzenlenir. Eski dosyaya dokunulmaz; yeni dosya hazır olunca bağlantıları kapatıp dosya adlarını değiştirerek ona geçersiniz.",
+  "MSG_BAGLANIYOR": "%s bağlanıyor...",
+  "MSG_AGAC_OKUNUYOR": "%s bağlandı, nesneler okunuyor..."
 }

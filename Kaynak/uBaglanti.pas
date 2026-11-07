@@ -93,6 +93,9 @@ function FbAcikBaglantiAdlari: TArray<string>;
 function FbIslemAcikMi(Bag: TAcikBaglanti): Boolean;
 { Sunucu bos, localhost ve 127.0.0.1 ayni yerel makine sayilir. }
 function YerelSunucuMu(const Sunucu: string): Boolean;
+{ Aga gidecek sunucu adi: "localhost" 127.0.0.1 olur. Windows "localhost"u once IPv6 (::1) ile dener; 2.5, 3.0 ve 4.0
+  sunuculari yalniz IPv4'te dinledigi icin her baglantida ~2 sn beklenirdi (olculdu). Baska adlar oldugu gibi kalir. }
+function SunucuAdresi(const Sunucu: string): string;
 { Ayni sunucudaki ayni veritabani yolu acik bir baglantida kullaniliyorsa o baglantinin adini verir, yoksa bos. }
 function FbYoluAcikBaglantidaMi(const Sunucu, Yol: string): string;
 
@@ -590,7 +593,7 @@ begin
   { Sunucu bos birakilirsa yerel baglanti (ag kullanilmaz). }
   if Tanim.Sunucu <> '' then
   begin
-    Result.Params.Values['Server'] := Tanim.Sunucu;
+    Result.Params.Values['Server'] := SunucuAdresi(Tanim.Sunucu);
     Result.Params.Values['Port'] := IntToStr(Tanim.Port);
     Result.Params.Values['Protocol'] := 'TCPIP';
   end;
@@ -661,6 +664,14 @@ begin
     raise;
   end;
   Result := Bag;
+end;
+
+function SunucuAdresi(const Sunucu: string): string;
+begin
+  if SameText(Sunucu, 'localhost') then
+    Result := '127.0.0.1'
+  else
+    Result := Sunucu;
 end;
 
 function FbBaglan(const Tanim: TBaglantiTanimi): TAcikBaglanti;

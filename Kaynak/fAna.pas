@@ -851,6 +851,9 @@ begin
       Exit;
     Tanim.Sifre := Sifre;
   end;
+  { Baglanirken durum cubugunda ne yapildigi gorunur (yavas aglarda pencere donmus sanilmasin). }
+  stbDurum.Panels[0].Text := TF('MSG_BAGLANIYOR', [Ad]);
+  stbDurum.Update;
   Screen.Cursor := crHourGlass;
   try
     try
@@ -859,9 +862,12 @@ begin
       on E: Exception do
       begin
         HataYaz(TF('ERR_BAGLANTI_ACILAMADI', [Ad]) + ' ' + HataMetniniCevir(E), E.Message);
+        DurumuGuncelle;
         Exit;
       end;
     end;
+    stbDurum.Panels[0].Text := TF('MSG_AGAC_OKUNUYOR', [Ad]);
+    stbDurum.Update;
     Dugme.ImageIndex := IKON_VERITABANI;
     Dugme.SelectedIndex := IKON_VERITABANI;
     try

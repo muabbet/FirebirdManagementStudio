@@ -1895,7 +1895,7 @@ begin
   try
     Guvenlik.DriverLink := FbSurucu;
     Guvenlik.Protocol := ipTCPIP;
-    Guvenlik.Host := Bag.Tanim.Sunucu;
+    Guvenlik.Host := SunucuAdresi(Bag.Tanim.Sunucu);
     Guvenlik.Port := Bag.Tanim.Port;
     Guvenlik.UserName := Bag.Tanim.Kullanici;
     Guvenlik.Password := Bag.Tanim.Sifre;

@@ -588,7 +588,7 @@ begin
     { 1. gstat -r: tablo ve index analizi }
     { Sunucu kipinde fbsvcmgr (sunucunun kendi servisi: 2.5, 3.0, 4.0, 5.0 hepsinde calisir; 5.0 gstat eski dosya surumunu okuyamaz) }
     if Bag.Tanim.Sunucu <> '' then
-      Bitti := AltIslemCalistir(FbsvcmgrYolu, Tirnakla(Bag.Tanim.Sunucu + '/' + IntToStr(Bag.Tanim.Port) + ':service_mgr') +
+      Bitti := AltIslemCalistir(FbsvcmgrYolu, Tirnakla(SunucuAdresi(Bag.Tanim.Sunucu) + '/' + IntToStr(Bag.Tanim.Port) + ':service_mgr') +
         ' user ' + Tirnakla(Bag.Tanim.Kullanici) + ' action_db_stats dbname ' + Tirnakla(Bag.Tanim.VeritabaniYolu) +
         ' sts_data_pages sts_idx_pages sts_record_versions', Bag.Tanim.Sifre, Cikti, Ham, Kod)
     else
@@ -617,7 +617,7 @@ begin
       { Sunucu kipinde servis yoluyla (eski sunucu surumleriyle de calisir; 5.0 gbak 2.5'e dogrudan baglanamaz) }
       if Bag.Tanim.Sunucu <> '' then
         Bitti := AltIslemCalistir(GbakYolu, '-b -g' + KullaniciArgumani(Bag.Tanim) + ' -se ' +
-          Tirnakla(Bag.Tanim.Sunucu + '/' + IntToStr(Bag.Tanim.Port) + ':service_mgr') + ' ' +
+          Tirnakla(SunucuAdresi(Bag.Tanim.Sunucu) + '/' + IntToStr(Bag.Tanim.Port) + ':service_mgr') + ' ' +
           Tirnakla(Bag.Tanim.VeritabaniYolu) + ' nul', Bag.Tanim.Sifre, Cikti, Ham, Kod)
       else
         Bitti := AltIslemCalistir(GbakYolu, '-b -g' + KullaniciArgumani(Bag.Tanim) + ' ' + Hedef + ' nul', Bag.Tanim.Sifre, Cikti, Ham, Kod);
