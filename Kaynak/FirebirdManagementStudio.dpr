@@ -60,6 +60,7 @@ uses
   uAktifBaglanti in 'uAktifBaglanti.pas',
   fAktifBaglanti in 'fAktifBaglanti.pas' {frmAktifBaglanti},
   uBakim in 'uBakim.pas',
+  uKlonla in 'uKlonla.pas',
   fBakim in 'fBakim.pas' {frmBakim},
   uTabloTasarim in 'uTabloTasarim.pas',
   fTabloTasarim in 'fTabloTasarim.pas' {frmTabloTasarim},

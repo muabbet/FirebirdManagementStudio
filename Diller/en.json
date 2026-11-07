@@ -946,5 +946,16 @@
   "ERR_BAKIM_ARAC": "The maintenance tool did not run.",
   "ERR_BAKIM_RAPOR": "The maintenance report could not be prepared.",
   "BAKIM_NOT_GSTAT_ESKI": "Detailed table and index analysis is not possible for this server version (old, such as Firebird 2.5); only the transaction counters and the corrupt record scan were checked. Sweep is suggested when the transaction gap is large.",
-  "BAKIM_OZET_ANALIZ_YOK": "Detailed table and index analysis could not be done on this server version (see the note below)."
+  "BAKIM_OZET_ANALIZ_YOK": "Detailed table and index analysis could not be done on this server version (see the note below).",
+  "MENU_VERITABANI_KOPYALA": "Copy database",
+  "KLON_BASLIK": "Copy database",
+  "KLON_ISTEK": "New database file (path on the server):",
+  "KLON_ONAY": "The database will be copied.\n\nSource: %s\nNew file: %s\n\nIn order: 1) the source is backed up with gbak to a temporary backup file (%s); 2) that backup is restored into the new file. The source database is not touched and an existing file is not overwritten. The temporary backup file is not deleted. It can take long for a large database; the Esc key stops it.\n\nCopy it?",
+  "KLON_BAGLANTI_SOR": "Add the new database (%s) as a saved connection too?",
+  "MSG_KLON_BASLADI": "Copying %s: %s ...",
+  "MSG_KLON_TAMAM": "Database copied: %s",
+  "MSG_KLON_YEDEK": "Temporary backup file (not deleted): %s",
+  "MSG_KLON_IPTAL": "Copy cancelled.",
+  "MSG_KLON_EKLENDI": "New connection added: %s",
+  "ERR_KLON_AYNI_YOL": "The new file path cannot be empty or the same as the source."
 }

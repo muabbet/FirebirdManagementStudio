@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -68,6 +68,8 @@ type
     miKaldir: TMenuItem;
     miMetadataCikar: TMenuItem;
     miYedek: TMenuItem;
+    miKlonla: TMenuItem;
+    miVeritabaniKopyala: TMenuItem;
     miKlasorAdi: TMenuItem;
     miKlasorKaldir: TMenuItem;
     miYeniKlasor: TMenuItem;
@@ -127,6 +129,7 @@ type
     procedure miKaldirClick(Sender: TObject);
     procedure miMetadataCikarClick(Sender: TObject);
     procedure miYedekClick(Sender: TObject);
+    procedure miVeritabaniKopyalaClick(Sender: TObject);
     procedure miKlasorAdiClick(Sender: TObject);
     procedure miKlasorKaldirClick(Sender: TObject);
     procedure miYeniKlasorClick(Sender: TObject);
@@ -247,6 +250,8 @@ type
     procedure YeniGeneratorAc(Dal: TTreeNode);
     procedure MetadataCikarAc(Dugme: TTreeNode);
     procedure YedekPenceresiAc(Dugme: TTreeNode);
+    procedure VeritabaniKopyala(Dugme: TTreeNode);
+    procedure KlonCiktisi(const Satir: string; var Iptal: Boolean);
     procedure SorguyuCalistir;
     procedure PlaniGoster;
   end;
@@ -373,6 +378,8 @@ begin
   miKaldir.Caption := T('MENU_KAYITTAN_KALDIR');
   miMetadataCikar.Caption := T('MENU_METADATA_CIKAR');
   miYedek.Caption := T('MENU_YEDEK');
+  miKlonla.Caption := T('MENU_KLONLA');
+  miVeritabaniKopyala.Caption := T('MENU_VERITABANI_KOPYALA');
   miKlasorAdi.Caption := T('MENU_KLASOR_ADLANDIR');
   miKlasorKaldir.Caption := T('MENU_KLASOR_KALDIR');
   miYeniKlasor.Caption := T('BTN_YENI_KLASOR');
@@ -1772,6 +1779,87 @@ begin
 end;
 
 { Yedek/geri yukleme penceresini acar; baglanti acik olmak zorunda degil. Sifre kayitli degilse sorulur (kaydedilmez). }
+{ gbak beklerken pencere donmasin; Esc tusuna basilirsa islem durdurulur. }
+procedure TfrmAna.KlonCiktisi(const Satir: string; var Iptal: Boolean);
+begin
+  Application.ProcessMessages;
+  Iptal := (GetAsyncKeyState(VK_ESCAPE) and $8000) <> 0;
+end;
+
+{ Sag tik > Veritabanini kopyala: yeni dosya yolu sorulur, net onay alinir, yedekle + yeni dosyaya geri yukle; istenirse yeni baglanti eklenir. }
+procedure TfrmAna.VeritabaniKopyala(Dugme: TTreeNode);
+var
+  Ad, Sifre, YeniYol, YeniAd: string;
+  Tanim: TBaglantiTanimi;
+  Bag: TAcikBaglanti;
+  Sonuc: TKlonSonucu;
+  Ust: TTreeNode;
+begin
+  Ad := OgeAl(Dugme).BaglantiAd;
+  Bag := FbAcikBaglanti(Ad);
+  if Bag <> nil then
+    Tanim := Bag.Tanim
+  else if not KayitliBaglantiBul(Ad, Tanim) then
+  begin
+    HataYaz(TF('ERR_KAYIT_YOK', [Ad]), '');
+    Exit;
+  end;
+  if Tanim.Sifre = '' then
+  begin
+    Sifre := '';
+    if not MetinSor(T('SIFRE_BASLIK'), TF('SIFRE_ISTEK', [Ad]), Sifre, True) then
+      Exit;
+    Tanim.Sifre := Sifre;
+  end;
+  YeniYol := KlonYoluOner(Tanim.VeritabaniYolu);
+  if not MetinSor(T('KLON_BASLIK'), T('KLON_ISTEK'), YeniYol, False) then
+    Exit;
+  YeniYol := Trim(YeniYol);
+  if (YeniYol = '') or SameText(YeniYol, Tanim.VeritabaniYolu) then
+  begin
+    UyariGoster(T('ERR_KLON_AYNI_YOL'));
+    Exit;
+  end;
+  if not OnayIste(KlonOnayMetni(Tanim, YeniYol, KlonYedekYolu(Tanim, YeniYol))) then
+    Exit;
+  MesajYaz(TF('MSG_KLON_BASLADI', [Ad, YeniYol]));
+  Screen.Cursor := crHourGlass;
+  try
+    Sonuc := VeritabaniKlonla(Tanim, YeniYol, KlonCiktisi);
+  finally
+    Screen.Cursor := crDefault;
+  end;
+  if Sonuc.Iptal then
+  begin
+    MesajYaz(T('MSG_KLON_IPTAL'));
+    Exit;
+  end;
+  if not Sonuc.Basarili then
+  begin
+    HataYaz(Sonuc.Cumle, Sonuc.Ayrinti);
+    UyariGoster(Sonuc.Cumle);
+    Exit;
+  end;
+  MesajYaz(TF('MSG_KLON_TAMAM', [YeniYol]));
+  MesajYaz(TF('MSG_KLON_YEDEK', [Sonuc.YedekDosya]));
+  if not OnayIste(TF('KLON_BAGLANTI_SOR', [YeniYol])) then
+    Exit;
+  try
+    YeniAd := KlonBaglantisiniEkle(Tanim, YeniYol);
+    Ust := nil;
+    if Tanim.Klasor <> '' then
+    begin
+      BaglantiKlasoruAyarla(YeniAd, Tanim.Klasor);
+      Ust := KlasorDugmesiBul(Tanim.Klasor);
+    end;
+    tvNesneler.Selected := BaglantiDugmesiEkle(Ust, YeniAd);
+    MesajYaz(TF('MSG_KLON_EKLENDI', [YeniAd]));
+  except
+    on E: Exception do
+      KayitHatasiGoster(E);
+  end;
+end;
+
 procedure TfrmAna.YedekPenceresiAc(Dugme: TTreeNode);
 var
   Ad, Sifre, Satir: string;
@@ -2304,6 +2392,8 @@ begin
   miKaldir.Visible := (not Bos) and (Tur = atBaglanti);
   miMetadataCikar.Visible := (not Bos) and (Tur = atBaglanti) and Acik;
   miYedek.Visible := (not Bos) and (Tur = atBaglanti);
+  miKlonla.Visible := (not Bos) and (Tur = atBaglanti);
+  miVeritabaniKopyala.Visible := (not Bos) and (Tur = atBaglanti);
   miAc.Visible := (not Bos) and (Tur = atNesne) and (OgeAl(Dugme).DalNo = DAL_TABLO);
   miBagimliliklar.Visible := miAc.Visible;
   { DDL tetikleyicisinde (script uretilmeyen tur) Script uret ve Duzenle gizlenir; Yenile kalir. }
@@ -2486,6 +2576,12 @@ procedure TfrmAna.miMetadataCikarClick(Sender: TObject);
 begin
   if SeciliBaglantiDugmesi <> nil then
     MetadataCikarAc(SeciliBaglantiDugmesi);
+end;
+
+procedure TfrmAna.miVeritabaniKopyalaClick(Sender: TObject);
+begin
+  if SeciliBaglantiDugmesi <> nil then
+    VeritabaniKopyala(SeciliBaglantiDugmesi);
 end;
 
 procedure TfrmAna.miYedekClick(Sender: TObject);

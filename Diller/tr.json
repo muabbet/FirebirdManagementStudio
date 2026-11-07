@@ -946,5 +946,16 @@
   "ERR_BAKIM_ARAC": "Bakım aracı çalışmadı.",
   "ERR_BAKIM_RAPOR": "Bakım raporu hazırlanamadı.",
   "BAKIM_NOT_GSTAT_ESKI": "Bu sunucu sürümü (Firebird 2.5 gibi eski) için tablo ve index ayrıntı analizi yapılamıyor; yalnızca işlem sayaçlarına ve bozuk kayıt taramasına bakıldı. Sweep işlem farkı büyükse önerilir.",
-  "BAKIM_OZET_ANALIZ_YOK": "Tablo ve index ayrıntı analizi bu sunucu sürümünde yapılamadı (aşağıdaki nota bakın)."
+  "BAKIM_OZET_ANALIZ_YOK": "Tablo ve index ayrıntı analizi bu sunucu sürümünde yapılamadı (aşağıdaki nota bakın).",
+  "MENU_VERITABANI_KOPYALA": "Veritabanını kopyala",
+  "KLON_BASLIK": "Veritabanını kopyala",
+  "KLON_ISTEK": "Yeni veritabanı dosyası (sunucudaki yol):",
+  "KLON_ONAY": "Veritabanı kopyalanacak.\n\nKaynak: %s\nYeni dosya: %s\n\nSırayla: 1) kaynak, gbak ile geçici bir yedek dosyasına alınır (%s); 2) bu yedek yeni dosyaya geri yüklenir. Kaynak veritabanına dokunulmaz, var olan bir dosya ezilmez. Geçici yedek dosyası silinmez. Büyük veritabanında uzun sürebilir; Esc tuşu işlemi durdurur.\n\nKopyalansın mı?",
+  "KLON_BAGLANTI_SOR": "Yeni veritabanı (%s) kayıtlı bağlantı olarak da eklensin mi?",
+  "MSG_KLON_BASLADI": "%s kopyalanıyor: %s ...",
+  "MSG_KLON_TAMAM": "Veritabanı kopyalandı: %s",
+  "MSG_KLON_YEDEK": "Geçici yedek dosyası (silinmedi): %s",
+  "MSG_KLON_IPTAL": "Kopyalama iptal edildi.",
+  "MSG_KLON_EKLENDI": "Yeni bağlantı eklendi: %s",
+  "ERR_KLON_AYNI_YOL": "Yeni dosya yolu boş olamaz ve kaynakla aynı olamaz."
 }

@@ -208,6 +208,7 @@
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="uBakim.pas"/>
+        <DCCReference Include="uKlonla.pas"/>
         <DCCReference Include="fBakim.pas">
             <Form>frmBakim</Form>
             <FormType>dfm</FormType>

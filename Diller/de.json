@@ -946,5 +946,16 @@
   "ERR_BAKIM_ARAC": "Das Wartungswerkzeug wurde nicht ausgeführt.",
   "ERR_BAKIM_RAPOR": "Der Wartungsbericht konnte nicht erstellt werden.",
   "BAKIM_NOT_GSTAT_ESKI": "Für diese Serverversion (alt, z. B. Firebird 2.5) ist keine detaillierte Tabellen- und Indexanalyse möglich; geprüft wurden nur die Transaktionszähler und die Suche nach beschädigten Datensätzen. Sweep wird bei großem Transaktionsabstand empfohlen.",
-  "BAKIM_OZET_ANALIZ_YOK": "Die detaillierte Tabellen- und Indexanalyse war bei dieser Serverversion nicht möglich (siehe Hinweis unten)."
+  "BAKIM_OZET_ANALIZ_YOK": "Die detaillierte Tabellen- und Indexanalyse war bei dieser Serverversion nicht möglich (siehe Hinweis unten).",
+  "MENU_VERITABANI_KOPYALA": "Datenbank kopieren",
+  "KLON_BASLIK": "Datenbank kopieren",
+  "KLON_ISTEK": "Neue Datenbankdatei (Pfad auf dem Server):",
+  "KLON_ONAY": "Die Datenbank wird kopiert.\n\nQuelle: %s\nNeue Datei: %s\n\nReihenfolge: 1) die Quelle wird mit gbak in eine temporäre Sicherungsdatei gesichert (%s); 2) diese Sicherung wird in die neue Datei wiederhergestellt. Die Quelldatenbank wird nicht angefasst, eine vorhandene Datei wird nicht überschrieben. Die temporäre Sicherungsdatei wird nicht gelöscht. Bei großen Datenbanken kann es lange dauern; die Esc-Taste bricht ab.\n\nKopieren?",
+  "KLON_BAGLANTI_SOR": "Die neue Datenbank (%s) auch als gespeicherte Verbindung hinzufügen?",
+  "MSG_KLON_BASLADI": "%s wird kopiert: %s ...",
+  "MSG_KLON_TAMAM": "Datenbank kopiert: %s",
+  "MSG_KLON_YEDEK": "Temporäre Sicherungsdatei (nicht gelöscht): %s",
+  "MSG_KLON_IPTAL": "Kopieren abgebrochen.",
+  "MSG_KLON_EKLENDI": "Neue Verbindung hinzugefügt: %s",
+  "ERR_KLON_AYNI_YOL": "Der neue Dateipfad darf nicht leer oder gleich der Quelle sein."
 }

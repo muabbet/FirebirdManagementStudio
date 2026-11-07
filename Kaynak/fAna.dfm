@@ -225,6 +225,12 @@ object frmAna: TfrmAna
     object miYedek: TMenuItem
       OnClick = miYedekClick
     end
+    object miKlonla: TMenuItem
+      OnClick = btnKlonlaClick
+    end
+    object miVeritabaniKopyala: TMenuItem
+      OnClick = miVeritabaniKopyalaClick
+    end
     object miDuzenle: TMenuItem
       OnClick = miDuzenleClick
     end
