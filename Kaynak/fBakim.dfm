@@ -216,6 +216,21 @@ object frmBakim: TfrmBakim
       TabOrder = 1
       OnClick = btnIptalClick
     end
+    object btnYenidenYarat: TButton
+      AlignWithMargins = True
+      Left = 248
+      Top = 24
+      Width = 140
+      Height = 34
+      Margins.Left = 12
+      Margins.Top = 4
+      Margins.Right = 4
+      Margins.Bottom = 10
+      Align = alLeft
+      Constraints.MinWidth = 140
+      ModalResult = 4
+      TabOrder = 3
+    end
     object btnKapat: TButton
       AlignWithMargins = True
       Left = 892

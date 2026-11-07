@@ -957,5 +957,7 @@
   "MSG_KLON_YEDEK": "Temporäre Sicherungsdatei (nicht gelöscht): %s",
   "MSG_KLON_IPTAL": "Kopieren abgebrochen.",
   "MSG_KLON_EKLENDI": "Neue Verbindung hinzugefügt: %s",
-  "ERR_KLON_AYNI_YOL": "Der neue Dateipfad darf nicht leer oder gleich der Quelle sein."
+  "ERR_KLON_AYNI_YOL": "Der neue Dateipfad darf nicht leer oder gleich der Quelle sein.",
+  "BAKIM_YENIDEN_YARAT": "Neu erstellen (Sichern und Wiederherstellen)",
+  "BAKIM_YENIDEN_IPUCU": "Sichert die Datenbank und stellt sie in eine neue Datei wieder her: die Datei wird kleiner, alle Indizes und Seiten werden neu organisiert. Die alte Datei bleibt unberührt; ist die neue Datei fertig, schließen Sie die Verbindungen und wechseln durch Umbenennen der Dateien."
 }

@@ -27,6 +27,7 @@ type
     lblDurum: TLabel;
     btnBaslat: TButton;
     btnIptal: TButton;
+    btnYenidenYarat: TButton;
     btnKapat: TButton;
     procedure btnRaporClick(Sender: TObject);
     procedure btnBaslatClick(Sender: TObject);
@@ -47,14 +48,15 @@ type
     procedure Hazirla;
   end;
 
-{ Pencereyi gosterir. SqlYaz: bakimda calisan komutlarin SQL karsiligi; Sonuc: ana pencerenin sonuc alani. }
-procedure BakimPenceresiniGoster(Bag: TAcikBaglanti; SqlYaz: TSqlGoster; Sonuc: TStrings);
+{ Pencereyi gosterir. SqlYaz: bakimda calisan komutlarin SQL karsiligi; Sonuc: ana pencerenin sonuc alani.
+  Kullanici "Yeniden yarat" dugmesine bastiysa True doner: cagiran Veritabanini kopyala (yedekle + yeni dosyaya geri yukle) akisini baslatir. }
+function BakimPenceresiniGoster(Bag: TAcikBaglanti; SqlYaz: TSqlGoster; Sonuc: TStrings): Boolean;
 
 implementation
 
 {$R *.dfm}
 
-procedure BakimPenceresiniGoster(Bag: TAcikBaglanti; SqlYaz: TSqlGoster; Sonuc: TStrings);
+function BakimPenceresiniGoster(Bag: TAcikBaglanti; SqlYaz: TSqlGoster; Sonuc: TStrings): Boolean;
 var
   Pencere: TfrmBakim;
 begin
@@ -64,7 +66,7 @@ begin
     Pencere.FSqlYaz := SqlYaz;
     Pencere.FSonuc := Sonuc;
     Pencere.YazilariYaz;
-    Pencere.ShowModal;
+    Result := Pencere.ShowModal = mrRetry;
   finally
     Pencere.Free;
   end;
@@ -77,6 +79,9 @@ begin
   btnRapor.Caption := T('BAKIM_RAPOR_HAZIRLA');
   btnBaslat.Caption := T('BAKIM_BASLAT');
   btnIptal.Caption := T('BTN_IPTAL');
+  btnYenidenYarat.Caption := T('BAKIM_YENIDEN_YARAT');
+  btnYenidenYarat.Hint := T('BAKIM_YENIDEN_IPUCU');
+  btnYenidenYarat.ShowHint := True;
   btnKapat.Caption := T('BTN_KAPAT');
   tsOzet.Caption := T('BAKIM_SEKME_OZET');
   tsTablolar.Caption := T('BAKIM_SEKME_TABLO');
@@ -85,6 +90,7 @@ begin
   DugmeyiYaziyaUydur(btnRapor);
   DugmeyiYaziyaUydur(btnBaslat);
   DugmeyiYaziyaUydur(btnIptal);
+  DugmeyiYaziyaUydur(btnYenidenYarat);
   DugmeyiYaziyaUydur(btnKapat);
   lvTablolar.Columns[0].Caption := T('BAKIM_KOL_TABLO');
   lvTablolar.Columns[1].Caption := T('BAKIM_KOL_SATIR');
@@ -113,6 +119,7 @@ begin
   btnRapor.Enabled := not Acik;
   btnBaslat.Enabled := (not Acik) and FRaporVar and FRapor.Basarili and (Length(FRapor.Isler) > 0);
   btnKapat.Enabled := not Acik;
+  btnYenidenYarat.Enabled := not Acik;
   btnIptal.Enabled := Acik;
   chkTarama.Enabled := not Acik;
   if not Acik then

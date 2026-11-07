@@ -2195,8 +2195,8 @@ begin
   if SeciliBaglantiDugmesi = nil then
     Exit;
   Bag := FbAcikBaglanti(OgeAl(SeciliBaglantiDugmesi).BaglantiAd);
-  if Bag <> nil then
-    BakimPenceresiniGoster(Bag, SqlMesajiYaz, memSonuc.Lines);
+  if (Bag <> nil) and BakimPenceresiniGoster(Bag, SqlMesajiYaz, memSonuc.Lines) then
+    VeritabaniKopyala(SeciliBaglantiDugmesi);
 end;
 
 procedure TfrmAna.btnKullanicilarClick(Sender: TObject);

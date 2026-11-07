@@ -957,5 +957,7 @@
   "MSG_KLON_YEDEK": "Geçici yedek dosyası (silinmedi): %s",
   "MSG_KLON_IPTAL": "Kopyalama iptal edildi.",
   "MSG_KLON_EKLENDI": "Yeni bağlantı eklendi: %s",
-  "ERR_KLON_AYNI_YOL": "Yeni dosya yolu boş olamaz ve kaynakla aynı olamaz."
+  "ERR_KLON_AYNI_YOL": "Yeni dosya yolu boş olamaz ve kaynakla aynı olamaz.",
+  "BAKIM_YENIDEN_YARAT": "Yeniden yarat (yedekle ve geri yükle)",
+  "BAKIM_YENIDEN_IPUCU": "Veritabanını yedekleyip yeni bir dosyaya geri yükler: dosya küçülür, tüm index'ler ve sayfalar yeniden düzenlenir. Eski dosyaya dokunulmaz; yeni dosya hazır olunca bağlantıları kapatıp dosya adlarını değiştirerek ona geçersiniz."
 }
