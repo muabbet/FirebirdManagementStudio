@@ -944,5 +944,7 @@
   "ERR_BAKIM_ARAC_YOK": "Die Wartungswerkzeuge (gstat.exe, gfix.exe) wurden nicht gefunden. Laden Sie das Programm erneut herunter oder prüfen Sie den Client-Ordner.",
   "ERR_BAKIM_YETKI": "Für die Wartung müssen Sie sich als SYSDBA oder als Benutzer mit ausreichenden Rechten verbinden.",
   "ERR_BAKIM_ARAC": "Das Wartungswerkzeug wurde nicht ausgeführt.",
-  "ERR_BAKIM_RAPOR": "Der Wartungsbericht konnte nicht erstellt werden."
+  "ERR_BAKIM_RAPOR": "Der Wartungsbericht konnte nicht erstellt werden.",
+  "BAKIM_NOT_GSTAT_ESKI": "Für diese Serverversion (alt, z. B. Firebird 2.5) ist keine detaillierte Tabellen- und Indexanalyse möglich; geprüft wurden nur die Transaktionszähler und die Suche nach beschädigten Datensätzen. Sweep wird bei großem Transaktionsabstand empfohlen.",
+  "BAKIM_OZET_ANALIZ_YOK": "Die detaillierte Tabellen- und Indexanalyse war bei dieser Serverversion nicht möglich (siehe Hinweis unten)."
 }

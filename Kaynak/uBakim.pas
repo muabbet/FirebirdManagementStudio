@@ -105,6 +105,8 @@ type
     Indeksler: TArray<TBakimIndeksi>;
     Tarama: TTaramaDurumu;
     TaramaCikti: string;
+    { gstat bu sunucu surumunu okuyamadi (eski surum): tablo / index analizi yok, yalniz sayaclar ve tarama }
+    TabloAnaliziYok: Boolean;
     Isler: TArray<TBakimIsi>;
     { Bakimi etkileyen notlar (bagli kisiler, yedek onerisi...), satir satir }
     Notlar: TArray<string>;
@@ -417,6 +419,8 @@ begin
       Notlar.Add(TF('BAKIM_NOT_YEDEK_INDEKS', [YedekOnerilen]));
     if Seyrek > 0 then
       Notlar.Add(TF('BAKIM_NOT_YEDEK_SAYFA', [Seyrek]));
+    if Rapor.TabloAnaliziYok then
+      Notlar.Add(T('BAKIM_NOT_GSTAT_ESKI'));
     if Rapor.Tarama = tdBozuk then
       Notlar.Add(T('BAKIM_NOT_BOZUK'));
     Rapor.Isler := Isler.ToArray;
@@ -585,7 +589,9 @@ begin
     if not GstatAyristir(Ham, Result.Tablolar, Result.Indeksler) then
     begin
       { Tablo yoksa: bos veritabani (hata degil) ya da arac hatasi }
-      if Kod <> 0 then
+      if ContainsText(Ham, 'ODS version') then
+        Result.TabloAnaliziYok := True
+      else if Kod <> 0 then
       begin
         Result.Cumle := AracHatasiniCevir(Ham);
         Result.Ayrinti := Ham;
@@ -596,7 +602,13 @@ begin
     { 2. istege bagli bozuk kayit taramasi }
     if TaramaYap then
     begin
-      Bitti := AltIslemCalistir(GbakYolu, '-b -g' + KullaniciArgumani(Bag.Tanim) + ' ' + Hedef + ' nul', Bag.Tanim.Sifre, Cikti, Ham, Kod);
+      { Sunucu kipinde servis yoluyla (eski sunucu surumleriyle de calisir; 5.0 gbak 2.5'e dogrudan baglanamaz) }
+      if Bag.Tanim.Sunucu <> '' then
+        Bitti := AltIslemCalistir(GbakYolu, '-b -g' + KullaniciArgumani(Bag.Tanim) + ' -se ' +
+          Tirnakla(Bag.Tanim.Sunucu + '/' + IntToStr(Bag.Tanim.Port) + ':service_mgr') + ' ' +
+          Tirnakla(Bag.Tanim.VeritabaniYolu) + ' nul', Bag.Tanim.Sifre, Cikti, Ham, Kod)
+      else
+        Bitti := AltIslemCalistir(GbakYolu, '-b -g' + KullaniciArgumani(Bag.Tanim) + ' ' + Hedef + ' nul', Bag.Tanim.Sifre, Cikti, Ham, Kod);
       if not Bitti then
       begin
         Result.Iptal := True;
@@ -677,8 +689,11 @@ begin
       ikYenidenKur: Inc(YenidenKur);
       ikYedekGeriYukle: Inc(YedekGeri);
     end;
-  Result := TF('BAKIM_OZET_TABLO', [Length(Rapor.Tablolar), Temiz, EskiToplam, IzToplam]) + sLineBreak +
-    TF('BAKIM_OZET_INDEKS', [Length(Rapor.Indeksler), YenidenKur, YedekGeri]);
+  if Rapor.TabloAnaliziYok then
+    Result := T('BAKIM_OZET_ANALIZ_YOK')
+  else
+    Result := TF('BAKIM_OZET_TABLO', [Length(Rapor.Tablolar), Temiz, EskiToplam, IzToplam]) + sLineBreak +
+      TF('BAKIM_OZET_INDEKS', [Length(Rapor.Indeksler), YenidenKur, YedekGeri]);
   case Rapor.Tarama of
     tdTemiz: Result := Result + sLineBreak + T('BAKIM_OZET_TARAMA_TEMIZ');
     tdBozuk: Result := Result + sLineBreak + T('BAKIM_OZET_TARAMA_BOZUK');

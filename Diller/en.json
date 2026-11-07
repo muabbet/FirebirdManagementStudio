@@ -944,5 +944,7 @@
   "ERR_BAKIM_ARAC_YOK": "The maintenance tools (gstat.exe, gfix.exe) were not found. Download the program again or check the client folder.",
   "ERR_BAKIM_YETKI": "For maintenance you must connect as SYSDBA or a user with sufficient privileges.",
   "ERR_BAKIM_ARAC": "The maintenance tool did not run.",
-  "ERR_BAKIM_RAPOR": "The maintenance report could not be prepared."
+  "ERR_BAKIM_RAPOR": "The maintenance report could not be prepared.",
+  "BAKIM_NOT_GSTAT_ESKI": "Detailed table and index analysis is not possible for this server version (old, such as Firebird 2.5); only the transaction counters and the corrupt record scan were checked. Sweep is suggested when the transaction gap is large.",
+  "BAKIM_OZET_ANALIZ_YOK": "Detailed table and index analysis could not be done on this server version (see the note below)."
 }

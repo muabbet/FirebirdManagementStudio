@@ -944,5 +944,7 @@
   "ERR_BAKIM_ARAC_YOK": "Bakım araçları (gstat.exe, gfix.exe) bulunamadı. Programı yeniden indirin ya da istemci klasörünü kontrol edin.",
   "ERR_BAKIM_YETKI": "Bakım için SYSDBA ya da yeterli yetkisi olan bir kullanıcıyla bağlanmalısınız.",
   "ERR_BAKIM_ARAC": "Bakım aracı çalışmadı.",
-  "ERR_BAKIM_RAPOR": "Bakım raporu hazırlanamadı."
+  "ERR_BAKIM_RAPOR": "Bakım raporu hazırlanamadı.",
+  "BAKIM_NOT_GSTAT_ESKI": "Bu sunucu sürümü (Firebird 2.5 gibi eski) için tablo ve index ayrıntı analizi yapılamıyor; yalnızca işlem sayaçlarına ve bozuk kayıt taramasına bakıldı. Sweep işlem farkı büyükse önerilir.",
+  "BAKIM_OZET_ANALIZ_YOK": "Tablo ve index ayrıntı analizi bu sunucu sürümünde yapılamadı (aşağıdaki nota bakın)."
 }

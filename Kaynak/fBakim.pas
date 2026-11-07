@@ -172,6 +172,12 @@ begin
   if not FRapor.Basarili then
   begin
     memOzet.Lines.Add(FRapor.Cumle);
+    if FRapor.Ayrinti <> '' then
+    begin
+      memOzet.Lines.Add('');
+      memOzet.Lines.Add(T('AYRINTI') + ':');
+      memOzet.Lines.Add(FRapor.Ayrinti);
+    end;
     Exit;
   end;
   memOzet.Lines.Add(TF('BAKIM_D_YOL', [FRapor.Durum.Yol]));
