@@ -173,6 +173,11 @@ begin
   Result := TPath.Combine(PaketKlasoru, 'istemci\gstat.exe');
 end;
 
+function FbsvcmgrYolu: string;
+begin
+  Result := TPath.Combine(PaketKlasoru, 'istemci' + PathDelim + 'fbsvcmgr.exe');
+end;
+
 function GfixYolu: string;
 begin
   Result := TPath.Combine(PaketKlasoru, 'istemci\gfix.exe');
@@ -180,7 +185,8 @@ end;
 
 function BakimAraclariVar: Boolean;
 begin
-  Result := TFile.Exists(GstatYolu) and TFile.Exists(GfixYolu) and TFile.Exists(GbakYolu);
+  Result := TFile.Exists(GstatYolu) and TFile.Exists(GfixYolu) and TFile.Exists(GbakYolu) and
+    TFile.Exists(FbsvcmgrYolu);
 end;
 
 { ---------- gstat ciktisini ayirma ---------- }
@@ -580,7 +586,13 @@ begin
     DurumuOku(Bag, Result.Durum);
     Hedef := Tirnakla(GbakBaglantiMetni(Bag.Tanim, Bag.Tanim.VeritabaniYolu));
     { 1. gstat -r: tablo ve index analizi }
-    Bitti := AltIslemCalistir(GstatYolu, '-r' + KullaniciArgumani(Bag.Tanim) + ' ' + Hedef, Bag.Tanim.Sifre, Cikti, Ham, Kod);
+    { Sunucu kipinde fbsvcmgr (sunucunun kendi servisi: 2.5, 3.0, 4.0, 5.0 hepsinde calisir; 5.0 gstat eski dosya surumunu okuyamaz) }
+    if Bag.Tanim.Sunucu <> '' then
+      Bitti := AltIslemCalistir(FbsvcmgrYolu, Tirnakla(Bag.Tanim.Sunucu + '/' + IntToStr(Bag.Tanim.Port) + ':service_mgr') +
+        ' user ' + Tirnakla(Bag.Tanim.Kullanici) + ' action_db_stats dbname ' + Tirnakla(Bag.Tanim.VeritabaniYolu) +
+        ' sts_data_pages sts_idx_pages sts_record_versions', Bag.Tanim.Sifre, Cikti, Ham, Kod)
+    else
+      Bitti := AltIslemCalistir(GstatYolu, '-r' + KullaniciArgumani(Bag.Tanim) + ' ' + Hedef, Bag.Tanim.Sifre, Cikti, Ham, Kod);
     if not Bitti then
     begin
       Result.Iptal := True;

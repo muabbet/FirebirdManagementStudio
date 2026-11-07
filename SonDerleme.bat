@@ -46,7 +46,7 @@ if not exist "%FBKAYNAK%\fbclient.dll" goto :istemci_yok
 if not exist "%CIKTI%\istemci" mkdir "%CIKTI%\istemci"
 if not exist "%CIKTI%\istemci\plugins" mkdir "%CIKTI%\istemci\plugins"
 if not exist "%FBKAYNAK%\gbak.exe" echo SonDerleme.bat : warning SD009: %FBKAYNAK%\gbak.exe bulunamadi, istemci klasorune kopyalanmadi. Yedekle / Geri yukle gbak.exe olmadan calismaz.
-for %%F in (fbclient.dll gbak.exe gstat.exe gfix.exe ib_util.dll firebird.msg zlib1.dll msvcp140.dll msvcp140_1.dll vcruntime140.dll vcruntime140_1.dll icudt63.dll icuin63.dll icuuc63.dll icudt63l.dat IDPLicense.txt IPLicense.txt) do if exist "%FBKAYNAK%\%%F" copy /Y "%FBKAYNAK%\%%F" "%CIKTI%\istemci\" >nul || echo SonDerleme.bat : warning SD008: %%F kopyalanamadi.
+for %%F in (fbclient.dll gbak.exe gstat.exe gfix.exe fbsvcmgr.exe ib_util.dll firebird.msg zlib1.dll msvcp140.dll msvcp140_1.dll vcruntime140.dll vcruntime140_1.dll icudt63.dll icuin63.dll icuuc63.dll icudt63l.dat IDPLicense.txt IPLicense.txt) do if exist "%FBKAYNAK%\%%F" copy /Y "%FBKAYNAK%\%%F" "%CIKTI%\istemci\" >nul || echo SonDerleme.bat : warning SD008: %%F kopyalanamadi.
 for %%F in (srp.dll legacy_auth.dll chacha.dll) do if exist "%FBKAYNAK%\plugins\%%F" copy /Y "%FBKAYNAK%\plugins\%%F" "%CIKTI%\istemci\plugins\" >nul || echo SonDerleme.bat : warning SD008: plugins\%%F kopyalanamadi.
 xcopy /Y /I /E /Q "%FBKAYNAK%\intl" "%CIKTI%\istemci\intl\" >nul
 if errorlevel 1 echo SonDerleme.bat : warning SD008: intl klasoru kopyalanamadi.
