@@ -171,14 +171,28 @@ object frmBakim: TfrmBakim
     Left = 0
     Top = 492
     Width = 980
-    Height = 68
+    Height = 86
     Align = alBottom
     BevelOuter = bvNone
     TabOrder = 2
-    object lblDurum: TLabel
+    object pbBakim: TProgressBar
       AlignWithMargins = True
       Left = 12
       Top = 3
+      Width = 956
+      Height = 14
+      Margins.Left = 12
+      Margins.Right = 12
+      Align = alTop
+      MarqueeInterval = 30
+      Style = pbstMarquee
+      TabOrder = 3
+      Visible = False
+    end
+    object lblDurum: TLabel
+      AlignWithMargins = True
+      Left = 12
+      Top = 20
       Width = 956
       Height = 18
       Margins.Left = 12

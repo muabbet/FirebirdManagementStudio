@@ -25,6 +25,7 @@ type
     memIsler: TMemo;
     pnlAlt: TPanel;
     lblDurum: TLabel;
+    pbBakim: TProgressBar;
     btnBaslat: TButton;
     btnIptal: TButton;
     btnYenidenYarat: TButton;
@@ -41,6 +42,10 @@ type
     FRaporVar: Boolean;
     FCalisiyor: Boolean;
     FIptal: Boolean;
+    FBaslangic: Cardinal;
+    FSonGuncelleme: Cardinal;
+    FAciklama: string;
+    FSonSatir: string;
     procedure YazilariYaz;
     procedure Calisiyor(Acik: Boolean);
     procedure Izle(const Satir: string; var Iptal: Boolean);
@@ -116,6 +121,9 @@ procedure TfrmBakim.Calisiyor(Acik: Boolean);
 begin
   FCalisiyor := Acik;
   FIptal := False;
+  FBaslangic := GetTickCount;
+  FSonSatir := '';
+  pbBakim.Visible := Acik;
   btnRapor.Enabled := not Acik;
   btnBaslat.Enabled := (not Acik) and FRaporVar and FRapor.Basarili and (Length(FRapor.Isler) > 0);
   btnKapat.Enabled := not Acik;
@@ -131,8 +139,16 @@ procedure TfrmBakim.Izle(const Satir: string; var Iptal: Boolean);
 begin
   { Eski sunucuda gstat'in bilinen "Wrong ODS" satiri hata degildir (rapor yedek kipte surer); ekranda gosterilmez. }
   if (Trim(Satir) <> '') and (Pos('Wrong ODS', Satir) = 0) then
-    lblDurum.Caption := TF('BAKIM_CALISIYOR', [Trim(Satir)]);
-  Application.ProcessMessages;
+    FSonSatir := Trim(Satir);
+  if GetTickCount - FSonGuncelleme > 150 then
+  begin
+    FSonGuncelleme := GetTickCount;
+    lblDurum.Caption := FAciklama + ' ' + TF('ILERLEME_SURE', [Format('%d:%.2d', [((GetTickCount - FBaslangic) div 1000) div 60,
+      ((GetTickCount - FBaslangic) div 1000) mod 60])]);
+    if FSonSatir <> '' then
+      lblDurum.Caption := lblDurum.Caption + '  -  ' + Copy(FSonSatir, 1, 80);
+    Application.ProcessMessages;
+  end;
   Iptal := FIptal;
 end;
 
@@ -250,6 +266,7 @@ end;
 { Raporu hazirlar (veritabanina yazmaz); bozuk kayit taramasi kutusu isaretliyse onu da yapar. }
 procedure TfrmBakim.Hazirla;
 begin
+  FAciklama := T('BAKIM_ACIKLAMA_RAPOR');
   Calisiyor(True);
   try
     FRapor := BakimRaporuHazirla(FBag, chkTarama.Checked, Izle);
@@ -322,6 +339,7 @@ begin
   if not OnayIste(BakimOnayMetni(FRapor)) then
     Exit;
   Once := FRapor;
+  FAciklama := T('BAKIM_ACIKLAMA_BAKIM');
   Calisiyor(True);
   try
     Sonuc := BakimiYap(FBag, FRapor, Izle);
@@ -337,6 +355,7 @@ begin
   if (Length(Sonuc.Komutlar) > 0) and Assigned(FSqlYaz) then
     FSqlYaz(Sonuc.Komutlar);
   { Bakimdan sonra raporu yeniden hazirla (tarama yeniden yapilmaz) ve farki goster }
+  FAciklama := T('BAKIM_ACIKLAMA_RAPOR');
   Calisiyor(True);
   try
     FRapor := BakimRaporuHazirla(FBag, False, Izle);

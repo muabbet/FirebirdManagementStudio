@@ -970,5 +970,7 @@
   "KLON_ADIM_YEDEK": "1/2  Backing up the database",
   "KLON_ADIM_GERI": "2/2  Restoring the backup into the new file (rebuilding indexes)",
   "YEDEK_ACIKLAMA_YEDEK": "Reading the database and writing the backup file.",
-  "YEDEK_ACIKLAMA_GERI": "Reading the backup and creating the new database."
+  "YEDEK_ACIKLAMA_GERI": "Reading the backup and creating the new database.",
+  "BAKIM_ACIKLAMA_RAPOR": "Preparing the report (table and index analysis, corrupt record scan). It can take long for a large database.",
+  "BAKIM_ACIKLAMA_BAKIM": "Maintenance running (sweep, indexes, statistics)."
 }
