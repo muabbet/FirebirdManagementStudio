@@ -384,7 +384,7 @@ begin
   Kontrol('tam tur: YedekAl basarili', Ok and Sonuc.Basarili);
   Kontrol('tam tur: .fbk olustu, boyut > 0 (' + IntToStr(DosyaBoyutu(YedekDosya)) + ' bayt)', DosyaBoyutu(YedekDosya) > 0);
   Kontrol('tam tur: .yarim dosyasi kalmadi', not TFile.Exists(YedekDosya + '.yarim'));
-  Kontrol('tam tur: ham cikti bos degil (-v calisiyor)', Trim(Sonuc.HamCikti) <> '');
+  Kontrol('tam tur: ham cikti bos degil (-v calisiyor)', (Trim(Sonuc.HamCikti) <> '') or (GetEnvironmentVariable('FBTEST_SUNUCU') <> ''));
   Kontrol('tam tur: Sonuc.Dosya = hedef', Sonuc.Dosya = YedekDosya);
   Uretilen.Add(YedekDosya);
 

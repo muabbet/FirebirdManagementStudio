@@ -81,7 +81,7 @@ function AltIslemCalistir(const Exe, Argumanlar, Sifre: string; Cikti: TYedekCik
 implementation
 
 uses
-  Winapi.Windows, System.IOUtils, System.StrUtils, System.Diagnostics, uDil, uPaket;
+  Winapi.Windows, Winapi.ShellAPI, System.IOUtils, System.StrUtils, System.Diagnostics, uDil, uPaket;
 
 const
   YARIM_UZANTI = '.yarim';
@@ -364,7 +364,10 @@ begin
       end;
       if Iptal then
       begin
-        TerminateProcess(Bilgi.hProcess, 1);
+        { cmd.exe ile akis kipinde gbak cmd'nin cocugudur: agaci birlikte sonlandir (yoksa gbak dosyayi tutmaya devam eder) }
+        ShellExecute(0, 'open', 'taskkill', PChar('/F /T /PID ' + IntToStr(Bilgi.dwProcessId)), nil, SW_HIDE);
+        if WaitForSingleObject(Bilgi.hProcess, 3000) <> WAIT_OBJECT_0 then
+          TerminateProcess(Bilgi.hProcess, 1);
         WaitForSingleObject(Bilgi.hProcess, 5000);
       end
       else
@@ -471,6 +474,34 @@ begin
   Result := Result and (Kod = 0);
 end;
 
+{ Sunucu kipinde gbak, sunucunun servisiyle (-se) ve dosyayi akis olarak (stdout / stdin) calisir: 5.0 gbak 2.5 ve 3.0 sunucularina
+  dogrudan baglanamaz (olculdu), servis yolu 2.5, 3.0, 4.0, 5.0'in hepsinde calisir. Dosya yonlendirmesi icin cmd.exe kullanilir;
+  gbak'in iletileri (-v) stderr'e gider ve borudan okunur. GbakArg: yonlendirmesiz gbak argumanlari; Yonlendirme: > "dosya" ya da < "dosya". }
+function GbakAkisCalistir(const Tanim: TBaglantiTanimi; const GbakArg, Yonlendirme: string; Cikti: TYedekCiktisi;
+  var Sonuc: TYedekSonucu): Boolean;
+var
+  Arguman, Ham: string;
+  Kod: Cardinal;
+begin
+  { gbak.exe yoksa cmd kendi iletisini verirdi; dogrudan kipteki gibi anlasilir istisna }
+  if not GbakVarMi then
+    raise Exception.Create(TF('ERR_YEDEK_BASLATILAMADI', [SysErrorMessage(ERROR_FILE_NOT_FOUND)]));
+  Arguman := '/c ""' + GbakYolu + '" ' + GbakArg + ' ' + Yonlendirme + '"';
+  Result := AltIslemCalistir(GetEnvironmentVariable('ComSpec'), Arguman, Tanim.Sifre, Cikti, Ham, Kod);
+  { cmd.exe dosyayi acamazsa (klasor yok, dosya baska programda acik) gbak hic calismaz; cmd'nin kendi (yerellesmis) iletisi gelir }
+  if Result and (Kod <> 0) and (Pos('gbak', LowerCase(Ham)) = 0) then
+    Ham := 'gbak: ERROR: cannot open backup file ' + Ham;
+  Sonuc.HamCikti := Ham;
+  Sonuc.Iptal := not Result;
+  Sonuc.Ayrinti := AyrintiHazirla(GbakArg + ' ' + Yonlendirme, Kod);
+  Result := Result and (Kod = 0);
+end;
+
+function ServisAdi(const Tanim: TBaglantiTanimi): string;
+begin
+  Result := Tirnakla(Tanim.Sunucu + '/' + IntToStr(Tanim.Port) + ':service_mgr');
+end;
+
 { Onceki bir yarim dosya silinmez, tarihli bir adla yanina tasinir. }
 procedure OncekiYarimiYanaTasi(const Gecici: string);
 begin
@@ -490,7 +521,11 @@ begin
   Arguman := '-b -v' + KullaniciArgumani(Tanim) + ' ' + Tirnakla(GbakBaglantiMetni(Tanim, Tanim.VeritabaniYolu)) +
     ' ' + Tirnakla(Gecici);
   Saat := TStopwatch.StartNew;
-  Result := GbakCalistir(Tanim, Arguman, Cikti, Sonuc);
+  if Tanim.Sunucu <> '' then
+    Result := GbakAkisCalistir(Tanim, '-b' + KullaniciArgumani(Tanim) + ' -se ' + ServisAdi(Tanim) + ' ' +
+      Tirnakla(Tanim.VeritabaniYolu) + ' stdout', '> ' + Tirnakla(Gecici), Cikti, Sonuc)
+  else
+    Result := GbakCalistir(Tanim, Arguman, Cikti, Sonuc);
   Sonuc.Sure := Saat.ElapsedMilliseconds;
   if Result then
   begin
@@ -541,7 +576,11 @@ begin
   Arguman := '-c -v' + KullaniciArgumani(Tanim) + ' ' + Tirnakla(Kaynak) + ' ' +
     Tirnakla(GbakBaglantiMetni(Tanim, HedefYol));
   Saat := TStopwatch.StartNew;
-  Result := GbakCalistir(Tanim, Arguman, Cikti, Sonuc);
+  if Tanim.Sunucu <> '' then
+    Result := GbakAkisCalistir(Tanim, '-c -v' + KullaniciArgumani(Tanim) + ' -se ' + ServisAdi(Tanim) + ' stdin ' +
+      Tirnakla(HedefYol), '< ' + Tirnakla(Kaynak), Cikti, Sonuc)
+  else
+    Result := GbakCalistir(Tanim, Arguman, Cikti, Sonuc);
   Sonuc.Sure := Saat.ElapsedMilliseconds;
   if Result then
   begin
