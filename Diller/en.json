@@ -310,7 +310,7 @@
   "MSG_BAGLANDI": "Connected: %s (Firebird %s)",
   "MSG_KESILDI": "Disconnected: %s",
   "MSG_AGAC_YENILENDI": "%s: object list refreshed.",
-  "MSG_TABLO_ACILDI": "Table %s opened (%s). Showing at most %d rows.",
+  "MSG_TABLO_ACILDI": "Table %s opened (%s). Showing the first %d rows; more load as you scroll down.",
   "MSG_SCRIPT_URETILDI": "The CREATE script for %s was opened in a new tab. Press F5 to run it.",
   "MSG_KAYIT_KALDIRILDI": "'%s' was unregistered. The database was not touched.",
   "MSG_KLASOR_KALDIRILDI": "Folder '%s' was removed. Its connections moved to the top level.",

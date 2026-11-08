@@ -403,6 +403,7 @@ object TabloSekme: TTabloSekme
     Top = 80
   end
   object dsVeri: TDataSource
+    OnDataChange = dsVeriDataChange
     Left = 40
     Top = 250
   end

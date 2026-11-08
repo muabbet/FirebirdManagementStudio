@@ -310,7 +310,7 @@
   "MSG_BAGLANDI": "Bağlandı: %s (Firebird %s)",
   "MSG_KESILDI": "Bağlantı kesildi: %s",
   "MSG_AGAC_YENILENDI": "%s: nesne listesi yenilendi.",
-  "MSG_TABLO_ACILDI": "%s tablosu açıldı (%s). En fazla %d satır gösteriliyor.",
+  "MSG_TABLO_ACILDI": "%s tablosu açıldı (%s). İlk %d satır gösteriliyor, aşağı indikçe devamı yüklenir.",
   "MSG_SCRIPT_URETILDI": "%s için CREATE script'i yeni sekmede açıldı. Çalıştırmak için F5.",
   "MSG_KAYIT_KALDIRILDI": "'%s' kayıttan kaldırıldı. Veritabanına dokunulmadı.",
   "MSG_KLASOR_KALDIRILDI": "'%s' klasörü kaldırıldı. İçindeki bağlantılar kök düzeye çıktı.",

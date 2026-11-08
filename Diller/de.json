@@ -310,7 +310,7 @@
   "MSG_BAGLANDI": "Verbunden: %s (Firebird %s)",
   "MSG_KESILDI": "Verbindung getrennt: %s",
   "MSG_AGAC_YENILENDI": "%s: Objektliste aktualisiert.",
-  "MSG_TABLO_ACILDI": "Tabelle %s geöffnet (%s). Es werden höchstens %d Zeilen angezeigt.",
+  "MSG_TABLO_ACILDI": "Tabelle %s geöffnet (%s). Die ersten %d Zeilen werden angezeigt, beim Hinunterscrollen werden weitere nachgeladen.",
   "MSG_SCRIPT_URETILDI": "Das CREATE-Skript für %s wurde in einem neuen Tab geöffnet. Mit F5 ausführen.",
   "MSG_KAYIT_KALDIRILDI": "Die Registrierung von '%s' wurde aufgehoben. Die Datenbank wurde nicht verändert.",
   "MSG_KLASOR_KALDIRILDI": "Der Ordner '%s' wurde entfernt. Seine Verbindungen liegen jetzt auf der obersten Ebene.",

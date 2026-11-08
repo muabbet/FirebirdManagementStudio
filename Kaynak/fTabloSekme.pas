@@ -66,13 +66,21 @@ type
     procedure btnIndeksDurumClick(Sender: TObject);
     procedure btnKisitEkleClick(Sender: TObject);
     procedure btnKisitSilClick(Sender: TObject);
+    procedure dsVeriDataChange(Sender: TObject; Field: TField);
   private
     FVeriGrid: TSonucGrid;
     { Nil degilse kayit duzeltme kipi acik (Asama 4d). }
     FDuzelt: TKayitDuzelt;
+    { Veri gridinin satir siniri (100'er artar), sunucu siralamasi ve bekleyen "devam yukle" istegi. }
+    FSatirLimit: Integer;
+    FSiraAlan: string;
+    FSiraAzalan: Boolean;
+    FDevamBekliyor: Boolean;
     procedure Yaz(const Metin: string);
     procedure VeriyiYukle(Bag: TAcikBaglanti);
     procedure VeriyiSirala(const Alan: string; Azalan: Boolean);
+    procedure VeriyiOku(Bag: TAcikBaglanti);
+    procedure DevamiYukle;
     procedure DuzenlemeyiAc;
     procedure DuzenlemeyiKapat;
     procedure DuzenlemeDurumunuYaz;
@@ -149,9 +157,10 @@ end;
 { Yalniz alttaki veri gridi: ilk satirlar salt okunur olarak yeniden okunur. }
 procedure TTabloSekme.VeriyiYukle(Bag: TAcikBaglanti);
 begin
-  dsVeri.DataSet.Free;
-  dsVeri.DataSet := TabloVerisiSorgusu(Bag, TabloAdi, ILK_SATIR_SAYISI, Self);
-  FVeriGrid.YeniSonuc;
+  FSatirLimit := ILK_SATIR_SAYISI;
+  FSiraAlan := '';
+  FSiraAzalan := False;
+  VeriyiOku(Bag);
 end;
 
 { Veri gridinde baslik tiklaninca: siralama SUNUCUDA yapilir (ORDER BY), boylece tablonun tamami
@@ -163,9 +172,19 @@ begin
   Bag := BaglantiAl;
   if Bag = nil then
     Exit;
+  FSatirLimit := ILK_SATIR_SAYISI;
+  FSiraAlan := Alan;
+  FSiraAzalan := Azalan;
+  VeriyiOku(Bag);
+end;
+
+{ Verisetini o anki satir siniri ve siralamayla yeniden okur. Her seferinde okuma biter ve
+  sunucuda acik kalmaz (yapi islemleri tabloyu kullanimda bulmasin). }
+procedure TTabloSekme.VeriyiOku(Bag: TAcikBaglanti);
+begin
   try
     dsVeri.DataSet.Free;
-    dsVeri.DataSet := TabloVerisiSorgusu(Bag, TabloAdi, ILK_SATIR_SAYISI, Self, Alan, Azalan);
+    dsVeri.DataSet := TabloVerisiSorgusu(Bag, TabloAdi, FSatirLimit, Self, FSiraAlan, FSiraAzalan);
   except
     on E: Exception do
     begin
@@ -174,7 +193,39 @@ begin
       Exit;
     end;
   end;
-  FVeriGrid.YeniSonuc(Alan, Azalan);
+  FVeriGrid.YeniSonuc(FSiraAlan, FSiraAzalan);
+  DuzenlemeDurumunuYaz;
+end;
+
+{ Kullanici son satira gelince 100 satir daha yuklenir: sorgu daha buyuk sinirla yeniden okunur ve
+  imlec eski satirda kalir. Tablo bitmisse (satir sayisi sinirdan azsa) bir sey yapmaz. }
+procedure TTabloSekme.DevamiYukle;
+var
+  Bag: TAcikBaglanti;
+  Eski: Integer;
+begin
+  FDevamBekliyor := False;
+  Bag := BaglantiAl;
+  if (Bag = nil) or (FDuzelt <> nil) or (dsVeri.DataSet = nil) or not dsVeri.DataSet.Active then
+    Exit;
+  Eski := dsVeri.DataSet.RecNo;
+  FSatirLimit := FSatirLimit + ILK_SATIR_SAYISI;
+  VeriyiOku(Bag);
+  if (dsVeri.DataSet <> nil) and dsVeri.DataSet.Active and (Eski > 0) and (Eski <= dsVeri.DataSet.RecordCount) then
+    dsVeri.DataSet.RecNo := Eski;
+end;
+
+{ Imlec son satira geldiyse ve tabloda daha satir olabilirse devam yuklemesi siraya konur
+  (olay bitmeden veriseti yikilmasin diye hemen degil). }
+procedure TTabloSekme.dsVeriDataChange(Sender: TObject; Field: TField);
+begin
+  if FDevamBekliyor or (FDuzelt <> nil) or (dsVeri.DataSet = nil) or not dsVeri.DataSet.Active then
+    Exit;
+  if (dsVeri.DataSet.RecordCount >= FSatirLimit) and (dsVeri.DataSet.RecNo = dsVeri.DataSet.RecordCount) then
+  begin
+    FDevamBekliyor := True;
+    TThread.ForceQueue(nil, DevamiYukle);
+  end;
 end;
 
 { ---------- Kayit duzeltme (Asama 4d, mantik uKayitDuzelt'te) ---------- }
@@ -250,6 +301,12 @@ begin
   if FDuzelt = nil then
   begin
     lblVeri.Caption := T('LBL_ILK_SATIRLAR');
+    if (dsVeri.DataSet <> nil) and dsVeri.DataSet.Active then
+    begin
+      lblVeri.Caption := lblVeri.Caption + ' - ' + TF('LBL_SATIR_YUKLENDI', [dsVeri.DataSet.RecordCount]);
+      if dsVeri.DataSet.RecordCount >= FSatirLimit then
+        lblVeri.Caption := lblVeri.Caption + ' ' + TF('LBL_SATIR_DEVAMI', [ILK_SATIR_SAYISI]);
+    end;
     lblVeri.Hint := '';
   end
   else
