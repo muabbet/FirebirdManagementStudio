@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Firebird Management Studio - Firebird için ücretsiz yönetim aracı</title>
-<meta name="description" content="Firebird Management Studio: Firebird 2.5, 3.0, 4.0 ve 5.0 için sade, ücretsiz ve açık kaynak yönetim aracı. SQL editörü, çoklu veritabanı sorgusu, şema farkı. Tek exe, kurulum yok. Free Firebird admin tool for Windows.">
+<title>Firebird Management Studio - Firebird yönetim aracı (GUI), ücretsiz ve açık kaynak</title>
+<meta name="description" content="Firebird Management Studio: Firebird için ücretsiz yönetim aracı ve GUI (Firebird 2.5, 3.0, 4.0, 5.0). SQL editörü, SQL geçmişi, tablo düzenleme, çoklu veritabanı sorgusu, şema farkı, bakım ve yedek. Tek exe, kurulum yok. Free Firebird GUI and admin tool for Windows.">
 <meta name="google-site-verification" content="616kb_zKWRuNbCWhAXFMWFtIxUbxwoYeOwdaxCPLGJI" />
 <link rel="canonical" href="https://muabbet.github.io/FirebirdManagementStudio/">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Firebird Management Studio">
+<meta property="og:title" content="Firebird Management Studio - Firebird yönetim aracı (GUI)">
 <meta property="og:description" content="Firebird için sade, ücretsiz ve açık kaynak yönetim aracı. Tek exe, kurulum yok.">
 <meta property="og:url" content="https://muabbet.github.io/FirebirdManagementStudio/">
 <meta property="og:image" content="https://muabbet.github.io/FirebirdManagementStudio/ekran-sorgu.png">
@@ -110,8 +110,8 @@
 
   <section class="hero">
     <img class="buyuk" src="logo.svg" alt="Firebird Management Studio">
-    <h1 data-k="baslik"></h1>
-    <p class="alt" data-k="alt"></p>
+    <h1 data-k="baslik">Firebird için sade yönetim aracı</h1>
+    <p class="alt" data-k="alt">Firebird yönetim aracı ve GUI: tablolarınıza bakın, sorgu yazın, yapıyı düzenleyin. Tek exe, kurulum yok, ücretsiz.</p>
     <a class="indir" id="indir" href="https://github.com/muabbet/FirebirdManagementStudio/releases/latest" data-k="indir"></a>
     <p class="gereksinim"><strong data-k="gereksinim64"></strong> <span data-k="gereksinimAyrinti"></span></p>
   </section>
@@ -156,7 +156,7 @@
   var M = {
     tr: {
       baslik: "Firebird için sade yönetim aracı",
-      alt: "Tablolarınıza bakın, sorgu yazın, yapıyı düzenleyin. Tek exe, kurulum yok, ücretsiz.",
+      alt: "Firebird yönetim aracı ve GUI: tablolarınıza bakın, sorgu yazın, yapıyı düzenleyin. Tek exe, kurulum yok, ücretsiz.",
       indir: "Windows için indir",
       gereksinim64: "Windows 10/11, 64 bit gerekir.",
       gereksinimAyrinti: "32 bit Windows'ta çalışmaz. Windows 7 denenmedi.",
@@ -164,7 +164,7 @@
       o1b: "Tek exe", o1: "Firebird istemcisi, diller ve ikonlar exe'nin içinde. Çalıştırmak için başka dosya gerekmez.",
       o2b: "Firebird 2.5, 3.0, 4.0, 5.0", o2: "Aynı programla eski ve yeni sürümlere bağlanın. Sunucuları ağda kendisi bulur.",
       o3b: "Türkçe, İngilizce, Almanca", o3: "Dili program açıkken değiştirin. Hata mesajları anlaşılır cümlelerle gelir.",
-      o4b: "SQL editörü ve tablolar", o4: "Renkli editör, sonuç ızgarası, tablo yapısı, index, kısıt ve script üretimi.",
+      o4b: "SQL editörü ve tablolar", o4: "Renkli editör, SQL geçmişi, sık kullanılan sorgular, sonuç ızgarası, tablo yapısı, index, kısıt ve script üretimi.",
       o5b: "Birçok veritabanında tek işlem", o5: "Aynı sorguyu birçok veritabanında çalıştırın, şemaları karşılaştırın, önizleyerek toplu güncelleyin.",
       o6b: "Güvenli", o6: "Tehlikeli işlemler önce önizlenir ve net bir onay penceresi ister. İşlemin SQL'ini görürsünüz.",
       fikirBaslik: "Fikriniz mi var?",
@@ -184,7 +184,7 @@
     },
     en: {
       baslik: "A simple management tool for Firebird",
-      alt: "Browse your tables, write queries, edit structure. One exe, no installation, free.",
+      alt: "A Firebird GUI and admin tool: browse your tables, write queries, edit structure. One exe, no installation, free.",
       indir: "Download for Windows",
       gereksinim64: "Windows 10/11, 64-bit required.",
       gereksinimAyrinti: "It does not run on 32-bit Windows. Windows 7 is untested.",
@@ -192,7 +192,7 @@
       o1b: "A single exe", o1: "The Firebird client, languages and icons are inside the exe. No other files needed.",
       o2b: "Firebird 2.5, 3.0, 4.0, 5.0", o2: "Connect to old and new versions with one program. It finds servers on your network.",
       o3b: "Turkish, English, German", o3: "Switch the language while the program runs. Errors come as clear sentences.",
-      o4b: "SQL editor and tables", o4: "Colored editor, result grid, table structure, indexes, constraints and script generation.",
+      o4b: "SQL editor and tables", o4: "Colored editor, SQL history, favorite queries, result grid, table structure, indexes, constraints and script generation.",
       o5b: "One action on many databases", o5: "Run the same query on many databases, compare schemas, bulk update with a preview.",
       o6b: "Safe", o6: "Dangerous actions are previewed first and ask for a clear confirmation. You see the SQL of every action.",
       fikirBaslik: "Got an idea?",
@@ -212,7 +212,7 @@
     },
     de: {
       baslik: "Ein schlichtes Verwaltungswerkzeug für Firebird",
-      alt: "Tabellen ansehen, Abfragen schreiben, Struktur bearbeiten. Eine Exe, keine Installation, kostenlos.",
+      alt: "Firebird-GUI und Verwaltungswerkzeug: Tabellen ansehen, Abfragen schreiben, Struktur bearbeiten. Eine Exe, keine Installation, kostenlos.",
       indir: "Für Windows herunterladen",
       gereksinim64: "Windows 10/11, 64 Bit erforderlich.",
       gereksinimAyrinti: "Läuft nicht unter 32-Bit-Windows. Windows 7 ist ungetestet.",
@@ -220,7 +220,7 @@
       o1b: "Eine einzige Exe", o1: "Firebird-Client, Sprachen und Symbole stecken in der Exe. Keine weiteren Dateien nötig.",
       o2b: "Firebird 2.5, 3.0, 4.0, 5.0", o2: "Mit einem Programm alte und neue Versionen verbinden. Server im Netzwerk werden gefunden.",
       o3b: "Türkisch, Englisch, Deutsch", o3: "Die Sprache während der Laufzeit wechseln. Fehler kommen als klare Sätze.",
-      o4b: "SQL-Editor und Tabellen", o4: "Farbiger Editor, Ergebnisraster, Tabellenstruktur, Indizes, Constraints und Skripterzeugung.",
+      o4b: "SQL-Editor und Tabellen", o4: "Farbiger Editor, SQL-Verlauf, Favoriten, Ergebnisraster, Tabellenstruktur, Indizes, Constraints und Skripterzeugung.",
       o5b: "Eine Aktion auf vielen Datenbanken", o5: "Dieselbe Abfrage auf vielen Datenbanken ausführen, Schemas vergleichen, per Vorschau sammelaktualisieren.",
       o6b: "Sicher", o6: "Gefährliche Aktionen werden zuerst in einer Vorschau gezeigt und verlangen eine klare Bestätigung. Sie sehen das SQL jeder Aktion.",
       fikirBaslik: "Haben Sie eine Idee?",
