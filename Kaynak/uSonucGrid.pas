@@ -147,7 +147,7 @@ begin
   FGrid := Grid;
   FGrid.ReadOnly := True;
   FGrid.DefaultDrawing := False;
-  FGrid.Options := FGrid.Options + [dgTitles, dgIndicator, dgMultiSelect] - [dgRowLines, dgColLines];
+  FGrid.Options := FGrid.Options + [dgTitles, dgTitleClick, dgIndicator, dgMultiSelect] - [dgRowLines, dgColLines];
   { Cizgileri ve renkleri biz ciziyoruz; VCL Style hucre zeminini ezmesin. }
   FGrid.StyleElements := [seBorder];
   FGrid.Font.Name := 'Segoe UI';
