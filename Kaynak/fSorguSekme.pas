@@ -11,7 +11,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes, System.Generics.Collections, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
   Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids,
   FireDAC.Comp.Client,
-  uDil, uPaket, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uSonucGrid, uCokluSorgu, fCsvAktar, uKullanici, fIndeksOner;
+  uDil, uPaket, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uSonucGrid, uCokluSorgu, fCsvAktar, uKullanici, fIndeksOner, uSorguGecmisi, fGecmis;
 
 type
   TSorguSekme = class(TFrame)
@@ -57,6 +57,7 @@ type
     procedure Calistir;
     procedure PlanGoster;
     procedure IndeksOner(SqlYaz: TSqlGoster);
+    procedure GecmisiAc;
     procedure EditoreOdaklan;
     procedure MetinYaz(const Metin: string);
     function Baslik: string;
@@ -376,6 +377,12 @@ begin
     MesajYaz(T('MSG_SORGU_VAZGECILDI'));
     Exit;
   end;
+  { Onaylanan metin SQL gecmisine yazilir (sifre iceren komutlar yazilmaz, bkz. uSorguGecmisi). }
+  try
+    GecmiseEkle(BaglantiAd, FEditor.CalistirilacakMetin);
+  except
+    { Gecmis dosyasi yazilamazsa sorgu yine calisir. }
+  end;
   SonucuBirak;
   if (Length(Komutlar) = 1) and (KomutTuruBul(Komutlar[0]) = ktNormal) then
     TekKomutCalistir(Bag, Komutlar[0])
@@ -407,6 +414,21 @@ begin
     Exit;
   end;
   IndeksOnerPenceresiniGoster(Bag, Komutlar[0], SqlYaz, AnaSonuc);
+end;
+
+{ Gecmis dugmesi: SQL gecmisi / sik kullanilanlar penceresi; secilen sorgu editorun sonuna eklenir (mevcut yazi silinmez). }
+procedure TSorguSekme.GecmisiAc;
+var
+  Secilen, Mevcut: string;
+begin
+  if not GecmisPenceresiniGoster(FEditor.TumMetin, Secilen) then
+    Exit;
+  Mevcut := FEditor.TumMetin;
+  if Trim(Mevcut) = '' then
+    FEditor.MetinYaz(Secilen)
+  else
+    FEditor.MetinYaz(Mevcut + sLineBreak + sLineBreak + Secilen);
+  FEditor.OdakVer;
 end;
 
 { Ctrl+L / Plan dugmesi: komutu calistirmadan planini mesaj kutusuna yazar. }

@@ -91,6 +91,7 @@ type
     procedure btnCalistirClick(Sender: TObject);
     procedure btnPlanClick(Sender: TObject);
     procedure btnIndeksOnerClick(Sender: TObject);
+    procedure btnGecmisClick(Sender: TObject);
     procedure btnMetadataClick(Sender: TObject);
     procedure btnYedekClick(Sender: TObject);
     procedure btnKullanicilarClick(Sender: TObject);
@@ -158,6 +159,7 @@ type
     btnCalistir: TSeritDugmesi;
     btnPlan: TSeritDugmesi;
     btnIndeksOner: TSeritDugmesi;
+    btnGecmis: TSeritDugmesi;
     btnMetadata: TSeritDugmesi;
     btnYedek: TSeritDugmesi;
     btnKullanicilar: TSeritDugmesi;
@@ -317,6 +319,7 @@ begin
   btnCalistir := FSerit.Ekle('GRUP_SORGU', 'BTN_CALISTIR', IKON_CALISTIR, btnCalistirClick);
   btnPlan := FSerit.Ekle('GRUP_SORGU', 'BTN_PLAN', IKON_PLAN, btnPlanClick);
   btnIndeksOner := FSerit.Ekle('GRUP_SORGU', 'BTN_INDEKS_ONER', IKON_PLAN, btnIndeksOnerClick);
+  btnGecmis := FSerit.Ekle('GRUP_SORGU', 'BTN_GECMIS', IKON_SORGU, btnGecmisClick);
   btnMetadata := FSerit.Ekle('GRUP_YONETIM', 'MENU_METADATA_CIKAR', IKON_METADATA, btnMetadataClick);
   btnYedek := FSerit.Ekle('GRUP_YONETIM', 'MENU_YEDEK', IKON_YEDEK, btnYedekClick);
   btnKullanicilar := FSerit.Ekle('GRUP_YONETIM', 'BTN_KULLANICILAR', IKON_KULLANICI, btnKullanicilarClick);
@@ -559,6 +562,7 @@ begin
   btnCalistir.Enabled := AktifSorguSekmesi <> nil;
   btnPlan.Enabled := AktifSorguSekmesi <> nil;
   btnIndeksOner.Enabled := AktifSorguSekmesi <> nil;
+  btnGecmis.Enabled := AktifSorguSekmesi <> nil;
   btnMetadata.Enabled := Bag <> nil;
   btnYedek.Enabled := Dugme <> nil;
   btnAktifBaglanti.Enabled := Bag <> nil;
@@ -2166,6 +2170,13 @@ procedure TfrmAna.btnIndeksOnerClick(Sender: TObject);
 begin
   if AktifSorguSekmesi <> nil then
     AktifSorguSekmesi.IndeksOner(SqlMesajiYaz);
+end;
+
+{ Sorgu > Gecmis: SQL gecmisi ve sik kullanilan sorgular penceresi (aktif sorgu sekmesine ekler). }
+procedure TfrmAna.btnGecmisClick(Sender: TObject);
+begin
+  if AktifSorguSekmesi <> nil then
+    AktifSorguSekmesi.GecmisiAc;
 end;
 
 procedure TfrmAna.btnPlanClick(Sender: TObject);

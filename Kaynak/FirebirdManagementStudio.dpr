@@ -64,6 +64,8 @@ uses
   fIlerleme in 'fIlerleme.pas' {frmIlerleme},
   uIndeksOner in 'uIndeksOner.pas',
   fIndeksOner in 'fIndeksOner.pas' {frmIndeksOner},
+  uSorguGecmisi in 'uSorguGecmisi.pas',
+  fGecmis in 'fGecmis.pas' {frmGecmis},
   fBakim in 'fBakim.pas' {frmBakim},
   uTabloTasarim in 'uTabloTasarim.pas',
   fTabloTasarim in 'fTabloTasarim.pas' {frmTabloTasarim},
