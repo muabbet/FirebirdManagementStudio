@@ -206,11 +206,23 @@ var
 begin
   FDevamBekliyor := False;
   Bag := BaglantiAl;
-  if (Bag = nil) or (FDuzelt <> nil) or (dsVeri.DataSet = nil) or not dsVeri.DataSet.Active then
+  if (Bag = nil) or (dsVeri.DataSet = nil) or not dsVeri.DataSet.Active then
     Exit;
   Eski := dsVeri.DataSet.RecNo;
   FSatirLimit := FSatirLimit + ILK_SATIR_SAYISI;
-  VeriyiOku(Bag);
+  if FDuzelt <> nil then
+  begin
+    { Duzeltme kipinde: bekleyen degisiklik yokken kip kapatilip daha buyuk sinirla yeniden acilir. }
+    if (FDuzelt.BekleyenSayisi > 0) or (dsVeri.DataSet.State <> dsBrowse) then
+    begin
+      FSatirLimit := FSatirLimit - ILK_SATIR_SAYISI;
+      Exit;
+    end;
+    DuzenlemeyiKapat;
+    DuzenlemeyiAc;
+  end
+  else
+    VeriyiOku(Bag);
   if (dsVeri.DataSet <> nil) and dsVeri.DataSet.Active and (Eski > 0) and (Eski <= dsVeri.DataSet.RecordCount) then
     dsVeri.DataSet.RecNo := Eski;
 end;
@@ -219,7 +231,10 @@ end;
   (olay bitmeden veriseti yikilmasin diye hemen degil). }
 procedure TTabloSekme.dsVeriDataChange(Sender: TObject; Field: TField);
 begin
-  if FDevamBekliyor or (FDuzelt <> nil) or (dsVeri.DataSet = nil) or not dsVeri.DataSet.Active then
+  if FDevamBekliyor or (dsVeri.DataSet = nil) or not dsVeri.DataSet.Active then
+    Exit;
+  { Duzeltme kipinde yalniz bekleyen degisiklik yokken (yoksa bellekteki degisiklikler kaybolurdu). }
+  if (FDuzelt <> nil) and ((FDuzelt.BekleyenSayisi > 0) or (dsVeri.DataSet.State <> dsBrowse)) then
     Exit;
   if (dsVeri.DataSet.RecordCount >= FSatirLimit) and (dsVeri.DataSet.RecNo = dsVeri.DataSet.RecordCount) then
   begin
@@ -251,7 +266,7 @@ begin
   if Bag = nil then
     Exit;
   try
-    Veri := DuzeltilebilirVeriSorgusu(Bag, TabloAdi, ILK_SATIR_SAYISI, Self);
+    Veri := DuzeltilebilirVeriSorgusu(Bag, TabloAdi, FSatirLimit, Self, FSiraAlan, FSiraAzalan);
     Duzelt := TKayitDuzelt.Create(Bag, TabloAdi, Veri, DuzenlemeDurumunuYaz);
   except
     on E: Exception do
@@ -271,7 +286,7 @@ begin
   dsVeri.DataSet := Veri;
   FDuzelt := Duzelt;
   FDuzelt.Ac;
-  FVeriGrid.YeniSonuc;
+  FVeriGrid.YeniSonuc(FSiraAlan, FSiraAzalan);
   FVeriGrid.Duzenle(True);
   btnYeniKayit.Visible := True;
   btnSil.Visible := True;
