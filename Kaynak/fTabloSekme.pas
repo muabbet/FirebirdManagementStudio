@@ -72,6 +72,7 @@ type
     FDuzelt: TKayitDuzelt;
     procedure Yaz(const Metin: string);
     procedure VeriyiYukle(Bag: TAcikBaglanti);
+    procedure VeriyiSirala(const Alan: string; Azalan: Boolean);
     procedure DuzenlemeyiAc;
     procedure DuzenlemeyiKapat;
     procedure DuzenlemeDurumunuYaz;
@@ -109,6 +110,7 @@ begin
   BaglantiAd := Bag.Tanim.Ad;
   TabloAdi := Tablo;
   FVeriGrid := TSonucGrid.Create(gridVeri);
+  FVeriGrid.OnSunucuSirala := VeriyiSirala;
   YenidenYukle(Bag);
   btnDisaAktar.Enabled := True;
   btnDuzenle.Enabled := True;
@@ -150,6 +152,29 @@ begin
   dsVeri.DataSet.Free;
   dsVeri.DataSet := TabloVerisiSorgusu(Bag, TabloAdi, ILK_SATIR_SAYISI, Self);
   FVeriGrid.YeniSonuc;
+end;
+
+{ Veri gridinde baslik tiklaninca: siralama SUNUCUDA yapilir (ORDER BY), boylece tablonun tamami
+  siralanir ve ilk 100 satir o siraya gore gelir; yalniz ekrandaki 100 satir degil. }
+procedure TTabloSekme.VeriyiSirala(const Alan: string; Azalan: Boolean);
+var
+  Bag: TAcikBaglanti;
+begin
+  Bag := BaglantiAl;
+  if Bag = nil then
+    Exit;
+  try
+    dsVeri.DataSet.Free;
+    dsVeri.DataSet := TabloVerisiSorgusu(Bag, TabloAdi, ILK_SATIR_SAYISI, Self, Alan, Azalan);
+  except
+    on E: Exception do
+    begin
+      dsVeri.DataSet := nil;
+      UyariGoster(HataMetniniCevir(E));
+      Exit;
+    end;
+  end;
+  FVeriGrid.YeniSonuc(Alan, Azalan);
 end;
 
 { ---------- Kayit duzeltme (Asama 4d, mantik uKayitDuzelt'te) ---------- }

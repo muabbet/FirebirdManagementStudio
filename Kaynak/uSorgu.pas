@@ -59,8 +59,10 @@ type
 { Tablonun TUM satirlarini okuyan komut (CSV disa aktarma bunu yeniden calistirir). }
 function TabloTumSatirlarSorgusu(const Tablo: string): string;
 
+{ SiraAlan doluysa satirlar sunucuda o kolona gore siralanir (ORDER BY); boylece ilk SatirSayisi satir
+  tablonun tamamindan secilir, yalniz yuklenenlerden degil. }
 function TabloVerisiSorgusu(Bag: TAcikBaglanti; const Tablo: string; SatirSayisi: Integer;
-  Sahip: TComponent): TFDQuery;
+  Sahip: TComponent; const SiraAlan: string = ''; Azalan: Boolean = False): TFDQuery;
 
 { Yazilan komutu calistirir. Hata olursa istisna firlar, cagiran HataMetniniCevir ile gosterir. }
 function SorguCalistir(Bag: TAcikBaglanti; const Sql: string): TSorguSonucu;
@@ -467,8 +469,17 @@ end;
 
 { Sorgu, Sahip ile birlikte yok olur. Sorgu salt okunurdur. }
 function TabloVerisiSorgusu(Bag: TAcikBaglanti; const Tablo: string; SatirSayisi: Integer;
-  Sahip: TComponent): TFDQuery;
+  Sahip: TComponent; const SiraAlan: string = ''; Azalan: Boolean = False): TFDQuery;
+var
+  Siralama: string;
 begin
+  Siralama := '';
+  if SiraAlan <> '' then
+  begin
+    Siralama := ' ORDER BY ' + TirnakliAd(SiraAlan);
+    if Azalan then
+      Siralama := Siralama + ' DESC';
+  end;
   Result := TFDQuery.Create(Sahip);
   try
     Result.Connection := Bag.Baglanti;
@@ -476,7 +487,7 @@ begin
     { En fazla 100 satir hepsi birden cekilir. Boylece okuma isleminin sunucuda
       acik kalmasi onlenir (sorgu sekmesi parca parca ceker, bkz. SorguCalistir). }
     Result.FetchOptions.Mode := fmAll;
-    Result.SQL.Text := 'SELECT FIRST ' + IntToStr(SatirSayisi) + ' * FROM ' + TirnakliAd(Tablo);
+    Result.SQL.Text := 'SELECT FIRST ' + IntToStr(SatirSayisi) + ' * FROM ' + TirnakliAd(Tablo) + Siralama;
     Result.Open;
   except
     Result.Free;

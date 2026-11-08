@@ -23,6 +23,9 @@ uses
   uDil, fMetinGoster;
 
 type
+  { Baslik tiklaninca sirayi sunucuya yaptirmak icin: Alan kolon adi, Azalan ise Z-A. }
+  TSunucuSirala = procedure(const Alan: string; Azalan: Boolean) of object;
+
   { Grid sahibidir: grid yok olunca bu nesne de yok olur. }
   TSonucGrid = class(TComponent)
   private
@@ -39,8 +42,12 @@ type
     procedure KolonGenisliginiAyarla;
     procedure SecimiKopyala;
   public
+    { Doluysa baslik tiklayinca (duzenleme kapaliyken) siralama bu olaya birakilir: sonucu sunucuda
+      siralayip YeniSonuc(Alan, Azalan) ile geri verir. Bos ise yuklenen satirlar grid icinde siralanir. }
+    OnSunucuSirala: TSunucuSirala;
     constructor Create(Grid: TDBGrid); reintroduce;
-    procedure YeniSonuc;
+    { SiraAlan: sonuc zaten o kolona gore sirali geldiyse basliga ok koymak icin. }
+    procedure YeniSonuc(const SiraAlan: string = ''; Azalan: Boolean = False);
     { Kayit duzeltme kipi (Asama 4d, bkz. uKayitDuzelt): hucre yazilabilir, degisen hucreler sari. }
     procedure Duzenle(Ac: Boolean);
   end;
@@ -156,10 +163,10 @@ begin
 end;
 
 { Yeni sonuc verisetine baglandiktan sonra cagrilir: kolonlar yeniden kurulur. }
-procedure TSonucGrid.YeniSonuc;
+procedure TSonucGrid.YeniSonuc(const SiraAlan: string; Azalan: Boolean);
 begin
-  FSiraAlan := '';
-  FAzalan := False;
+  FSiraAlan := SiraAlan;
+  FAzalan := Azalan;
   FGrid.Columns.State := csDefault;
   BasliklariYaz;
   KolonGenisliginiAyarla;
@@ -211,6 +218,8 @@ procedure TSonucGrid.BaslikTik(Column: TColumn);
 var
   Veri: TFDDataSet;
   Alan: TField;
+  Yeni: string;
+  Z: Boolean;
 begin
   if (FGrid.DataSource = nil) or not (FGrid.DataSource.DataSet is TFDDataSet) then
     Exit;
@@ -224,6 +233,18 @@ begin
   begin
     FSiraAlan := Alan.FieldName;
     FAzalan := False;
+  end;
+  if Assigned(OnSunucuSirala) and not FDuzenleme then
+  begin
+    { Sonuc degisecek, bu tiklama olayi bitmeden grid kolonlari yikilmasin: is sirada bekletilir. }
+    Yeni := Alan.FieldName;
+    Z := FAzalan;
+    TThread.ForceQueue(nil,
+      procedure
+      begin
+        OnSunucuSirala(Yeni, Z);
+      end);
+    Exit;
   end;
   if FAzalan then
     Veri.IndexFieldNames := Alan.FieldName + ':D'
