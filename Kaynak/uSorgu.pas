@@ -59,10 +59,15 @@ type
 { Tablonun TUM satirlarini okuyan komut (CSV disa aktarma bunu yeniden calistirir). }
 function TabloTumSatirlarSorgusu(const Tablo: string): string;
 
-{ SiraAlan doluysa satirlar sunucuda o kolona gore siralanir (ORDER BY); boylece ilk SatirSayisi satir
+{ Kullanicinin yazdigi filtre (ornek: TUTAR > 100) icin " WHERE (...)" parcasi; bos filtre bos doner.
+  Basindaki "WHERE" ve sondaki ';' atilir. Kosul parantez icine alinir, boylece OR kullanimi siralamayi bozmaz. }
+function FiltreKosulu(const Filtre: string): string;
+
+{ Filtre doluysa yalniz kosula uyan satirlar gelir (sunucuda, WHERE).
+  SiraAlan doluysa satirlar sunucuda o kolona gore siralanir (ORDER BY); boylece ilk SatirSayisi satir
   tablonun tamamindan secilir, yalniz yuklenenlerden degil. }
 function TabloVerisiSorgusu(Bag: TAcikBaglanti; const Tablo: string; SatirSayisi: Integer;
-  Sahip: TComponent; const SiraAlan: string = ''; Azalan: Boolean = False): TFDQuery;
+  Sahip: TComponent; const SiraAlan: string = ''; Azalan: Boolean = False; const Filtre: string = ''): TFDQuery;
 
 { Yazilan komutu calistirir. Hata olursa istisna firlar, cagiran HataMetniniCevir ile gosterir. }
 function SorguCalistir(Bag: TAcikBaglanti; const Sql: string): TSorguSonucu;
@@ -467,9 +472,26 @@ begin
   Result := 'SELECT * FROM ' + TirnakliAd(Tablo);
 end;
 
+function FiltreKosulu(const Filtre: string): string;
+var
+  Metin: string;
+begin
+  Metin := Trim(Filtre);
+  if SameText(Metin, 'where') then
+    Metin := ''
+  else if StartsText('where ', Metin) then
+    Metin := Trim(Copy(Metin, 7, MaxInt));
+  while (Metin <> '') and (Metin[Length(Metin)] = ';') do
+    Metin := Trim(Copy(Metin, 1, Length(Metin) - 1));
+  if Metin = '' then
+    Result := ''
+  else
+    Result := ' WHERE (' + Metin + sLineBreak + ')';
+end;
+
 { Sorgu, Sahip ile birlikte yok olur. Sorgu salt okunurdur. }
 function TabloVerisiSorgusu(Bag: TAcikBaglanti; const Tablo: string; SatirSayisi: Integer;
-  Sahip: TComponent; const SiraAlan: string = ''; Azalan: Boolean = False): TFDQuery;
+  Sahip: TComponent; const SiraAlan: string = ''; Azalan: Boolean = False; const Filtre: string = ''): TFDQuery;
 var
   Siralama: string;
 begin
@@ -487,7 +509,7 @@ begin
     { En fazla 100 satir hepsi birden cekilir. Boylece okuma isleminin sunucuda
       acik kalmasi onlenir (sorgu sekmesi parca parca ceker, bkz. SorguCalistir). }
     Result.FetchOptions.Mode := fmAll;
-    Result.SQL.Text := 'SELECT FIRST ' + IntToStr(SatirSayisi) + ' * FROM ' + TirnakliAd(Tablo) + Siralama;
+    Result.SQL.Text := 'SELECT FIRST ' + IntToStr(SatirSayisi) + ' * FROM ' + TirnakliAd(Tablo) + FiltreKosulu(Filtre) + Siralama;
     Result.Open;
   except
     Result.Free;

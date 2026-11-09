@@ -90,7 +90,7 @@ function KomutOzeti(const Komutlar: TArray<string>): string;
 
 { Duzeltmeye uygun veri seti: tablonun ilk satirlari, degisiklikler bellekte tutulur. Sorgu, Sahip ile yok olur. }
 function DuzeltilebilirVeriSorgusu(Bag: TAcikBaglanti; const Tablo: string; SatirSayisi: Integer;
-  Sahip: TComponent; const SiraAlan: string = ''; Azalan: Boolean = False): TFDQuery;
+  Sahip: TComponent; const SiraAlan: string = ''; Azalan: Boolean = False; const Filtre: string = ''): TFDQuery;
 
 implementation
 
@@ -99,7 +99,7 @@ const
   TUM_KAYITLAR: TFDUpdateRecordTypes = [rtUnmodified, rtModified, rtInserted];
 
 function DuzeltilebilirVeriSorgusu(Bag: TAcikBaglanti; const Tablo: string; SatirSayisi: Integer;
-  Sahip: TComponent; const SiraAlan: string = ''; Azalan: Boolean = False): TFDQuery;
+  Sahip: TComponent; const SiraAlan: string = ''; Azalan: Boolean = False; const Filtre: string = ''): TFDQuery;
 var
   Siralama: string;
 begin
@@ -115,7 +115,7 @@ begin
     Result.Connection := Bag.Baglanti;
     Result.CachedUpdates := True;
     Result.FetchOptions.Mode := fmAll;
-    Result.SQL.Text := 'SELECT FIRST ' + IntToStr(SatirSayisi) + ' * FROM ' + TirnakliAd(Tablo) + Siralama;
+    Result.SQL.Text := 'SELECT FIRST ' + IntToStr(SatirSayisi) + ' * FROM ' + TirnakliAd(Tablo) + FiltreKosulu(Filtre) + Siralama;
     Result.Open;
   except
     Result.Free;

@@ -38,6 +38,17 @@ Firebird için sade, ücretsiz ve açık kaynak yönetim aracı. SSMS'e (SQL Ser
 - Hedeflenen Firebird sürümleri 2.5, 3.0, 4.0 ve 5.0'dır. Gerçek veritabanında 2.5.9 ve 5.0.4 ile denendi; önceki sürümlerdeki özellikler mantık testleriyle 3.0.14 ve 4.0.7 ile de denendi. **0.6 sürümündeki bakım, veritabanı kopyalama ve yedek 2.5.9, 3.0.14, 4.0.7 ve 5.0.4'te denendi. 0.5 sürümündeki özellikler (veri düzenleme, içe aktarma, tablo kopyalama, tasarım, aktif bağlantılar) yalnızca 2.5.9 ve 5.0.4'te denendi; 3.0 ve 4.0'da henüz denenmedi.**
 - Arayüzün bazı pencereleri yalnızca sahibi tarafından elle denendi; her aşamanın raporunda neyin denenmediği yazılıdır.
 
+## Yeni dil ekleme
+
+Program Türkçe, İngilizce ve Almanca gelir; bu üç dil her sürümde eksiksiz tutulur. Başka bir dili herkes ekleyebilir, kod derlemek gerekmez:
+
+1. `%LOCALAPPDATA%\FirebirdYonetici\paket\Diller` klasörünü açın (program bir kez çalışmış olmalı).
+2. `en.json` dosyasını kopyalayıp adını dil koduna çevirin (örneğin `ru.json`, `pt-BR.json`).
+3. Dosyadaki `DIL_ADI` değerini dilin kendi adıyla yazın (örneğin `Русский`), diğer değerleri çevirin.
+4. Programı yeniden açın; dil seçim listesinde görünür.
+
+Çevirmediğiniz anahtarlar İngilizce görünür, program bozulmaz. Yeni sürümlerde eklenen anahtarlar topluluk dillerinde İngilizce kalabilir. Çevirinizi GitHub Issues üzerinden gönderirseniz sürüme ekleyebiliriz.
+
 ## Derleme
 
 RAD Studio 12 (Athens) gerekir. SQL editörü için **SynEdit (TurboPack)** kütüphane yolunda olmalıdır (kaynak: https://github.com/TurboPack/SynEdit, depoda yer almaz). Firebird 5.0 64 bit istemci dosyaları `SonDerleme.bat` başındaki `FBKAYNAK` yolundan alınır; kendi bilgisayarınıza göre değiştirin.

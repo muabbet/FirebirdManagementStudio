@@ -65,6 +65,7 @@ uses
   uIndeksOner in 'uIndeksOner.pas',
   fIndeksOner in 'fIndeksOner.pas' {frmIndeksOner},
   uSorguGecmisi in 'uSorguGecmisi.pas',
+  uFiltre in 'uFiltre.pas',
   fGecmis in 'fGecmis.pas' {frmGecmis},
   fBakim in 'fBakim.pas' {frmBakim},
   uTabloTasarim in 'uTabloTasarim.pas',

@@ -385,6 +385,35 @@ object TabloSekme: TTabloSekme
         Visible = False
         OnClick = btnGeriAlClick
       end
+      object btnFiltreKaldir: TButton
+        AlignWithMargins = True
+        Left = 380
+        Top = 2
+        Width = 92
+        Height = 25
+        Margins.Top = 2
+        Margins.Right = 4
+        Margins.Bottom = 2
+        Align = alRight
+        Constraints.MinWidth = 92
+        TabOrder = 7
+        Visible = False
+        OnClick = btnFiltreKaldirClick
+      end
+      object edtFiltre: TEdit
+        AlignWithMargins = True
+        Left = 140
+        Top = 3
+        Width = 380
+        Height = 23
+        Margins.Top = 3
+        Margins.Right = 4
+        Margins.Bottom = 3
+        Align = alRight
+        ShowHint = True
+        TabOrder = 8
+        OnKeyPress = edtFiltreKeyPress
+      end
     end
     object gridVeri: TDBGrid
       Left = 0
@@ -393,6 +422,7 @@ object TabloSekme: TTabloSekme
       Height = 220
       Align = alClient
       DataSource = dsVeri
+      PopupMenu = pmVeri
       Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgCancelOnExit]
       ReadOnly = True
       TabOrder = 0
@@ -418,5 +448,38 @@ object TabloSekme: TTabloSekme
   object dsBagimliliklar: TDataSource
     Left = 280
     Top = 80
+  end
+  object pmVeri: TPopupMenu
+    OnPopup = pmVeriPopup
+    Left = 360
+    Top = 250
+    object miFEsit: TMenuItem
+      Tag = 1
+      OnClick = miFiltreClick
+    end
+    object miFFarkli: TMenuItem
+      Tag = 2
+      OnClick = miFiltreClick
+    end
+    object miFBuyuk: TMenuItem
+      Tag = 3
+      OnClick = miFiltreClick
+    end
+    object miFKucuk: TMenuItem
+      Tag = 4
+      OnClick = miFiltreClick
+    end
+    object miFIceren: TMenuItem
+      Tag = 5
+      OnClick = miFiltreClick
+    end
+    object miFBos: TMenuItem
+      Tag = 6
+      OnClick = miFiltreClick
+    end
+    object miFTemizle: TMenuItem
+      Tag = 7
+      OnClick = miFiltreClick
+    end
   end
 end

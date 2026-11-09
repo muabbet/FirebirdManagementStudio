@@ -5,11 +5,14 @@ unit fTabloSekme;
 interface
 
 uses
-  System.SysUtils, System.Classes, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
-  Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls, FireDAC.Comp.Client,
-  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uSonucGrid, uKayitDuzelt, uKullanici, uProsedur, uKolon, uIndeksKisit, fKolonIslem, fYapiIslem, fCsvAktar, fIceAktar;
+  System.SysUtils, System.Classes, System.Types, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
+  Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls, Vcl.Menus, FireDAC.Comp.Client,
+  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uFiltre, uSonucGrid, uKayitDuzelt, uKullanici, uProsedur, uKolon, uIndeksKisit, fKolonIslem, fYapiIslem, fCsvAktar, fIceAktar;
 
 type
+  { Yalniz gridin korumali "Row" ozelligini okumak icin (sag tikla hangi satirda oldugumuzu bulmak). }
+  TGridErisim = class(TDBGrid);
+
   TTabloSekme = class(TFrame)
     pnlKolonlar: TPanel;
     pcYapi: TPageControl;
@@ -44,7 +47,17 @@ type
     btnSil: TButton;
     btnKaydet: TButton;
     btnGeriAl: TButton;
+    edtFiltre: TEdit;
+    btnFiltreKaldir: TButton;
     gridVeri: TDBGrid;
+    pmVeri: TPopupMenu;
+    miFEsit: TMenuItem;
+    miFFarkli: TMenuItem;
+    miFBuyuk: TMenuItem;
+    miFKucuk: TMenuItem;
+    miFIceren: TMenuItem;
+    miFBos: TMenuItem;
+    miFTemizle: TMenuItem;
     dsKolonlar: TDataSource;
     dsVeri: TDataSource;
     dsIndeksler: TDataSource;
@@ -67,6 +80,10 @@ type
     procedure btnKisitEkleClick(Sender: TObject);
     procedure btnKisitSilClick(Sender: TObject);
     procedure dsVeriDataChange(Sender: TObject; Field: TField);
+    procedure btnFiltreKaldirClick(Sender: TObject);
+    procedure edtFiltreKeyPress(Sender: TObject; var Key: Char);
+    procedure pmVeriPopup(Sender: TObject);
+    procedure miFiltreClick(Sender: TObject);
   private
     FVeriGrid: TSonucGrid;
     { Nil degilse kayit duzeltme kipi acik (Asama 4d). }
@@ -75,11 +92,17 @@ type
     FSatirLimit: Integer;
     FSiraAlan: string;
     FSiraAzalan: Boolean;
+    { Uygulanan WHERE kosulu ('' = filtre yok): filtre kutusundan ya da hucreye sag tikla gelir. }
+    FFiltre: string;
+    { Sag tiklanan hucrenin kolon adi ('' = hucre disinda). }
+    FHucreAlan: string;
     FDevamBekliyor: Boolean;
     procedure Yaz(const Metin: string);
+    procedure FiltreyiUygula(const Yeni: string);
+    procedure FiltreKutusunuAyarla;
     procedure VeriyiYukle(Bag: TAcikBaglanti);
     procedure VeriyiSirala(const Alan: string; Azalan: Boolean);
-    procedure VeriyiOku(Bag: TAcikBaglanti);
+    function VeriyiOku(Bag: TAcikBaglanti): Boolean;
     procedure DevamiYukle;
     procedure DuzenlemeyiAc;
     procedure DuzenlemeyiKapat;
@@ -180,11 +203,12 @@ end;
 
 { Verisetini o anki satir siniri ve siralamayla yeniden okur. Her seferinde okuma biter ve
   sunucuda acik kalmaz (yapi islemleri tabloyu kullanimda bulmasin). }
-procedure TTabloSekme.VeriyiOku(Bag: TAcikBaglanti);
+function TTabloSekme.VeriyiOku(Bag: TAcikBaglanti): Boolean;
 begin
+  Result := False;
   try
     dsVeri.DataSet.Free;
-    dsVeri.DataSet := TabloVerisiSorgusu(Bag, TabloAdi, FSatirLimit, Self, FSiraAlan, FSiraAzalan);
+    dsVeri.DataSet := TabloVerisiSorgusu(Bag, TabloAdi, FSatirLimit, Self, FSiraAlan, FSiraAzalan, FFiltre);
   except
     on E: Exception do
     begin
@@ -195,6 +219,129 @@ begin
   end;
   FVeriGrid.YeniSonuc(FSiraAlan, FSiraAzalan);
   DuzenlemeDurumunuYaz;
+  Result := True;
+end;
+
+{ Filtre kutusu: kosul sunucuda WHERE olarak calisir; hatali kosulda hata gosterilir ve onceki gorunum geri gelir
+  (kutudaki yazi duzeltilsin diye kalir). Duzenleme kipinde kutu kapalidir. }
+procedure TTabloSekme.FiltreyiUygula(const Yeni: string);
+var
+  Bag: TAcikBaglanti;
+  Eski: string;
+begin
+  Bag := BaglantiAl;
+  if (Bag = nil) or (FDuzelt <> nil) then
+    Exit;
+  Eski := FFiltre;
+  FFiltre := Trim(Yeni);
+  FSatirLimit := ILK_SATIR_SAYISI;
+  if VeriyiOku(Bag) then
+    edtFiltre.Text := FFiltre
+  else
+  begin
+    FFiltre := Eski;
+    VeriyiOku(Bag);
+  end;
+  btnFiltreKaldir.Visible := FFiltre <> '';
+end;
+
+procedure TTabloSekme.FiltreKutusunuAyarla;
+begin
+  edtFiltre.Enabled := FDuzelt = nil;
+  btnFiltreKaldir.Enabled := FDuzelt = nil;
+end;
+
+procedure TTabloSekme.btnFiltreKaldirClick(Sender: TObject);
+begin
+  FiltreyiUygula('');
+end;
+
+{ Sag tik menusu: tiklanan hucreyi bulur (imleci oraya koyar) ve degerine uyan secenekleri gosterir.
+  Menu en fazla 6 satirdir: yazida Esit / Farkli / Iceren / Bos, sayi ve tarihte Esit / Farkli / Buyuk / Kucuk / Bos. }
+procedure TTabloSekme.pmVeriPopup(Sender: TObject);
+var
+  Nokta: TPoint;
+  Koordinat: TGridCoord;
+  Alan: TField;
+  Bos: Boolean;
+begin
+  FHucreAlan := '';
+  Alan := nil;
+  Nokta := gridVeri.ScreenToClient(Mouse.CursorPos);
+  Koordinat := gridVeri.MouseCoord(Nokta.X, Nokta.Y);
+  if (FDuzelt = nil) and (dsVeri.DataSet <> nil) and dsVeri.DataSet.Active and (Koordinat.Y > 0) and
+    (Koordinat.X > 0) and (Koordinat.X <= gridVeri.Columns.Count) then
+  begin
+    { Imlec kaydirilirken "devam yukle" tetiklenmesin. }
+    FDevamBekliyor := True;
+    try
+      dsVeri.DataSet.MoveBy(Koordinat.Y - TGridErisim(gridVeri).Row);
+    finally
+      FDevamBekliyor := False;
+    end;
+    Alan := dsVeri.DataSet.FindField(gridVeri.Columns[Koordinat.X - 1].FieldName);
+    if (Alan <> nil) and FiltreyeUygunMu(Alan) then
+      FHucreAlan := Alan.FieldName
+    else
+      Alan := nil;
+  end;
+  Bos := (Alan <> nil) and Alan.IsNull;
+  miFEsit.Caption := T('FILTRE_ESIT');
+  miFFarkli.Caption := T('FILTRE_FARKLI');
+  miFBuyuk.Caption := T('FILTRE_BUYUK');
+  miFKucuk.Caption := T('FILTRE_KUCUK');
+  miFIceren.Caption := T('FILTRE_ICEREN');
+  if Bos then
+    miFBos.Caption := T('FILTRE_BOS_DEGIL')
+  else
+    miFBos.Caption := T('FILTRE_BOS');
+  miFTemizle.Caption := T('FILTRE_TEMIZLE');
+  miFEsit.Visible := (Alan <> nil) and not Bos;
+  miFFarkli.Visible := (Alan <> nil) and not Bos;
+  miFBuyuk.Visible := (Alan <> nil) and not Bos and SiralanabilirMi(Alan);
+  miFKucuk.Visible := miFBuyuk.Visible;
+  miFIceren.Visible := (Alan <> nil) and not Bos and MetinAlaniMi(Alan);
+  miFBos.Visible := Alan <> nil;
+  miFTemizle.Visible := (FFiltre <> '') and (FDuzelt = nil);
+end;
+
+{ Menu secimi: hucrenin degerinden kosul uretilir (uFiltre), varsa onceki filtreye VE ile eklenir. }
+procedure TTabloSekme.miFiltreClick(Sender: TObject);
+var
+  Etiket: Integer;
+  Alan: TField;
+  Islem: THucreIslemi;
+begin
+  Etiket := (Sender as TMenuItem).Tag;
+  if Etiket = 7 then
+  begin
+    FiltreyiUygula('');
+    Exit;
+  end;
+  if (FHucreAlan = '') or (dsVeri.DataSet = nil) or not dsVeri.DataSet.Active then
+    Exit;
+  Alan := dsVeri.DataSet.FindField(FHucreAlan);
+  if Alan = nil then
+    Exit;
+  if Etiket = 6 then
+  begin
+    if Alan.IsNull then
+      Islem := hiBosDegil
+    else
+      Islem := hiBos;
+  end
+  else
+    Islem := THucreIslemi(Etiket - 1);
+  FiltreyiUygula(FiltreBirlestir(FFiltre, HucreFiltresi(Alan, Islem)));
+end;
+
+procedure TTabloSekme.edtFiltreKeyPress(Sender: TObject; var Key: Char);
+begin
+  if Key = #13 then
+  begin
+    Key := #0;
+    FiltreyiUygula(edtFiltre.Text);
+  end;
 end;
 
 { Kullanici son satira gelince 100 satir daha yuklenir: sorgu daha buyuk sinirla yeniden okunur ve
@@ -266,7 +413,7 @@ begin
   if Bag = nil then
     Exit;
   try
-    Veri := DuzeltilebilirVeriSorgusu(Bag, TabloAdi, FSatirLimit, Self, FSiraAlan, FSiraAzalan);
+    Veri := DuzeltilebilirVeriSorgusu(Bag, TabloAdi, FSatirLimit, Self, FSiraAlan, FSiraAzalan, FFiltre);
     Duzelt := TKayitDuzelt.Create(Bag, TabloAdi, Veri, DuzenlemeDurumunuYaz);
   except
     on E: Exception do
@@ -292,6 +439,7 @@ begin
   btnSil.Visible := True;
   btnKaydet.Visible := True;
   btnGeriAl.Visible := True;
+  FiltreKutusunuAyarla;
   YazilariYenile;
 end;
 
@@ -308,6 +456,7 @@ begin
   btnSil.Visible := False;
   btnKaydet.Visible := False;
   btnGeriAl.Visible := False;
+  FiltreKutusunuAyarla;
 end;
 
 { Kipte "islem" bilgisi: islem yalniz Kaydet sirasinda acilir, bekleyenler henuz sadece bellekte. }
@@ -319,6 +468,8 @@ begin
     if (dsVeri.DataSet <> nil) and dsVeri.DataSet.Active then
     begin
       lblVeri.Caption := lblVeri.Caption + ' - ' + TF('LBL_SATIR_YUKLENDI', [dsVeri.DataSet.RecordCount]);
+      if FFiltre <> '' then
+        lblVeri.Caption := lblVeri.Caption + ' (' + T('LBL_FILTRELI') + ')';
       if dsVeri.DataSet.RecordCount >= FSatirLimit then
         lblVeri.Caption := lblVeri.Caption + ' ' + TF('LBL_SATIR_DEVAMI', [ILK_SATIR_SAYISI]);
     end;
@@ -735,6 +886,10 @@ begin
   DugmeyiYaziyaUydur(btnKisitEkle);
   DugmeyiYaziyaUydur(btnKisitSil);
   DuzenlemeDurumunuYaz;
+  edtFiltre.TextHint := T('FILTRE_ETIKET');
+  edtFiltre.Hint := T('FILTRE_IPUCU');
+  btnFiltreKaldir.Caption := T('FILTRE_KALDIR');
+  DugmeyiYaziyaUydur(btnFiltreKaldir);
   btnDisaAktar.Caption := T('AKTAR_DUGME');
   btnIceAktar.Caption := T('BTN_ICE_AKTAR');
   DugmeyiYaziyaUydur(btnIceAktar);
