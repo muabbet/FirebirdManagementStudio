@@ -338,7 +338,7 @@ begin
     Sorgu.Connection := Bag.Baglanti;
     Sorgu.MetaInfoKind := mkTables;
     Sorgu.TableKinds := [tkTable];
-    Sorgu.ObjectScopes := [osMy];
+    Sorgu.ObjectScopes := [osMy, osOther];
     ListeyiDoldur(Sorgu, 'TABLE_NAME', Hedef);
   finally
     Sorgu.Free;
@@ -354,7 +354,7 @@ begin
     Sorgu.Connection := Bag.Baglanti;
     Sorgu.MetaInfoKind := mkTables;
     Sorgu.TableKinds := [tkView];
-    Sorgu.ObjectScopes := [osMy];
+    Sorgu.ObjectScopes := [osMy, osOther];
     ListeyiDoldur(Sorgu, 'TABLE_NAME', Hedef);
   finally
     Sorgu.Free;
@@ -369,7 +369,7 @@ begin
   try
     Sorgu.Connection := Bag.Baglanti;
     Sorgu.MetaInfoKind := mkProcs;
-    Sorgu.ObjectScopes := [osMy];
+    Sorgu.ObjectScopes := [osMy, osOther];
     ListeyiDoldur(Sorgu, 'PROC_NAME', Hedef);
   finally
     Sorgu.Free;
@@ -384,7 +384,7 @@ begin
   try
     Sorgu.Connection := Bag.Baglanti;
     Sorgu.MetaInfoKind := mkGenerators;
-    Sorgu.ObjectScopes := [osMy];
+    Sorgu.ObjectScopes := [osMy, osOther];
     ListeyiDoldur(Sorgu, 'GENERATOR_NAME', Hedef);
   finally
     Sorgu.Free;
