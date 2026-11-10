@@ -56,18 +56,28 @@ type
     OncekiSonucKapandi: Boolean;
   end;
 
-{ Tablonun TUM satirlarini okuyan komut (CSV disa aktarma bunu yeniden calistirir). }
-function TabloTumSatirlarSorgusu(const Tablo: string): string;
+{ Tablonun TUM satirlarini okuyan komut (CSV disa aktarma bunu yeniden calistirir). Filtre doluysa yalniz kosula uyan
+  satirlar, SiraAlan doluysa o kolona gore sirali gelir; yani ekranda gordugunuz (filtreli, sirali) tablonun tamami. }
+function TabloTumSatirlarSorgusu(const Tablo: string; const Filtre: string = ''; const SiraAlan: string = '';
+  Azalan: Boolean = False): string;
 
 { Kullanicinin yazdigi filtre (ornek: TUTAR > 100) icin " WHERE (...)" parcasi; bos filtre bos doner.
   Basindaki "WHERE" ve sondaki ';' atilir. Kosul parantez icine alinir, boylece OR kullanimi siralamayi bozmaz. }
 function FiltreKosulu(const Filtre: string): string;
+
+{ Tablo verisini okuyan komutun yazisi (TabloVerisiSorgusu bunu calistirir; arayuz ayni yaziyi SQL karsiligi olarak gosterir). }
+function TabloVerisiSql(const Tablo: string; SatirSayisi: Integer; const SiraAlan: string; Azalan: Boolean;
+  const Filtre: string): string;
 
 { Filtre doluysa yalniz kosula uyan satirlar gelir (sunucuda, WHERE).
   SiraAlan doluysa satirlar sunucuda o kolona gore siralanir (ORDER BY); boylece ilk SatirSayisi satir
   tablonun tamamindan secilir, yalniz yuklenenlerden degil. }
 function TabloVerisiSorgusu(Bag: TAcikBaglanti; const Tablo: string; SatirSayisi: Integer;
   Sahip: TComponent; const SiraAlan: string = ''; Azalan: Boolean = False; const Filtre: string = ''): TFDQuery;
+
+{ Filtre kutusundaki oneri listesi: Alan kolonunda Yazi'yi iceren (buyuk kucuk harf fark etmez) birbirinden farkli en cok Adet
+  deger, alfabetik. Diger doluysa (baska kolonlarin filtresi) yalniz o satirlardaki degerler gelir. Hata olursa istisna firlar. }
+function AlanDegerleri(Bag: TAcikBaglanti; const Tablo, Alan, Yazi, Diger: string; Adet: Integer): TArray<string>;
 
 { Yazilan komutu calistirir. Hata olursa istisna firlar, cagiran HataMetniniCevir ile gosterir. }
 function SorguCalistir(Bag: TAcikBaglanti; const Sql: string): TSorguSonucu;
@@ -467,9 +477,16 @@ begin
   end;
 end;
 
-function TabloTumSatirlarSorgusu(const Tablo: string): string;
+function TabloTumSatirlarSorgusu(const Tablo: string; const Filtre: string = ''; const SiraAlan: string = '';
+  Azalan: Boolean = False): string;
 begin
-  Result := 'SELECT * FROM ' + TirnakliAd(Tablo);
+  Result := 'SELECT * FROM ' + TirnakliAd(Tablo) + FiltreKosulu(Filtre);
+  if SiraAlan <> '' then
+  begin
+    Result := Result + ' ORDER BY ' + TirnakliAd(SiraAlan);
+    if Azalan then
+      Result := Result + ' DESC';
+  end;
 end;
 
 function FiltreKosulu(const Filtre: string): string;
@@ -489,19 +506,54 @@ begin
     Result := ' WHERE (' + Metin + sLineBreak + ')';
 end;
 
+function AlanDegerleri(Bag: TAcikBaglanti; const Tablo, Alan, Yazi, Diger: string; Adet: Integer): TArray<string>;
+var
+  Sorgu: TFDQuery;
+  Liste: TList<string>;
+  Kolon, Ek: string;
+begin
+  Kolon := TirnakliAd(Alan);
+  Ek := '';
+  if Trim(Diger) <> '' then
+    Ek := ' AND (' + Diger + sLineBreak + ')';
+  Liste := TList<string>.Create;
+  Sorgu := TFDQuery.Create(nil);
+  try
+    Sorgu.Connection := Bag.Baglanti;
+    Sorgu.UpdateOptions.ReadOnly := True;
+    Sorgu.FetchOptions.Mode := fmAll;
+    Sorgu.SQL.Text := 'SELECT FIRST ' + IntToStr(Adet) + ' DISTINCT ' + Kolon + ' FROM ' + TirnakliAd(Tablo) +
+      ' WHERE ' + Kolon + ' IS NOT NULL AND ' + Kolon + ' CONTAINING :YAZI' + Ek + ' ORDER BY ' + Kolon;
+    Sorgu.ParamByName('YAZI').AsString := Yazi;
+    Sorgu.Open;
+    while not Sorgu.Eof do
+    begin
+      Liste.Add(TrimRight(Sorgu.Fields[0].AsString));
+      Sorgu.Next;
+    end;
+    Result := Liste.ToArray;
+  finally
+    Sorgu.Free;
+    Liste.Free;
+  end;
+end;
+
+function TabloVerisiSql(const Tablo: string; SatirSayisi: Integer; const SiraAlan: string; Azalan: Boolean;
+  const Filtre: string): string;
+begin
+  Result := 'SELECT FIRST ' + IntToStr(SatirSayisi) + ' * FROM ' + TirnakliAd(Tablo) + FiltreKosulu(Filtre);
+  if SiraAlan <> '' then
+  begin
+    Result := Result + ' ORDER BY ' + TirnakliAd(SiraAlan);
+    if Azalan then
+      Result := Result + ' DESC';
+  end;
+end;
+
 { Sorgu, Sahip ile birlikte yok olur. Sorgu salt okunurdur. }
 function TabloVerisiSorgusu(Bag: TAcikBaglanti; const Tablo: string; SatirSayisi: Integer;
   Sahip: TComponent; const SiraAlan: string = ''; Azalan: Boolean = False; const Filtre: string = ''): TFDQuery;
-var
-  Siralama: string;
 begin
-  Siralama := '';
-  if SiraAlan <> '' then
-  begin
-    Siralama := ' ORDER BY ' + TirnakliAd(SiraAlan);
-    if Azalan then
-      Siralama := Siralama + ' DESC';
-  end;
   Result := TFDQuery.Create(Sahip);
   try
     Result.Connection := Bag.Baglanti;
@@ -509,7 +561,7 @@ begin
     { En fazla 100 satir hepsi birden cekilir. Boylece okuma isleminin sunucuda
       acik kalmasi onlenir (sorgu sekmesi parca parca ceker, bkz. SorguCalistir). }
     Result.FetchOptions.Mode := fmAll;
-    Result.SQL.Text := 'SELECT FIRST ' + IntToStr(SatirSayisi) + ' * FROM ' + TirnakliAd(Tablo) + FiltreKosulu(Filtre) + Siralama;
+    Result.SQL.Text := TabloVerisiSql(Tablo, SatirSayisi, SiraAlan, Azalan, Filtre);
     Result.Open;
   except
     Result.Free;

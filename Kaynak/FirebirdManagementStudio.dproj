@@ -216,6 +216,7 @@
         </DCCReference>
         <DCCReference Include="uSorguGecmisi.pas"/>
         <DCCReference Include="uFiltre.pas"/>
+        <DCCReference Include="uFiltreSatiri.pas"/>
         <DCCReference Include="fGecmis.pas">
             <Form>frmGecmis</Form>
             <FormType>dfm</FormType>

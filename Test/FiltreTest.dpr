@@ -93,11 +93,58 @@ begin
   Kontrol('Birlestir: eski yorumlu ise parantez alt satirda', Pos(sLineBreak + ') AND', FiltreBirlestir('A = 1 -- x', 'B = 2')) > 0);
 end;
 
+{ Kolon altindaki filtre kutusu: yazilan yazinin kosula cevrilmesi (uFiltre.SatirFiltresi). }
+procedure SatirTestleri;
+var
+  Hata: string;
+
+  function S(const Ad: string; Tur: TFieldType; const Yazi: string): string;
+  begin
+    Result := SatirFiltresi(Ad, Tur, Yazi, Hata);
+  end;
+
+begin
+  Kontrol('Satir: bos yazi bos kosul', (S('AD', ftString, '') = '') and (Hata = ''));
+  Kontrol('Satir: yazi varsayilan iceren', S('AD', ftString, 'ali') = '"AD" CONTAINING ''ali''');
+  Kontrol('Satir: ad* ile baslar (buyuk kucuk harf fark etmez)', S('AD', ftString, 'ali*') = 'UPPER("AD") STARTING WITH UPPER(''ali'')');
+  Kontrol('Satir: *ad iceren', S('AD', ftString, '*ali') = '"AD" CONTAINING ''ali''');
+  Kontrol('Satir: =ad tam esit', S('AD', ftString, '=ali') = '"AD" = ''ali''');
+  Kontrol('Satir: tirnak ikilenir', S('AD', ftString, 'O''Neil') = '"AD" CONTAINING ''O''''Neil''');
+  Kontrol('Satir: tire bos olanlar', S('AD', ftString, '-') = '"AD" IS NULL');
+  Kontrol('Satir: unlem tire bos olmayanlar', S('AD', ftString, '!-') = '"AD" IS NOT NULL');
+  Kontrol('Satir: sayi varsayilan esit', S('ID', ftInteger, '5') = '"ID" = 5');
+  Kontrol('Satir: sayi buyuk', S('ID', ftInteger, '>5') = '"ID" > 5');
+  Kontrol('Satir: sayi buyuk esit, bosluklu', S('ID', ftInteger, '>= 5') = '"ID" >= 5');
+  Kontrol('Satir: sayi kucuk esit', S('ID', ftInteger, '<=5') = '"ID" <= 5');
+  Kontrol('Satir: sayi farkli (<>)', S('ID', ftInteger, '<>5') = '"ID" <> 5');
+  Kontrol('Satir: sayi farkli (!=)', S('ID', ftInteger, '!=5') = '"ID" <> 5');
+  Kontrol('Satir: sayi arasi', S('ID', ftInteger, '1..5') = '"ID" BETWEEN 1 AND 5');
+  Kontrol('Satir: virgul ondalik nokta olur', S('TUTAR', ftFloat, '>1,5') = '"TUTAR" > 1.5');
+  Kontrol('Satir: ondalik arasi', S('TUTAR', ftFloat, '1.5..2.5') = '"TUTAR" BETWEEN 1.5 AND 2.5');
+  Kontrol('Satir: yalniz islem yazildi: henuz filtre yok, hata yok', (S('ID', ftInteger, '>') = '') and (Hata = ''));
+  Kontrol('Satir: gecersiz sayi hata verir', (S('ID', ftInteger, 'abc') = '') and (Hata <> ''));
+  Kontrol('Satir: sayi ve harf karisik hata verir', (S('ID', ftInteger, '5abc') = '') and (Hata <> ''));
+  Kontrol('Satir: sayiya SQL parcasi sokulamaz', (S('ID', ftInteger, '1 OR 1=1') = '') and (Hata <> ''));
+  Kontrol('Satir: tarih ISO', S('TARIH', ftDate, '2026-11-09') = '"TARIH" = ''2026-11-09''');
+  Kontrol('Satir: tarih buyuk', S('TARIH', ftDate, '>2026-11-09') = '"TARIH" > ''2026-11-09''');
+  Kontrol('Satir: tarih arasi', S('TARIH', ftDate, '2026-11-01..2026-11-09') = '"TARIH" BETWEEN ''2026-11-01'' AND ''2026-11-09''');
+  Kontrol('Satir: tarih olmayan hata', (S('TARIH', ftDate, '5') = '') and (Hata <> ''));
+  Kontrol('Satir: zaman damgasi saatsiz tarih tum gun', S('ZAMAN', ftTimeStamp, '2026-11-09') =
+    '("ZAMAN" >= ''2026-11-09 00:00:00'' AND "ZAMAN" < ''2026-11-10 00:00:00'')');
+  Kontrol('Satir: zaman damgasi saatli esit', S('ZAMAN', ftTimeStamp, '2026-11-09 10:30') = '"ZAMAN" = ''2026-11-09 10:30:00''');
+  Kontrol('Satir: saat', S('SAAT', ftTime, '14:30') = '"SAAT" = ''14:30:00''');
+  Kontrol('Satir: mantik evet', S('AKTIF', ftBoolean, 'evet') = '"AKTIF" = TRUE');
+  Kontrol('Satir: mantik 0', S('AKTIF', ftBoolean, '0') = '"AKTIF" = FALSE');
+  Kontrol('Satir: mantik gecersiz hata', (S('AKTIF', ftBoolean, 'belki') = '') and (Hata <> ''));
+  Kontrol('Satir: birlestir yeni bos ise eski', FiltreBirlestir('A = 1', '') = 'A = 1');
+end;
+
 var
   Tanim: TBaglantiTanimi;
   Bag: TAcikBaglanti;
   Sorgu: TFDQuery;
   Hata, CiktiYolu: string;
+  Oneri: TArray<string>;
 begin
   Cikti := TStringList.Create;
   Hatalar := 0;
@@ -114,6 +161,14 @@ begin
     Kontrol('Yorum satiri parantezi yutmaz (satir sonu)', Pos(sLineBreak + ')', FiltreKosulu('A = 1 -- yorum')) > 0);
 
     HucreTestleri;
+    SatirTestleri;
+    Kontrol('Disa aktar: filtresiz ve siralamasiz hepsi', TabloTumSatirlarSorgusu('T') = 'SELECT * FROM "T"');
+    Kontrol('Disa aktar: filtre WHERE olarak girer', Pos('WHERE (A = 1', TabloTumSatirlarSorgusu('T', 'A = 1')) > 0);
+    Kontrol('Disa aktar: siralama azalan', Pos(' ORDER BY "X" DESC', TabloTumSatirlarSorgusu('T', '', 'X', True)) > 0);
+    Kontrol('Veri SQL: ilk satirlar, filtre ve siralama', TabloVerisiSql('T', 100, 'X', True, 'A = 1') = 'SELECT FIRST 100 * FROM "T" WHERE (A = 1' + sLineBreak + ') ORDER BY "X" DESC');
+    Kontrol('Veri SQL: filtresiz', TabloVerisiSql('T', 100, '', False, '') = 'SELECT FIRST 100 * FROM "T"');
+    Kontrol('Disa aktar: filtre ve siralama birlikte, filtre once',
+      Pos('WHERE', TabloTumSatirlarSorgusu('T', 'A = 1', 'X')) < Pos('ORDER BY', TabloTumSatirlarSorgusu('T', 'A = 1', 'X')));
 
     { B: gercek sunucu (yalniz okuma) }
     if Ortam('FBTEST_YOL', '') = '' then
@@ -170,6 +225,37 @@ begin
       Sorgu.Free;
       Sorgu := TabloVerisiSorgusu(Bag, 'RDB$RELATIONS', 100, nil, '', False, Hata);
       Kontrol('Birlesik filtre (VE) gercek sunucuda calisir', Sorgu.RecordCount >= 1);
+      Sorgu.Free;
+
+      { Yazarken oneri listesi (uSorgu.AlanDegerleri). }
+      Oneri := AlanDegerleri(Bag, 'RDB$RELATIONS', 'RDB$RELATION_NAME', 'rdb$fiel', '', 10);
+      Kontrol('Oneri: kucuk harfle yazilan buyuk harfli degeri bulur', (Length(Oneri) >= 1) and (Oneri[0] = 'RDB$FIELDS'));
+      Oneri := AlanDegerleri(Bag, 'RDB$RELATIONS', 'RDB$RELATION_NAME', 'rdb$', '', 3);
+      Kontrol('Oneri: en cok istenen adet gelir (3)', Length(Oneri) = 3);
+      Oneri := AlanDegerleri(Bag, 'RDB$RELATIONS', 'RDB$RELATION_NAME', 'rdb$', '', 10);
+      Kontrol('Oneri: alfabetik sirali, bosluk dolgusuz', (Length(Oneri) = 10) and (Oneri[0] <= Oneri[1]) and (Oneri[0] = Trim(Oneri[0])));
+      Oneri := AlanDegerleri(Bag, 'RDB$RELATIONS', 'RDB$RELATION_NAME', 'rdb$', 'RDB$SYSTEM_FLAG = 0', 10);
+      Kontrol('Oneri: diger filtre (kullanici tablolari) sistem tablolarini eler', Length(Oneri) = 0);
+      Oneri := AlanDegerleri(Bag, 'RDB$RELATIONS', 'RDB$RELATION_NAME', 'o''neil', '', 10);
+      Kontrol('Oneri: tirnakli yazi hata vermez, sonuc yok', Length(Oneri) = 0);
+
+      { Kolon altindaki filtre kutusunun urettigi kosullar gercek sunucuda calisir (yalniz okuma). }
+      Sorgu := TabloVerisiSorgusu(Bag, 'RDB$RELATIONS', 100, nil, '', False,
+        SatirFiltresi('RDB$RELATION_NAME', ftString, 'rdb$rel*', Hata));
+      Kontrol('Satir filtresi: ad* ile baslar', Sorgu.RecordCount >= 1);
+      Sorgu.Free;
+      Sorgu := TabloVerisiSorgusu(Bag, 'RDB$RELATIONS', 100, nil, '', False,
+        FiltreBirlestir(SatirFiltresi('RDB$RELATION_NAME', ftString, 'rdb$fields', Hata),
+        SatirFiltresi('RDB$SYSTEM_FLAG', ftSmallint, '1', Hata)));
+      Kontrol('Satir filtresi: iceren ve sayi VE ile birlesir, tam 1 satir', Sorgu.RecordCount = 1);
+      Sorgu.Free;
+      Sorgu := TabloVerisiSorgusu(Bag, 'RDB$RELATIONS', 100, nil, '', False,
+        SatirFiltresi('RDB$RELATION_ID', ftSmallint, '1..3', Hata));
+      Kontrol('Satir filtresi: sayi arasi calisir', Sorgu.RecordCount >= 1);
+      Sorgu.Free;
+      Sorgu := TabloVerisiSorgusu(Bag, 'RDB$RELATIONS', 100, nil, '', False,
+        SatirFiltresi('RDB$DESCRIPTION', ftString, '-', Hata));
+      Kontrol('Satir filtresi: bos olanlar calisir', Sorgu.RecordCount >= 1);
       Sorgu.Free;
 
       Hata := '';

@@ -7,7 +7,7 @@ interface
 uses
   System.SysUtils, System.Classes, System.Types, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
   Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls, Vcl.Menus, FireDAC.Comp.Client,
-  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uFiltre, uSonucGrid, uKayitDuzelt, uKullanici, uProsedur, uKolon, uIndeksKisit, fKolonIslem, fYapiIslem, fCsvAktar, fIceAktar;
+  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uFiltre, uFiltreSatiri, uSonucGrid, uKayitDuzelt, uKullanici, uProsedur, uKolon, uIndeksKisit, fKolonIslem, fYapiIslem, fCsvAktar, fIceAktar;
 
 type
   { Yalniz gridin korumali "Row" ozelligini okumak icin (sag tikla hangi satirda oldugumuzu bulmak). }
@@ -94,11 +94,18 @@ type
     FSiraAzalan: Boolean;
     { Uygulanan WHERE kosulu ('' = filtre yok): filtre kutusundan ya da hucreye sag tikla gelir. }
     FFiltre: string;
+    { Kolon altindaki filtre kutularindan gelen kosul; FFiltre ile VE ile birlesir. }
+    FSatirKosulu: string;
+    FSatir: TFiltreSatiri;
     { Sag tiklanan hucrenin kolon adi ('' = hucre disinda). }
     FHucreAlan: string;
     FDevamBekliyor: Boolean;
     procedure Yaz(const Metin: string);
+    function TamFiltre: string;
+    procedure FiltreDegistir(const YeniElle, YeniSatir: string);
     procedure FiltreyiUygula(const Yeni: string);
+    procedure FiltreSatiriDegisti(Sender: TObject);
+    procedure FiltreOnerisiIste(const AlanAdi, Yazi: string; Sonuc: TStrings);
     procedure FiltreKutusunuAyarla;
     procedure VeriyiYukle(Bag: TAcikBaglanti);
     procedure VeriyiSirala(const Alan: string; Azalan: Boolean);
@@ -142,6 +149,8 @@ begin
   TabloAdi := Tablo;
   FVeriGrid := TSonucGrid.Create(gridVeri);
   FVeriGrid.OnSunucuSirala := VeriyiSirala;
+  FSatir := TFiltreSatiri.Create(gridVeri, FiltreSatiriDegisti);
+  FSatir.OnOneri := FiltreOnerisiIste;
   YenidenYukle(Bag);
   btnDisaAktar.Enabled := True;
   btnDuzenle.Enabled := True;
@@ -150,6 +159,7 @@ end;
 
 destructor TTabloSekme.Destroy;
 begin
+  FSatir.Free;
   FDuzelt.Free;
   inherited;
 end;
@@ -208,7 +218,7 @@ begin
   Result := False;
   try
     dsVeri.DataSet.Free;
-    dsVeri.DataSet := TabloVerisiSorgusu(Bag, TabloAdi, FSatirLimit, Self, FSiraAlan, FSiraAzalan, FFiltre);
+    dsVeri.DataSet := TabloVerisiSorgusu(Bag, TabloAdi, FSatirLimit, Self, FSiraAlan, FSiraAzalan, TamFiltre);
   except
     on E: Exception do
     begin
@@ -218,42 +228,91 @@ begin
     end;
   end;
   FVeriGrid.YeniSonuc(FSiraAlan, FSiraAzalan);
+  FSatir.Esitle;
   DuzenlemeDurumunuYaz;
   Result := True;
 end;
 
-{ Filtre kutusu: kosul sunucuda WHERE olarak calisir; hatali kosulda hata gosterilir ve onceki gorunum geri gelir
-  (kutudaki yazi duzeltilsin diye kalir). Duzenleme kipinde kutu kapalidir. }
-procedure TTabloSekme.FiltreyiUygula(const Yeni: string);
+{ Sorguya giren tam filtre: ustteki kutu (ve sag tik) ile kolon altindaki kutularin kosullari VE ile birlesir. }
+function TTabloSekme.TamFiltre: string;
+begin
+  Result := FiltreBirlestir(FFiltre, FSatirKosulu);
+end;
+
+{ Filtreyi degistirir ve veriyi yeniden okur: kosul sunucuda WHERE olarak calisir. Hatali kosulda hata gosterilir ve
+  onceki gorunum geri gelir (kutudaki yazi duzeltilsin diye kalir). Duzenleme kipinde kutular kapalidir. }
+procedure TTabloSekme.FiltreDegistir(const YeniElle, YeniSatir: string);
 var
   Bag: TAcikBaglanti;
-  Eski: string;
+  EskiElle, EskiSatir, Sql: string;
 begin
   Bag := BaglantiAl;
   if (Bag = nil) or (FDuzelt <> nil) then
     Exit;
-  Eski := FFiltre;
-  FFiltre := Trim(Yeni);
+  EskiElle := FFiltre;
+  EskiSatir := FSatirKosulu;
+  FFiltre := Trim(YeniElle);
+  FSatirKosulu := YeniSatir;
   FSatirLimit := ILK_SATIR_SAYISI;
+  Sql := TabloVerisiSql(TabloAdi, FSatirLimit, FSiraAlan, FSiraAzalan, TamFiltre);
   if VeriyiOku(Bag) then
     edtFiltre.Text := FFiltre
   else
   begin
-    FFiltre := Eski;
+    FFiltre := EskiElle;
+    FSatirKosulu := EskiSatir;
     VeriyiOku(Bag);
   end;
-  btnFiltreKaldir.Visible := FFiltre <> '';
+  btnFiltreKaldir.Visible := TamFiltre <> '';
+  { SQL karsiligi (CLAUDE.md): calisan komut alt mesaj alaninda gorunur; hata olunca da denenen komut. }
+  if Assigned(SqlYaz) then
+    SqlYaz([StringReplace(Sql, sLineBreak, ' ', [rfReplaceAll])]);
+end;
+
+procedure TTabloSekme.FiltreyiUygula(const Yeni: string);
+begin
+  FiltreDegistir(Yeni, FSatirKosulu);
+end;
+
+{ Kolon altindaki bir kutuya Enter basildi ya da yazmak birakildi. Gecersiz yazida kutu kirmizi olur, sorgu calismaz. }
+procedure TTabloSekme.FiltreSatiriDegisti(Sender: TObject);
+var
+  Kosul, Hata: string;
+begin
+  Kosul := FSatir.Kosul(Hata);
+  if (Hata <> '') or (Kosul = FSatirKosulu) then
+    Exit;
+  FiltreDegistir(FFiltre, Kosul);
+end;
+
+{ Kolon kutusuna yazarken: o kolonun mevcut degerlerinden en cok 10 tanesi (uSorgu.AlanDegerleri). Baska kolonlarin ve
+  ustteki kutunun filtresi de sayilir, boylece yalniz gorunecek satirlardaki degerler onerilir. Yazi hatali ise oneri yok. }
+procedure TTabloSekme.FiltreOnerisiIste(const AlanAdi, Yazi: string; Sonuc: TStrings);
+var
+  Bag: TAcikBaglanti;
+  Diger, Hata, Deger: string;
+begin
+  Bag := BaglantiAl;
+  if (Bag = nil) or (FDuzelt <> nil) then
+    Exit;
+  Diger := FSatir.Kosul(Hata, AlanAdi);
+  if Hata <> '' then
+    Exit;
+  for Deger in AlanDegerleri(Bag, TabloAdi, AlanAdi, Yazi, FiltreBirlestir(FFiltre, Diger), ONERI_ADET) do
+    Sonuc.Add(Deger);
 end;
 
 procedure TTabloSekme.FiltreKutusunuAyarla;
 begin
   edtFiltre.Enabled := FDuzelt = nil;
   btnFiltreKaldir.Enabled := FDuzelt = nil;
+  FSatir.Etkin(FDuzelt = nil);
 end;
 
 procedure TTabloSekme.btnFiltreKaldirClick(Sender: TObject);
 begin
-  FiltreyiUygula('');
+  FSatir.Temizle;
+  FiltreDegistir('', '');
 end;
 
 { Sag tik menusu: tiklanan hucreyi bulur (imleci oraya koyar) ve degerine uyan secenekleri gosterir.
@@ -302,7 +361,7 @@ begin
   miFKucuk.Visible := miFBuyuk.Visible;
   miFIceren.Visible := (Alan <> nil) and not Bos and MetinAlaniMi(Alan);
   miFBos.Visible := Alan <> nil;
-  miFTemizle.Visible := (FFiltre <> '') and (FDuzelt = nil);
+  miFTemizle.Visible := (TamFiltre <> '') and (FDuzelt = nil);
 end;
 
 { Menu secimi: hucrenin degerinden kosul uretilir (uFiltre), varsa onceki filtreye VE ile eklenir. }
@@ -315,7 +374,7 @@ begin
   Etiket := (Sender as TMenuItem).Tag;
   if Etiket = 7 then
   begin
-    FiltreyiUygula('');
+    btnFiltreKaldirClick(nil);
     Exit;
   end;
   if (FHucreAlan = '') or (dsVeri.DataSet = nil) or not dsVeri.DataSet.Active then
@@ -413,7 +472,7 @@ begin
   if Bag = nil then
     Exit;
   try
-    Veri := DuzeltilebilirVeriSorgusu(Bag, TabloAdi, FSatirLimit, Self, FSiraAlan, FSiraAzalan, FFiltre);
+    Veri := DuzeltilebilirVeriSorgusu(Bag, TabloAdi, FSatirLimit, Self, FSiraAlan, FSiraAzalan, TamFiltre);
     Duzelt := TKayitDuzelt.Create(Bag, TabloAdi, Veri, DuzenlemeDurumunuYaz);
   except
     on E: Exception do
@@ -434,6 +493,7 @@ begin
   FDuzelt := Duzelt;
   FDuzelt.Ac;
   FVeriGrid.YeniSonuc(FSiraAlan, FSiraAzalan);
+  FSatir.Esitle;
   FVeriGrid.Duzenle(True);
   btnYeniKayit.Visible := True;
   btnSil.Visible := True;
@@ -468,7 +528,7 @@ begin
     if (dsVeri.DataSet <> nil) and dsVeri.DataSet.Active then
     begin
       lblVeri.Caption := lblVeri.Caption + ' - ' + TF('LBL_SATIR_YUKLENDI', [dsVeri.DataSet.RecordCount]);
-      if FFiltre <> '' then
+      if TamFiltre <> '' then
         lblVeri.Caption := lblVeri.Caption + ' (' + T('LBL_FILTRELI') + ')';
       if dsVeri.DataSet.RecordCount >= FSatirLimit then
         lblVeri.Caption := lblVeri.Caption + ' ' + TF('LBL_SATIR_DEVAMI', [ILK_SATIR_SAYISI]);
@@ -851,7 +911,7 @@ begin
     UyariGoster(TF('ERR_SORGU_BAGLANTI_YOK', [BaglantiAd]));
     Exit;
   end;
-  CsvPenceresiniGoster(Bag, TabloTumSatirlarSorgusu(TabloAdi), TabloAdi, AnaSonuc);
+  CsvPenceresiniGoster(Bag, TabloTumSatirlarSorgusu(TabloAdi, TamFiltre, FSiraAlan, FSiraAzalan), TabloAdi, AnaSonuc);
 end;
 
 procedure TTabloSekme.BagimliliklariGoster;
