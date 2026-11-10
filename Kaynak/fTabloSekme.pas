@@ -948,6 +948,7 @@ begin
   DuzenlemeDurumunuYaz;
   edtFiltre.TextHint := T('FILTRE_ETIKET');
   edtFiltre.Hint := T('FILTRE_IPUCU');
+  FSatir.YazilariYenile;
   btnFiltreKaldir.Caption := T('FILTRE_KALDIR');
   DugmeyiYaziyaUydur(btnFiltreKaldir);
   btnDisaAktar.Caption := T('AKTAR_DUGME');

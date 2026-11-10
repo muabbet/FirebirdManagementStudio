@@ -70,6 +70,8 @@ type
     { HaricAlan doluysa o kolonun kutusu katilmaz (o kolon icin oneri toplarken kendi filtresi sayilmasin). }
     function Kosul(out Hata: string; const HaricAlan: string = ''): string;
     procedure Temizle;
+    { Dil degisince kutu ipuclari (hata ipuclari dahil) yeni dilde yazilir. }
+    procedure YazilariYenile;
     function Dolu: Boolean;
     { Duzenleme kipinde kutular kapanir. }
     procedure Etkin(Acik: Boolean);
@@ -524,6 +526,14 @@ begin
       Result := Result + Parca;
     end;
   end;
+end;
+
+procedure TFiltreSatiri.YazilariYenile;
+var
+  Hata: string;
+begin
+  { Kosul her kutunun ipucunu ve kirmizi rengini o anki dilde yeniden yazar. }
+  Kosul(Hata);
 end;
 
 procedure TFiltreSatiri.Temizle;
