@@ -533,7 +533,8 @@ begin
       if dsVeri.DataSet.RecordCount >= FSatirLimit then
         lblVeri.Caption := lblVeri.Caption + ' ' + TF('LBL_SATIR_DEVAMI', [ILK_SATIR_SAYISI]);
     end;
-    lblVeri.Hint := '';
+    { Yer dar olursa yazi "..." ile kisalir; tamami ipucunda okunur. }
+    lblVeri.Hint := lblVeri.Caption;
   end
   else
   begin

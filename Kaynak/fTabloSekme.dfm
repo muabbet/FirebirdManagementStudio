@@ -277,6 +277,7 @@ object TabloSekme: TTabloSekme
         AutoSize = False
         Font.Style = [fsBold]
         ParentFont = False
+        EllipsisPosition = epEndEllipsis
         Layout = tlCenter
         ShowHint = True
       end
