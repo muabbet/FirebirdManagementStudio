@@ -11,7 +11,7 @@ uses
   System.SysUtils, System.Classes, System.IOUtils, Data.DB,
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.Comp.Client, FireDAC.Phys.FB,
   FireDAC.ConsoleUI.Wait,
-  uDil, uBaglanti, uSorgu, uMetadata, uIliski;
+  uDil, uBaglanti, uSorgu, uMetadata, uIliski, uDDL, uAra;
 
 var
   Cikti: TStringList;
@@ -70,6 +70,64 @@ begin
   Calistir('INSERT INTO KALEM_NOT VALUES (1, 10, 2)');
   Calistir('INSERT INTO KOD VALUES (''O''''K'')');
   Calistir('INSERT INTO URUN VALUES (1, ''O''''K'')');
+  { Arama testi icin view, exception, prosedur ve trigger }
+  Calistir('CREATE VIEW V_SIPARIS_OZET AS SELECT MUSTERI_ID, COUNT(*) AS ADET FROM SIPARIS GROUP BY MUSTERI_ID');
+  Calistir('CREATE EXCEPTION E_MUSTERI_YOK ''Musteri yok''');
+  Calistir('CREATE PROCEDURE P_MUSTERI_SIL AS BEGIN DELETE FROM MUSTERI WHERE ID = 999; END');
+  Calistir('CREATE TRIGGER TR_SIPARIS_BI FOR SIPARIS ACTIVE BEFORE INSERT POSITION 0 AS BEGIN IF (NEW.ID IS NULL) THEN NEW.ID = 1; END');
+end;
+
+{ Sonucta bu tur, ad ve yerde bir kayit var mi (Ayrinti bos degilse onu da icermeli). }
+function Var_(const Liste: TArray<TAramaSonucu>; Tur: TNesneTuru; const Ad: string; Yer: TAramaYeri; const Ayrinti: string = ''): Boolean;
+var
+  S: TAramaSonucu;
+begin
+  Result := False;
+  for S in Liste do
+    if (S.Tur = Tur) and SameText(S.Ad, Ad) and (S.Yer = Yer) and ((Ayrinti = '') or (Pos(UpperCase(Ayrinti), UpperCase(S.Ayrinti)) > 0)) then
+      Exit(True);
+end;
+
+{ Veritabaninda arama (7l): ad, kolon ve kaynak metni. }
+procedure AraDene;
+var
+  S: TArray<TAramaSonucu>;
+  Kesildi: Boolean;
+  K: TAramaSonucu;
+  KaynakVar: Boolean;
+begin
+  S := MetadataAra(Bag, 'musteri', False, Kesildi);
+  Kontrol('Ara ad: tablo MUSTERI bulunur', Var_(S, ntTablo, 'MUSTERI', ayAd));
+  Kontrol('Ara ad: exception bulunur', Var_(S, ntIstisna, 'E_MUSTERI_YOK', ayAd));
+  Kontrol('Ara ad: prosedur bulunur', Var_(S, ntProsedur, 'P_MUSTERI_SIL', ayAd));
+  Kontrol('Ara kolon: SIPARIS.MUSTERI_ID tablo kolonu', Var_(S, ntTablo, 'SIPARIS', ayKolon, 'MUSTERI_ID'));
+  Kontrol('Ara kolon: view kolonu view olarak gelir', Var_(S, ntView, 'V_SIPARIS_OZET', ayKolon, 'MUSTERI_ID'));
+  KaynakVar := False;
+  for K in S do
+    if K.Yer = ayKaynak then
+      KaynakVar := True;
+  Kontrol('Ara: kaynak aramasi kapaliyken kaynak sonucu yok', not KaynakVar);
+  Kontrol('Ara: kesilmedi', not Kesildi);
+
+  S := MetadataAra(Bag, 'MuSteRi', False, Kesildi);
+  Kontrol('Ara: buyuk kucuk harf fark etmez', Var_(S, ntTablo, 'MUSTERI', ayAd));
+
+  S := MetadataAra(Bag, 'm', False, Kesildi);
+  Kontrol('Ara: cok kisa yazi aranmaz', Length(S) = 0);
+
+  S := MetadataAra(Bag, 'musteri', True, Kesildi);
+  Kontrol('Ara kaynak: prosedur govdesi (DELETE FROM MUSTERI satiri)', Var_(S, ntProsedur, 'P_MUSTERI_SIL', ayKaynak, 'DELETE FROM MUSTERI'));
+  Kontrol('Ara kaynak: view kaynagi', Var_(S, ntView, 'V_SIPARIS_OZET', ayKaynak, 'MUSTERI_ID'));
+  S := MetadataAra(Bag, 'new.id', True, Kesildi);
+  Kontrol('Ara kaynak: trigger govdesi', Var_(S, ntTetikleyici, 'TR_SIPARIS_BI', ayKaynak, 'NEW.ID'));
+
+  S := MetadataAra(Bag, 'siparis_bi', False, Kesildi);
+  Kontrol('Ara ad: trigger adi bulunur', Var_(S, ntTetikleyici, 'TR_SIPARIS_BI', ayAd));
+
+  S := MetadataAra(Bag, 'zzzyok', True, Kesildi);
+  Kontrol('Ara: olmayan yazi bos doner', Length(S) = 0);
+  S := MetadataAra(Bag, 'rdb$', True, Kesildi);
+  Kontrol('Ara: sistem nesneleri aranmaz', Length(S) = 0);
 end;
 
 procedure Dene;
@@ -217,6 +275,7 @@ begin
       Kur;
       Dene;
       OzetDene;
+      AraDene;
     except
       on E: Exception do
       begin

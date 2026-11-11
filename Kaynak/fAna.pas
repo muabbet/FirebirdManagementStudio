@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme, fIndeksOner;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme, fIndeksOner, uAra, fAra;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -97,6 +97,7 @@ type
     procedure btnKullanicilarClick(Sender: TObject);
     procedure btnAktifBaglantiClick(Sender: TObject);
     procedure btnBakimClick(Sender: TObject);
+    procedure btnAraClick(Sender: TObject);
     procedure btnYenileClick(Sender: TObject);
     procedure cmbDilChange(Sender: TObject);
     procedure btnYoneticiClick(Sender: TObject);
@@ -165,6 +166,7 @@ type
     btnKullanicilar: TSeritDugmesi;
     btnAktifBaglanti: TSeritDugmesi;
     btnBakim: TSeritDugmesi;
+    btnAra: TSeritDugmesi;
     FDilKodlari: TArray<string>;
     FOgeler: TObjectList<TAgacOgesi>;
     FSurukleNode: TTreeNode;
@@ -241,6 +243,8 @@ type
     function ProsedurSekmeAl(Sayfa: TTabSheet): TProsedurSekme;
     function AktifProsedurSekmesi: TProsedurSekme;
     procedure NesneDuzenleAc(Dugme: TTreeNode);
+    procedure NesneDuzenleSekmesiAc(const BaglantiAd, Ad: string; Tur: TNesneTuru);
+    procedure AramaSonucunuAc(const BaglantiAd: string; const Sonuc: TAramaSonucu);
     function DalTuru(DalNo: Integer): TNesneTuru;
     function DalDugmesiBul(const BaglantiAd: string; DalNo: Integer): TTreeNode;
     procedure DalYenile(Dal: TTreeNode);
@@ -326,6 +330,7 @@ begin
   btnSemaFarki := FSerit.Ekle('GRUP_YONETIM', 'BTN_SEMA_FARKI', IKON_PLAN, btnSemaFarkiClick);
   btnAktifBaglanti := FSerit.Ekle('GRUP_YONETIM', 'BTN_AKTIF_BAGLANTI', IKON_VERITABANI, btnAktifBaglantiClick);
   btnBakim := FSerit.Ekle('GRUP_YONETIM', 'BTN_BAKIM', IKON_VERITABANI, btnBakimClick);
+  btnAra := FSerit.Ekle('GRUP_YONETIM', 'BTN_ARA', IKON_PLAN, btnAraClick);
   btnKullanicilar.ShowHint := True;
   btnAyrinti := FSerit.Ekle('GRUP_GORUNUM', 'BTN_AYRINTI_KAPAT', IKON_VIEW, btnAyrintiClick);
   btnTumKapat := FSerit.Ekle('GRUP_GORUNUM', 'BTN_TUM_KAPAT', IKON_KAPAT, btnTumKapatClick);
@@ -567,6 +572,7 @@ begin
   btnYedek.Enabled := Dugme <> nil;
   btnAktifBaglanti.Enabled := Bag <> nil;
   btnBakim.Enabled := Bag <> nil;
+  btnAra.Enabled := Bag <> nil;
   { Kullanicilar: yalniz acik ve sunucu kipindeki baglantida; gomulu baglantida gerekce arac ipucunda. }
   btnKullanicilar.Enabled := (Bag <> nil) and KullaniciYetenekleri(Bag).YonetimVar;
   if (Bag <> nil) and not KullaniciYetenekleri(Bag).YonetimVar then
@@ -1258,23 +1264,46 @@ end;
 { Prosedurun, tetikleyicinin veya view'in CREATE OR ALTER metnini duzenleme sekmesinde acar (hangisi oldugu agactaki
   dalindan gelir). Ayni baglantida ayni nesne zaten aciksa o sekmeye gecilir (yazilmis ama kaydedilmemis metin kaybolmasin). }
 procedure TfrmAna.NesneDuzenleAc(Dugme: TTreeNode);
+begin
+  NesneDuzenleSekmesiAc(OgeAl(Dugme).BaglantiAd, OgeAl(Dugme).Ad, DalTuru(OgeAl(Dugme).DalNo));
+end;
+
+{ Arama sonucu: tablo kendi sekmesinde, view / prosedur / trigger / exception duzenleme sekmesinde acilir. }
+procedure TfrmAna.AramaSonucunuAc(const BaglantiAd: string; const Sonuc: TAramaSonucu);
+begin
+  if Sonuc.Tur = ntTablo then
+    TabloSekmesiAc(BaglantiAd, Sonuc.Ad)
+  else
+    NesneDuzenleSekmesiAc(BaglantiAd, Sonuc.Ad, Sonuc.Tur);
+end;
+
+{ Yonetim > Ara: secili (acik) baglantida ad ve kaynak aramasi; secilen nesne sekmede acilir. }
+procedure TfrmAna.btnAraClick(Sender: TObject);
 var
-  Oge: TAgacOgesi;
+  Bag: TAcikBaglanti;
+  Secim: TAramaSonucu;
+begin
+  if SeciliBaglantiDugmesi = nil then
+    Exit;
+  Bag := FbAcikBaglanti(OgeAl(SeciliBaglantiDugmesi).BaglantiAd);
+  if (Bag <> nil) and AraPenceresiniGoster(Bag, Secim) then
+    AramaSonucunuAc(Bag.Tanim.Ad, Secim);
+end;
+
+procedure TfrmAna.NesneDuzenleSekmesiAc(const BaglantiAd, Ad: string; Tur: TNesneTuru);
+var
   Bag: TAcikBaglanti;
   Sayfa: TTabSheet;
   Sekme: TProsedurSekme;
-  Tur: TNesneTuru;
   i: Integer;
 begin
-  Oge := OgeAl(Dugme);
-  Bag := FbAcikBaglanti(Oge.BaglantiAd);
+  Bag := FbAcikBaglanti(BaglantiAd);
   if Bag = nil then
     Exit;
-  Tur := DalTuru(Oge.DalNo);
   for i := 0 to pcCalisma.PageCount - 1 do
   begin
     Sekme := ProsedurSekmeAl(pcCalisma.Pages[i]);
-    if (Sekme <> nil) and not Sekme.Yeni and SameText(Sekme.BaglantiAd, Oge.BaglantiAd) and (Sekme.NesneAdi = Oge.Ad) and
+    if (Sekme <> nil) and not Sekme.Yeni and SameText(Sekme.BaglantiAd, BaglantiAd) and (Sekme.NesneAdi = Ad) and
       (TurOnEki(Sekme.Tur) = TurOnEki(Tur)) then
     begin
       pcCalisma.ActivePage := pcCalisma.Pages[i];
@@ -1297,7 +1326,7 @@ begin
   Sekme.AnaSonuc := memSonuc.Lines;
   Sekme.SqlYaz := SqlMesajiYaz;
   try
-    Sekme.Yukle(Bag, Oge.Ad);
+    Sekme.Yukle(Bag, Ad);
   except
     on E: EMetadataHatasi do
     begin
@@ -1315,7 +1344,7 @@ begin
   Sayfa.Caption := Sekme.Baslik;
   pcCalisma.ActivePage := Sayfa;
   Sekme.EditoreOdaklan;
-  MesajYaz(TF('MSG_' + TurOnEki(Tur) + '_ACILDI', [Oge.Ad]));
+  MesajYaz(TF('MSG_' + TurOnEki(Tur) + '_ACILDI', [Ad]));
   DurumuGuncelle;
 end;
 
