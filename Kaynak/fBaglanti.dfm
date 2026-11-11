@@ -250,7 +250,6 @@ object frmBaglanti: TfrmBaglanti
       Width = 220
       Height = 25
       DropDownCount = 16
-      Enabled = False
       TabOrder = 7
       Items.Strings = (
         'WIN1254'

@@ -321,7 +321,8 @@ begin
   finally
     Screen.Cursor := crDefault;
   end;
-  { Karakter seti kutusu kapalidir; yalniz veritabaninin varsayilan karakter seti yoksa (NONE) kullanici secebilir. }
+  { Karakter seti kutusu acik gelir (IBExpert gibi); Algila veritabanindakini okuyup kutuyu kapatir. Veritabaninin
+    varsayilan karakter seti yoksa (NONE) kutu acik kalir ve kullanici secer. }
   if SameText(Bulunan, 'NONE') then
   begin
     cmbKarakter.Text := VARSAYILAN_KARAKTER_SETI;
