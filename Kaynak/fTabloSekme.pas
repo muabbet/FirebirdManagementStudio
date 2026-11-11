@@ -63,6 +63,7 @@ type
     miFTemizle: TMenuItem;
     miGit: TMenuItem;
     miKullananlar: TMenuItem;
+    miOzet: TMenuItem;
     dsKolonlar: TDataSource;
     dsVeri: TDataSource;
     dsIndeksler: TDataSource;
@@ -91,6 +92,7 @@ type
     procedure miFiltreClick(Sender: TObject);
     procedure miGitClick(Sender: TObject);
     procedure miKullananlarClick(Sender: TObject);
+    procedure miOzetClick(Sender: TObject);
   private
     FVeriGrid: TSonucGrid;
     { Nil degilse kayit duzeltme kipi acik (Asama 4d). }
@@ -111,6 +113,8 @@ type
     FKisitlar: TArray<TKisitBilgisi>;
     FKisitlarOkundu: Boolean;
     FBagliKayit: TIliskiliKayit;
+    { Baslik satirina sag tiklanan kolonun adi ('' = baslik disinda): kolon ozeti icin. }
+    FOzetAlan: string;
     procedure Yaz(const Metin: string);
     function TamFiltre: string;
     procedure FiltreDegistir(const YeniElle, YeniSatir: string);
@@ -391,6 +395,63 @@ begin
     miGit.Visible := BagliKayitBul(KisitlariAl, gridVeri.Columns[Koordinat.X - 1].FieldName, dsVeri.DataSet, FBagliKayit);
   miGit.Caption := TF('ILISKI_GIT', [FBagliKayit.Tablo]);
   miKullananlar.Caption := T('ILISKI_KULLANANLAR');
+  { Kolon ozeti: kolon basligina sag tik. }
+  FOzetAlan := '';
+  if (FDuzelt = nil) and (dsVeri.DataSet <> nil) and dsVeri.DataSet.Active and (Koordinat.Y = 0) and
+    (Koordinat.X > 0) and (Koordinat.X <= gridVeri.Columns.Count) then
+  begin
+    Alan := dsVeri.DataSet.FindField(gridVeri.Columns[Koordinat.X - 1].FieldName);
+    if (Alan <> nil) and FiltreyeUygunMu(Alan) then
+      FOzetAlan := Alan.FieldName;
+  end;
+  miOzet.Caption := T('OZET_MENU');
+  miOzet.Visible := FOzetAlan <> '';
+end;
+
+{ Kolon basligina sag tik "Kolon ozeti": filtreye uyan satirlarin sayisi, doluluk, en kucuk/en buyuk, sayi kolonunda
+  toplam ve ortalama. Hesap sunucuda yapilir (ekrandaki 100 satir degil, filtrelenmis tablonun tamami); sonuc alt alana yazilir. }
+procedure TTabloSekme.miOzetClick(Sender: TObject);
+var
+  Bag: TAcikBaglanti;
+  Alan: TField;
+  Kapsam: TOzetKapsami;
+  Ozet: TKolonOzeti;
+  Satir, Sql: string;
+begin
+  Bag := BaglantiAl;
+  if (Bag = nil) or (FOzetAlan = '') or (dsVeri.DataSet = nil) then
+    Exit;
+  Alan := dsVeri.DataSet.FindField(FOzetAlan);
+  if Alan = nil then
+    Exit;
+  if SayisalAlanMi(Alan) then
+    Kapsam := okSayisal
+  else if SiralanabilirMi(Alan) or MetinAlaniMi(Alan) then
+    Kapsam := okAralik
+  else
+    Kapsam := okSade;
+  Sql := KolonOzetiSql(TabloAdi, FOzetAlan, Kapsam, TamFiltre);
+  try
+    Ozet := KolonOzeti(Bag, TabloAdi, FOzetAlan, Kapsam, TamFiltre);
+  except
+    on E: Exception do
+    begin
+      if Assigned(SqlYaz) then
+        SqlYaz([StringReplace(Sql, sLineBreak, ' ', [rfReplaceAll])]);
+      UyariGoster(HataMetniniCevir(E));
+      Exit;
+    end;
+  end;
+  Satir := TabloAdi + '.' + FOzetAlan + ': ' + TF('OZET_SATIR', [Ozet.Kayit, Ozet.Dolu, Ozet.Kayit - Ozet.Dolu]);
+  if Kapsam in [okAralik, okSayisal] then
+    Satir := Satir + ' ' + TF('OZET_ARALIK', [Ozet.EnKucuk, Ozet.EnBuyuk]);
+  if Kapsam = okSayisal then
+    Satir := Satir + ' ' + TF('OZET_SAYISAL', [Ozet.Toplam, Ozet.Ortalama]);
+  if TamFiltre <> '' then
+    Satir := Satir + ' (' + T('LBL_FILTRELI') + ')';
+  Yaz(Satir);
+  if Assigned(SqlYaz) then
+    SqlYaz([StringReplace(Sql, sLineBreak, ' ', [rfReplaceAll])]);
 end;
 
 { Tablonun kisitlari ilk ihtiyacta okunur; sag tik her seferinde sorgu calistirmasin. }

@@ -1,6 +1,6 @@
 program IliskiTest;
 
-{ Iliskili kayitlara git testi (uIliski, uMetadata.KisitaBagliYabanciKolonlar, uSorgu.KayitSayisi).
+{ Iliskili kayitlara git testi (uIliski, uMetadata.KisitaBagliYabanciKolonlar, uSorgu.KayitSayisi) ve kolon ozeti (uSorgu.KolonOzeti).
   Gercek veriye dokunulmaz: kendi gecici veritabanini kurar (musteri, siparis, kalem, ...), dosya silinmez.
   Ortam degiskenleri: FBTEST_SUNUCU (bos = yerel), FBTEST_PORT, FBTEST_KLASOR, FBTEST_KULLANICI, FBTEST_SIFRE,
   FBTEST_CIKTI. Cikis kodu: hata sayisi (0 = hepsi gecti). }
@@ -158,6 +158,34 @@ begin
   Kontrol('KayitSayisi: filtreli', KayitSayisi(Bag, 'SIPARIS', '"MUSTERI_ID" = 1') = 2);
 end;
 
+{ Kolon ozeti (7k): sayi, yazi ve bos degerli kolonlar, filtreli ve filtresiz. }
+procedure OzetDene;
+var
+  O: TKolonOzeti;
+begin
+  { SIPARIS: ID 10, 11, 12; MUSTERI_ID 1, 1, NULL }
+  O := KolonOzeti(Bag, 'SIPARIS', 'ID', okSayisal, '');
+  Kontrol('Ozet sayi: 3 kayit, 3 dolu', (O.Kayit = 3) and (O.Dolu = 3));
+  Kontrol('Ozet sayi: toplam 33', O.Toplam = '33');
+  Kontrol('Ozet sayi: ortalama 11', O.Ortalama = '11');
+  Kontrol('Ozet sayi: en kucuk 10, en buyuk 12', (O.EnKucuk = '10') and (O.EnBuyuk = '12'));
+  O := KolonOzeti(Bag, 'SIPARIS', 'MUSTERI_ID', okSayisal, '');
+  Kontrol('Ozet bos deger: 3 kayit, 2 dolu', (O.Kayit = 3) and (O.Dolu = 2));
+  Kontrol('Ozet bos deger: toplam 2, ortalama 1', (O.Toplam = '2') and (O.Ortalama = '1'));
+  O := KolonOzeti(Bag, 'SIPARIS', 'ID', okSayisal, '"ID" > 10');
+  Kontrol('Ozet filtreli: 2 kayit, toplam 23, ortalama 11,5',
+    (O.Kayit = 2) and (O.Toplam = '23') and (O.Ortalama = FormatFloat('0.####', 11.5)));
+  O := KolonOzeti(Bag, 'SIPARIS', 'ID', okSayisal, '"ID" > 1000');
+  Kontrol('Ozet filtre hic kayit getirmez: 0 kayit, toplam bos', (O.Kayit = 0) and (O.Toplam = '') and (O.EnKucuk = ''));
+  O := KolonOzeti(Bag, 'MUSTERI', 'AD', okAralik, '');
+  Kontrol('Ozet yazi: en kucuk Ali, en buyuk Veli', (O.EnKucuk = 'Ali') and (O.EnBuyuk = 'Veli') and (O.Toplam = ''));
+  O := KolonOzeti(Bag, 'MUSTERI', 'AD', okSade, '');
+  Kontrol('Ozet sade: yalniz sayim', (O.Kayit = 3) and (O.Dolu = 3) and (O.EnKucuk = ''));
+  Kontrol('Ozet SQL: filtre WHERE olarak girer',
+    Pos('WHERE ("ID" > 10', KolonOzetiSql('SIPARIS', 'ID', okSayisal, '"ID" > 10')) > 0);
+  Kontrol('Ozet SQL: sade ozette SUM yok', Pos('SUM(', KolonOzetiSql('SIPARIS', 'ID', okSade, '')) = 0);
+end;
+
 var
   Tanim: TBaglantiTanimi;
   Klasor, Yol, CiktiYolu: string;
@@ -188,6 +216,7 @@ begin
       Cikti.Add('Baglandi. Surum: ' + Bag.Surum);
       Kur;
       Dene;
+      OzetDene;
     except
       on E: Exception do
       begin

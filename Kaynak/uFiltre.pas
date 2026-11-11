@@ -19,6 +19,9 @@ function MetinAlaniMi(Alan: TField): Boolean;
 { "Buyuk" ve "kucuk" sayi, tarih ve saat kolonlarinda anlamli. }
 function SiralanabilirMi(Alan: TField): Boolean;
 
+{ Toplam ve ortalama yalniz sayi kolonlarinda anlamli (tarih ve yazi kolonlarinda degil). }
+function SayisalAlanMi(Alan: TField): Boolean;
+
 { Degerin SQL'deki yazilisi (sayi oldugu gibi, yazi ve tarih tirnakli); baska kosullar da (iliskili kayitlar) kullanir. }
 function DegerYazisi(Alan: TField): string;
 
@@ -117,6 +120,11 @@ begin
   else
     Result := stMetin;
   end;
+end;
+
+function SayisalAlanMi(Alan: TField): Boolean;
+begin
+  Result := SutunTuru(Alan.DataType) = stSayi;
 end;
 
 function TirnakliMetin(const Metin: string): string;

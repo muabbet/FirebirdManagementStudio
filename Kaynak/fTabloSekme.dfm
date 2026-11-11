@@ -488,5 +488,8 @@ object TabloSekme: TTabloSekme
     object miKullananlar: TMenuItem
       OnClick = miKullananlarClick
     end
+    object miOzet: TMenuItem
+      OnClick = miOzetClick
+    end
   end
 end

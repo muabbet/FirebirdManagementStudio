@@ -82,6 +82,25 @@ function AlanDegerleri(Bag: TAcikBaglanti; const Tablo, Alan, Yazi, Diger: strin
 { Filtreye uyan kayit sayisi (SELECT COUNT(*) ... WHERE); filtre bossa tablonun tamami. Hata olursa istisna firlar. }
 function KayitSayisi(Bag: TAcikBaglanti; const Tablo, Filtre: string): Int64;
 
+type
+  { Ne hesaplanacagi: yalniz sayim / + en kucuk, en buyuk / + toplam, ortalama (sayi kolonlari). }
+  TOzetKapsami = (okSade, okAralik, okSayisal);
+
+  TKolonOzeti = record
+    Kayit: Int64;
+    Dolu: Int64;
+    EnKucuk: string;
+    EnBuyuk: string;
+    Toplam: string;
+    Ortalama: string;
+  end;
+
+{ Kolon ozetinin SQL'i (SELECT COUNT(*), COUNT(kolon), ... FROM tablo WHERE filtre); alt alanda gosterilir. }
+function KolonOzetiSql(const Tablo, Alan: string; Kapsam: TOzetKapsami; const Filtre: string): string;
+
+{ Filtreye uyan satirlarda kolonun ozeti, hesap sunucuda yapilir. Hata olursa istisna firlar. }
+function KolonOzeti(Bag: TAcikBaglanti; const Tablo, Alan: string; Kapsam: TOzetKapsami; const Filtre: string): TKolonOzeti;
+
 { Yazilan komutu calistirir. Hata olursa istisna firlar, cagiran HataMetniniCevir ile gosterir. }
 function SorguCalistir(Bag: TAcikBaglanti; const Sql: string): TSorguSonucu;
 
@@ -553,6 +572,52 @@ begin
     Sorgu.SQL.Text := 'SELECT COUNT(*) FROM ' + TirnakliAd(Tablo) + FiltreKosulu(Filtre);
     Sorgu.Open;
     Result := Sorgu.Fields[0].AsLargeInt;
+  finally
+    Sorgu.Free;
+  end;
+end;
+
+function KolonOzetiSql(const Tablo, Alan: string; Kapsam: TOzetKapsami; const Filtre: string): string;
+var
+  Kolon: string;
+begin
+  Kolon := TirnakliAd(Alan);
+  Result := 'SELECT COUNT(*), COUNT(' + Kolon + ')';
+  if Kapsam in [okAralik, okSayisal] then
+    Result := Result + ', MIN(' + Kolon + '), MAX(' + Kolon + ')';
+  if Kapsam = okSayisal then
+    Result := Result + ', SUM(' + Kolon + '), AVG(CAST(' + Kolon + ' AS DOUBLE PRECISION))';
+  Result := Result + ' FROM ' + TirnakliAd(Tablo) + FiltreKosulu(Filtre);
+end;
+
+function KolonOzeti(Bag: TAcikBaglanti; const Tablo, Alan: string; Kapsam: TOzetKapsami; const Filtre: string): TKolonOzeti;
+var
+  Sorgu: TFDQuery;
+begin
+  Result := Default(TKolonOzeti);
+  Sorgu := TFDQuery.Create(nil);
+  try
+    Sorgu.Connection := Bag.Baglanti;
+    Sorgu.UpdateOptions.ReadOnly := True;
+    Sorgu.FetchOptions.Mode := fmAll;
+    Sorgu.SQL.Text := KolonOzetiSql(Tablo, Alan, Kapsam, Filtre);
+    Sorgu.Open;
+    Result.Kayit := Sorgu.Fields[0].AsLargeInt;
+    Result.Dolu := Sorgu.Fields[1].AsLargeInt;
+    if Kapsam in [okAralik, okSayisal] then
+    begin
+      if not Sorgu.Fields[2].IsNull then
+        Result.EnKucuk := TrimRight(Sorgu.Fields[2].AsString);
+      if not Sorgu.Fields[3].IsNull then
+        Result.EnBuyuk := TrimRight(Sorgu.Fields[3].AsString);
+    end;
+    if Kapsam = okSayisal then
+    begin
+      if not Sorgu.Fields[4].IsNull then
+        Result.Toplam := Sorgu.Fields[4].AsString;
+      if not Sorgu.Fields[5].IsNull then
+        Result.Ortalama := FormatFloat('0.####', Sorgu.Fields[5].AsFloat);
+    end;
   finally
     Sorgu.Free;
   end;
