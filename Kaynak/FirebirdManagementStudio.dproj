@@ -217,6 +217,11 @@
         <DCCReference Include="uSorguGecmisi.pas"/>
         <DCCReference Include="uFiltre.pas"/>
         <DCCReference Include="uFiltreSatiri.pas"/>
+        <DCCReference Include="uIliski.pas"/>
+        <DCCReference Include="fKullananlar.pas">
+            <Form>frmKullananlar</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <DCCReference Include="fGecmis.pas">
             <Form>frmGecmis</Form>
             <FormType>dfm</FormType>

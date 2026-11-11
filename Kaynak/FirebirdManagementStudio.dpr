@@ -67,6 +67,8 @@ uses
   uSorguGecmisi in 'uSorguGecmisi.pas',
   uFiltre in 'uFiltre.pas',
   uFiltreSatiri in 'uFiltreSatiri.pas',
+  uIliski in 'uIliski.pas',
+  fKullananlar in 'fKullananlar.pas' {frmKullananlar},
   fGecmis in 'fGecmis.pas' {frmGecmis},
   fBakim in 'fBakim.pas' {frmBakim},
   uTabloTasarim in 'uTabloTasarim.pas',

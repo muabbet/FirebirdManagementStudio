@@ -482,5 +482,11 @@ object TabloSekme: TTabloSekme
       Tag = 7
       OnClick = miFiltreClick
     end
+    object miGit: TMenuItem
+      OnClick = miGitClick
+    end
+    object miKullananlar: TMenuItem
+      OnClick = miKullananlarClick
+    end
   end
 end

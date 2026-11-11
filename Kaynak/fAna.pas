@@ -230,7 +230,7 @@ type
     procedure SemaFarkiAc;
     function ListeSekmeAl(Sayfa: TTabSheet): TTabloListeSekme;
     procedure TabloListesiAc(Dugme: TTreeNode);
-    procedure TabloSekmesiAc(const BaglantiAd, Tablo: string);
+    procedure TabloSekmesiAc(const BaglantiAd, Tablo: string; const Filtre: string = '');
     procedure TumSekmeleriKapat;
     procedure AyrintiDugmesiniYaz;
     procedure CokluSorguAc;
@@ -2081,7 +2081,7 @@ begin
   TabloSekmesiAc(OgeAl(Dugme).BaglantiAd, OgeAl(Dugme).Ad);
 end;
 
-procedure TfrmAna.TabloSekmesiAc(const BaglantiAd, Tablo: string);
+procedure TfrmAna.TabloSekmesiAc(const BaglantiAd, Tablo: string; const Filtre: string);
 var
   Bag: TAcikBaglanti;
   Sayfa: TTabSheet;
@@ -2091,26 +2091,35 @@ begin
   Bag := FbAcikBaglanti(BaglantiAd);
   if Bag = nil then
     Exit;
-  for i := 0 to pcCalisma.PageCount - 1 do
-  begin
-    Sekme := SekmeAl(pcCalisma.Pages[i]);
-    if (Sekme <> nil) and SameText(Sekme.BaglantiAd, BaglantiAd) and (Sekme.TabloAdi = Tablo) then
+  { Filtreli acilista (iliskili kayit) her seferinde yeni sekme acilir; acik duran sekmenin filtresi bozulmasin. }
+  if Filtre = '' then
+    for i := 0 to pcCalisma.PageCount - 1 do
     begin
-      pcCalisma.ActivePage := pcCalisma.Pages[i];
-      Exit;
+      Sekme := SekmeAl(pcCalisma.Pages[i]);
+      if (Sekme <> nil) and SameText(Sekme.BaglantiAd, BaglantiAd) and (Sekme.TabloAdi = Tablo) then
+      begin
+        pcCalisma.ActivePage := pcCalisma.Pages[i];
+        Exit;
+      end;
     end;
-  end;
   Sayfa := TTabSheet.Create(pcCalisma);
   Sayfa.PageControl := pcCalisma;
   Sayfa.Caption := Tablo + ' [' + BaglantiAd + ']';
+  if Filtre <> '' then
+    Sayfa.Caption := Sayfa.Caption + ' (' + T('LBL_FILTRELI') + ')';
   Sayfa.ImageIndex := IKON_TABLO;
   Sekme := TTabloSekme.Create(Sayfa);
   Sekme.Parent := Sayfa;
   Sekme.Align := alClient;
   Sekme.AnaSonuc := memSonuc.Lines;
   Sekme.SqlYaz := SqlMesajiYaz;
+  Sekme.FiltreliAc :=
+    procedure(const IliskiliTablo, IliskiliFiltre: string)
+    begin
+      TabloSekmesiAc(BaglantiAd, IliskiliTablo, IliskiliFiltre);
+    end;
   try
-    Sekme.Yukle(Bag, Tablo);
+    Sekme.Yukle(Bag, Tablo, Filtre);
   except
     on E: Exception do
     begin

@@ -7,9 +7,12 @@ interface
 uses
   System.SysUtils, System.Classes, System.Types, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
   Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls, Vcl.Menus, FireDAC.Comp.Client,
-  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uFiltre, uFiltreSatiri, uSonucGrid, uKayitDuzelt, uKullanici, uProsedur, uKolon, uIndeksKisit, fKolonIslem, fYapiIslem, fCsvAktar, fIceAktar;
+  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uFiltre, uFiltreSatiri, uSonucGrid, uKayitDuzelt, uKullanici, uProsedur, uKolon, uIndeksKisit, fKolonIslem, fYapiIslem, fCsvAktar, fIceAktar, uIliski, fKullananlar;
 
 type
+  { Bir tabloyu hazir filtreyle yeni sekmede acar (iliskili kayitlara git). }
+  TFiltreliTabloAc = reference to procedure(const Tablo, Filtre: string);
+
   { Yalniz gridin korumali "Row" ozelligini okumak icin (sag tikla hangi satirda oldugumuzu bulmak). }
   TGridErisim = class(TDBGrid);
 
@@ -58,6 +61,8 @@ type
     miFIceren: TMenuItem;
     miFBos: TMenuItem;
     miFTemizle: TMenuItem;
+    miGit: TMenuItem;
+    miKullananlar: TMenuItem;
     dsKolonlar: TDataSource;
     dsVeri: TDataSource;
     dsIndeksler: TDataSource;
@@ -84,6 +89,8 @@ type
     procedure edtFiltreKeyPress(Sender: TObject; var Key: Char);
     procedure pmVeriPopup(Sender: TObject);
     procedure miFiltreClick(Sender: TObject);
+    procedure miGitClick(Sender: TObject);
+    procedure miKullananlarClick(Sender: TObject);
   private
     FVeriGrid: TSonucGrid;
     { Nil degilse kayit duzeltme kipi acik (Asama 4d). }
@@ -100,6 +107,10 @@ type
     { Sag tiklanan hucrenin kolon adi ('' = hucre disinda). }
     FHucreAlan: string;
     FDevamBekliyor: Boolean;
+    { Tablonun kisitlari (ilk ihtiyacta okunur, yapi degisince/yenilenince sifirlanir) ve sag tiklanan hucrenin bagli kaydi. }
+    FKisitlar: TArray<TKisitBilgisi>;
+    FKisitlarOkundu: Boolean;
+    FBagliKayit: TIliskiliKayit;
     procedure Yaz(const Metin: string);
     function TamFiltre: string;
     procedure FiltreDegistir(const YeniElle, YeniSatir: string);
@@ -107,6 +118,8 @@ type
     procedure FiltreSatiriDegisti(Sender: TObject);
     procedure FiltreOnerisiIste(const AlanAdi, Yazi: string; Sonuc: TStrings);
     procedure FiltreKutusunuAyarla;
+    function KisitlariAl: TArray<TKisitBilgisi>;
+    procedure IliskiyiAc(const Kayit: TIliskiliKayit);
     procedure VeriyiYukle(Bag: TAcikBaglanti);
     procedure VeriyiSirala(const Alan: string; Azalan: Boolean);
     function VeriyiOku(Bag: TAcikBaglanti): Boolean;
@@ -130,8 +143,11 @@ type
     AnaSonuc: TStrings;
     { Yonetim islemlerinin SQL'i buraya verilir (ana pencerenin SQL mesaji); ana pencere atar. }
     SqlYaz: TSqlGoster;
+    { Iliskili kayda gitmek icin: ana pencere tabloyu filtreli yeni sekmede acar; ana pencere atar. }
+    FiltreliAc: TFiltreliTabloAc;
     destructor Destroy; override;
-    procedure Yukle(Bag: TAcikBaglanti; const Tablo: string);
+    { Filtre doluysa tablo bu WHERE kosuluyla acilir (iliskili kayitlar). }
+    procedure Yukle(Bag: TAcikBaglanti; const Tablo: string; const Filtre: string = '');
     { Sag tik "Yenile": kolonlar, yapi ve ilk satirlar veritabanindan yeniden okunur. }
     procedure Yenile;
     procedure YazilariYenile;
@@ -143,15 +159,18 @@ implementation
 
 {$R *.dfm}
 
-procedure TTabloSekme.Yukle(Bag: TAcikBaglanti; const Tablo: string);
+procedure TTabloSekme.Yukle(Bag: TAcikBaglanti; const Tablo: string; const Filtre: string);
 begin
   BaglantiAd := Bag.Tanim.Ad;
   TabloAdi := Tablo;
+  FFiltre := Filtre;
   FVeriGrid := TSonucGrid.Create(gridVeri);
   FVeriGrid.OnSunucuSirala := VeriyiSirala;
   FSatir := TFiltreSatiri.Create(gridVeri, FiltreSatiriDegisti);
   FSatir.OnOneri := FiltreOnerisiIste;
   YenidenYukle(Bag);
+  edtFiltre.Text := FFiltre;
+  btnFiltreKaldir.Visible := TamFiltre <> '';
   btnDisaAktar.Enabled := True;
   btnDuzenle.Enabled := True;
   btnIceAktar.Enabled := True;
@@ -180,6 +199,7 @@ end;
 { Kolonlar, yapi sekmeleri ve ilk satirlar bastan okunur (acilista ve kolon islemlerinden sonra). }
 procedure TTabloSekme.YenidenYukle(Bag: TAcikBaglanti);
 begin
+  FKisitlarOkundu := False;
   dsKolonlar.DataSet.Free;
   dsKolonlar.DataSet := KolonTablosuOlustur(Bag, TabloAdi, Self);
   YapiyiYukle(Bag);
@@ -325,6 +345,7 @@ var
   Bos: Boolean;
 begin
   FHucreAlan := '';
+  FBagliKayit := Default(TIliskiliKayit);
   Alan := nil;
   Nokta := gridVeri.ScreenToClient(Mouse.CursorPos);
   Koordinat := gridVeri.MouseCoord(Nokta.X, Nokta.Y);
@@ -362,6 +383,74 @@ begin
   miFIceren.Visible := (Alan <> nil) and not Bos and MetinAlaniMi(Alan);
   miFBos.Visible := Alan <> nil;
   miFTemizle.Visible := (TamFiltre <> '') and (FDuzelt = nil);
+  { Iliskili kayitlar: yalniz hucre ustunde ve duzenleme kipi kapaliyken. Bagli kayda git yalniz yabanci anahtar hucresinde. }
+  miGit.Visible := False;
+  miKullananlar.Visible := (FDuzelt = nil) and (dsVeri.DataSet <> nil) and dsVeri.DataSet.Active and (Koordinat.Y > 0) and
+    (Koordinat.X > 0) and (Koordinat.X <= gridVeri.Columns.Count);
+  if miKullananlar.Visible then
+    miGit.Visible := BagliKayitBul(KisitlariAl, gridVeri.Columns[Koordinat.X - 1].FieldName, dsVeri.DataSet, FBagliKayit);
+  miGit.Caption := TF('ILISKI_GIT', [FBagliKayit.Tablo]);
+  miKullananlar.Caption := T('ILISKI_KULLANANLAR');
+end;
+
+{ Tablonun kisitlari ilk ihtiyacta okunur; sag tik her seferinde sorgu calistirmasin. }
+function TTabloSekme.KisitlariAl: TArray<TKisitBilgisi>;
+var
+  Bag: TAcikBaglanti;
+begin
+  if not FKisitlarOkundu then
+  begin
+    Bag := BaglantiAl;
+    if Bag = nil then
+      Exit(nil);
+    FKisitlar := KisitlariOku(Bag, TabloAdi);
+    FKisitlarOkundu := True;
+  end;
+  Result := FKisitlar;
+end;
+
+{ Ana pencereye "bu tabloyu su filtreyle yeni sekmede ac" der; SQL karsiligi alt alanda gorunur. }
+procedure TTabloSekme.IliskiyiAc(const Kayit: TIliskiliKayit);
+begin
+  if Assigned(SqlYaz) then
+    SqlYaz(['SELECT FIRST ' + IntToStr(ILK_SATIR_SAYISI) + ' * FROM ' + TirnakliAd(Kayit.Tablo) + ' WHERE ' + Kayit.Filtre]);
+  if Assigned(FiltreliAc) then
+    FiltreliAc(Kayit.Tablo, Kayit.Filtre);
+end;
+
+{ Sag tik "Bagli kayda git": yabanci anahtarin gosterdigi ana kayit, hedef tabloda filtreli sekmede acilir. }
+procedure TTabloSekme.miGitClick(Sender: TObject);
+begin
+  if FBagliKayit.Tablo <> '' then
+    IliskiyiAc(FBagliKayit);
+end;
+
+{ Sag tik "Bu kaydi kullananlar": o an secili kaydi baska tablolarda kullananlar listelenir, secilen acilir. }
+procedure TTabloSekme.miKullananlarClick(Sender: TObject);
+var
+  Bag: TAcikBaglanti;
+  Kayitlar: TArray<TIliskiliKayit>;
+  Secim: Integer;
+begin
+  Bag := BaglantiAl;
+  if (Bag = nil) or (dsVeri.DataSet = nil) or not dsVeri.DataSet.Active then
+    Exit;
+  try
+    Kayitlar := KullananKayitlariBul(Bag, KisitlariAl, dsVeri.DataSet);
+  except
+    on E: Exception do
+    begin
+      UyariGoster(HataMetniniCevir(E));
+      Exit;
+    end;
+  end;
+  if Length(Kayitlar) = 0 then
+  begin
+    UyariGoster(TF('ILISKI_KULLANAN_YOK', [TabloAdi]));
+    Exit;
+  end;
+  if KullananlarPenceresi(TabloAdi, Kayitlar, Secim) then
+    IliskiyiAc(Kayitlar[Secim]);
 end;
 
 { Menu secimi: hucrenin degerinden kosul uretilir (uFiltre), varsa onceki filtreye VE ile eklenir. }

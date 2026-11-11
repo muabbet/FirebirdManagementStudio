@@ -210,6 +210,12 @@ type
 
   TBagimlilikHedefi = (bhView, bhIstisna, bhDomain, bhGenerator);
 
+  { Bir kisita bagli yabanci anahtar: hangi tabloda, hangi kolonlar. }
+  TYabanciKolonlar = record
+    Tablo: string;
+    Kolonlar: TArray<string>;
+  end;
+
 const
   BAG_KOLON = -1;
   { Tablo icin: baska bir tablonun yabanci anahtari bu tabloyu kullaniyor / bu tablonun yabanci anahtari buna bagli. }
@@ -249,6 +255,9 @@ function TabloBagimliliklariniOku(Bag: TAcikBaglanti; const Tablo: string): TArr
 function KolonBagimliliklariniOku(Bag: TAcikBaglanti; const Tablo, Kolon: string): TArray<TBagimlilik>;
 { Birincil anahtar / UNIQUE kisitina bagli yabanci anahtarlar ("TABLO (FK_ADI)", Tur = BAG_FK_KULLANAN); silmeyi engeller. }
 function KisitaBagliYabanciAnahtarlar(Bag: TAcikBaglanti; const Kisit: string): TArray<TBagimlilik>;
+{ Ayni, ama hangi tablonun hangi kolonlarinin o kisita bagli oldugunu verir (iliskili kayitlara gitmek icin).
+  Kisit: birincil anahtar ya da benzersiz kisitin gercek adi (KisitlariOku.GercekAd). }
+function KisitaBagliYabanciKolonlar(Bag: TAcikBaglanti; const Kisit: string): TArray<TYabanciKolonlar>;
 { Tablodaki satir sayisi (COUNT(*)); veri kaybi riskli islerin onayinda gosterilir. Buyuk tabloda uzun surebilir. }
 function TabloSatirSayisi(Bag: TAcikBaglanti; const Tablo: string): Int64;
 { ALTER COLUMN ... SET/DROP NOT NULL: Firebird 3.0 ve ustu. 2.5'te yok (yalniz sistem tablosuna elle yazilirdi, yapilmaz). }
@@ -1486,6 +1495,52 @@ begin
     Result := Liste.ToArray;
   finally
     Liste.Free;
+  end;
+end;
+
+function KisitaBagliYabanciKolonlar(Bag: TAcikBaglanti; const Kisit: string): TArray<TYabanciKolonlar>;
+var
+  Sorgu: TFDQuery;
+  Adaylar: TList<TYabanciKolonlar>;
+  Tablolar, Adlar: TStringList;
+  Satir: TYabanciKolonlar;
+  Kisitlar: TArray<TKisitBilgisi>;
+  i, k: Integer;
+begin
+  Adaylar := TList<TYabanciKolonlar>.Create;
+  Tablolar := TStringList.Create;
+  Adlar := TStringList.Create;
+  try
+    Sorgu := SorguAc(Bag, 'select trim(rc.rdb$relation_name), trim(rc.rdb$constraint_name) ' +
+      'from rdb$ref_constraints rf ' +
+      'join rdb$relation_constraints rc on rc.rdb$constraint_name = rf.rdb$constraint_name ' +
+      'where rf.rdb$const_name_uq = :K order by 1, 2', Kisit);
+    try
+      while not Sorgu.Eof do
+      begin
+        Tablolar.Add(Sorgu.Fields[0].AsString);
+        Adlar.Add(Sorgu.Fields[1].AsString);
+        Sorgu.Next;
+      end;
+    finally
+      Sorgu.Free;
+    end;
+    for i := 0 to Tablolar.Count - 1 do
+    begin
+      Kisitlar := KisitlariOku(Bag, Tablolar[i]);
+      for k := 0 to High(Kisitlar) do
+        if (Kisitlar[k].Tur = ktYabanci) and SameText(Kisitlar[k].GercekAd, Adlar[i]) then
+        begin
+          Satir.Tablo := Tablolar[i];
+          Satir.Kolonlar := Kisitlar[k].Kolonlar;
+          Adaylar.Add(Satir);
+        end;
+    end;
+    Result := Adaylar.ToArray;
+  finally
+    Adlar.Free;
+    Tablolar.Free;
+    Adaylar.Free;
   end;
 end;
 

@@ -79,6 +79,9 @@ function TabloVerisiSorgusu(Bag: TAcikBaglanti; const Tablo: string; SatirSayisi
   deger, alfabetik. Diger doluysa (baska kolonlarin filtresi) yalniz o satirlardaki degerler gelir. Hata olursa istisna firlar. }
 function AlanDegerleri(Bag: TAcikBaglanti; const Tablo, Alan, Yazi, Diger: string; Adet: Integer): TArray<string>;
 
+{ Filtreye uyan kayit sayisi (SELECT COUNT(*) ... WHERE); filtre bossa tablonun tamami. Hata olursa istisna firlar. }
+function KayitSayisi(Bag: TAcikBaglanti; const Tablo, Filtre: string): Int64;
+
 { Yazilan komutu calistirir. Hata olursa istisna firlar, cagiran HataMetniniCevir ile gosterir. }
 function SorguCalistir(Bag: TAcikBaglanti; const Sql: string): TSorguSonucu;
 
@@ -535,6 +538,23 @@ begin
   finally
     Sorgu.Free;
     Liste.Free;
+  end;
+end;
+
+function KayitSayisi(Bag: TAcikBaglanti; const Tablo, Filtre: string): Int64;
+var
+  Sorgu: TFDQuery;
+begin
+  Sorgu := TFDQuery.Create(nil);
+  try
+    Sorgu.Connection := Bag.Baglanti;
+    Sorgu.UpdateOptions.ReadOnly := True;
+    Sorgu.FetchOptions.Mode := fmAll;
+    Sorgu.SQL.Text := 'SELECT COUNT(*) FROM ' + TirnakliAd(Tablo) + FiltreKosulu(Filtre);
+    Sorgu.Open;
+    Result := Sorgu.Fields[0].AsLargeInt;
+  finally
+    Sorgu.Free;
   end;
 end;
 

@@ -19,6 +19,9 @@ function MetinAlaniMi(Alan: TField): Boolean;
 { "Buyuk" ve "kucuk" sayi, tarih ve saat kolonlarinda anlamli. }
 function SiralanabilirMi(Alan: TField): Boolean;
 
+{ Degerin SQL'deki yazilisi (sayi oldugu gibi, yazi ve tarih tirnakli); baska kosullar da (iliskili kayitlar) kullanir. }
+function DegerYazisi(Alan: TField): string;
+
 { Hucrenin degerinden kosul uretir. Hucre bos (NULL) ise yalniz hiBos / hiBosDegil verilebilir. }
 function HucreFiltresi(Alan: TField; Islem: THucreIslemi): string;
 
