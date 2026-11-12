@@ -438,6 +438,8 @@
   "ERR_SORGU_BAGLANTI_YOK": "'%s' bağlantısı açık değil. Önce ağaçtan bağlanın.",
   "ERR_SORGU_BAGLANTI_SEC": "Yeni sorgu için ağaçta açık (bağlı) bir bağlantı seçin.",
   "MSG_SORGU_VAZGECILDI": "Komut çalıştırılmadı.",
+  "MSG_SORGU_FILTRELI": "Filtre uygulandı (%d ms). Çalışan SQL:",
+  "ERR_SORGU_FILTRE": "Filtre uygulanamadı, önceki sonuç duruyor. Filtre, sorgunun sonucunu türetilmiş tablo gibi kullanır; bu yüzden sonuçtaki kolonların adlı ve birbirinden farklı olması gerekir (aynı adlı iki kolon ya da adsız ifade, örn. COUNT(*), olmamalı: takma ad verin).",
   "MSG_SORGU_SECIM": "Sorgu çalıştı (%d ms). Sonuç 500'er satır yüklenir. İşlem otomatik onay (autocommit) modunda.",
   "MSG_SORGU_DEGISTI": "Komut çalıştı: %d satır etkilendi (%d ms). İşlem otomatik onaylandı (commit), geri alınamaz.",
   "MSG_SORGU_TAMAM": "Komut çalıştı (%d ms). İşlem otomatik onaylandı (commit).",

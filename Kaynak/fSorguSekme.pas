@@ -11,7 +11,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes, System.Generics.Collections, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
   Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids,
   FireDAC.Comp.Client,
-  uDil, uPaket, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uSonucGrid, uCokluSorgu, fCsvAktar, uKullanici, fIndeksOner, uSorguGecmisi, fGecmis;
+  uDil, uPaket, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uSonucGrid, uCokluSorgu, fCsvAktar, uKullanici, fIndeksOner, uSorguGecmisi, fGecmis, uFiltreSatiri;
 
 type
   TSorguSekme = class(TFrame)
@@ -31,7 +31,13 @@ type
     FEditor: TSqlEditor;
     FGrid: TSonucGrid;
     FSonuc: TSorguSonucu;
+    FSatir: TFiltreSatiri;
+    { Filtre satirinin dayandigi SELECT (kullanicinin calistirdigi, filtresiz hali) ve uygulanan kolon kosulu. }
+    FTemelSql: string;
+    FSatirKosulu: string;
     procedure SonucuBirak;
+    procedure FiltreSatiriDegisti(Sender: TObject);
+    procedure FiltreOnerisiIste(const AlanAdi, Yazi: string; Sonuc: TStrings);
     procedure SatirSayisiniYaz;
     procedure MesajYaz(const Metin: string);
     procedure HataYaz(Hata: Exception);
@@ -71,6 +77,7 @@ implementation
 destructor TSorguSekme.Destroy;
 begin
   SonucuBirak;
+  FSatir.Free;
   inherited;
 end;
 
@@ -80,6 +87,8 @@ begin
   BaglantiAd := Baglanti;
   FEditor := TSqlEditor.Create(pnlEditor);
   FGrid := TSonucGrid.Create(gridSonuc);
+  FSatir := TFiltreSatiri.Create(gridSonuc, FiltreSatiriDegisti);
+  FSatir.OnOneri := FiltreOnerisiIste;
   FEditor.KolonGetirici := KolonlariGetir;
   OneriHazirla;
   YazilariYenile;
@@ -161,6 +170,8 @@ procedure TSorguSekme.YazilariYenile;
 begin
   btnDisaAktar.Caption := T('AKTAR_DUGME');
   DugmeyiYaziyaUydur(btnDisaAktar);
+  if FSatir <> nil then
+    FSatir.YazilariYenile;
   SatirSayisiniYaz;
 end;
 
@@ -169,6 +180,72 @@ procedure TSorguSekme.SonucuBirak;
 begin
   dsSonuc.DataSet := nil;
   FreeAndNil(FSonuc);
+  FTemelSql := '';
+  FSatirKosulu := '';
+  { Sonuc yok: filtre kutulari kalkar (Esitle, veri seti yokken kutulari siler). }
+  if FSatir <> nil then
+    FSatir.Esitle;
+end;
+
+{ Kolon altindaki bir kutuya Enter basildi (ya da listeden deger secildi): ayni SELECT, kolon kosullariyla filtrelenmis
+  olarak yeniden calisir (SELECT * FROM (sorgu) WHERE ...). Calismazsa onceki sonuc kalir, hata mesaj kutusuna yazilir. }
+procedure TSorguSekme.FiltreSatiriDegisti(Sender: TObject);
+var
+  Bag: TAcikBaglanti;
+  Yeni: TSorguSonucu;
+  Kosul, Hata, Sql: string;
+begin
+  if FTemelSql = '' then
+    Exit;
+  Kosul := FSatir.Kosul(Hata);
+  if (Hata <> '') or (Kosul = FSatirKosulu) then
+    Exit;
+  Bag := FbAcikBaglanti(BaglantiAd);
+  if Bag = nil then
+  begin
+    MesajYaz(TF('ERR_SORGU_BAGLANTI_YOK', [BaglantiAd]));
+    Exit;
+  end;
+  Sql := FiltreliSorguSql(FTemelSql, Kosul);
+  try
+    Yeni := SorguCalistir(Bag, Sql);
+  except
+    on E: Exception do
+    begin
+      HataYaz(E);
+      MesajYaz(T('ERR_SORGU_FILTRE') + sLineBreak + sLineBreak + memMesaj.Text + sLineBreak + sLineBreak + Sql);
+      Exit;
+    end;
+  end;
+  dsSonuc.DataSet := nil;
+  FSonuc.Free;
+  FSonuc := Yeni;
+  dsSonuc.DataSet := FSonuc.Sorgu;
+  FGrid.YeniSonuc;
+  FSatirKosulu := Kosul;
+  FSatir.Esitle;
+  MesajYaz(TF('MSG_SORGU_FILTRELI', [FSonuc.Sure]) + sLineBreak + Sql);
+  SatirSayisiniYaz;
+end;
+
+{ Kolon kutusuna yazarken: o kolonun sonuctaki degerlerinden en cok 10 tanesi (sonuc, SELECT'in kendisinden okunur). }
+procedure TSorguSekme.FiltreOnerisiIste(const AlanAdi, Yazi: string; Sonuc: TStrings);
+var
+  Bag: TAcikBaglanti;
+  Diger, Hata, Deger: string;
+begin
+  Bag := FbAcikBaglanti(BaglantiAd);
+  if (Bag = nil) or (FTemelSql = '') then
+    Exit;
+  Diger := FSatir.Kosul(Hata, AlanAdi);
+  if Hata <> '' then
+    Exit;
+  try
+    for Deger in SonucAlanDegerleri(Bag, FTemelSql, AlanAdi, Yazi, Diger, ONERI_ADET) do
+      Sonuc.Add(Deger);
+  except
+    { Oneri alinamazsa (sorgu turetilmis tablo olamiyor) liste bos kalir; hata Enter'da zaten yazilir. }
+  end;
 end;
 
 procedure TSorguSekme.SatirSayisiniYaz;
@@ -276,6 +353,13 @@ begin
     dsSonuc.DataSet := FSonuc.Sorgu;
     FGrid.YeniSonuc;
     MesajYaz(TF('MSG_SORGU_SECIM', [FSonuc.Sure]));
+    { Filtre satiri yalniz SELECT sonucunda acilir (baska satir donduren komutlar filtre icin yeniden calistirilmaz). }
+    FSatir.Temizle;
+    FSatir.Esitle;
+    if SecimSorgusuMu(Sql) then
+      FTemelSql := Sql
+    else
+      FSatir.Etkin(False);
   end
   else if FSonuc.Etkilenen >= 0 then
     MesajYaz(TF('MSG_SORGU_DEGISTI', [FSonuc.Etkilenen, FSonuc.Sure]))
@@ -347,6 +431,10 @@ begin
   begin
     dsSonuc.DataSet := FSonuc.Sorgu;
     FGrid.YeniSonuc;
+    { Birden fazla komutta filtre yok: hangi komutun sonucunu filtreleyecegi belirsiz. }
+    FSatir.Temizle;
+    FSatir.Esitle;
+    FSatir.Etkin(False);
   end;
   SatirSayisiniYaz;
   if YapiDegisti and Assigned(OnYapiDegisti) then

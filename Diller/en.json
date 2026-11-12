@@ -438,6 +438,8 @@
   "ERR_SORGU_BAGLANTI_YOK": "Connection '%s' is not open. Connect from the tree first.",
   "ERR_SORGU_BAGLANTI_SEC": "Select an open (connected) connection in the tree for a new query.",
   "MSG_SORGU_VAZGECILDI": "The statement was not executed.",
+  "MSG_SORGU_FILTRELI": "Filter applied (%d ms). SQL that ran:",
+  "ERR_SORGU_FILTRE": "The filter could not be applied; the previous result stays. A filter uses the query result as a derived table, so the result columns must have names and be distinct (no two columns with the same name and no unnamed expressions such as COUNT(*): give them an alias).",
   "MSG_SORGU_SECIM": "Query executed (%d ms). Results load 500 rows at a time. Transaction is in auto-commit mode.",
   "MSG_SORGU_DEGISTI": "Statement executed: %d rows affected (%d ms). The transaction was committed automatically and cannot be undone.",
   "MSG_SORGU_TAMAM": "Statement executed (%d ms). The transaction was committed automatically.",

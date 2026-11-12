@@ -58,6 +58,10 @@ function IlkSozcuk(const Komut: string): string;
 { Komut veritabaninin yapisini degistirir mi (CREATE, ALTER, DROP, RECREATE)? Sorgu sekmesi bunun uzerine agaci yeniler. }
 function YapiKomutuMu(const Komut: string): Boolean;
 
+{ Komut bir SELECT mi (yorumlar atlanir)? Sorgu sonucunun filtre satiri yalniz SELECT'te acilir: INSERT ... RETURNING gibi
+  satir donduren komutlar filtre icin yeniden calistirilmaz. }
+function SecimSorgusuMu(const Komut: string): Boolean;
+
 { Bu adli baglanti simdi kullanilabilir mi: acik, ya da kayitli ve sifresi kayitli. }
 function CokluBaglantiKullanilabilir(const Ad: string): Boolean;
 
@@ -126,6 +130,11 @@ var
 begin
   Sozcuk := IlkSozcuk(Komut);
   Result := (Sozcuk = 'CREATE') or (Sozcuk = 'ALTER') or (Sozcuk = 'DROP') or (Sozcuk = 'RECREATE');
+end;
+
+function SecimSorgusuMu(const Komut: string): Boolean;
+begin
+  Result := IlkSozcuk(Komut) = 'SELECT';
 end;
 
 function CokluSorguKontrol(const Sql: string): string;

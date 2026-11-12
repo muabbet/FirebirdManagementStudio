@@ -79,6 +79,13 @@ function TabloVerisiSorgusu(Bag: TAcikBaglanti; const Tablo: string; SatirSayisi
   deger, alfabetik. Diger doluysa (baska kolonlarin filtresi) yalniz o satirlardaki degerler gelir. Hata olursa istisna firlar. }
 function AlanDegerleri(Bag: TAcikBaglanti; const Tablo, Alan, Yazi, Diger: string; Adet: Integer): TArray<string>;
 
+{ Sorgu sonucu icin ayni oneri: Sql, sonucu ureten SELECT'tir (filtresiz hali); degerler onun sonucundan gelir. }
+function SonucAlanDegerleri(Bag: TAcikBaglanti; const Sql, Alan, Yazi, Diger: string; Adet: Integer): TArray<string>;
+
+{ Sorgu sonucuna filtre uygulamak icin SELECT'i turetilmis tablo yapar: SELECT * FROM (sorgu) WHERE (filtre).
+  Filtre bossa sorgu aynen (sondaki ';' atilmis) doner. Calismazsa (ayni adli iki kolon, adsiz ifade, WITH gibi) sunucu hata verir. }
+function FiltreliSorguSql(const Sql, Filtre: string): string;
+
 { Filtreye uyan kayit sayisi (SELECT COUNT(*) ... WHERE); filtre bossa tablonun tamami. Hata olursa istisna firlar. }
 function KayitSayisi(Bag: TAcikBaglanti; const Tablo, Filtre: string): Int64;
 
@@ -528,7 +535,8 @@ begin
     Result := ' WHERE (' + Metin + sLineBreak + ')';
 end;
 
-function AlanDegerleri(Bag: TAcikBaglanti; const Tablo, Alan, Yazi, Diger: string; Adet: Integer): TArray<string>;
+{ Ortak is: Kaynak, FROM'dan sonra gelen yazidir (tirnakli tablo adi ya da "(sorgu) takma_ad"). }
+function KaynaktanAlanDegerleri(Bag: TAcikBaglanti; const Kaynak, Alan, Yazi, Diger: string; Adet: Integer): TArray<string>;
 var
   Sorgu: TFDQuery;
   Liste: TList<string>;
@@ -544,7 +552,7 @@ begin
     Sorgu.Connection := Bag.Baglanti;
     Sorgu.UpdateOptions.ReadOnly := True;
     Sorgu.FetchOptions.Mode := fmAll;
-    Sorgu.SQL.Text := 'SELECT FIRST ' + IntToStr(Adet) + ' DISTINCT ' + Kolon + ' FROM ' + TirnakliAd(Tablo) +
+    Sorgu.SQL.Text := 'SELECT FIRST ' + IntToStr(Adet) + ' DISTINCT ' + Kolon + ' FROM ' + Kaynak +
       ' WHERE ' + Kolon + ' IS NOT NULL AND ' + Kolon + ' CONTAINING :YAZI' + Ek + ' ORDER BY ' + Kolon;
     Sorgu.ParamByName('YAZI').AsString := Yazi;
     Sorgu.Open;
@@ -558,6 +566,29 @@ begin
     Sorgu.Free;
     Liste.Free;
   end;
+end;
+
+function AlanDegerleri(Bag: TAcikBaglanti; const Tablo, Alan, Yazi, Diger: string; Adet: Integer): TArray<string>;
+begin
+  Result := KaynaktanAlanDegerleri(Bag, TirnakliAd(Tablo), Alan, Yazi, Diger, Adet);
+end;
+
+function FiltreliSorguSql(const Sql, Filtre: string): string;
+var
+  Govde: string;
+begin
+  Govde := Trim(Sql);
+  while (Govde <> '') and (Govde[Length(Govde)] = ';') do
+    Govde := Trim(Copy(Govde, 1, Length(Govde) - 1));
+  if Trim(Filtre) = '' then
+    Exit(Govde);
+  { Sorgunun son satiri "--" yorumuysa kapanis parantezi yorumun icinde kalmasin diye alt satira konur. }
+  Result := 'SELECT * FROM (' + sLineBreak + Govde + sLineBreak + ') FILTRELI_SONUC' + FiltreKosulu(Filtre);
+end;
+
+function SonucAlanDegerleri(Bag: TAcikBaglanti; const Sql, Alan, Yazi, Diger: string; Adet: Integer): TArray<string>;
+begin
+  Result := KaynaktanAlanDegerleri(Bag, '(' + sLineBreak + FiltreliSorguSql(Sql, '') + sLineBreak + ') FILTRELI_SONUC', Alan, Yazi, Diger, Adet);
 end;
 
 function KayitSayisi(Bag: TAcikBaglanti; const Tablo, Filtre: string): Int64;

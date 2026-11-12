@@ -10,7 +10,7 @@ program FiltreTest;
 
 uses
   System.SysUtils, System.Classes, System.IOUtils, Data.DB, FireDAC.Comp.Client,
-  uDil, uBaglanti, uSorgu, uFiltre;
+  uDil, uBaglanti, uSorgu, uFiltre, uCokluSorgu;
 
 var
   Cikti: TStringList;
@@ -145,6 +145,9 @@ var
   Sorgu: TFDQuery;
   Hata, CiktiYolu: string;
   Oneri: TArray<string>;
+  Sonuc: TSorguSonucu;
+  Temel: string;
+  Say: Integer;
 begin
   Cikti := TStringList.Create;
   Hatalar := 0;
@@ -159,6 +162,15 @@ begin
     Kontrol('Sondaki ; ve bosluklar atilir', Pos(';', FiltreKosulu('TUTAR > 100 ; ;  ')) = 0);
     Kontrol('Yalniz WHERE yazilirsa filtre yok', FiltreKosulu('where ') = ''); Kontrol('Yalniz WHERE (bosluksuz): filtre yok', FiltreKosulu('WHERE') = '');
     Kontrol('Yorum satiri parantezi yutmaz (satir sonu)', Pos(sLineBreak + ')', FiltreKosulu('A = 1 -- yorum')) > 0);
+
+    Kontrol('Sorgu filtresi SQL: sondaki ; atilir, turetilmis tablo ve takma ad',
+      FiltreliSorguSql('SELECT 1 FROM T;', 'A = 1') = 'SELECT * FROM (' + sLineBreak + 'SELECT 1 FROM T' + sLineBreak +
+      ') FILTRELI_SONUC WHERE (A = 1' + sLineBreak + ')');
+    Kontrol('Sorgu filtresi SQL: filtre bossa sorgu aynen (; atilmis)', FiltreliSorguSql('  SELECT 1 FROM T ;; ', '') = 'SELECT 1 FROM T');
+    Kontrol('SELECT mi: SELECT evet', SecimSorgusuMu('select * from t') and SecimSorgusuMu('-- not' + sLineBreak + '  /* x */ SELECT 1 FROM RDB$DATABASE'));
+    Kontrol('SELECT mi: INSERT RETURNING, EXECUTE PROCEDURE, WITH, UPDATE hayir',
+      not SecimSorgusuMu('insert into t values (1) returning id') and not SecimSorgusuMu('execute procedure p') and
+      not SecimSorgusuMu('with a as (select 1 from rdb$database) select * from a') and not SecimSorgusuMu('update t set a = 1'));
 
     HucreTestleri;
     SatirTestleri;
@@ -267,6 +279,32 @@ begin
           Hata := E.Message;
       end;
       Kontrol('Hatali kosul: istisna firlar (arayuz anlasilir mesaj gosterir)', Hata <> '');
+
+      { Sorgu sonucunun filtre satiri (7n): SELECT, turetilmis tablo olarak filtrelenir. }
+      Temel := 'SELECT RDB$RELATION_NAME AS AD, RDB$SYSTEM_FLAG AS BAYRAK FROM RDB$RELATIONS ORDER BY RDB$RELATION_NAME;';
+      Sonuc := SorguCalistir(Bag, FiltreliSorguSql(Temel, ''));
+      Say := Sonuc.Sorgu.RecordCount;
+      Sonuc.Free;
+      Kontrol('Sorgu filtresi: filtresiz sorgu (;, ORDER BY ile) calisir', Say > 2);
+      Sonuc := SorguCalistir(Bag, FiltreliSorguSql(Temel, SatirFiltresi('AD', ftString, 'rdb$fields', Hata)));
+      Kontrol('Sorgu filtresi: ORDER BY li sorgu turetilmis tablo olur, ad icerir filtresi 1 satir', Sonuc.Sorgu.RecordCount = 1);
+      Sonuc.Free;
+      Sonuc := SorguCalistir(Bag, FiltreliSorguSql(StringReplace(Temel, ';', '', []) + sLineBreak + '-- son satir yorum',
+        FiltreBirlestir(SatirFiltresi('AD', ftString, 'rdb$rel*', Hata), SatirFiltresi('BAYRAK', ftSmallint, '1', Hata))));
+      Kontrol('Sorgu filtresi: son satiri yorum olan sorgu ve iki kolon kosulu VE ile calisir', Sonuc.Sorgu.RecordCount >= 1);
+      Sonuc.Free;
+      Oneri := SonucAlanDegerleri(Bag, Temel, 'AD', 'rdb$rel', '', 10);
+      Kontrol('Sorgu filtresi: oneri sonuctaki degerlerden gelir', (Length(Oneri) >= 1) and (Pos('RDB$REL', UpperCase(Oneri[0])) > 0));
+      Hata := '';
+      try
+        Sonuc := SorguCalistir(Bag, FiltreliSorguSql('SELECT RDB$RELATION_NAME, RDB$RELATION_NAME FROM RDB$RELATIONS',
+          '"RDB$RELATION_NAME" = ''X'''));
+        Sonuc.Free;
+      except
+        on E: Exception do
+          Hata := E.Message;
+      end;
+      Kontrol('Sorgu filtresi: ayni adli iki kolonda sunucu hata verir (arayuz anlasilir cumle gosterir)', Hata <> '');
       FbBaglantiyiKes(Bag);
     end;
   except

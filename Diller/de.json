@@ -438,6 +438,8 @@
   "ERR_SORGU_BAGLANTI_YOK": "Die Verbindung '%s' ist nicht geöffnet. Verbinden Sie sich zuerst im Baum.",
   "ERR_SORGU_BAGLANTI_SEC": "Wählen Sie für eine neue Abfrage eine geöffnete (verbundene) Verbindung im Baum.",
   "MSG_SORGU_VAZGECILDI": "Der Befehl wurde nicht ausgeführt.",
+  "MSG_SORGU_FILTRELI": "Filter angewendet (%d ms). Ausgeführtes SQL:",
+  "ERR_SORGU_FILTRE": "Der Filter konnte nicht angewendet werden; das vorherige Ergebnis bleibt. Ein Filter nutzt das Abfrageergebnis als abgeleitete Tabelle, daher müssen die Ergebnisspalten Namen haben und eindeutig sein (keine zwei Spalten mit gleichem Namen und keine unbenannten Ausdrücke wie COUNT(*): einen Alias vergeben).",
   "MSG_SORGU_SECIM": "Abfrage ausgeführt (%d ms). Ergebnisse werden in Blöcken von 500 Zeilen geladen. Die Transaktion ist im Auto-Commit-Modus.",
   "MSG_SORGU_DEGISTI": "Befehl ausgeführt: %d Zeilen betroffen (%d ms). Die Transaktion wurde automatisch bestätigt (Commit) und kann nicht rückgängig gemacht werden.",
   "MSG_SORGU_TAMAM": "Befehl ausgeführt (%d ms). Die Transaktion wurde automatisch bestätigt (Commit).",
