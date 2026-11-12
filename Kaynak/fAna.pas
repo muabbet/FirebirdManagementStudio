@@ -51,6 +51,12 @@ type
     miBagimliliklar: TMenuItem;
     miYetkiler: TMenuItem;
     miScriptUret: TMenuItem;
+    miTabloScript: TMenuItem;
+    miTsCreate: TMenuItem;
+    miTsSelect: TMenuItem;
+    miTsInsert: TMenuItem;
+    miTsUpdate: TMenuItem;
+    miTsDelete: TMenuItem;
     miNesneDuzenle: TMenuItem;
     miYeniTabloTasarim: TMenuItem;
     miYeniNesne: TMenuItem;
@@ -116,6 +122,7 @@ type
     procedure miBagimliliklarClick(Sender: TObject);
     procedure miYetkilerClick(Sender: TObject);
     procedure miScriptUretClick(Sender: TObject);
+    procedure miTabloScriptClick(Sender: TObject);
     procedure miNesneDuzenleClick(Sender: TObject);
     procedure miYeniNesneClick(Sender: TObject);
     procedure miYeniTabloTasarimClick(Sender: TObject);
@@ -245,6 +252,7 @@ type
     procedure SorguYapisiDegisti(Sender: TObject);
     procedure YeniSorgu(const Metin: string = '');
     procedure ScriptAc(Dugme: TTreeNode);
+    procedure TabloKomutAc(Dugme: TTreeNode; Tur: TTabloKomutTuru);
     function ProsedurSekmeAl(Sayfa: TTabSheet): TProsedurSekme;
     function AktifProsedurSekmesi: TProsedurSekme;
     procedure NesneDuzenleAc(Dugme: TTreeNode);
@@ -378,6 +386,12 @@ begin
   miBagimliliklar.Caption := T('MENU_BAGIMLILIKLAR');
   miYetkiler.Caption := T('MENU_YETKILER');
   miScriptUret.Caption := T('MENU_SCRIPT_URET');
+  miTabloScript.Caption := T('MENU_SCRIPT_URET');
+  miTsCreate.Caption := T('SCRIPT_CREATE');
+  miTsSelect.Caption := T('SCRIPT_SELECT');
+  miTsInsert.Caption := T('SCRIPT_INSERT');
+  miTsUpdate.Caption := T('SCRIPT_UPDATE');
+  miTsDelete.Caption := T('SCRIPT_DELETE');
   miNesneDuzenle.Caption := T('MENU_PROSEDUR_DUZENLE');
   miDomVarsayilan.Caption := T('MENU_DOM_VARSAYILAN');
   miDomKontrol.Caption := T('MENU_DOM_KONTROL');
@@ -1324,6 +1338,35 @@ begin
   end;
   YeniSorgu(Script);
   MesajYaz(TF('MSG_SCRIPT_URETILDI', [Oge.Ad]));
+end;
+
+{ Tablonun ornek SELECT / INSERT / UPDATE / DELETE komutunu yeni sorgu sekmesinde acar (calistirmaz). }
+procedure TfrmAna.TabloKomutAc(Dugme: TTreeNode; Tur: TTabloKomutTuru);
+var
+  Oge: TAgacOgesi;
+  Bag: TAcikBaglanti;
+  Script: string;
+begin
+  Oge := OgeAl(Dugme);
+  Bag := FbAcikBaglanti(Oge.BaglantiAd);
+  if Bag = nil then
+    Exit;
+  try
+    Script := TabloKomutScripti(Bag, Oge.Ad, Tur);
+  except
+    on E: EMetadataHatasi do
+    begin
+      HataYaz(E.Message, '');
+      Exit;
+    end;
+    on E: Exception do
+    begin
+      HataYaz(T('ERR_DDL_ALINAMADI') + ' ' + HataMetniniCevir(E), E.Message);
+      Exit;
+    end;
+  end;
+  YeniSorgu(Script);
+  MesajYaz(TF('MSG_KOMUT_SCRIPT_URETILDI', [Oge.Ad]));
 end;
 
 { Prosedurun, tetikleyicinin veya view'in CREATE OR ALTER metnini duzenleme sekmesinde acar (hangisi oldugu agactaki
@@ -2557,7 +2600,9 @@ begin
   miBagimliliklar.Visible := miAc.Visible;
   { DDL tetikleyicisinde (script uretilmeyen tur) Script uret ve Duzenle gizlenir; Yenile kalir. }
   Uretilebilir := (not Bos) and (Tur = atNesne) and not OgeAl(Dugme).Duzenlenemez;
-  miScriptUret.Visible := Uretilebilir;
+  { Tablo: "Script uret" alt menu (CREATE, SELECT, INSERT, UPDATE, DELETE); diger nesneler: tek madde (CREATE). }
+  miTabloScript.Visible := Uretilebilir and (OgeAl(Dugme).DalNo = DAL_TABLO);
+  miScriptUret.Visible := Uretilebilir and not miTabloScript.Visible;
   { Yetkiler: tablo, view ve prosedur (kimde ne yetkisi var, ver / geri al). }
   miYetkiler.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_TABLO, DAL_VIEW, DAL_PROSEDUR]);
   miNesneDuzenle.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_VIEW, DAL_PROSEDUR, DAL_TETIKLEYICI, DAL_ISTISNA]);
@@ -2628,6 +2673,20 @@ procedure TfrmAna.miScriptUretClick(Sender: TObject);
 begin
   if tvNesneler.Selected <> nil then
     ScriptAc(tvNesneler.Selected);
+end;
+
+{ Tabloya sag tik > Script uret > CREATE / SELECT / INSERT / UPDATE / DELETE (Tag 1..5). }
+procedure TfrmAna.miTabloScriptClick(Sender: TObject);
+begin
+  if tvNesneler.Selected = nil then
+    Exit;
+  case (Sender as TMenuItem).Tag of
+    1: ScriptAc(tvNesneler.Selected);
+    2: TabloKomutAc(tvNesneler.Selected, tkSelect);
+    3: TabloKomutAc(tvNesneler.Selected, tkInsert);
+    4: TabloKomutAc(tvNesneler.Selected, tkUpdate);
+    5: TabloKomutAc(tvNesneler.Selected, tkDelete);
+  end;
 end;
 
 procedure TfrmAna.miNesneDuzenleClick(Sender: TObject);

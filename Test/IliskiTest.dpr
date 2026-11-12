@@ -11,7 +11,7 @@ uses
   System.SysUtils, System.Classes, System.IOUtils, Data.DB,
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.Comp.Client, FireDAC.Phys.FB,
   FireDAC.ConsoleUI.Wait,
-  uDil, uBaglanti, uSorgu, uMetadata, uIliski, uDDL, uAra;
+  uDil, uBaglanti, uSorgu, uMetadata, uIliski, uDDL, uAra, uCokluSorgu;
 
 var
   Cikti: TStringList;
@@ -86,6 +86,62 @@ begin
   for S in Liste do
     if (S.Tur = Tur) and SameText(S.Ad, Ad) and (S.Yer = Yer) and ((Ayrinti = '') or (Pos(UpperCase(Ayrinti), UpperCase(S.Ayrinti)) > 0)) then
       Exit(True);
+end;
+
+
+{ Tablo icin ornek SELECT / INSERT / UPDATE / DELETE (7p). Uretilen komutlar gercekten calisir; UPDATE ve DELETE
+  doldurulmadan hicbir satira dokunmaz. }
+procedure ScriptDene;
+var
+  S: string;
+  Komutlar: TArray<string>;
+  Sonuc: TSorguSonucu;
+  Once, Sonra: Int64;
+begin
+  Calistir('CREATE TABLE T_HESAPLI (A INTEGER NOT NULL PRIMARY KEY, B INTEGER, C COMPUTED BY (A + B))');
+  Calistir('CREATE TABLE T_ANAHTARSIZ (X INTEGER, Y VARCHAR(10))');
+  Calistir('INSERT INTO T_HESAPLI (A, B) VALUES (1, 2)');
+  Calistir('INSERT INTO T_ANAHTARSIZ VALUES (1, ''a'')');
+
+  S := TabloKomutScripti(Bag, 'MUSTERI', tkSelect);
+  Cikti.Add('--- SELECT ---' + sLineBreak + S);
+  Kontrol('Script SELECT: tum kolonlar ve FROM', (Pos('    ID,', S) > 0) and (Pos('    AD' + sLineBreak, S) > 0) and (Pos('FROM MUSTERI;', S) > 0));
+  S := TabloKomutScripti(Bag, 'MUSTERI', tkInsert);
+  Cikti.Add('--- INSERT ---' + sLineBreak + S);
+  Kontrol('Script INSERT: kolon listesi ve NULL degerler', (Pos('INSERT INTO MUSTERI (', S) > 0) and (Pos('NULL, -- ID (NOT NULL)', S) > 0) and
+    (Pos('NULL -- AD', S) > 0));
+  S := TabloKomutScripti(Bag, 'MUSTERI', tkUpdate);
+  Cikti.Add('--- UPDATE ---' + sLineBreak + S);
+  Kontrol('Script UPDATE: SET yalniz anahtar olmayan kolon, WHERE anahtardan', (Pos('UPDATE MUSTERI SET', S) > 0) and
+    (Pos('    AD = NULL', S) > 0) and (Pos('ID = NULL' + sLineBreak, S) = 0) and (Pos('WHERE ID = NULL', S) > 0));
+  S := TabloKomutScripti(Bag, 'KALEM', tkDelete);
+  Cikti.Add('--- DELETE (birlesik anahtar) ---' + sLineBreak + S);
+  Kontrol('Script DELETE: birlesik anahtarda iki kosul AND ile', (Pos('DELETE FROM KALEM', S) > 0) and
+    (Pos('WHERE SIPARIS_ID = NULL', S) > 0) and (Pos('AND SATIR_NO = NULL', S) > 0));
+  S := TabloKomutScripti(Bag, 'T_HESAPLI', tkInsert);
+  Kontrol('Script INSERT: hesaplanan kolon girmez', (Pos(' C,', S) = 0) and (Pos('-- C', S) = 0) and (Pos('-- B', S) > 0));
+  S := TabloKomutScripti(Bag, 'T_HESAPLI', tkSelect);
+  Kontrol('Script SELECT: hesaplanan kolon da okunur', Pos('    C' + sLineBreak, S) > 0);
+  S := TabloKomutScripti(Bag, 'T_ANAHTARSIZ', tkDelete);
+  Cikti.Add('--- DELETE (anahtarsiz) ---' + sLineBreak + S);
+  Kontrol('Script DELETE: anahtar yoksa WHERE 1 = 0', Pos('WHERE 1 = 0', S) > 0);
+  S := TabloKomutScripti(Bag, 'T_ANAHTARSIZ', tkUpdate);
+  Kontrol('Script UPDATE: anahtar yoksa tum kolonlar SET, WHERE 1 = 0', (Pos('    X = NULL,', S) > 0) and (Pos('    Y = NULL' + sLineBreak, S) > 0) and
+    (Pos('WHERE 1 = 0', S) > 0));
+
+  { Uretilen komutlar editorle ayni yoldan (KomutlaraBol) calisir ve hicbir satira dokunmaz. }
+  Once := KayitSayisi(Bag, 'T_HESAPLI', '');
+  for S in [TabloKomutScripti(Bag, 'T_HESAPLI', tkSelect), TabloKomutScripti(Bag, 'T_HESAPLI', tkUpdate),
+    TabloKomutScripti(Bag, 'T_HESAPLI', tkDelete), TabloKomutScripti(Bag, 'T_ANAHTARSIZ', tkUpdate),
+    TabloKomutScripti(Bag, 'T_ANAHTARSIZ', tkDelete)] do
+  begin
+    Komutlar := KomutlaraBol(S);
+    Sonuc := SorguCalistir(Bag, Komutlar[0]);
+    Sonuc.Free;
+  end;
+  Sonra := KayitSayisi(Bag, 'T_HESAPLI', '');
+  Kontrol('Script: SELECT/UPDATE/DELETE komutlari gecerli SQL ve doldurulmadan satira dokunmaz',
+    (Once = 1) and (Sonra = 1) and (KayitSayisi(Bag, 'T_ANAHTARSIZ', '') = 1));
 end;
 
 { Veritabaninda arama (7l): ad, kolon ve kaynak metni. }
@@ -276,6 +332,7 @@ begin
       Dene;
       OzetDene;
       AraDene;
+      ScriptDene;
     except
       on E: Exception do
       begin

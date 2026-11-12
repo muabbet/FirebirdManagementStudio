@@ -39,6 +39,15 @@ function ScriptKodlamasiOlustur(Bag: TAcikBaglanti): TEncoding;
   EMetadataHatasi (uMetadata) verir; mesaji kullaniciya gosterilir. }
 function ScriptUret(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string): string;
 
+type
+  TTabloKomutTuru = (tkSelect, tkInsert, tkUpdate, tkDelete);
+
+{ Tablo icin ornek SELECT / INSERT / UPDATE / DELETE komutu (sag tik > Script uret). Kolonlar tablodan okunur; degerler NULL
+  yer tutucusudur, kullanici doldurur. Hesaplanan ve "GENERATED ALWAYS" kolonlar INSERT / UPDATE'e girmez. UPDATE ve DELETE'in
+  WHERE'i birincil anahtar kolonlarindan kurulur (birincil anahtar yoksa "1 = 0"), yani doldurulmadan calistirilirsa hicbir
+  kayda dokunmaz. Calistirilmaz, yeni sorgu sekmesinde acilir. }
+function TabloKomutScripti(Bag: TAcikBaglanti; const Ad: string; Tur: TTabloKomutTuru): string;
+
 { Tabloyu BASKA bir ada (ve baska veritabanina) kopyalamak icin CREATE TABLE: kolonlar, PRIMARY KEY / UNIQUE / CHECK ve indexler.
   Yabanci anahtarlar, tetikleyiciler, yetkiler ve dis dosya baglantisi KOPYALANMAZ. Kisit ve index adlari cakismasin diye
   kisitlar adsiz, indexler yeni adla yazilir. Domain kullanan kolonlar domain adiyla kalir (hedefte domain olmali). }
@@ -611,6 +620,119 @@ begin
   AnahtarKelimeleriKur(Bag.Surum);
   try
     Result := AdYaz(Ad);
+  finally
+    AnahtarKelimeleriBirak;
+  end;
+end;
+
+{ Birincil anahtar kolon adlari (yoksa bos). }
+function BirincilKolonlar(const Bilgi: TTabloBilgisi): TArray<string>;
+var
+  Kisit: TKisitBilgisi;
+begin
+  Result := nil;
+  for Kisit in Bilgi.Kisitlar do
+    if Kisit.Tur = ktBirincil then
+      Exit(Kisit.Kolonlar);
+end;
+
+{ Ad listesini her satira bir tane, 4 bosluk girintili yazar; Sablon icinde "#" yerine kolon adi girer. Son satirda virgul yok. }
+function KolonSatirlari(const Adlar: TArray<string>; const Sablon: string): string;
+var
+  i: Integer;
+  Satir: string;
+begin
+  Result := '';
+  for i := 0 to High(Adlar) do
+  begin
+    Satir := StringReplace(Sablon, '#', AdYaz(Adlar[i]), [rfReplaceAll]);
+    if i < High(Adlar) then
+      Satir := StringReplace(Satir, '|', ',', [])
+    else
+      Satir := StringReplace(Satir, '|', '', []);
+    Result := Result + '    ' + Satir + sLineBreak;
+  end;
+end;
+
+{ WHERE: birincil anahtar kolonlari (ID = NULL AND ...); yoksa 1 = 0. Doldurulmadan calisirsa hicbir kayda dokunmaz. }
+function NullKosulu(const Anahtar: TArray<string>): string;
+var
+  i: Integer;
+begin
+  if Length(Anahtar) = 0 then
+    Exit('WHERE 1 = 0');
+  Result := 'WHERE ';
+  for i := 0 to High(Anahtar) do
+  begin
+    if i > 0 then
+      Result := Result + sLineBreak + '  AND ';
+    Result := Result + AdYaz(Anahtar[i]) + ' = NULL';
+  end;
+end;
+
+function TabloKomutMetni(const Ad: string; const Bilgi: TTabloBilgisi; Tur: TTabloKomutTuru): string;
+var
+  Kolon: TKolonBilgisi;
+  Tumu, Yazilabilir, Degisen, Anahtar: TArray<string>;
+  YerTutucu: string;
+  i, k: Integer;
+  AnahtarMi: Boolean;
+begin
+  Anahtar := BirincilKolonlar(Bilgi);
+  Tumu := nil;
+  Yazilabilir := nil;
+  Degisen := nil;
+  for Kolon in Bilgi.Kolonlar do
+  begin
+    Tumu := Tumu + [Kolon.Ad];
+    { Hesaplanan ve GENERATED ALWAYS kolonlara deger yazilamaz. }
+    if (Kolon.Hesaplanan = '') and not (Kolon.Kimlik and Kolon.KimlikHep) then
+    begin
+      Yazilabilir := Yazilabilir + [Kolon.Ad];
+      AnahtarMi := False;
+      for k := 0 to High(Anahtar) do
+        if SameText(Anahtar[k], Kolon.Ad) then
+          AnahtarMi := True;
+      if not AnahtarMi then
+        Degisen := Degisen + [Kolon.Ad];
+    end;
+  end;
+  { Hepsi anahtarsa (yalniz anahtar kolonlu tablo) UPDATE yine de bir kolon icermeli. }
+  if Length(Degisen) = 0 then
+    Degisen := Yazilabilir;
+  case Tur of
+    tkSelect:
+      Result := 'SELECT' + sLineBreak + KolonSatirlari(Tumu, '#|') + 'FROM ' + AdYaz(Ad) + ';';
+    tkInsert:
+      begin
+        Result := 'INSERT INTO ' + AdYaz(Ad) + ' (' + sLineBreak + KolonSatirlari(Yazilabilir, '#|') + ') VALUES (' + sLineBreak;
+        for i := 0 to High(Yazilabilir) do
+        begin
+          YerTutucu := 'NULL';
+          if i < High(Yazilabilir) then
+            YerTutucu := YerTutucu + ',';
+          YerTutucu := YerTutucu + ' -- ' + Yazilabilir[i];
+          for Kolon in Bilgi.Kolonlar do
+            if SameText(Kolon.Ad, Yazilabilir[i]) and Kolon.BosOlmaz then
+              YerTutucu := YerTutucu + ' (NOT NULL)';
+          Result := Result + '    ' + YerTutucu + sLineBreak;
+        end;
+        Result := Result + ');';
+      end;
+    tkUpdate:
+      Result := 'UPDATE ' + AdYaz(Ad) + ' SET' + sLineBreak + KolonSatirlari(Degisen, '# = NULL|') +
+        NullKosulu(Anahtar) + ' -- ' + T('SCRIPT_DOLDURUN') + sLineBreak + ';';
+    tkDelete:
+      Result := 'DELETE FROM ' + AdYaz(Ad) + sLineBreak + NullKosulu(Anahtar) + ' -- ' + T('SCRIPT_DOLDURUN') + sLineBreak + ';';
+  end;
+  Result := Result + sLineBreak;
+end;
+
+function TabloKomutScripti(Bag: TAcikBaglanti; const Ad: string; Tur: TTabloKomutTuru): string;
+begin
+  AnahtarKelimeleriKur(Bag.Surum);
+  try
+    Result := TabloKomutMetni(Ad, TabloBilgisiOku(Bag, Ad), Tur);
   finally
     AnahtarKelimeleriBirak;
   end;

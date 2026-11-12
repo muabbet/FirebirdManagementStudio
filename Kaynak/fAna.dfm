@@ -181,6 +181,28 @@ object frmAna: TfrmAna
     object miScriptUret: TMenuItem
       OnClick = miScriptUretClick
     end
+    object miTabloScript: TMenuItem
+      object miTsCreate: TMenuItem
+        Tag = 1
+        OnClick = miTabloScriptClick
+      end
+      object miTsSelect: TMenuItem
+        Tag = 2
+        OnClick = miTabloScriptClick
+      end
+      object miTsInsert: TMenuItem
+        Tag = 3
+        OnClick = miTabloScriptClick
+      end
+      object miTsUpdate: TMenuItem
+        Tag = 4
+        OnClick = miTabloScriptClick
+      end
+      object miTsDelete: TMenuItem
+        Tag = 5
+        OnClick = miTabloScriptClick
+      end
+    end
     object miNesneDuzenle: TMenuItem
       OnClick = miNesneDuzenleClick
     end
