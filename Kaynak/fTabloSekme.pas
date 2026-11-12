@@ -7,7 +7,7 @@ interface
 uses
   System.SysUtils, System.Classes, System.Types, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
   Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls, Vcl.Menus, FireDAC.Comp.Client,
-  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uFiltre, uFiltreSatiri, uSonucGrid, uKayitDuzelt, uKullanici, uProsedur, uKolon, uIndeksKisit, fKolonIslem, fYapiIslem, fCsvAktar, fIceAktar, uIliski, fKullananlar;
+  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uFiltre, uFiltreSatiri, uSonucGrid, uKayitDuzelt, uKullanici, uProsedur, uKolon, uIndeksKisit, fKolonIslem, fYapiIslem, fCsvAktar, fIceAktar, uIliski, fKullananlar, uOtoArtan;
 
 type
   { Bir tabloyu hazir filtreyle yeni sekmede acar (iliskili kayitlara git). }
@@ -26,6 +26,7 @@ type
     btnKolonDegistir: TButton;
     btnKolonSil: TButton;
     btnKolonPk: TButton;
+    btnKolonOto: TButton;
     gridKolonlar: TDBGrid;
     tsIndeksler: TTabSheet;
     pnlIndeksDugme: TPanel;
@@ -82,6 +83,7 @@ type
     procedure btnKolonDegistirClick(Sender: TObject);
     procedure btnKolonSilClick(Sender: TObject);
     procedure btnKolonPkClick(Sender: TObject);
+    procedure btnKolonOtoClick(Sender: TObject);
     procedure btnIndeksOlusturClick(Sender: TObject);
     procedure btnIndeksSilClick(Sender: TObject);
     procedure btnIndeksDurumClick(Sender: TObject);
@@ -1012,6 +1014,31 @@ begin
   KolonIsle(kiSil);
 end;
 
+{ "Otomatik artan yap": secili tam sayi kolonu icin generator + BEFORE INSERT trigger'i (kolon bos gelirse siradaki sayi yazilir).
+  Komutlar onay penceresinde yazilidir; hepsi tek islemde calisir. Engel varsa (tam sayi degil, zaten otomatik artan, ad var)
+  anlasilir cumle gosterilir. }
+procedure TTabloSekme.btnKolonOtoClick(Sender: TObject);
+var
+  Bag: TAcikBaglanti;
+  Plan: TOtoPlani;
+begin
+  Bag := BaglantiAl;
+  if (Bag = nil) or dsKolonlar.DataSet.IsEmpty then
+    Exit;
+  Plan := OtoPlaniKur(Bag, TabloAdi, dsKolonlar.DataSet.FieldByName('AD').AsString);
+  if Plan.Engel <> '' then
+  begin
+    UyariGoster(Plan.Engel);
+    Exit;
+  end;
+  if not OnayIste(OtoOnayMetni(Plan)) then
+  begin
+    Yaz(T('MSG_KOLON_VAZGECILDI'));
+    Exit;
+  end;
+  SonucuBildir(Bag, OtoUygula(Bag, Plan));
+end;
+
 { "Birincil anahtar yap": secili kolon PRIMARY KEY olur. Kolon bos olabiliyorsa (Firebird 3.0 ve ustu) once NOT NULL yapilir;
   iki komut da onay penceresinde yazilidir. Engel varsa (zaten PK var, 2.5'te bos olabilen kolon) anlasilir cumle gosterilir. }
 procedure TTabloSekme.btnKolonPkClick(Sender: TObject);
@@ -1109,6 +1136,8 @@ begin
   btnKolonDegistir.Caption := T('BTN_KOLON_DEGISTIR');
   btnKolonSil.Caption := T('BTN_KOLON_SIL');
   btnKolonPk.Caption := T('BTN_KOLON_PK');
+  btnKolonOto.Caption := T('BTN_KOLON_OTO');
+  DugmeyiYaziyaUydur(btnKolonOto);
   DugmeyiYaziyaUydur(btnKolonPk);
   DugmeyiYaziyaUydur(btnKolonEkle);
   DugmeyiYaziyaUydur(btnKolonAd);

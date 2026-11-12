@@ -1,6 +1,6 @@
 program PkTest;
 
-{ Birincil anahtar (PRIMARY KEY) ekleme testi (uIndeksKisit.KisitUygula): bos olabilen kolona PK, tekrarlayan veriye PK,
+{ Birincil anahtar (PRIMARY KEY) ekleme ve otomatik artan yapma testi (uIndeksKisit.KisitUygula): bos olabilen kolona PK, tekrarlayan veriye PK,
   basarili PK. Gercek veriye dokunulmaz: kendi gecici veritabanini kurar, dosya silinmez.
   Ortam: FBTEST_SUNUCU (bos = yerel), FBTEST_PORT, FBTEST_KLASOR, FBTEST_KULLANICI, FBTEST_SIFRE, FBTEST_CIKTI.
   Cikis kodu: hata sayisi. }
@@ -11,7 +11,7 @@ uses
   System.SysUtils, System.Classes, System.IOUtils, Data.DB,
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.Comp.Client, FireDAC.Phys.FB,
   FireDAC.ConsoleUI.Wait,
-  uDil, uBaglanti, uSorgu, uMetadata, uProsedur, uIndeksKisit, uKolon;
+  uDil, uBaglanti, uSorgu, uMetadata, uProsedur, uIndeksKisit, uKolon, uOtoArtan;
 
 var
   Cikti: TStringList;
@@ -47,6 +47,44 @@ begin
   Result.Tablo := Tablo;
   Result.Tur := ktBirincil;
   Result.Kolonlar := Kolon;
+end;
+
+
+{ "Otomatik artan yap" (7q): generator + BEFORE INSERT trigger'i. }
+procedure OtoDene;
+var
+  Plan: TOtoPlani;
+  S: TProsedurSonucu;
+  Sonuc: TSorguSonucu;
+begin
+  Calistir('CREATE TABLE T_OTO (ID INTEGER NOT NULL PRIMARY KEY, AD VARCHAR(20))');
+  Calistir('INSERT INTO T_OTO VALUES (5, ''a'')');
+  Calistir('INSERT INTO T_OTO VALUES (7, ''b'')');
+  Plan := OtoPlaniKur(Bag, 'T_OTO', 'ID');
+  Cikti.Add('Oto plan: engel=[' + Plan.Engel + '] gen=' + Plan.GeneratorAdi + ' trg=' + Plan.TetikleyiciAdi + ' enbuyuk=' + IntToStr(Plan.EnBuyuk));
+  Kontrol('Oto: engel yok, generator ve trigger adlari', (Plan.Engel = '') and (Plan.GeneratorAdi = 'GEN_T_OTO_ID') and (Plan.TetikleyiciAdi = 'TR_T_OTO_ID_BI'));
+  Kontrol('Oto: generator mevcut en buyuk degerden baslar', Plan.EnBuyuk = 7);
+  Kontrol('Oto: gorunen komutlar SET TERM icermez', (Pos('SET TERM', Plan.Komutlar) = 0) and (Pos('CREATE GENERATOR', Plan.Komutlar) > 0) and
+    (Pos('CREATE TRIGGER', Plan.Komutlar) > 0));
+  S := OtoUygula(Bag, Plan);
+  Cikti.Add('Oto uygula: basarili=' + BoolToStr(S.Basarili, True) + ' cumle=' + S.Cumle + ' ham=' + Copy(S.Ayrinti, 1, 200));
+  Kontrol('Oto: uygulandi', S.Basarili);
+  Calistir('INSERT INTO T_OTO (AD) VALUES (''c'')');
+  Calistir('INSERT INTO T_OTO (ID, AD) VALUES (100, ''d'')');
+  Calistir('INSERT INTO T_OTO (AD) VALUES (''e'')');
+  Kontrol('Oto: bos birakilan ID 8, 9 olur (7den devam)', (KayitSayisi(Bag, 'T_OTO', '"ID" = 8') = 1) and (KayitSayisi(Bag, 'T_OTO', '"ID" = 9') = 1));
+  Kontrol('Oto: elle verilen ID (100) degismez', KayitSayisi(Bag, 'T_OTO', '"ID" = 100') = 1);
+  Kontrol('Oto: toplam 5 kayit, mevcutlara dokunulmadi', (KayitSayisi(Bag, 'T_OTO', '') = 5) and (KayitSayisi(Bag, 'T_OTO', '"ID" IN (5, 7)') = 2));
+  Plan := OtoPlaniKur(Bag, 'T_OTO', 'ID');
+  Kontrol('Oto: ikinci kez yapilamaz (ad var)', Plan.Engel <> '');
+  Plan := OtoPlaniKur(Bag, 'T_OTO', 'AD');
+  Kontrol('Oto: tam sayi olmayan kolonda engel', Plan.Engel = TF('ERR_OTO_TIP', ['AD']));
+  Calistir('CREATE TABLE T_OTO_BOS (SIRA BIGINT, AD VARCHAR(20))');
+  Plan := OtoPlaniKur(Bag, 'T_OTO_BOS', 'SIRA');
+  Kontrol('Oto: bos tabloda en buyuk 0, BIGINT kabul', (Plan.Engel = '') and (Plan.EnBuyuk = 0));
+  S := OtoUygula(Bag, Plan);
+  Calistir('INSERT INTO T_OTO_BOS (AD) VALUES (''x'')');
+  Kontrol('Oto: bos tabloda ilk numara 1', S.Basarili and (KayitSayisi(Bag, 'T_OTO_BOS', '"SIRA" = 1') = 1));
 end;
 
 procedure Dene;
@@ -142,6 +180,7 @@ begin
       Bag := FbBaglan(Tanim);
       Cikti.Add('Gecici veritabani: ' + Yol + ' | Surum: ' + Bag.Surum);
       Dene;
+      OtoDene;
     except
       on E: Exception do
       begin

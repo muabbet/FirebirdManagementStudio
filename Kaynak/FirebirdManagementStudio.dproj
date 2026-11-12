@@ -218,6 +218,7 @@
         <DCCReference Include="uFiltre.pas"/>
         <DCCReference Include="uFiltreSatiri.pas"/>
         <DCCReference Include="uIliski.pas"/>
+        <DCCReference Include="uOtoArtan.pas"/>
         <DCCReference Include="uAra.pas"/>
         <DCCReference Include="fAra.pas">
             <Form>frmAra</Form>

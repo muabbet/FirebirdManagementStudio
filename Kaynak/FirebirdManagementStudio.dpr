@@ -68,6 +68,7 @@ uses
   uFiltre in 'uFiltre.pas',
   uFiltreSatiri in 'uFiltreSatiri.pas',
   uIliski in 'uIliski.pas',
+  uOtoArtan in 'uOtoArtan.pas',
   uAra in 'uAra.pas',
   fAra in 'fAra.pas' {frmAra},
   fKullananlar in 'fKullananlar.pas' {frmKullananlar},

@@ -104,6 +104,21 @@ object TabloSekme: TTabloSekme
             TabOrder = 4
             OnClick = btnKolonPkClick
           end
+          object btnKolonOto: TButton
+            AlignWithMargins = True
+            Left = 474
+            Top = 3
+            Width = 90
+            Height = 28
+            Margins.Left = 4
+            Margins.Top = 3
+            Margins.Right = 0
+            Margins.Bottom = 3
+            Align = alLeft
+            Constraints.MinWidth = 90
+            TabOrder = 5
+            OnClick = btnKolonOtoClick
+          end
         end
         object gridKolonlar: TDBGrid
           Left = 0
