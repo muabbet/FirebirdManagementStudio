@@ -291,7 +291,7 @@ begin
     MesajYaz(TF('ERR_SORGU_BAGLANTI_YOK', [BaglantiAd]));
     Exit;
   end;
-  CsvPenceresiniGoster(Bag, FSonuc.Sorgu.SQL.Text, T('AKTAR_AD_SORGU'), AnaSonuc);
+  CsvPenceresiniGoster(Bag, FSonuc.Sorgu.SQL.Text, T('AKTAR_AD_SORGU'), AnaSonuc, FSatirKosulu <> '');
 end;
 
 { Mesaj kutusuna yazar ve kutuyu en uste kaydirir (ilk satir, ornegin hata, gorunsun). }

@@ -31,7 +31,7 @@ type
     FCalisiyor: Boolean;
     FIptalIstendi: Boolean;
     FSonGuncelleme: Cardinal;
-    procedure YazilariYaz(const Ad: string);
+    procedure YazilariYaz(const Ad: string; Filtreli: Boolean);
     procedure CalisiyorAyarla(Calisiyor: Boolean);
     procedure Ilerle(SatirSayisi: Int64; var Iptal: Boolean);
     procedure SonucuYaz(Tamam: Boolean; const Dosya: string; SatirSayisi: Int64; Sure: Int64; Uyarilar: TStrings);
@@ -39,13 +39,13 @@ type
 
 { Pencereyi gosterir. Ad: varsayilan dosya adinin basi (tablo adi ya da "sorgu"). Bitince ozet ve uyarilar
   Sonuc'a (ana pencerenin sonuc alani) eklenir. }
-procedure CsvPenceresiniGoster(Bag: TAcikBaglanti; const Sql, Ad: string; Sonuc: TStrings);
+procedure CsvPenceresiniGoster(Bag: TAcikBaglanti; const Sql, Ad: string; Sonuc: TStrings; Filtreli: Boolean = False);
 
 implementation
 
 {$R *.dfm}
 
-procedure CsvPenceresiniGoster(Bag: TAcikBaglanti; const Sql, Ad: string; Sonuc: TStrings);
+procedure CsvPenceresiniGoster(Bag: TAcikBaglanti; const Sql, Ad: string; Sonuc: TStrings; Filtreli: Boolean);
 var
   Pencere: TfrmCsvAktar;
 begin
@@ -54,16 +54,19 @@ begin
     Pencere.FBag := Bag;
     Pencere.FSql := Sql;
     Pencere.FSonuc := Sonuc;
-    Pencere.YazilariYaz(Ad);
+    Pencere.YazilariYaz(Ad, Filtreli);
     Pencere.ShowModal;
   finally
     Pencere.Free;
   end;
 end;
 
-procedure TfrmCsvAktar.YazilariYaz(const Ad: string);
+procedure TfrmCsvAktar.YazilariYaz(const Ad: string; Filtreli: Boolean);
 begin
   Caption := T('AKTAR_BASLIK');
+  { Tablo sekmesinde filtre varsa yalniz filtreye uyan satirlar aktarilir; pencere basliginda yazar. }
+  if Filtreli then
+    Caption := Caption + ' (' + T('LBL_FILTRELI') + ')';
   lblDosya.Caption := T('AKTAR_DOSYA');
   btnSec.Caption := T('AKTAR_SEC');
   btnBaslat.Caption := T('AKTAR_BASLAT');

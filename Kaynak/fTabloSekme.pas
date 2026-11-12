@@ -153,7 +153,11 @@ type
     SqlYaz: TSqlGoster;
     { Iliskili kayda gitmek icin: ana pencere tabloyu filtreli yeni sekmede acar; ana pencere atar. }
     FiltreliAc: TFiltreliTabloAc;
+    { Iliskili kayit ile (hazir filtreyle) acildi: sekme basligina "(filtreli)" yazilir; ana pencere Yukle'den once atar. }
+    IliskiliAcildi: Boolean;
     destructor Destroy; override;
+    { Sekmenin basligi; dil degisince yeniden yazilir. }
+    function Baslik: string;
     { Filtre doluysa tablo bu WHERE kosuluyla acilir (iliskili kayitlar). }
     procedure Yukle(Bag: TAcikBaglanti; const Tablo: string; const Filtre: string = '');
     { Sag tik "Yenile": kolonlar, yapi ve ilk satirlar veritabanindan yeniden okunur. }
@@ -189,6 +193,13 @@ begin
   FSatir.Free;
   FDuzelt.Free;
   inherited;
+end;
+
+function TTabloSekme.Baslik: string;
+begin
+  Result := TabloAdi + ' [' + BaglantiAd + ']';
+  if IliskiliAcildi then
+    Result := Result + ' (' + T('LBL_FILTRELI') + ')';
 end;
 
 procedure TTabloSekme.Yenile;
@@ -1115,7 +1126,8 @@ begin
     UyariGoster(TF('ERR_SORGU_BAGLANTI_YOK', [BaglantiAd]));
     Exit;
   end;
-  CsvPenceresiniGoster(Bag, TabloTumSatirlarSorgusu(TabloAdi, TamFiltre, FSiraAlan, FSiraAzalan), TabloAdi, AnaSonuc);
+  CsvPenceresiniGoster(Bag, TabloTumSatirlarSorgusu(TabloAdi, TamFiltre, FSiraAlan, FSiraAzalan), TabloAdi, AnaSonuc,
+    TamFiltre <> '');
 end;
 
 procedure TTabloSekme.BagimliliklariGoster;

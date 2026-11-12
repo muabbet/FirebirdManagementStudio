@@ -428,7 +428,10 @@ begin
   begin
     Sekme := SekmeAl(pcCalisma.Pages[i]);
     if Sekme <> nil then
+    begin
+      pcCalisma.Pages[i].Caption := Sekme.Baslik;
       Sekme.YazilariYenile;
+    end;
     KullaniciSekme := KullanicilarAl(pcCalisma.Pages[i]);
     if KullaniciSekme <> nil then
     begin
@@ -2242,10 +2245,9 @@ begin
   Sayfa := TTabSheet.Create(pcCalisma);
   Sayfa.PageControl := pcCalisma;
   Sayfa.Caption := Tablo + ' [' + BaglantiAd + ']';
-  if Filtre <> '' then
-    Sayfa.Caption := Sayfa.Caption + ' (' + T('LBL_FILTRELI') + ')';
   Sayfa.ImageIndex := IKON_TABLO;
   Sekme := TTabloSekme.Create(Sayfa);
+  Sekme.IliskiliAcildi := Filtre <> '';
   Sekme.Parent := Sayfa;
   Sekme.Align := alClient;
   Sekme.AnaSonuc := memSonuc.Lines;
@@ -2265,6 +2267,7 @@ begin
       Exit;
     end;
   end;
+  Sayfa.Caption := Sekme.Baslik;
   pcCalisma.ActivePage := Sayfa;
   MesajYaz(TF('MSG_TABLO_ACILDI', [Tablo, BaglantiAd, ILK_SATIR_SAYISI]));
   DurumuGuncelle;
