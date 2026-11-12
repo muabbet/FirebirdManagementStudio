@@ -1132,6 +1132,14 @@ begin
     UNIQUE index tekrarli veride "attempt to store duplicate value (visible to active transactions) in unique index". }
   if Iceriyor(Hata.Message, 'second PRIMARY KEY') then
     Exit(T('ERR_PK_VAR'));
+  { Olcum (3.0.14 ve 4.0.7): bos olabilen kolona PK "Column X not defined as NOT NULL - cannot be used in PRIMARY KEY
+    constraint definition". 2.5'te de ayni cumle beklenir (sunucuda olculmedi). }
+  if Iceriyor(Hata.Message, 'not defined as NOT NULL') then
+    Exit(T('ERR_PK_BOS_OLUR'));
+  { Olcum (3.0.14 ve 4.0.7): NOT NULL yapilacak kolonda bos deger varsa "Cannot make field X of table T NOT NULL because
+    there are NULLs present". }
+  if Iceriyor(Hata.Message, 'because there are NULLs present') then
+    Exit(T('ERR_KOLON_NULL_VAR'));
   if Iceriyor(Hata.Message, 'being used in FOREIGN KEY') then
     Exit(T('ERR_KISIT_FK_BAGLI'));
   if Iceriyor(Hata.Message, 'duplicate value') and Iceriyor(Hata.Message, 'unique index') then

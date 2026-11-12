@@ -25,6 +25,7 @@ type
     btnKolonAd: TButton;
     btnKolonDegistir: TButton;
     btnKolonSil: TButton;
+    btnKolonPk: TButton;
     gridKolonlar: TDBGrid;
     tsIndeksler: TTabSheet;
     pnlIndeksDugme: TPanel;
@@ -80,6 +81,7 @@ type
     procedure btnKolonAdClick(Sender: TObject);
     procedure btnKolonDegistirClick(Sender: TObject);
     procedure btnKolonSilClick(Sender: TObject);
+    procedure btnKolonPkClick(Sender: TObject);
     procedure btnIndeksOlusturClick(Sender: TObject);
     procedure btnIndeksSilClick(Sender: TObject);
     procedure btnIndeksDurumClick(Sender: TObject);
@@ -1010,6 +1012,30 @@ begin
   KolonIsle(kiSil);
 end;
 
+{ "Birincil anahtar yap": secili kolon PRIMARY KEY olur. Kolon bos olabiliyorsa (Firebird 3.0 ve ustu) once NOT NULL yapilir;
+  iki komut da onay penceresinde yazilidir. Engel varsa (zaten PK var, 2.5'te bos olabilen kolon) anlasilir cumle gosterilir. }
+procedure TTabloSekme.btnKolonPkClick(Sender: TObject);
+var
+  Bag: TAcikBaglanti;
+  Plan: TPkPlani;
+begin
+  Bag := BaglantiAl;
+  if (Bag = nil) or dsKolonlar.DataSet.IsEmpty then
+    Exit;
+  Plan := PkPlaniKur(Bag, TabloAdi, dsKolonlar.DataSet.FieldByName('AD').AsString);
+  if Plan.Engel <> '' then
+  begin
+    UyariGoster(Plan.Engel);
+    Exit;
+  end;
+  if not OnayIste(PkOnayMetni(Plan)) then
+  begin
+    Yaz(T('MSG_KOLON_VAZGECILDI'));
+    Exit;
+  end;
+  SonucuBildir(Bag, PkUygula(Bag, Plan));
+end;
+
 { Index'ler, kisitlar ve bagimliliklar: her seferinde yeniden okunur (dil degisince yazilar da yenilenir). }
 procedure TTabloSekme.YapiyiYukle(Bag: TAcikBaglanti);
 begin
@@ -1082,6 +1108,8 @@ begin
   btnKolonAd.Caption := T('BTN_KOLON_AD');
   btnKolonDegistir.Caption := T('BTN_KOLON_DEGISTIR');
   btnKolonSil.Caption := T('BTN_KOLON_SIL');
+  btnKolonPk.Caption := T('BTN_KOLON_PK');
+  DugmeyiYaziyaUydur(btnKolonPk);
   DugmeyiYaziyaUydur(btnKolonEkle);
   DugmeyiYaziyaUydur(btnKolonAd);
   DugmeyiYaziyaUydur(btnKolonDegistir);

@@ -84,6 +84,7 @@ type
     procedure btnYeniBaglantiClick(Sender: TObject);
     procedure btnKlonlaClick(Sender: TObject);
     procedure btnBaglanClick(Sender: TObject);
+    procedure btnTumKesClick(Sender: TObject);
     procedure btnYeniSorguClick(Sender: TObject);
     procedure btnCokluSorguClick(Sender: TObject);
     procedure btnTopluGuncelleClick(Sender: TObject);
@@ -150,6 +151,7 @@ type
     btnYeniBaglanti: TSeritDugmesi;
     btnKlonla: TSeritDugmesi;
     btnBaglan: TSeritDugmesi;
+    btnTumKes: TSeritDugmesi;
     btnYenile: TSeritDugmesi;
     btnYeniSorgu: TSeritDugmesi;
     btnCokluSorgu: TSeritDugmesi;
@@ -194,6 +196,7 @@ type
     function DugumAltindaMi(Dugme, Ata: TTreeNode): Boolean;
     function BaglantiDugmesiEkle(Ust: TTreeNode; const Ad: string): TTreeNode;
     function KlasorDugmesiBul(const Ad: string): TTreeNode;
+    function BaglantiDugmesiBul(const Ad: string): TTreeNode;
     function BaglantiDugmesineCik(Dugme: TTreeNode): TTreeNode;
     function SeciliBaglantiDugmesi: TTreeNode;
     procedure AgaciKur;
@@ -318,6 +321,7 @@ begin
   btnYeniBaglanti := FSerit.Ekle('GRUP_BAGLANTI', 'BTN_YENI_BAGLANTI', IKON_VERITABANI, btnYeniBaglantiClick);
   btnKlonla := FSerit.Ekle('GRUP_BAGLANTI', 'BTN_KLONLA', IKON_KLONLA, btnKlonlaClick);
   btnBaglan := FSerit.Ekle('GRUP_BAGLANTI', 'BTN_BAGLAN', IKON_BAGLAN, btnBaglanClick);
+  btnTumKes := FSerit.Ekle('GRUP_BAGLANTI', 'BTN_TUM_KES', IKON_KES, btnTumKesClick);
   btnYenile := FSerit.Ekle('GRUP_BAGLANTI', 'BTN_YENILE', IKON_YENILE, btnYenileClick);
   btnYeniSorgu := FSerit.Ekle('GRUP_SORGU', 'BTN_YENI_SORGU', IKON_SORGU, btnYeniSorguClick);
   btnCokluSorgu := FSerit.Ekle('GRUP_SORGU', 'BTN_COKLU_SORGU', IKON_VERITABANI, btnCokluSorguClick);
@@ -562,6 +566,7 @@ begin
   else
     btnBaglan.Ayarla('BTN_KES', IKON_KES);
   btnBaglan.Enabled := Dugme <> nil;
+  btnTumKes.Enabled := Length(FbAcikBaglantiAdlari) > 0;
   { Klonla: yalniz dogrudan bir baglanti dugumu secili iken (klasor, tablo vb. degil). }
   btnKlonla.Enabled := (tvNesneler.Selected <> nil) and (OgeAl(tvNesneler.Selected).Tur = atBaglanti);
   btnYenile.Enabled := Bag <> nil;
@@ -698,6 +703,20 @@ begin
   begin
     Result := tvNesneler.Items[i];
     if (OgeAl(Result) <> nil) and (OgeAl(Result).Tur = atKlasor) and SameText(OgeAl(Result).Ad, Ad) then
+      Exit;
+  end;
+  Result := nil;
+end;
+
+{ Adi verilen baglantinin agactaki dugumu (klasorun icinde de olabilir); yoksa nil. }
+function TfrmAna.BaglantiDugmesiBul(const Ad: string): TTreeNode;
+var
+  i: Integer;
+begin
+  for i := 0 to tvNesneler.Items.Count - 1 do
+  begin
+    Result := tvNesneler.Items[i];
+    if (OgeAl(Result) <> nil) and (OgeAl(Result).Tur = atBaglanti) and SameText(OgeAl(Result).BaglantiAd, Ad) then
       Exit;
   end;
   Result := nil;
@@ -2237,6 +2256,33 @@ begin
     MesajYaz(TF('MSG_KESILDI', [OgeAl(Dugme).BaglantiAd]));
     DurumuGuncelle;
   end;
+end;
+
+{ Baglanti > Tum baglantilari kes: acik olan her baglanti kapanir ve sekmeleri kapanir. Tek net onay ister. }
+procedure TfrmAna.btnTumKesClick(Sender: TObject);
+var
+  Adlar: TArray<string>;
+  Ad: string;
+  Dugme: TTreeNode;
+begin
+  Adlar := FbAcikBaglantiAdlari;
+  if Length(Adlar) = 0 then
+    Exit;
+  if not OnayIste(TF('ONAY_TUM_KES', [Length(Adlar)])) then
+    Exit;
+  for Ad in Adlar do
+  begin
+    Dugme := BaglantiDugmesiBul(Ad);
+    if Dugme <> nil then
+      BaglantiyiKapat(Dugme)
+    else
+    begin
+      BaglantiSekmeleriniKapat(Ad);
+      FbBaglantiyiKes(FbAcikBaglanti(Ad));
+    end;
+  end;
+  MesajYaz(TF('MSG_TUM_KESILDI', [Length(Adlar)]));
+  DurumuGuncelle;
 end;
 
 procedure TfrmAna.btnYeniSorguClick(Sender: TObject);

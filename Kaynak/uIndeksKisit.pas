@@ -15,10 +15,22 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.StrUtils,
-  uDil, uBaglanti, uMetadata, uDDL, uProsedur, uNesneYonet;
+  uDil, uBaglanti, uMetadata, uDDL, uProsedur, uNesneYonet, uKolon;
 
 type
   TYapiIslemi = (yiOlustur, yiSil, yiDurum);
+
+  { "Birincil anahtar yap" dugmesinin plani. Engel doluysa is yapilamaz (anlasilir cumle). NotNullGerek: kolon bos olabiliyor,
+    once NOT NULL yapilir (Firebird 3.0 ve ustu). Komutlar: onay penceresinde gosterilecek komutlar, alt alta. }
+  TPkPlani = record
+    Tablo: string;
+    Kolon: string;
+    Engel: string;
+    NotNullGerek: Boolean;
+    Komutlar: string;
+    Eski: TKolonGirdisi;
+    Yeni: TKolonGirdisi;
+  end;
 
   { Kolonlar: virgulle ayrilmis yazi ("A, B"). Pasif: mevcut durum (yiDurum bunun tersini yapar). }
   TIndeksGirdisi = record
@@ -62,6 +74,15 @@ function KisitOnayMetni(Bag: TAcikBaglanti; Islem: TYapiIslemi; const G: TKisitG
 
 function IndeksUygula(Bag: TAcikBaglanti; Islem: TYapiIslemi; const G: TIndeksGirdisi): TProsedurSonucu;
 function KisitUygula(Bag: TAcikBaglanti; Islem: TYapiIslemi; const G: TKisitGirdisi): TProsedurSonucu;
+
+{ Kolonlar sekmesindeki "Birincil anahtar yap": secili kolon icin plan. Tabloda zaten PK varsa, kolon hesaplananssa ya da
+  kolon bos olabiliyor ve surum NOT NULL degistirmeye izin vermiyorsa (2.5) Engel dolar. Kolon bos olabiliyorsa ve surum
+  izin veriyorsa plan once NOT NULL, sonra PRIMARY KEY komutunu icerir. }
+function PkPlaniKur(Bag: TAcikBaglanti; const Tablo, Kolon: string): TPkPlani;
+{ Plani uygular: gerekirse once NOT NULL, sonra PRIMARY KEY (iki ayri adim; ikincisi basarisiz olursa NOT NULL kalir ve cumlede yazar). }
+function PkUygula(Bag: TAcikBaglanti; const Plan: TPkPlani): TProsedurSonucu;
+{ Onay penceresinin metni: komutlar (gerekirse NOT NULL ve PRIMARY KEY), yedek bilgisi. }
+function PkOnayMetni(const Plan: TPkPlani): string;
 
 implementation
 
@@ -299,6 +320,74 @@ begin
   Result.Ad := AdHazirla(G.Ad);
   MetniCalistir(Bag, KisitKomutu(Bag, Islem, G), Result);
   MevcutVeriCumlesi(Islem, Result);
+end;
+
+function PkGirdisi(const Tablo, Kolon: string): TKisitGirdisi;
+begin
+  Result := Default(TKisitGirdisi);
+  Result.Tablo := Tablo;
+  Result.Tur := ktBirincil;
+  Result.Kolonlar := Kolon;
+end;
+
+function PkPlaniKur(Bag: TAcikBaglanti; const Tablo, Kolon: string): TPkPlani;
+var
+  Kisit: TKisitBilgisi;
+begin
+  Result := Default(TPkPlani);
+  Result.Tablo := Tablo;
+  Result.Kolon := Kolon;
+  for Kisit in KisitlariOku(Bag, Tablo) do
+    if Kisit.Tur = ktBirincil then
+    begin
+      Result.Engel := T('ERR_PK_VAR');
+      Exit;
+    end;
+  try
+    Result.Eski := KolonGirdisiOku(Bag, Tablo, Kolon, kiDegistir);
+  except
+    on E: EMetadataHatasi do
+    begin
+      Result.Engel := E.Message;
+      Exit;
+    end;
+  end;
+  Result.Yeni := Result.Eski;
+  if not Result.Eski.BosOlmaz then
+  begin
+    Result.NotNullGerek := True;
+    if not KolonNullDegistirilebilir(Bag) then
+    begin
+      Result.Engel := T('ERR_PK_BOS_25');
+      Exit;
+    end;
+    Result.Yeni.BosOlmaz := True;
+    Result.Komutlar := KolonKomutlari(Bag, Result.Eski, Result.Yeni) + ';' + sLineBreak;
+  end;
+  Result.Komutlar := Result.Komutlar + KisitKomutu(Bag, yiOlustur, PkGirdisi(Tablo, Kolon));
+end;
+
+function PkOnayMetni(const Plan: TPkPlani): string;
+begin
+  Result := TF('ONAY_KOLON', [Plan.Tablo, Plan.Komutlar]) + sLineBreak + sLineBreak + T('ONAY_KOLON_YEDEK') + sLineBreak +
+    sLineBreak + T('ONAY_DOM_SORU');
+end;
+
+function PkUygula(Bag: TAcikBaglanti; const Plan: TPkPlani): TProsedurSonucu;
+var
+  Ilk: TProsedurSonucu;
+begin
+  Ilk := Default(TProsedurSonucu);
+  if Plan.NotNullGerek then
+  begin
+    Ilk := KolonUygula(Bag, Plan.Eski, Plan.Yeni);
+    if not Ilk.Basarili then
+      Exit(Ilk);
+  end;
+  Result := KisitUygula(Bag, yiOlustur, PkGirdisi(Plan.Tablo, Plan.Kolon));
+  Result.Komutlar := Ilk.Komutlar + Result.Komutlar;
+  if (not Result.Basarili) and Plan.NotNullGerek then
+    Result.Cumle := TF('ERR_PK_NOT_NULL_KALDI', [Plan.Kolon]) + ' ' + Result.Cumle;
 end;
 
 end.
