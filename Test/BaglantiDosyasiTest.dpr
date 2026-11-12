@@ -189,6 +189,106 @@ begin
   Kontrol('klasor: baglanti kalkinca klasor durur', (Length(KayitliBaglantilar) = 0) and (Length(KayitliKlasorler) = 1));
 end;
 
+{ Ust klasorun adini (ya da kokte ise bos) verir. }
+function UstuNedir(const Agac: TArray<TKlasorKaydi>; const Ad: string): string;
+var
+  Kayit: TKlasorKaydi;
+begin
+  Result := '<yok>';
+  for Kayit in Agac do
+    if SameText(Kayit.Ad, Ad) then
+      Exit(Kayit.Ust);
+end;
+
+function KuralHatasiVerdi(const Ad, Ust: string; Tasi: Boolean): Boolean;
+begin
+  Result := False;
+  try
+    if Tasi then
+      KlasorUstuAyarla(Ad, Ust)
+    else
+      KlasorEkle(Ad, Ust);
+  except
+    on EKayitKurali do
+      Result := True;
+  end;
+end;
+
+{ Klasor icinde klasor: ekleme, tasima, dongu engeli, ad degistirme, kaldirma, gidis-donus, eski dosya, bozuk dosya. }
+procedure IcIceKlasorSenaryosu;
+var
+  Agac: TArray<TKlasorKaydi>;
+  Liste: TArray<TBaglantiTanimi>;
+  Ham: string;
+begin
+  TFile.WriteAllText(Dosya, '{"Baglantilar": []}', TEncoding.UTF8);
+  BaglantiKaydet(Tanim('A', '', False));
+  KlasorEkle('Musteriler');
+  KlasorEkle('Istanbul', 'Musteriler');
+  KlasorEkle('Kadikoy', 'Istanbul');
+  KlasorEkle('Ankara', 'musteriler');
+  Agac := KayitliKlasorAgaci;
+  Kontrol('ic ice: 4 klasor', Length(Agac) = 4);
+  Kontrol('ic ice: Musteriler kokte', UstuNedir(Agac, 'Musteriler') = '');
+  Kontrol('ic ice: Istanbul, Musteriler icinde', UstuNedir(Agac, 'Istanbul') = 'Musteriler');
+  Kontrol('ic ice: Kadikoy, Istanbul icinde (3 duzey)', UstuNedir(Agac, 'Kadikoy') = 'Istanbul');
+  Kontrol('ic ice: ust adi klasor listesindeki yazilisla saklanir', UstuNedir(Agac, 'Ankara') = 'Musteriler');
+  Kontrol('ic ice: ust klasor her zaman once gelir',
+    (Agac[0].Ad = 'Musteriler') and (UstuNedir(Agac, 'Kadikoy') <> '') and (Length(Agac) = 4));
+  Kontrol('ic ice: olmayan ust klasore ekleme reddedilir', KuralHatasiVerdi('Yeni', 'Olmayan', False));
+  Kontrol('ic ice: ayni ad baska duzeyde de reddedilir (adlar butun agacta tek)', KuralHatasiVerdi('kadikoy', 'Ankara', False));
+  Kontrol('ic ice: klasor kendi icine giremez', KuralHatasiVerdi('Istanbul', 'Istanbul', True));
+  Kontrol('ic ice: klasor altindaki klasorun icine giremez (dongu)', KuralHatasiVerdi('Musteriler', 'Kadikoy', True));
+  Kontrol('ic ice: dongu denemesi dosyayi bozmadi', UstuNedir(KayitliKlasorAgaci, 'Musteriler') = '');
+  Kontrol('ic ice: olmayan klasoru tasima reddedilir', KuralHatasiVerdi('Olmayan', 'Ankara', True));
+
+  { Tasima ve gidis-donus }
+  KlasorUstuAyarla('Kadikoy', 'Ankara');
+  Kontrol('ic ice: tasindi', UstuNedir(KayitliKlasorAgaci, 'Kadikoy') = 'Ankara');
+  KlasorUstuAyarla('Kadikoy', '');
+  Kontrol('ic ice: kok duzeye tasindi', UstuNedir(KayitliKlasorAgaci, 'Kadikoy') = '');
+  KlasorUstuAyarla('Kadikoy', 'Istanbul');
+  Ham := TFile.ReadAllText(Dosya, TEncoding.UTF8);
+  Kontrol('ic ice: dosyada KlasorUstleri alani var', Pos('"KlasorUstleri"', Ham) > 0);
+  Kontrol('ic ice: Klasorler listesi duz kaldi (eski surum okuyabilir)', Pos('"Klasorler"', Ham) > 0);
+  Kontrol('ic ice: KayitliKlasorler duz liste doner', Length(KayitliKlasorler) = 4);
+
+  { Ad degistirme: altindaki klasorler ve kendi ustu yeni adi gosterir }
+  KlasorYenidenAdlandir('Istanbul', 'Ist');
+  Agac := KayitliKlasorAgaci;
+  Kontrol('ic ice: yeniden adlandirma: alt klasorun ustu yeni ad', UstuNedir(Agac, 'Kadikoy') = 'Ist');
+  Kontrol('ic ice: yeniden adlandirma: klasorun kendi ustu korunur', UstuNedir(Agac, 'Ist') = 'Musteriler');
+  Kontrol('ic ice: eski ad artik yok', UstuNedir(Agac, 'Istanbul') = '<yok>');
+
+  { Baglanti ic klasore girer; ortadaki klasor kalkinca ikisi de bir ust duzeye cikar }
+  BaglantiKlasoruAyarla('A', 'Ist');
+  KlasorKaldir('Ist');
+  Agac := KayitliKlasorAgaci;
+  Liste := KayitliBaglantilar;
+  Kontrol('ic ice: kaldirinca alt klasor bir ust duzeye cikti', UstuNedir(Agac, 'Kadikoy') = 'Musteriler');
+  Kontrol('ic ice: kaldirinca baglanti bir ust duzeye cikti (kok degil)', (Length(Liste) = 1) and (Liste[0].Klasor = 'Musteriler'));
+  Kontrol('ic ice: kaldirilan klasor yok', UstuNedir(Agac, 'Ist') = '<yok>');
+  KlasorKaldir('Musteriler');
+  Liste := KayitliBaglantilar;
+  Kontrol('ic ice: kok klasoru kaldirinca baglanti ve alt klasorler kok duzeye cikar',
+    (Liste[0].Klasor = '') and (UstuNedir(KayitliKlasorAgaci, 'Kadikoy') = '') and (UstuNedir(KayitliKlasorAgaci, 'Ankara') = ''));
+
+  { Eski dosya (KlasorUstleri yok): hepsi kokte kalir }
+  TFile.WriteAllText(Dosya, '{"Klasorler": ["K1", "K2"], "Baglantilar": []}', TEncoding.UTF8);
+  Agac := KayitliKlasorAgaci;
+  Kontrol('ic ice: eski dosya: klasorler kokte', (Length(Agac) = 2) and (Agac[0].Ust = '') and (Agac[1].Ust = ''));
+
+  { Elle bozulmus KlasorUstleri: dongu, olmayan klasor ve kendine bagli satirlar yok sayilir, klasor kaybolmaz }
+  TFile.WriteAllText(Dosya,
+    '{"Klasorler": ["A1", "B1", "C1", "D1"], "KlasorUstleri": {"A1": "B1", "B1": "A1", "C1": "Hayalet", "D1": "D1"}, "Baglantilar": []}',
+    TEncoding.UTF8);
+  Agac := KayitliKlasorAgaci;
+  Kontrol('ic ice: bozuk dosya: 4 klasor de listede', Length(Agac) = 4);
+  Kontrol('ic ice: bozuk dosya: olmayan ust ve kendine bagli kokte', (UstuNedir(Agac, 'C1') = '') and (UstuNedir(Agac, 'D1') = ''));
+  Kontrol('ic ice: bozuk dosya: dongu kirildi (en az biri kokte)', (UstuNedir(Agac, 'A1') = '') or (UstuNedir(Agac, 'B1') = ''));
+  Kontrol('ic ice: bozuk dosya uyari uretmedi', BozukDosyaUyarisiAl = '');
+end;
+
 var
   Liste: TArray<TBaglantiTanimi>;
   Bozuklar: TArray<string>;
@@ -230,6 +330,7 @@ begin
 
       EskiBicimSenaryosu;
       KlasorSenaryosu;
+      IcIceKlasorSenaryosu;
 
       BozukSenaryo('yarim yazilmis JSON', '{"Baglantilar": [ {"Ad": "A", ');
       BozukSenaryo('bos dosya', '');

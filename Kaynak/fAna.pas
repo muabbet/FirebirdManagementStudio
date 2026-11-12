@@ -189,7 +189,9 @@ type
     procedure OgeBagla(Dugme: TTreeNode; Ikon: Integer; Tur: TAgacTuru;
       const BaglantiAd, Ad: string; DalNo: Integer);
     function OgeAl(Dugme: TTreeNode): TAgacOgesi;
-    function KlasorDugmesiEkle(const Ad: string): TTreeNode;
+    function KlasorDugmesiEkle(const Ad: string; Ust: TTreeNode): TTreeNode;
+    procedure DugumuTasi(Dugme, Ust: TTreeNode);
+    function DugumAltindaMi(Dugme, Ata: TTreeNode): Boolean;
     function BaglantiDugmesiEkle(Ust: TTreeNode; const Ad: string): TTreeNode;
     function KlasorDugmesiBul(const Ad: string): TTreeNode;
     function BaglantiDugmesineCik(Dugme: TTreeNode): TTreeNode;
@@ -637,19 +639,47 @@ begin
     Result := TAgacOgesi(Dugme.Data);
 end;
 
-{ Yeni klasor, kokteki ilk baglantinin onune konur (klasorler ustte durur). }
-function TfrmAna.KlasorDugmesiEkle(const Ad: string): TTreeNode;
-var
-  Dugme: TTreeNode;
+{ Yeni klasor, Ust'un (nil = kok) icinde, oradaki ilk baglantinin onune konur (klasorler ustte durur). }
+function TfrmAna.KlasorDugmesiEkle(const Ad: string; Ust: TTreeNode): TTreeNode;
 begin
-  Dugme := tvNesneler.Items.GetFirstNode;
-  while (Dugme <> nil) and (OgeAl(Dugme).Tur <> atBaglanti) do
-    Dugme := Dugme.GetNextSibling;
-  if Dugme = nil then
-    Result := tvNesneler.Items.Add(nil, Ad)
-  else
-    Result := tvNesneler.Items.Insert(Dugme, Ad);
+  Result := tvNesneler.Items.AddChild(Ust, Ad);
   OgeBagla(Result, IKON_KLASOR, atKlasor, '', Ad, 0);
+  DugumuTasi(Result, Ust);
+end;
+
+{ Dugumu Ust'un (nil = kok) altina tasir. Klasor, oradaki ilk baglantinin onune girer; baglanti en sona. }
+procedure TfrmAna.DugumuTasi(Dugme, Ust: TTreeNode);
+var
+  Kardes: TTreeNode;
+begin
+  Kardes := nil;
+  if OgeAl(Dugme).Tur = atKlasor then
+  begin
+    if Ust = nil then
+      Kardes := tvNesneler.Items.GetFirstNode
+    else
+      Kardes := Ust.GetFirstChild;
+    while (Kardes <> nil) and (OgeAl(Kardes).Tur <> atBaglanti) do
+      Kardes := Kardes.GetNextSibling;
+  end;
+  if Kardes <> nil then
+    Dugme.MoveTo(Kardes, naInsert)
+  else if Ust = nil then
+    Dugme.MoveTo(nil, naAdd)
+  else
+    Dugme.MoveTo(Ust, naAddChild);
+end;
+
+{ Dugum, Ata'nin kendisi ya da altindaki bir dugum mu (klasoru kendi icine tasimayi engellemek icin). }
+function TfrmAna.DugumAltindaMi(Dugme, Ata: TTreeNode): Boolean;
+begin
+  Result := False;
+  while Dugme <> nil do
+  begin
+    if Dugme = Ata then
+      Exit(True);
+    Dugme := Dugme.Parent;
+  end;
 end;
 
 { Ust nil ise baglanti kok duzeye eklenir. Kapali baglanti "fisi cekilmis" ikonuyla gorunur. }
@@ -659,15 +689,18 @@ begin
   OgeBagla(Result, IKON_KES, atBaglanti, Ad, '', 0);
 end;
 
+{ Klasor adlari butun agacta tektir; klasor kokte de bir klasorun icinde de olabilir. }
 function TfrmAna.KlasorDugmesiBul(const Ad: string): TTreeNode;
+var
+  i: Integer;
 begin
-  Result := tvNesneler.Items.GetFirstNode;
-  while Result <> nil do
+  for i := 0 to tvNesneler.Items.Count - 1 do
   begin
-    if (OgeAl(Result).Tur = atKlasor) and SameText(OgeAl(Result).Ad, Ad) then
+    Result := tvNesneler.Items[i];
+    if (OgeAl(Result) <> nil) and (OgeAl(Result).Tur = atKlasor) and SameText(OgeAl(Result).Ad, Ad) then
       Exit;
-    Result := Result.GetNextSibling;
   end;
+  Result := nil;
 end;
 
 { Dugum bir baglantinin parcasi ise (kendisi, dali, nesnesi) baglanti dugumunu verir. }
@@ -697,7 +730,7 @@ end;
 { Programi acarken: kayitli klasorler ve baglantilar. Hicbir baglanti bagli degildir. }
 procedure TfrmAna.AgaciKur;
 var
-  Klasor: string;
+  Klasor: TKlasorKaydi;
   Tanim: TBaglantiTanimi;
   Ust: TTreeNode;
 begin
@@ -706,8 +739,8 @@ begin
     tvNesneler.Items.Clear;
     FOgeler.Clear;
     FSurukleNode := nil;
-    for Klasor in KayitliKlasorler do
-      KlasorDugmesiEkle(Klasor);
+    for Klasor in KayitliKlasorAgaci do
+      KlasorDugmesiEkle(Klasor.Ad, KlasorDugmesiBul(Klasor.Ust));
     for Tanim in KayitliBaglantilar do
     begin
       Ust := nil;
@@ -1040,15 +1073,24 @@ end;
 
 { ---------- Klasor islemleri ---------- }
 
+{ Secili dugum bir klasorse yeni klasor onun icine girer; degilse (bos alana sag tik secimi kaldirir) kok duzeye. }
 procedure TfrmAna.YeniKlasor;
 var
-  Ad: string;
+  Ad, UstAdi: string;
+  Ust: TTreeNode;
 begin
+  Ust := nil;
+  UstAdi := '';
+  if (tvNesneler.Selected <> nil) and (OgeAl(tvNesneler.Selected).Tur = atKlasor) then
+  begin
+    Ust := tvNesneler.Selected;
+    UstAdi := OgeAl(Ust).Ad;
+  end;
   Ad := '';
   if not MetinSor(T('KLASOR_YENI_BASLIK'), T('LBL_KLASOR_AD'), Ad, False) then
     Exit;
   try
-    KlasorEkle(Ad);
+    KlasorEkle(Ad, UstAdi);
   except
     on E: Exception do
     begin
@@ -1056,7 +1098,9 @@ begin
       Exit;
     end;
   end;
-  tvNesneler.Selected := KlasorDugmesiEkle(Trim(Ad));
+  if Ust <> nil then
+    Ust.Expand(False);
+  tvNesneler.Selected := KlasorDugmesiEkle(Trim(Ad), Ust);
   DurumuGuncelle;
 end;
 
@@ -1080,10 +1124,11 @@ begin
   Dugme.Text := Trim(Ad);
 end;
 
-{ Klasor kalkar, icindeki baglantilar silinmez, kok duzeye cikar. }
+{ Klasor kalkar; icindeki baglantilar ve alt klasorler silinmez, klasorun ustune (ustu yoksa kok duzeye) cikar. }
 procedure TfrmAna.KlasoruKaldir(Dugme: TTreeNode);
 var
   Ad: string;
+  Ust: TTreeNode;
 begin
   Ad := OgeAl(Dugme).Ad;
   if not OnayIste(TF('ONAY_KLASOR_KALDIR', [Ad])) then
@@ -1097,8 +1142,9 @@ begin
       Exit;
     end;
   end;
+  Ust := Dugme.Parent;
   while Dugme.Count > 0 do
-    Dugme.GetFirstChild.MoveTo(nil, naAdd);
+    DugumuTasi(Dugme.GetFirstChild, Ust);
   Dugme.Delete;
   MesajYaz(TF('MSG_KLASOR_KALDIRILDI', [Ad]));
   DurumuGuncelle;
@@ -2365,14 +2411,15 @@ begin
   if Button <> mbLeft then
     Exit;
   Dugme := tvNesneler.GetNodeAt(X, Y);
-  if (Dugme <> nil) and (OgeAl(Dugme).Tur = atBaglanti) then
+  if (Dugme <> nil) and (OgeAl(Dugme).Tur in [atBaglanti, atKlasor]) then
   begin
     FSurukleNode := Dugme;
     tvNesneler.BeginDrag(False, 5);
   end;
 end;
 
-{ Baglanti bir klasorun ustune birakilabilir. Bos alana birakilirsa kok duzeye cikar. }
+{ Baglanti ya da klasor bir klasorun ustune birakilabilir. Bos alana birakilirsa kok duzeye cikar.
+  Klasor kendi icine ya da altindaki bir klasorun icine birakilamaz. }
 procedure TfrmAna.tvNesnelerDragOver(Sender, Source: TObject; X, Y: Integer;
   State: TDragState; var Accept: Boolean);
 var
@@ -2385,7 +2432,7 @@ begin
   if Hedef = nil then
     Accept := FSurukleNode.Parent <> nil
   else
-    Accept := (OgeAl(Hedef).Tur = atKlasor) and (FSurukleNode.Parent <> Hedef);
+    Accept := (OgeAl(Hedef).Tur = atKlasor) and (FSurukleNode.Parent <> Hedef) and not DugumAltindaMi(Hedef, FSurukleNode);
 end;
 
 procedure TfrmAna.tvNesnelerDragDrop(Sender, Source: TObject; X, Y: Integer);
@@ -2400,7 +2447,10 @@ begin
   if Hedef <> nil then
     KlasorAdi := OgeAl(Hedef).Ad;
   try
-    BaglantiKlasoruAyarla(OgeAl(FSurukleNode).BaglantiAd, KlasorAdi);
+    if OgeAl(FSurukleNode).Tur = atKlasor then
+      KlasorUstuAyarla(OgeAl(FSurukleNode).Ad, KlasorAdi)
+    else
+      BaglantiKlasoruAyarla(OgeAl(FSurukleNode).BaglantiAd, KlasorAdi);
   except
     on E: Exception do
     begin
@@ -2409,13 +2459,9 @@ begin
       Exit;
     end;
   end;
-  if Hedef = nil then
-    FSurukleNode.MoveTo(nil, naAdd)
-  else
-  begin
-    FSurukleNode.MoveTo(Hedef, naAddChild);
+  DugumuTasi(FSurukleNode, Hedef);
+  if Hedef <> nil then
     Hedef.Expand(False);
-  end;
   FSurukleNode := nil;
 end;
 
@@ -2435,6 +2481,9 @@ begin
   Bos := Dugme = nil;
   Tur := atKlasor;
   Acik := False;
+  { Bos alana sag tik secimi kaldirir: "Yeni klasor" kok duzeye eklesin, eski secili klasorun icine degil. }
+  if Bos then
+    tvNesneler.Selected := nil;
   if not Bos then
   begin
     tvNesneler.Selected := Dugme;
@@ -2442,7 +2491,12 @@ begin
     if Tur <> atKlasor then
       Acik := FbAcikBaglanti(OgeAl(Dugme).BaglantiAd) <> nil;
   end;
-  miYeniKlasor.Visible := Bos;
+  { Bos alanda "Yeni klasor", klasore sag tikta "Alt klasor ekle" (klasorun icine). }
+  miYeniKlasor.Visible := Bos or (Tur = atKlasor);
+  if Bos then
+    miYeniKlasor.Caption := T('BTN_YENI_KLASOR')
+  else
+    miYeniKlasor.Caption := T('MENU_ALT_KLASOR');
   miKlasorAdi.Visible := (not Bos) and (Tur = atKlasor);
   miKlasorKaldir.Visible := (not Bos) and (Tur = atKlasor);
   miBaglan.Visible := (not Bos) and (Tur = atBaglanti);

@@ -313,7 +313,9 @@
   "MSG_TABLO_ACILDI": "%s tablosu açıldı (%s). İlk %d satır gösteriliyor, aşağı indikçe devamı yüklenir.",
   "MSG_SCRIPT_URETILDI": "%s için CREATE script'i yeni sekmede açıldı. Çalıştırmak için F5.",
   "MSG_KAYIT_KALDIRILDI": "'%s' kayıttan kaldırıldı. Veritabanına dokunulmadı.",
-  "MSG_KLASOR_KALDIRILDI": "'%s' klasörü kaldırıldı. İçindeki bağlantılar kök düzeye çıktı.",
+  "MSG_KLASOR_KALDIRILDI": "'%s' klasörü kaldırıldı. İçindeki bağlantılar ve klasörler bir üst düzeye çıktı.",
+  "MENU_ALT_KLASOR": "Alt klasör ekle",
+  "ERR_KLASOR_DONGU": "Klasör kendi içine ya da altındaki bir klasörün içine taşınamaz.",
 
   "AYRINTI": "Ayrıntı",
 
@@ -348,7 +350,7 @@
   "ONAY_KAYIT_KALDIR": "'%s' bağlantısı kayıtlı listeden kaldırılsın mı? Veritabanına dokunulmaz.",
   "ONAY_KAYIT_KALDIR_ACIK": "'%s' bağlantısı şu an açık. Önce bağlantı kesilecek ve bu bağlantının sekmeleri kapanacak, sonra kayıtlı listeden kaldırılacak. Veritabanına dokunulmaz. Devam edilsin mi?",
   "ONAY_DUZENLE_KES": "'%s' bağlantısı şu an açık. Düzenlemek için önce bağlantı kesilecek ve bu bağlantının sekmeleri kapanacak. Devam edilsin mi?",
-  "ONAY_KLASOR_KALDIR": "'%s' klasörü kaldırılsın mı? İçindeki bağlantılar silinmez, kök düzeye çıkar.",
+  "ONAY_KLASOR_KALDIR": "'%s' klasörü kaldırılsın mı? İçindeki bağlantılar ve klasörler silinmez, bir üst düzeye çıkar.",
 
   "ERR_SIFRE": "Kullanıcı adı veya şifre yanlış.",
   "ERR_SUNUCU": "Sunucuya ulaşılamadı. Sunucu adını, port numarasını ve Firebird servisinin çalıştığını kontrol edin.",

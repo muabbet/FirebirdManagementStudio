@@ -313,7 +313,9 @@
   "MSG_TABLO_ACILDI": "Tabelle %s geöffnet (%s). Die ersten %d Zeilen werden angezeigt, beim Hinunterscrollen werden weitere nachgeladen.",
   "MSG_SCRIPT_URETILDI": "Das CREATE-Skript für %s wurde in einem neuen Tab geöffnet. Mit F5 ausführen.",
   "MSG_KAYIT_KALDIRILDI": "Die Registrierung von '%s' wurde aufgehoben. Die Datenbank wurde nicht verändert.",
-  "MSG_KLASOR_KALDIRILDI": "Der Ordner '%s' wurde entfernt. Seine Verbindungen liegen jetzt auf der obersten Ebene.",
+  "MSG_KLASOR_KALDIRILDI": "Der Ordner '%s' wurde entfernt. Seine Verbindungen und Ordner liegen jetzt eine Ebene höher.",
+  "MENU_ALT_KLASOR": "Unterordner hinzufügen",
+  "ERR_KLASOR_DONGU": "Ein Ordner kann nicht in sich selbst oder in einen darin liegenden Ordner verschoben werden.",
 
   "AYRINTI": "Details",
 
@@ -348,7 +350,7 @@
   "ONAY_KAYIT_KALDIR": "Die Registrierung der Verbindung '%s' aus der gespeicherten Liste aufheben? Die Datenbank wird nicht verändert.",
   "ONAY_KAYIT_KALDIR_ACIK": "Die Verbindung '%s' ist gerade geöffnet. Sie wird zuerst getrennt und ihre Tabs werden geschlossen, danach wird sie aus der gespeicherten Liste entfernt. Die Datenbank wird nicht verändert. Fortfahren?",
   "ONAY_DUZENLE_KES": "Die Verbindung '%s' ist gerade geöffnet. Zum Bearbeiten wird sie zuerst getrennt und ihre Tabs werden geschlossen. Fortfahren?",
-  "ONAY_KLASOR_KALDIR": "Den Ordner '%s' entfernen? Seine Verbindungen werden nicht gelöscht, sie wandern auf die oberste Ebene.",
+  "ONAY_KLASOR_KALDIR": "Den Ordner '%s' entfernen? Seine Verbindungen und Ordner werden nicht gelöscht, sie wandern eine Ebene höher.",
 
   "ERR_SIFRE": "Benutzername oder Passwort ist falsch.",
   "ERR_SUNUCU": "Der Server ist nicht erreichbar. Prüfen Sie Servername, Portnummer und ob der Firebird-Dienst läuft.",

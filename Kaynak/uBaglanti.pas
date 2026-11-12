@@ -15,7 +15,7 @@ interface
 
 uses
   Winapi.Windows, System.SysUtils, System.Classes, System.IOUtils, System.JSON,
-  System.NetEncoding, System.Generics.Collections, System.Variants, Data.DB,
+  System.NetEncoding, System.Generics.Collections, System.Generics.Defaults, System.Variants, Data.DB,
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.UI.Intf,
   FireDAC.Phys.Intf, FireDAC.Stan.Def, FireDAC.Stan.Pool, FireDAC.Stan.Async,
   FireDAC.Phys, FireDAC.Phys.FB, FireDAC.Phys.FBDef, FireDAC.Phys.IBBase,
@@ -38,6 +38,12 @@ type
   { Kayit kurali ihlali (ayni ad, bos ad vb.): mesaj kullaniciya oldugu gibi gosterilir. }
   EKayitKurali = class(Exception);
 
+  { Bir klasor ve bulundugu ust klasor (Ust bos ise kok duzeyde). Klasor adlari butun agacta tektir. }
+  TKlasorKaydi = record
+    Ad: string;
+    Ust: string;
+  end;
+
   { Acik bir baglanti. Acik baglantilar tek bir listede durur. }
   TAcikBaglanti = class
     Tanim: TBaglantiTanimi;
@@ -58,11 +64,16 @@ const
 { Kayitli baglantilar ve klasorler (baglantilar.json) }
 function KayitliBaglantilar: TArray<TBaglantiTanimi>;
 function KayitliKlasorler: TArray<string>;
+{ Klasorler ust klasorleriyle; sira her zaman ust klasor once, alt klasor sonra (agac kurarken ust hazir olsun). }
+function KayitliKlasorAgaci: TArray<TKlasorKaydi>;
 function KayitliBaglantiBul(const Ad: string; out Tanim: TBaglantiTanimi): Boolean;
 { EskiAd doluysa o adli kayit yenisiyle degisir (ad degistirme). Klasor bilgisi eski kayittan korunur. }
 procedure BaglantiKaydet(const Tanim: TBaglantiTanimi; const EskiAd: string = '');
 procedure BaglantiListedenKaldir(const Ad: string);
-procedure KlasorEkle(const Ad: string);
+{ Ust doluysa yeni klasor o klasorun icine girer (klasor icinde klasor). }
+procedure KlasorEkle(const Ad: string; const Ust: string = '');
+{ Klasoru baska bir klasorun icine tasir; Ust bos ise kok duzeye. Klasor kendi icine ya da altindaki bir klasorun icine girmez. }
+procedure KlasorUstuAyarla(const Ad, Ust: string);
 procedure KlasorYenidenAdlandir(const EskiAd, YeniAd: string);
 procedure KlasorKaldir(const Ad: string);
 procedure BaglantiKlasoruAyarla(const BaglantiAd, Klasor: string);
@@ -123,6 +134,8 @@ type
   TKayit = class
     Baglantilar: TList<TBaglantiTanimi>;
     Klasorler: TList<string>;
+    { Alt klasor adi -> ust klasor adi (ust klasoru olmayanlar burada yoktur). }
+    KlasorUstleri: TDictionary<string, string>;
     constructor Create;
     destructor Destroy; override;
   end;
@@ -143,10 +156,12 @@ begin
   inherited;
   Baglantilar := TList<TBaglantiTanimi>.Create;
   Klasorler := TList<string>.Create;
+  KlasorUstleri := TDictionary<string, string>.Create(TIStringComparer.Ordinal);
 end;
 
 destructor TKayit.Destroy;
 begin
+  KlasorUstleri.Free;
   Klasorler.Free;
   Baglantilar.Free;
   inherited;
@@ -244,6 +259,42 @@ begin
       Exit(i);
 end;
 
+{ Klasorun ust klasoru ('' = kok duzeyde). }
+function KlasorUstu(Kayit: TKayit; const Ad: string): string;
+begin
+  if not Kayit.KlasorUstleri.TryGetValue(Trim(Ad), Result) then
+    Result := '';
+end;
+
+{ Ad klasoru YeniUst'un icine konursa dongu olur mu: YeniUst, Ad'in kendisi ya da altindaki bir klasorse evet. }
+function DonguVarMi(Kayit: TKayit; const Ad, YeniUst: string): Boolean;
+var
+  Su: string;
+  Sayac: Integer;
+begin
+  Result := False;
+  Su := Trim(YeniUst);
+  Sayac := 0;
+  while Su <> '' do
+  begin
+    if SameText(Su, Trim(Ad)) then
+      Exit(True);
+    Su := KlasorUstu(Kayit, Su);
+    Inc(Sayac);
+    if Sayac > Kayit.Klasorler.Count then
+      Exit(True);
+  end;
+end;
+
+{ Ust bossa klasor kok duzeye cikar. Ad ve ust, klasor listesindeki yazilisiyla saklanir. }
+procedure KlasorUstunuYaz(Kayit: TKayit; const Ad, Ust: string);
+begin
+  if Trim(Ust) = '' then
+    Kayit.KlasorUstleri.Remove(Trim(Ad))
+  else
+    Kayit.KlasorUstleri.AddOrSetValue(Trim(Ad), Trim(Ust));
+end;
+
 function BaglantiSirasi(Kayit: TKayit; const Ad: string): Integer;
 var
   i: Integer;
@@ -260,9 +311,11 @@ function DosyayiOku: TKayit;
 var
   Kok: TJSONValue;
   Dizi, KlasorDizisi: TJSONArray;
+  UstNesnesi: TJSONObject;
+  Cift: TJSONPair;
   Oge: TJSONValue;
   Tanim: TBaglantiTanimi;
-  SifreliMetin, KlasorAdi: string;
+  SifreliMetin, KlasorAdi, UstAdi: string;
   i: Integer;
 begin
   Result := TKayit.Create;
@@ -314,6 +367,18 @@ begin
       if (KlasorAdi <> '') and (KlasorSirasi(Result.Klasorler, KlasorAdi) < 0) then
         Result.Klasorler.Add(KlasorAdi);
     end;
+    { Ust klasorler (klasor icinde klasor). Eski dosyada yoktur: tum klasorler kokte kalir. Listede olmayan klasore
+      baglanan ya da dongu yapan satir yok sayilir (klasor kokte kalir, hicbir sey kaybolmaz). }
+    if Kok.TryGetValue<TJSONObject>('KlasorUstleri', UstNesnesi) then
+      for Cift in UstNesnesi do
+      begin
+        KlasorAdi := Cift.JsonString.Value;
+        UstAdi := Cift.JsonValue.Value;
+        if (KlasorSirasi(Result.Klasorler, KlasorAdi) >= 0) and (KlasorSirasi(Result.Klasorler, UstAdi) >= 0) and
+          not DonguVarMi(Result, KlasorAdi, UstAdi) then
+          KlasorUstunuYaz(Result, Result.Klasorler[KlasorSirasi(Result.Klasorler, KlasorAdi)],
+            Result.Klasorler[KlasorSirasi(Result.Klasorler, UstAdi)]);
+      end;
   finally
     Kok.Free;
   end;
@@ -323,6 +388,7 @@ procedure DosyayiYaz(Kayit: TKayit);
 var
   Kok: TJSONObject;
   Dizi, KlasorDizisi: TJSONArray;
+  UstNesnesi: TJSONObject;
   Oge: TJSONObject;
   Tanim: TBaglantiTanimi;
   KlasorAdi, Gecici: string;
@@ -333,6 +399,11 @@ begin
     Kok.AddPair('Klasorler', KlasorDizisi);
     for KlasorAdi in Kayit.Klasorler do
       KlasorDizisi.Add(KlasorAdi);
+    UstNesnesi := TJSONObject.Create;
+    Kok.AddPair('KlasorUstleri', UstNesnesi);
+    for KlasorAdi in Kayit.Klasorler do
+      if KlasorUstu(Kayit, KlasorAdi) <> '' then
+        UstNesnesi.AddPair(KlasorAdi, KlasorUstu(Kayit, KlasorAdi));
     Dizi := TJSONArray.Create;
     Kok.AddPair('Baglantilar', Dizi);
     for Tanim in Kayit.Baglantilar do
@@ -452,9 +523,10 @@ end;
 
 { ---------- Klasorler ---------- }
 
-procedure KlasorEkle(const Ad: string);
+procedure KlasorEkle(const Ad: string; const Ust: string);
 var
   Kayit: TKayit;
+  UstSirasi: Integer;
 begin
   if Trim(Ad) = '' then
     raise EKayitKurali.Create(T('ERR_KLASOR_AD_BOS'));
@@ -462,9 +534,79 @@ begin
   try
     if KlasorSirasi(Kayit.Klasorler, Ad) >= 0 then
       raise EKayitKurali.Create(TF('ERR_KLASOR_VAR', [Trim(Ad)]));
+    UstSirasi := KlasorSirasi(Kayit.Klasorler, Ust);
+    if (Trim(Ust) <> '') and (UstSirasi < 0) then
+      raise EKayitKurali.Create(TF('ERR_KLASOR_YOK', [Trim(Ust)]));
     Kayit.Klasorler.Add(Trim(Ad));
+    if UstSirasi >= 0 then
+      KlasorUstunuYaz(Kayit, Ad, Kayit.Klasorler[UstSirasi]);
     DosyayiYaz(Kayit);
   finally
+    Kayit.Free;
+  end;
+end;
+
+procedure KlasorUstuAyarla(const Ad, Ust: string);
+var
+  Kayit: TKayit;
+  Sira, UstSirasi: Integer;
+begin
+  Kayit := DosyayiOku;
+  try
+    Sira := KlasorSirasi(Kayit.Klasorler, Ad);
+    if Sira < 0 then
+      raise EKayitKurali.Create(TF('ERR_KLASOR_YOK', [Trim(Ad)]));
+    UstSirasi := KlasorSirasi(Kayit.Klasorler, Ust);
+    if (Trim(Ust) <> '') and (UstSirasi < 0) then
+      raise EKayitKurali.Create(TF('ERR_KLASOR_YOK', [Trim(Ust)]));
+    if DonguVarMi(Kayit, Ad, Ust) then
+      raise EKayitKurali.Create(T('ERR_KLASOR_DONGU'));
+    if UstSirasi >= 0 then
+      KlasorUstunuYaz(Kayit, Kayit.Klasorler[Sira], Kayit.Klasorler[UstSirasi])
+    else
+      KlasorUstunuYaz(Kayit, Kayit.Klasorler[Sira], '');
+    DosyayiYaz(Kayit);
+  finally
+    Kayit.Free;
+  end;
+end;
+
+function KayitliKlasorAgaci: TArray<TKlasorKaydi>;
+var
+  Kayit: TKayit;
+  Liste: TList<TKlasorKaydi>;
+  Eklendi: TList<string>;
+  Satir: TKlasorKaydi;
+  Ad: string;
+  Degisti: Boolean;
+begin
+  Kayit := DosyayiOku;
+  Liste := TList<TKlasorKaydi>.Create;
+  Eklendi := TList<string>.Create;
+  try
+    { Ust klasoru kokte ya da daha once eklenmis olan klasorler sirayla eklenir; dongu dosyayi okurken elendigi icin biter. }
+    Degisti := True;
+    while Degisti do
+    begin
+      Degisti := False;
+      for Ad in Kayit.Klasorler do
+      begin
+        if KlasorSirasi(Eklendi, Ad) >= 0 then
+          Continue;
+        Satir.Ad := Ad;
+        Satir.Ust := KlasorUstu(Kayit, Ad);
+        if (Satir.Ust = '') or (KlasorSirasi(Eklendi, Satir.Ust) >= 0) then
+        begin
+          Liste.Add(Satir);
+          Eklendi.Add(Ad);
+          Degisti := True;
+        end;
+      end;
+    end;
+    Result := Liste.ToArray;
+  finally
+    Eklendi.Free;
+    Liste.Free;
     Kayit.Free;
   end;
 end;
@@ -474,6 +616,8 @@ procedure KlasorYenidenAdlandir(const EskiAd, YeniAd: string);
 var
   Kayit: TKayit;
   Tanim: TBaglantiTanimi;
+  Cift: TPair<string, string>;
+  Alt, Ust: string;
   i, Sira: Integer;
 begin
   if Trim(YeniAd) = '' then
@@ -486,6 +630,18 @@ begin
     { Sadece buyuk/kucuk harf degisiyorsa (ayni klasor) cakisma sayilmaz. }
     if (KlasorSirasi(Kayit.Klasorler, YeniAd) >= 0) and not SameText(EskiAd, Trim(YeniAd)) then
       raise EKayitKurali.Create(TF('ERR_KLASOR_VAR', [Trim(YeniAd)]));
+    { Ust klasor kayitlari yeni ada tasinir (hem bu klasorun ustu hem altindakilerin ustu). }
+    for Cift in Kayit.KlasorUstleri.ToArray do
+    begin
+      Kayit.KlasorUstleri.Remove(Cift.Key);
+      Alt := Cift.Key;
+      Ust := Cift.Value;
+      if SameText(Alt, EskiAd) then
+        Alt := Trim(YeniAd);
+      if SameText(Ust, EskiAd) then
+        Ust := Trim(YeniAd);
+      Kayit.KlasorUstleri.AddOrSetValue(Alt, Ust);
+    end;
     Kayit.Klasorler[Sira] := Trim(YeniAd);
     for i := 0 to Kayit.Baglantilar.Count - 1 do
       if SameText(Kayit.Baglantilar[i].Klasor, EskiAd) then
@@ -500,23 +656,30 @@ begin
   end;
 end;
 
-{ Klasor kalkar, icindeki baglantilar silinmez, kok duzeye cikar. }
+{ Klasor kalkar; icindeki baglantilar ve alt klasorler silinmez, kaldirilan klasorun ustune (ustu yoksa kok duzeye) cikar. }
 procedure KlasorKaldir(const Ad: string);
 var
   Kayit: TKayit;
   Tanim: TBaglantiTanimi;
+  Cift: TPair<string, string>;
+  Ust: string;
   i, Sira: Integer;
 begin
   Kayit := DosyayiOku;
   try
     Sira := KlasorSirasi(Kayit.Klasorler, Ad);
+    Ust := KlasorUstu(Kayit, Ad);
     if Sira >= 0 then
       Kayit.Klasorler.Delete(Sira);
+    for Cift in Kayit.KlasorUstleri.ToArray do
+      if SameText(Cift.Value, Ad) then
+        KlasorUstunuYaz(Kayit, Cift.Key, Ust);
+    Kayit.KlasorUstleri.Remove(Trim(Ad));
     for i := 0 to Kayit.Baglantilar.Count - 1 do
       if SameText(Kayit.Baglantilar[i].Klasor, Ad) then
       begin
         Tanim := Kayit.Baglantilar[i];
-        Tanim.Klasor := '';
+        Tanim.Klasor := Ust;
         Kayit.Baglantilar[i] := Tanim;
       end;
     DosyayiYaz(Kayit);

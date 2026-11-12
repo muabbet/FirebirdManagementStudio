@@ -313,7 +313,9 @@
   "MSG_TABLO_ACILDI": "Table %s opened (%s). Showing the first %d rows; more load as you scroll down.",
   "MSG_SCRIPT_URETILDI": "The CREATE script for %s was opened in a new tab. Press F5 to run it.",
   "MSG_KAYIT_KALDIRILDI": "'%s' was unregistered. The database was not touched.",
-  "MSG_KLASOR_KALDIRILDI": "Folder '%s' was removed. Its connections moved to the top level.",
+  "MSG_KLASOR_KALDIRILDI": "Folder '%s' was removed. Its connections and folders moved up one level.",
+  "MENU_ALT_KLASOR": "Add subfolder",
+  "ERR_KLASOR_DONGU": "A folder cannot be moved into itself or into a folder inside it.",
 
   "AYRINTI": "Details",
 
@@ -348,7 +350,7 @@
   "ONAY_KAYIT_KALDIR": "Remove the connection '%s' from the saved list? The database is not touched.",
   "ONAY_KAYIT_KALDIR_ACIK": "The connection '%s' is currently open. It will be disconnected first and its tabs will be closed, then it will be removed from the saved list. The database is not touched. Continue?",
   "ONAY_DUZENLE_KES": "The connection '%s' is currently open. To edit it, it will be disconnected first and its tabs will be closed. Continue?",
-  "ONAY_KLASOR_KALDIR": "Remove the folder '%s'? Its connections are not deleted; they move to the top level.",
+  "ONAY_KLASOR_KALDIR": "Remove the folder '%s'? Its connections and folders are not deleted; they move up one level.",
 
   "ERR_SIFRE": "The user name or password is wrong.",
   "ERR_SUNUCU": "The server could not be reached. Check the server name, the port number and that the Firebird service is running.",
