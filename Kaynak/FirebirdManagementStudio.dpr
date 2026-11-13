@@ -65,6 +65,7 @@ uses
   uIndeksOner in 'uIndeksOner.pas',
   fIndeksOner in 'fIndeksOner.pas' {frmIndeksOner},
   uSorguGecmisi in 'uSorguGecmisi.pas',
+  uSqlDosya in 'uSqlDosya.pas',
   uFiltre in 'uFiltre.pas',
   uFiltreSatiri in 'uFiltreSatiri.pas',
   uIliski in 'uIliski.pas',

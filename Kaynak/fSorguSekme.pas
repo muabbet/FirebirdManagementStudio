@@ -9,9 +9,9 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes, System.Generics.Collections, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
-  Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids,
+  Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.Dialogs,
   FireDAC.Comp.Client,
-  uDil, uPaket, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uSonucGrid, uCokluSorgu, fCsvAktar, uKullanici, fIndeksOner, uSorguGecmisi, fGecmis, uFiltreSatiri;
+  uDil, uPaket, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uSonucGrid, uCokluSorgu, fCsvAktar, uKullanici, fIndeksOner, uSorguGecmisi, fGecmis, uFiltreSatiri, uSqlDosya;
 
 type
   TSorguSekme = class(TFrame)
@@ -58,12 +58,21 @@ type
     OnDurum: TNotifyEvent;
     { Calisan komut veritabaninin yapisini degistirdi (CREATE, ALTER, DROP); ana pencere agaci yeniler. }
     OnYapiDegisti: TNotifyEvent;
+    { Sekmenin bagli oldugu .sql dosyasi (acilan ya da kaydedilen); bos ise henuz dosyasi yok. }
+    Dosya: string;
     destructor Destroy; override;
     procedure Hazirla(SekmeNo: Integer; const Baglanti: string);
     procedure Calistir;
     procedure PlanGoster;
     procedure IndeksOner(SqlYaz: TSqlGoster);
     procedure GecmisiAc;
+    { Editordeki yaziyi .sql dosyasina yazar. Farkli ya da dosyasi yoksa once dosya adi sorulur.
+      Yazildiysa True doner (ana pencere sekme basligini yeniler). }
+    function SqlKaydet(Farkli: Boolean): Boolean;
+    { Dosyasi olan ve kaydedilmemis degisikligi bulunan sekme (kapatirken sorulur). }
+    function KaydedilmemisMi: Boolean;
+    { Ilk yukleme sonrasi "degisti" isareti kalkar (dosya acilinca cagrilir). }
+    procedure DegisimiSifirla;
     procedure EditoreOdaklan;
     procedure MetinYaz(const Metin: string);
     function Baslik: string;
@@ -153,7 +162,63 @@ end;
 
 function TSorguSekme.Baslik: string;
 begin
-  Result := T('SEKME_SORGU') + ' ' + IntToStr(No) + ' [' + BaglantiAd + ']';
+  if Dosya <> '' then
+    Result := ExtractFileName(Dosya) + ' [' + BaglantiAd + ']'
+  else
+    Result := T('SEKME_SORGU') + ' ' + IntToStr(No) + ' [' + BaglantiAd + ']';
+end;
+
+{ Sorgu > Kaydet / Farkli kaydet. Var olan dosyanin ustune yazmadan once Windows'un kendi
+  "uzerine yazilsin mi" sorusu cikar (ofOverwritePrompt); bilinen dosyaya Kaydet sormadan yazar. }
+function TSorguSekme.SqlKaydet(Farkli: Boolean): Boolean;
+var
+  Pencere: TSaveDialog;
+  Yol: string;
+begin
+  Result := False;
+  Yol := Dosya;
+  if Farkli or (Yol = '') then
+  begin
+    Pencere := TSaveDialog.Create(nil);
+    try
+      Pencere.Title := T('SQL_KAYDET_BASLIK');
+      Pencere.Filter := T('SQL_FILTRE_SQL') + '|*.sql|' + T('SQL_FILTRE_HEPSI') + '|*.*';
+      Pencere.DefaultExt := 'sql';
+      Pencere.Options := Pencere.Options + [ofOverwritePrompt];
+      if Dosya <> '' then
+        Pencere.FileName := Dosya
+      else
+        Pencere.FileName := 'sorgu.sql';
+      if not Pencere.Execute then
+        Exit;
+      Yol := Pencere.FileName;
+    finally
+      Pencere.Free;
+    end;
+  end;
+  try
+    SqlDosyasiniYaz(Yol, FEditor.TumMetin);
+  except
+    on E: Exception do
+    begin
+      MesajYaz(TF('ERR_SQL_YAZILAMADI', [Yol]) + sLineBreak + T('AYRINTI') + ': ' + E.Message);
+      Exit;
+    end;
+  end;
+  Dosya := Yol;
+  FEditor.DegisimiSifirla;
+  MesajYaz(TF('MSG_SQL_KAYDEDILDI', [Yol]));
+  Result := True;
+end;
+
+function TSorguSekme.KaydedilmemisMi: Boolean;
+begin
+  Result := (Dosya <> '') and FEditor.Degisti;
+end;
+
+procedure TSorguSekme.DegisimiSifirla;
+begin
+  FEditor.DegisimiSifirla;
 end;
 
 procedure TSorguSekme.EditoreOdaklan;

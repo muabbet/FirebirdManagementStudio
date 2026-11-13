@@ -1086,5 +1086,17 @@
   "GECMIS_AD_BASLIK": "Favoritenabfrage",
   "GECMIS_AD_ETIKET": "Geben Sie einen Namen für diese Abfrage ein:",
   "GECMIS_ONAY_SIL": "\"%s\" wird aus der Favoritenliste entfernt. Das kann nicht rückgängig gemacht werden. Fortfahren?",
-  "GECMIS_ONAY_TEMIZLE": "%d gespeicherte Verlaufseinträge werden geleert. Nichts wird gelöscht: Sie werden in eine datierte Sicherungsdatei verschoben (im Datenordner). Favoriten bleiben unberührt. Fortfahren?"
+  "GECMIS_ONAY_TEMIZLE": "%d gespeicherte Verlaufseinträge werden geleert. Nichts wird gelöscht: Sie werden in eine datierte Sicherungsdatei verschoben (im Datenordner). Favoriten bleiben unberührt. Fortfahren?",
+  "BTN_SQL_AC": "SQL öffnen",
+  "BTN_SQL_KAYDET": "Speichern",
+  "BTN_SQL_FARKLI_KAYDET": "Speichern unter",
+  "SQL_AC_BASLIK": "SQL-Datei öffnen",
+  "SQL_KAYDET_BASLIK": "SQL-Datei speichern",
+  "SQL_FILTRE_SQL": "SQL-Dateien (*.sql)",
+  "SQL_FILTRE_HEPSI": "Alle Dateien (*.*)",
+  "MSG_SQL_KAYDEDILDI": "SQL in Datei gespeichert: %s",
+  "ERR_SQL_YAZILAMADI": "Die Datei konnte nicht geschrieben werden: %s",
+  "ERR_SQL_OKUNAMADI": "Die Datei konnte nicht gelesen werden: %s",
+  "SQL_KAYDET_SOR": "\"%s\" enthält nicht gespeicherte Änderungen. Speichern?",
+  "BTN_KAYDETME": "Nicht speichern"
 }

@@ -215,6 +215,7 @@
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="uSorguGecmisi.pas"/>
+        <DCCReference Include="uSqlDosya.pas"/>
         <DCCReference Include="uFiltre.pas"/>
         <DCCReference Include="uFiltreSatiri.pas"/>
         <DCCReference Include="uIliski.pas"/>

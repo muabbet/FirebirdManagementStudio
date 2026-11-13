@@ -10,12 +10,12 @@ unit fAna;
 interface
 
 uses
-  Winapi.Windows, System.SysUtils, System.Classes, System.Generics.Collections,
-  Vcl.Controls, Vcl.Graphics, Vcl.Forms, Vcl.ComCtrls, Vcl.ExtCtrls, Vcl.StdCtrls,
+  Winapi.Windows, Winapi.Messages, Winapi.ShellAPI, System.SysUtils, System.Classes, System.Generics.Collections,
+  Vcl.Controls, Vcl.Dialogs, Vcl.Graphics, Vcl.Forms, Vcl.ComCtrls, Vcl.ExtCtrls, Vcl.StdCtrls,
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme, fIndeksOner, uAra, fAra;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme, fIndeksOner, uAra, fAra, uSqlDosya;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -99,6 +99,9 @@ type
     procedure btnPlanClick(Sender: TObject);
     procedure btnIndeksOnerClick(Sender: TObject);
     procedure btnGecmisClick(Sender: TObject);
+    procedure btnSqlAcClick(Sender: TObject);
+    procedure btnSqlKaydetClick(Sender: TObject);
+    procedure btnSqlFarkliKaydetClick(Sender: TObject);
     procedure btnMetadataClick(Sender: TObject);
     procedure btnYedekClick(Sender: TObject);
     procedure btnKullanicilarClick(Sender: TObject);
@@ -152,6 +155,10 @@ type
     procedure pcCalismaMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure btnAyrintiClick(Sender: TObject);
     procedure btnTumKapatClick(Sender: TObject);
+  protected
+    { Pencereye dosya surukleyip birakilabilsin (.sql dosyalari yeni sorgu sekmesinde acilir). }
+    procedure CreateWnd; override;
+    procedure DosyaBirakildi(var Mesaj: TWMDropFiles); message WM_DROPFILES;
   private
     icSerit: TImageCollection;
     FSerit: TSerit;
@@ -170,6 +177,9 @@ type
     btnPlan: TSeritDugmesi;
     btnIndeksOner: TSeritDugmesi;
     btnGecmis: TSeritDugmesi;
+    btnSqlAc: TSeritDugmesi;
+    btnSqlKaydet: TSeritDugmesi;
+    btnSqlFarkliKaydet: TSeritDugmesi;
     btnMetadata: TSeritDugmesi;
     btnYedek: TSeritDugmesi;
     btnKullanicilar: TSeritDugmesi;
@@ -250,7 +260,12 @@ type
     procedure CokluSorguAc;
     procedure SorguDurumuYaz(Sender: TObject);
     procedure SorguYapisiDegisti(Sender: TObject);
-    procedure YeniSorgu(const Metin: string = '');
+    procedure YeniSorgu(const Metin: string = ''; const Dosya: string = '');
+    procedure SqlDosyalariniAc(const Yollar: TArray<string>);
+    procedure SqlKaydet(Farkli: Boolean);
+    function SekmeyiKaydetSor(Sayfa: TTabSheet): Boolean;
+    function KaydedilmemisleriSor(const BaglantiAd: string): Boolean;
+    procedure FormKapanirken(Sender: TObject; var CanClose: Boolean);
     procedure ScriptAc(Dugme: TTreeNode);
     procedure TabloKomutAc(Dugme: TTreeNode; Tur: TTabloKomutTuru);
     function ProsedurSekmeAl(Sayfa: TTabSheet): TProsedurSekme;
@@ -300,6 +315,7 @@ var
 begin
   FOgeler := TObjectList<TAgacOgesi>.Create(True);
   FAyrintiAcik := True;
+  OnCloseQuery := FormKapanirken;
   DilYukle(SonKullanilanDil);
   IkonlariYukle(icIkonlar, vilIkonlar);
   SeritKur;
@@ -338,6 +354,9 @@ begin
   btnPlan := FSerit.Ekle('GRUP_SORGU', 'BTN_PLAN', IKON_PLAN, btnPlanClick);
   btnIndeksOner := FSerit.Ekle('GRUP_SORGU', 'BTN_INDEKS_ONER', IKON_PLAN, btnIndeksOnerClick);
   btnGecmis := FSerit.Ekle('GRUP_SORGU', 'BTN_GECMIS', IKON_SORGU, btnGecmisClick);
+  btnSqlAc := FSerit.Ekle('GRUP_SORGU', 'BTN_SQL_AC', IKON_SORGU, btnSqlAcClick);
+  btnSqlKaydet := FSerit.Ekle('GRUP_SORGU', 'BTN_SQL_KAYDET', IKON_SORGU, btnSqlKaydetClick);
+  btnSqlFarkliKaydet := FSerit.Ekle('GRUP_SORGU', 'BTN_SQL_FARKLI_KAYDET', IKON_SORGU, btnSqlFarkliKaydetClick);
   btnMetadata := FSerit.Ekle('GRUP_YONETIM', 'MENU_METADATA_CIKAR', IKON_METADATA, btnMetadataClick);
   btnYedek := FSerit.Ekle('GRUP_YONETIM', 'MENU_YEDEK', IKON_YEDEK, btnYedekClick);
   btnKullanicilar := FSerit.Ekle('GRUP_YONETIM', 'BTN_KULLANICILAR', IKON_KULLANICI, btnKullanicilarClick);
@@ -592,6 +611,9 @@ begin
   btnPlan.Enabled := AktifSorguSekmesi <> nil;
   btnIndeksOner.Enabled := AktifSorguSekmesi <> nil;
   btnGecmis.Enabled := AktifSorguSekmesi <> nil;
+  btnSqlAc.Enabled := Bag <> nil;
+  btnSqlKaydet.Enabled := AktifSorguSekmesi <> nil;
+  btnSqlFarkliKaydet.Enabled := AktifSorguSekmesi <> nil;
   btnMetadata.Enabled := Bag <> nil;
   btnYedek.Enabled := Dugme <> nil;
   btnAktifBaglanti.Enabled := Bag <> nil;
@@ -1277,7 +1299,7 @@ begin
 end;
 
 { Secili (acik) baglanti icin yeni bir sorgu sekmesi acar. Metin doluysa editore yazilir (calistirilmaz). }
-procedure TfrmAna.YeniSorgu(const Metin: string);
+procedure TfrmAna.YeniSorgu(const Metin: string; const Dosya: string);
 var
   Dugme: TTreeNode;
   Bag: TAcikBaglanti;
@@ -1306,10 +1328,173 @@ begin
   Sekme.Hazirla(FSorguNo, Bag.Tanim.Ad);
   if Metin <> '' then
     Sekme.MetinYaz(Metin);
+  Sekme.Dosya := Dosya;
+  if Dosya <> '' then
+    Sekme.DegisimiSifirla;
   Sayfa.Caption := Sekme.Baslik;
   pcCalisma.ActivePage := Sayfa;
   Sekme.EditoreOdaklan;
   DurumuGuncelle;
+end;
+
+{ Verilen .sql dosyalarini, secili baglanti icin her biri ayri sorgu sekmesinde acar (calistirmaz).
+  Okunamayan dosya icin uyari verilir, digerleri acilmaya devam eder. }
+procedure TfrmAna.SqlDosyalariniAc(const Yollar: TArray<string>);
+var
+  Yol, Metin: string;
+begin
+  for Yol in Yollar do
+  begin
+    try
+      Metin := SqlDosyasiniOku(Yol);
+    except
+      on E: Exception do
+      begin
+        UyariGoster(TF('ERR_SQL_OKUNAMADI', [Yol]) + sLineBreak + T('AYRINTI') + ': ' + E.Message);
+        Continue;
+      end;
+    end;
+    YeniSorgu(Metin, Yol);
+  end;
+end;
+
+{ Sorgu > Kaydet / Farkli kaydet: aktif sorgu sekmesinin yazisini .sql dosyasina yazar. }
+procedure TfrmAna.SqlKaydet(Farkli: Boolean);
+var
+  Sekme: TSorguSekme;
+begin
+  Sekme := AktifSorguSekmesi;
+  if Sekme = nil then
+    Exit;
+  if Sekme.SqlKaydet(Farkli) then
+    pcCalisma.ActivePage.Caption := Sekme.Baslik;
+end;
+
+{ Tek sekme icin: kaydedilmemis degisiklik varsa Kaydet/Kaydetme/Iptal sorar (sekme once one getirilir).
+  Evet: dosyaya yazar, Hayir: degisiklik atilir. Iptal ya da kaydedememe: False (kapatma yapilmaz). }
+function TfrmAna.SekmeyiKaydetSor(Sayfa: TTabSheet): Boolean;
+var
+  Sekme: TSorguSekme;
+begin
+  Result := True;
+  Sekme := SorguSekmeAl(Sayfa);
+  if (Sekme = nil) or not Sekme.KaydedilmemisMi then
+    Exit;
+  pcCalisma.ActivePage := Sayfa;
+  case KaydetSor(TF('SQL_KAYDET_SOR', [ExtractFileName(Sekme.Dosya)])) of
+    mrYes:
+      begin
+        Result := Sekme.SqlKaydet(False);
+        if Result then
+          Sayfa.Caption := Sekme.Baslik;
+      end;
+    mrNo:
+      ;
+  else
+    Result := False;
+  end;
+end;
+{ Dosyasi olan ve kaydedilmemis degisikligi bulunan sorgu sekmeleri icin tek tek sorar (BaglantiAd bos ise
+  butun sekmeler, doluysa yalniz o baglantinin sekmeleri). Evet: dosyaya yazar, Hayir: degisiklik atilir,
+  Iptal ya da kaydedememe: False doner ve kapatma yapilmaz. Sorulan sekme once one getirilir. }
+function TfrmAna.KaydedilmemisleriSor(const BaglantiAd: string): Boolean;
+var
+  i: Integer;
+  Sekme: TSorguSekme;
+begin
+  Result := True;
+  for i := 0 to pcCalisma.PageCount - 1 do
+  begin
+    Sekme := SorguSekmeAl(pcCalisma.Pages[i]);
+    if (Sekme = nil) or not Sekme.KaydedilmemisMi then
+      Continue;
+    if (BaglantiAd <> '') and not SameText(Sekme.BaglantiAd, BaglantiAd) then
+      Continue;
+    if not SekmeyiKaydetSor(pcCalisma.Pages[i]) then
+      Exit(False);
+  end;
+end;
+
+{ Program kapanirken kaydedilmemis SQL dosyalari sorulur; Iptal kapanmayi durdurur. }
+procedure TfrmAna.FormKapanirken(Sender: TObject; var CanClose: Boolean);
+begin
+  CanClose := KaydedilmemisleriSor('');
+end;
+
+{ Sorgu > SQL ac: secilen .sql dosyalari yeni sorgu sekmelerinde acilir. }
+procedure TfrmAna.btnSqlAcClick(Sender: TObject);
+var
+  Pencere: TOpenDialog;
+begin
+  if SeciliBaglantiDugmesi = nil then
+  begin
+    UyariGoster(T('ERR_SORGU_BAGLANTI_SEC'));
+    Exit;
+  end;
+  Pencere := TOpenDialog.Create(nil);
+  try
+    Pencere.Title := T('SQL_AC_BASLIK');
+    Pencere.Filter := T('SQL_FILTRE_SQL') + '|*.sql|' + T('SQL_FILTRE_HEPSI') + '|*.*';
+    Pencere.Options := Pencere.Options + [ofAllowMultiSelect, ofFileMustExist];
+    if Pencere.Execute then
+      SqlDosyalariniAc(Pencere.Files.ToStringArray);
+  finally
+    Pencere.Free;
+  end;
+end;
+
+procedure TfrmAna.btnSqlKaydetClick(Sender: TObject);
+begin
+  SqlKaydet(False);
+end;
+
+procedure TfrmAna.btnSqlFarkliKaydetClick(Sender: TObject);
+begin
+  SqlKaydet(True);
+end;
+
+function ChangeWindowMessageFilterEx(Pencere: HWND; Mesaj: UINT; Islem: DWORD; Yapi: Pointer): BOOL; stdcall;
+  external user32 name 'ChangeWindowMessageFilterEx';
+
+{ Pencere olusurken (ve tutacagi yeniden olusunca) surukle-birak acilir. Program yonetici olarak
+  calisiyorsa Gezgin'in biraktigi dosya mesajlari da gecsin diye izin verilir. }
+procedure TfrmAna.CreateWnd;
+const
+  MSGFLT_ALLOW = 1;
+  WM_COPYGLOBALDATA = $0049;
+begin
+  inherited;
+  DragAcceptFiles(Handle, True);
+  ChangeWindowMessageFilterEx(Handle, WM_DROPFILES, MSGFLT_ALLOW, nil);
+  ChangeWindowMessageFilterEx(Handle, WM_COPYGLOBALDATA, MSGFLT_ALLOW, nil);
+end;
+
+{ Birakilan dosyalardan yalniz .sql olanlar acilir; baska uzantili dosya sessizce atlanir. }
+procedure TfrmAna.DosyaBirakildi(var Mesaj: TWMDropFiles);
+var
+  Sayi, i: Integer;
+  Tampon: array[0..MAX_PATH] of Char;
+  Yollar: TArray<string>;
+begin
+  try
+    Sayi := DragQueryFile(Mesaj.Drop, $FFFFFFFF, nil, 0);
+    for i := 0 to Sayi - 1 do
+    begin
+      DragQueryFile(Mesaj.Drop, i, Tampon, Length(Tampon));
+      if SqlDosyasiMi(Tampon) then
+        Yollar := Yollar + [string(Tampon)];
+    end;
+  finally
+    DragFinish(Mesaj.Drop);
+  end;
+  if Length(Yollar) = 0 then
+    Exit;
+  if SeciliBaglantiDugmesi = nil then
+  begin
+    UyariGoster(T('ERR_SORGU_BAGLANTI_SEC'));
+    Exit;
+  end;
+  SqlDosyalariniAc(Yollar);
 end;
 
 { Secili nesnenin CREATE script'ini yeni bir sorgu sekmesinde acar (calistirmaz). }
@@ -2316,6 +2501,8 @@ begin
     Exit;
   if not OnayIste(TF('ONAY_TUM_KES', [Length(Adlar)])) then
     Exit;
+  if not KaydedilmemisleriSor('') then
+    Exit;
   for Ad in Adlar do
   begin
     Dugme := BaglantiDugmesiBul(Ad);
@@ -2418,6 +2605,17 @@ begin
   begin
     Key := 0;
     AktifProsedurSekmesi.Kaydet;
+  end
+  else if (Key = Ord('S')) and (ssCtrl in Shift) and (AktifSorguSekmesi <> nil) then
+  begin
+    { Ctrl+S: sorgu sekmesinin yazisini .sql dosyasina kaydeder; Ctrl+Shift+S: farkli kaydet. }
+    Key := 0;
+    SqlKaydet(ssShift in Shift);
+  end
+  else if (Key = Ord('O')) and (ssCtrl in Shift) and (btnSqlAc.Enabled) then
+  begin
+    Key := 0;
+    btnSqlAcClick(nil);
   end
   else if (Key = Ord('L')) and (ssCtrl in Shift) then
   begin
@@ -2770,6 +2968,8 @@ begin
   Dugme := SeciliBaglantiDugmesi;
   if Dugme = nil then
     Exit;
+  if not KaydedilmemisleriSor(OgeAl(Dugme).BaglantiAd) then
+    Exit;
   BaglantiyiKapat(Dugme);
   MesajYaz(TF('MSG_KESILDI', [OgeAl(Dugme).BaglantiAd]));
   DurumuGuncelle;
@@ -2830,8 +3030,12 @@ end;
 
 procedure TfrmAna.miSekmeKapatClick(Sender: TObject);
 begin
-  if pcCalisma.ActivePage <> nil then
-    pcCalisma.ActivePage.Free;
+  if pcCalisma.ActivePage = nil then
+    Exit;
+  { Dosyasi olan sorgu sekmesinde kaydedilmemis degisiklik varsa once sorulur. }
+  if not SekmeyiKaydetSor(pcCalisma.ActivePage) then
+    Exit;
+  pcCalisma.ActivePage.Free;
   DurumuGuncelle;
 end;
 
@@ -2961,6 +3165,8 @@ begin
   if pcCalisma.PageCount = 0 then
     Exit;
   if not OnayIste(T('SEKME_TUMU_SOR')) then
+    Exit;
+  if not KaydedilmemisleriSor('') then
     Exit;
   while pcCalisma.PageCount > 0 do
     pcCalisma.Pages[0].Free;

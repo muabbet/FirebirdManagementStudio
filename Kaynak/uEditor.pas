@@ -62,6 +62,9 @@ type
     procedure HataSatiriniIsaretle(Satir: Integer);
     procedure HataSatiriniTemizle;
     procedure OdakVer;
+    { Yazi son kaydetmeden (ya da DegisimiSifirla'dan) beri degisti mi? }
+    function Degisti: Boolean;
+    procedure DegisimiSifirla;
     { Editorun tum yazisini degistirir (calistirmaz). }
     procedure MetinYaz(const Metin: string);
     { Dosya: anahtar_kelimeler.txt yolu. Surum: sunucu surumu ("5.0.4"); bos ise tum kelimeler. }
@@ -199,6 +202,16 @@ procedure TSqlEditor.OdakVer;
 begin
   if FEdit.CanFocus then
     FEdit.SetFocus;
+end;
+
+function TSqlEditor.Degisti: Boolean;
+begin
+  Result := FEdit.Modified;
+end;
+
+procedure TSqlEditor.DegisimiSifirla;
+begin
+  FEdit.Modified := False;
 end;
 
 procedure TSqlEditor.AnahtarKelimeleriYukle(const Dosya, Surum: string);

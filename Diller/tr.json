@@ -1086,5 +1086,17 @@
   "GECMIS_AD_BASLIK": "Sık kullanılan sorgu",
   "GECMIS_AD_ETIKET": "Bu sorgu için bir ad yazın:",
   "GECMIS_ONAY_SIL": "\"%s\" sık kullanılanlar listesinden çıkarılacak. Bu işlem geri alınamaz. Devam edilsin mi?",
-  "GECMIS_ONAY_TEMIZLE": "%d kayıtlı geçmiş temizlenecek. Kayıtlar silinmez, tarihli bir yedek dosyaya taşınır (veri klasöründe). Sık kullanılanlara dokunulmaz. Devam edilsin mi?"
+  "GECMIS_ONAY_TEMIZLE": "%d kayıtlı geçmiş temizlenecek. Kayıtlar silinmez, tarihli bir yedek dosyaya taşınır (veri klasöründe). Sık kullanılanlara dokunulmaz. Devam edilsin mi?",
+  "BTN_SQL_AC": "SQL aç",
+  "BTN_SQL_KAYDET": "Kaydet",
+  "BTN_SQL_FARKLI_KAYDET": "Farklı kaydet",
+  "SQL_AC_BASLIK": "SQL dosyası aç",
+  "SQL_KAYDET_BASLIK": "SQL dosyasını kaydet",
+  "SQL_FILTRE_SQL": "SQL dosyaları (*.sql)",
+  "SQL_FILTRE_HEPSI": "Tüm dosyalar (*.*)",
+  "MSG_SQL_KAYDEDILDI": "SQL dosyaya kaydedildi: %s",
+  "ERR_SQL_YAZILAMADI": "Dosya yazılamadı: %s",
+  "ERR_SQL_OKUNAMADI": "Dosya okunamadı: %s",
+  "SQL_KAYDET_SOR": "\"%s\" dosyasında kaydedilmemiş değişiklik var. Kaydedilsin mi?",
+  "BTN_KAYDETME": "Kaydetme"
 }
