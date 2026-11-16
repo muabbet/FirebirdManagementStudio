@@ -260,7 +260,8 @@ type
     procedure CokluSorguAc;
     procedure SorguDurumuYaz(Sender: TObject);
     procedure SorguYapisiDegisti(Sender: TObject);
-    procedure YeniSorgu(const Metin: string = ''; const Dosya: string = '');
+    procedure YeniSorgu(const Metin: string = ''; const Dosya: string = ''; const BaglantiAdi: string = '');
+    procedure ScriptiSekmedeAc(const BaglantiAdi, Metin: string);
     procedure SqlDosyalariniAc(const Yollar: TArray<string>);
     procedure SqlKaydet(Farkli: Boolean);
     function SekmeyiKaydetSor(Sayfa: TTabSheet): Boolean;
@@ -1299,16 +1300,19 @@ begin
 end;
 
 { Secili (acik) baglanti icin yeni bir sorgu sekmesi acar. Metin doluysa editore yazilir (calistirilmaz). }
-procedure TfrmAna.YeniSorgu(const Metin: string; const Dosya: string);
+procedure TfrmAna.YeniSorgu(const Metin: string; const Dosya: string; const BaglantiAdi: string);
 var
   Dugme: TTreeNode;
   Bag: TAcikBaglanti;
   Sayfa: TTabSheet;
   Sekme: TSorguSekme;
 begin
+  { BaglantiAdi verilmisse (disa aktarma gibi) o baglanti, yoksa agactaki secili baglanti kullanilir. }
   Dugme := SeciliBaglantiDugmesi;
   Bag := nil;
-  if Dugme <> nil then
+  if BaglantiAdi <> '' then
+    Bag := FbAcikBaglanti(BaglantiAdi)
+  else if Dugme <> nil then
     Bag := FbAcikBaglanti(OgeAl(Dugme).BaglantiAd);
   if Bag = nil then
   begin
@@ -1325,6 +1329,7 @@ begin
   Sekme.AnaSonuc := memSonuc.Lines;
   Sekme.OnDurum := SorguDurumuYaz;
   Sekme.OnYapiDegisti := SorguYapisiDegisti;
+  Sekme.ScriptAc := ScriptiSekmedeAc;
   Sekme.Hazirla(FSorguNo, Bag.Tanim.Ad);
   if Metin <> '' then
     Sekme.MetinYaz(Metin);
@@ -1335,6 +1340,12 @@ begin
   pcCalisma.ActivePage := Sayfa;
   Sekme.EditoreOdaklan;
   DurumuGuncelle;
+end;
+
+{ Disa aktarmanin INSERT script'i: verilen baglanti icin yeni sorgu sekmesinde acilir (calistirilmaz). }
+procedure TfrmAna.ScriptiSekmedeAc(const BaglantiAdi, Metin: string);
+begin
+  YeniSorgu(Metin, '', BaglantiAdi);
 end;
 
 { Verilen .sql dosyalarini, secili baglanti icin her biri ayri sorgu sekmesinde acar (calistirmaz).
@@ -2437,6 +2448,7 @@ begin
   Sekme.Align := alClient;
   Sekme.AnaSonuc := memSonuc.Lines;
   Sekme.SqlYaz := SqlMesajiYaz;
+  Sekme.ScriptAc := ScriptiSekmedeAc;
   Sekme.FiltreliAc :=
     procedure(const IliskiliTablo, IliskiliFiltre: string)
     begin

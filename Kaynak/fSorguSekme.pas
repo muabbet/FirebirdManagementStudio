@@ -11,7 +11,7 @@ uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes, System.Generics.Collections, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
   Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.Dialogs,
   FireDAC.Comp.Client,
-  uDil, uPaket, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uSonucGrid, uCokluSorgu, fCsvAktar, uKullanici, fIndeksOner, uSorguGecmisi, fGecmis, uFiltreSatiri, uSqlDosya;
+  uDil, uPaket, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uSonucGrid, uCokluSorgu, uAktar, fCsvAktar, uKullanici, fIndeksOner, uSorguGecmisi, fGecmis, uFiltreSatiri, uSqlDosya;
 
 type
   TSorguSekme = class(TFrame)
@@ -58,6 +58,8 @@ type
     OnDurum: TNotifyEvent;
     { Calisan komut veritabaninin yapisini degistirdi (CREATE, ALTER, DROP); ana pencere agaci yeniler. }
     OnYapiDegisti: TNotifyEvent;
+    { Disa aktarmada INSERT script yeni sorgu sekmesinde acilir; ana pencere atar. }
+    ScriptAc: TScriptAcici;
     { Sekmenin bagli oldugu .sql dosyasi (acilan ya da kaydedilen); bos ise henuz dosyasi yok. }
     Dosya: string;
     destructor Destroy; override;
@@ -356,7 +358,8 @@ begin
     MesajYaz(TF('ERR_SORGU_BAGLANTI_YOK', [BaglantiAd]));
     Exit;
   end;
-  CsvPenceresiniGoster(Bag, FSonuc.Sorgu.SQL.Text, T('AKTAR_AD_SORGU'), AnaSonuc, FSatirKosulu <> '');
+  CsvPenceresiniGoster(Bag, FSonuc.Sorgu.SQL.Text, T('AKTAR_AD_SORGU'), '', AnaSonuc, ScriptAc,
+    FSatirKosulu <> '');
 end;
 
 { Mesaj kutusuna yazar ve kutuyu en uste kaydirir (ilk satir, ornegin hata, gorunsun). }

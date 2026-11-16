@@ -7,7 +7,7 @@ interface
 uses
   System.SysUtils, System.Classes, System.Types, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
   Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls, Vcl.Menus, FireDAC.Comp.Client,
-  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uFiltre, uFiltreSatiri, uSonucGrid, uKayitDuzelt, uKullanici, uProsedur, uKolon, uIndeksKisit, fKolonIslem, fYapiIslem, fCsvAktar, fIceAktar, uIliski, fKullananlar, uOtoArtan;
+  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uFiltre, uFiltreSatiri, uSonucGrid, uKayitDuzelt, uKullanici, uProsedur, uKolon, uIndeksKisit, fKolonIslem, fYapiIslem, uAktar, fCsvAktar, fIceAktar, uIliski, fKullananlar, uOtoArtan;
 
 type
   { Bir tabloyu hazir filtreyle yeni sekmede acar (iliskili kayitlara git). }
@@ -151,6 +151,8 @@ type
     AnaSonuc: TStrings;
     { Yonetim islemlerinin SQL'i buraya verilir (ana pencerenin SQL mesaji); ana pencere atar. }
     SqlYaz: TSqlGoster;
+    { Disa aktarmada INSERT script yeni sorgu sekmesinde acilir; ana pencere atar. }
+    ScriptAc: TScriptAcici;
     { Iliskili kayda gitmek icin: ana pencere tabloyu filtreli yeni sekmede acar; ana pencere atar. }
     FiltreliAc: TFiltreliTabloAc;
     { Iliskili kayit ile (hazir filtreyle) acildi: sekme basligina "(filtreli)" yazilir; ana pencere Yukle'den once atar. }
@@ -1126,8 +1128,8 @@ begin
     UyariGoster(TF('ERR_SORGU_BAGLANTI_YOK', [BaglantiAd]));
     Exit;
   end;
-  CsvPenceresiniGoster(Bag, TabloTumSatirlarSorgusu(TabloAdi, TamFiltre, FSiraAlan, FSiraAzalan), TabloAdi, AnaSonuc,
-    TamFiltre <> '');
+  CsvPenceresiniGoster(Bag, TabloTumSatirlarSorgusu(TabloAdi, TamFiltre, FSiraAlan, FSiraAzalan), TabloAdi, TabloAdi,
+    AnaSonuc, ScriptAc, TamFiltre <> '');
 end;
 
 procedure TTabloSekme.BagimliliklariGoster;

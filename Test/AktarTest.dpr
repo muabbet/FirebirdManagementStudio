@@ -884,9 +884,104 @@ begin
   Kontrol('windows: ayrac bos degil', S.Ayrac <> #0);
 end;
 
+{ ---------- INSERT script ---------- }
+
+{ Script'i InsertScriptiUret ile yazar; metni verir. }
+function InsertScripti(const Sql, Tablo: string; Uyarilar: TStrings; out Satir: Int64): string;
+var
+  Yazici: TStringWriter;
+begin
+  Yazici := TStringWriter.Create;
+  try
+    InsertScriptiUret(Bag, Sql, Tablo, Yazici, Uyarilar, nil, Satir);
+    Result := Yazici.ToString;
+  finally
+    Yazici.Free;
+  end;
+end;
+
+{ Script'teki her komutu (sonu ");" + satir sonu) tek tek calistirir; calistirilan komut sayisini verir. }
+function ScriptiCalistir(const Script: string): Integer;
+const
+  SON = ');'#13#10;
+var
+  Kalan, Komutu: string;
+  Yer: Integer;
+begin
+  Result := 0;
+  Kalan := Script;
+  Yer := Pos(SON, Kalan);
+  while Yer > 0 do
+  begin
+    Komutu := Copy(Kalan, 1, Yer);
+    Komut(Komutu);
+    Inc(Result);
+    Delete(Kalan, 1, Yer + Length(SON) - 1);
+    Yer := Pos(SON, Kalan);
+  end;
+end;
+
+procedure InsertTesti(N: Integer);
+var
+  Mantik, Script, Kopya, Asil: string;
+  Uyarilar: TStringList;
+  Satir: Int64;
+  Dosya1, Dosya2: string;
+begin
+  Mantik := '';
+  if SurumNo >= 3 then
+    Mantik := 'MANTIK BOOLEAN, ';
+  Komut('CREATE TABLE T_KOPYA (ID INTEGER NOT NULL PRIMARY KEY, AD VARCHAR(100), SABIT CHAR(6), SM SMALLINT, ' +
+    'TAM INTEGER, BIG BIGINT, NUM NUMERIC(18,2), DES DECIMAL(9,3), KUCUK NUMERIC(4,1), TEK FLOAT, ' +
+    'CIFT DOUBLE PRECISION, TAR DATE, SAAT TIME, ZAMAN TIMESTAMP, ' + Mantik +
+    'NOTM BLOB SUB_TYPE TEXT, IKILI BLOB SUB_TYPE BINARY)');
+  Uyarilar := TStringList.Create;
+  try
+    { 1. T_ALAN'in butun tipleri: script'i calistirinca T_KOPYA, T_ALAN ile ayni olmali (CSV'leri ayni). }
+    Script := InsertScripti('SELECT * FROM T_ALAN ORDER BY ID', 'T_KOPYA', Uyarilar, Satir);
+    Kontrol('insert: 7 satir yazildi', Satir = 7);
+    Kontrol('insert: komut "INSERT INTO ""T_KOPYA"" (" ile baslar', StartsText('INSERT INTO "T_KOPYA" ("ID", "AD"', Script));
+    Kontrol('insert: ikili kolon icin uyari var (IKILI)', (Uyarilar.Count = 1) and (Pos('IKILI', Uyarilar[0]) > 0));
+    Kontrol('insert: script komutlari calisti (7)', ScriptiCalistir(Script) = 7);
+    Dosya1 := AktarDosyaYolu('insert_asil');
+    Dosya2 := AktarDosyaYolu('insert_kopya');
+    Uyarilar.Clear;
+    Aktar('SELECT * FROM T_ALAN ORDER BY ID', Dosya1, Secenek(';', ','), Uyarilar, nil, Satir);
+    Aktar('SELECT * FROM T_KOPYA ORDER BY ID', Dosya2, Secenek(';', ','), Uyarilar, nil, Satir);
+    Asil := DosyaMetni(Dosya1);
+    Kopya := DosyaMetni(Dosya2);
+    Kontrol('insert: kopya tablo asil ile ayni (bos, NULL, Turkce, tirnak, satir sonu, sayilar, tarihler)',
+      (Asil = Kopya) and (Length(Asil) > 5000));
+
+    { 2. Kesme isareti ve NULL: 'O''Brien' }
+    Uyarilar.Clear;
+    Script := InsertScripti('SELECT ''O''''Brien'' AS "AD X", CAST(NULL AS INTEGER) AS N, 1.50 AS S FROM RDB$DATABASE',
+      'TABLO_ADI', Uyarilar, Satir);
+    Kontrol('insert: kesme isareti ikiye katlandi, NULL, sayi',
+      (Script = 'INSERT INTO "TABLO_ADI" ("AD X", "N", "S") VALUES (''O''''Brien'', NULL, 1.5);'#13#10) and (Uyarilar.Count = 0));
+
+    { 3. Bos sonuc }
+    Script := InsertScripti('SELECT * FROM T_ALAN WHERE ID < 0', 'T_ALAN', Uyarilar, Satir);
+    Kontrol('insert: bos sonucta script bos, satir 0', (Satir = 0) and (Script = ''));
+
+    { 4. Sinir: buyuk tabloda (N > sinir ise) en cok INSERT_SATIR_SINIRI satir, uyari }
+    if N > INSERT_SATIR_SINIRI then
+    begin
+      Uyarilar.Clear;
+      Script := InsertScripti('SELECT * FROM T_BUYUK ORDER BY 1', 'T_BUYUK', Uyarilar, Satir);
+      Kontrol('insert: sinir ' + IntToStr(INSERT_SATIR_SINIRI) + ' satirda durur ve uyarir',
+        (Satir = INSERT_SATIR_SINIRI) and (Uyarilar.Count = 1));
+    end;
+  finally
+    Uyarilar.Free;
+  end;
+end;
+
 procedure DilAnahtarTesti;
 const
-  ANAHTARLAR: array[0..16] of string = ('AKTAR_DUGME', 'AKTAR_AD_SORGU', 'AKTAR_BASLIK', 'AKTAR_DOSYA', 'AKTAR_SEC',
+  ANAHTARLAR: array[0..22] of string = ('AKTAR_INSERT', 'AKTAR_INSERT_BITTI', 'AKTAR_INSERT_BOS', 'AKTAR_INSERT_IPTAL',
+    'AKTAR_UYARI_INSERT_SINIR', 'AKTAR_UYARI_BLOB_NULL',
+    'AKTAR_DUGME', 'AKTAR_AD_SORGU', 'AKTAR_BASLIK', 'AKTAR_DOSYA', 'AKTAR_SEC',
     'AKTAR_BASLAT', 'AKTAR_FILTRE', 'AKTAR_ILERLEME', 'AKTAR_BITTI', 'AKTAR_IPTAL', 'AKTAR_UYARI_BLOB',
     'AKTAR_UYARI_EXCEL', 'ERR_AKTAR_DOSYA_BOS', 'ERR_AKTAR_DOSYA', 'ERR_AKTAR_YAPILAMADI', 'ERR_SALT_OKUNUR',
     'ONAY_UZERINE_YAZ');
@@ -972,6 +1067,8 @@ begin
       SaltOkunurTesti;
       Cikti.Add('--- 7. Hatalar ---');
       HataTestleri(Tanim);
+      Cikti.Add('--- 8. INSERT script ---');
+      InsertTesti(N);
       Milyon := Ortam('AKTAR_MILYON', '');
       if Milyon <> '' then
       begin

@@ -16,8 +16,13 @@ uses
 const
   { Excel bir sayfada en fazla bu kadar veri satiri (baslik haric) acabilir. }
   EXCEL_SATIR_SINIRI = 1048575;
+  { INSERT script sorgu editorune konur; editor cok buyuk metinde yavaslar, bu yuzden sinir var. }
+  INSERT_SATIR_SINIRI = 50000;
 
 type
+  { INSERT script'in acilacagi yeni sorgu sekmesini ana pencere acar. }
+  TScriptAcici = procedure(const BaglantiAd, Metin: string) of object;
+
   TCsvSecenekleri = record
     Ayrac: Char;
     Ondalik: Char;
@@ -40,6 +45,12 @@ function VarsayilanCsvAdi(const Ad: string): string;
 function CsvAktar(Bag: TAcikBaglanti; const Sql: string; Yazici: TTextWriter; const Secenekler: TCsvSecenekleri;
   Uyarilar: TStrings; Ilerleme: TCsvIlerlemesi; out SatirSayisi: Int64): Boolean;
 
+{ Sql'in sonucunu "INSERT INTO Tablo (...) VALUES (...);" satirlari olarak Yazici'ya yazar (satir basina bir komut;
+  ayni salt okunur islem, parca parca okuma). En cok INSERT_SATIR_SINIRI satir yazilir, fazlasi icin Uyarilar'a cumle
+  eklenir. Ikili BLOB degerleri NULL yazilir (uyari eklenir). Iptalde False doner. Komut CALISTIRILMAZ. }
+function InsertScriptiUret(Bag: TAcikBaglanti; const Sql, Tablo: string; Yazici: TTextWriter;
+  Uyarilar: TStrings; Ilerleme: TCsvIlerlemesi; out SatirSayisi: Int64): Boolean;
+
 { Aktarma hatasini anlasilir cumleye cevirir: dosya sorunlari (klasor yok, disk dolu, dosya acik) icin
   kendi cumlemiz, veritabani hatalari icin uBaglanti.HataMetniniCevir. }
 function AktarmaHatasiniCevir(Hata: Exception): string;
@@ -50,7 +61,7 @@ uses
   Winapi.Windows, System.Math, Data.DB, Data.FmtBcd,
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error,
   FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
-  uDil;
+  uDil, uSorgu;
 
 const
   { Ekrandaki sonuc 500'er satir cekilir; aktarma da ayni buyuklukte parcalarla okur. }
@@ -207,12 +218,44 @@ begin
   end;
 end;
 
+{ Sql'i YENI, SALT OKUNUR, anlik goruntulu bir islemle acar (Islem ve Sorgu cagiranin, o serbest birakir).
+  Salt okunur: SELECT ... FROM prosedur gibi yan etkili bir komut veri yazamaz, Firebird hata verir.
+  Anlik goruntu: uzun surse bile cikti tek bir andaki veriyi yansitir. }
+procedure SaltOkunurSorguAc(Bag: TAcikBaglanti; const Sql: string; Islem: TFDTransaction; Sorgu: TFDQuery);
+var
+  Kural: TFDMapRule;
+begin
+  Islem.Connection := Bag.Baglanti;
+  Islem.Options.ReadOnly := True;
+  Islem.Options.Isolation := xiSnapshot;
+  Islem.Options.AutoCommit := False;
+  Sorgu.Connection := Bag.Baglanti;
+  Sorgu.Transaction := Islem;
+  { Komut oldugu gibi gitsin: ':ad' parametre, '!ad' makro sayilmasin. }
+  Sorgu.ResourceOptions.ParamCreate := False;
+  Sorgu.ResourceOptions.MacroCreate := False;
+  Sorgu.ResourceOptions.MacroExpand := False;
+  Sorgu.ResourceOptions.EscapeExpand := False;
+  Sorgu.UpdateOptions.ReadOnly := True;
+  { Bellekte biriktirme yok: parca parca okunur, okunan satir birakilir. }
+  Sorgu.FetchOptions.Mode := fmOnDemand;
+  Sorgu.FetchOptions.Unidirectional := True;
+  Sorgu.FetchOptions.RowsetSize := OKUMA_PARCASI;
+  Sorgu.FetchOptions.Cache := [];
+  { NUMERIC(18,2) gibi degerler Currency'ye (4 hane, ~9e14) sigmasin diye hep FMTBCD okunur. }
+  Sorgu.FormatOptions.OwnMapRules := True;
+  Kural := Sorgu.FormatOptions.MapRules.Add;
+  Kural.SourceDataType := dtBCD;
+  Kural.TargetDataType := dtFmtBCD;
+  Sorgu.SQL.Text := Trim(Sql);
+  Sorgu.Open;
+end;
+
 function CsvAktar(Bag: TAcikBaglanti; const Sql: string; Yazici: TTextWriter; const Secenekler: TCsvSecenekleri;
   Uyarilar: TStrings; Ilerleme: TCsvIlerlemesi; out SatirSayisi: Int64): Boolean;
 var
   Islem: TFDTransaction;
   Sorgu: TFDQuery;
-  Kural: TFDMapRule;
   Bicim: TFormatSettings;
   Turler: array of TKolonTuru;
   Satir: TStringBuilder;
@@ -229,32 +272,7 @@ begin
   Sorgu := TFDQuery.Create(nil);
   Satir := TStringBuilder.Create;
   try
-    Islem.Connection := Bag.Baglanti;
-    { Salt okunur: SELECT ... FROM prosedur gibi yan etkili bir komut veri yazamaz, Firebird hata verir.
-      Anlik goruntu: uzun surse bile dosya tek bir andaki veriyi yansitir. }
-    Islem.Options.ReadOnly := True;
-    Islem.Options.Isolation := xiSnapshot;
-    Islem.Options.AutoCommit := False;
-    Sorgu.Connection := Bag.Baglanti;
-    Sorgu.Transaction := Islem;
-    { Komut oldugu gibi gitsin: ':ad' parametre, '!ad' makro sayilmasin. }
-    Sorgu.ResourceOptions.ParamCreate := False;
-    Sorgu.ResourceOptions.MacroCreate := False;
-    Sorgu.ResourceOptions.MacroExpand := False;
-    Sorgu.ResourceOptions.EscapeExpand := False;
-    Sorgu.UpdateOptions.ReadOnly := True;
-    { Bellekte biriktirme yok: parca parca okunur, okunan satir birakilir. }
-    Sorgu.FetchOptions.Mode := fmOnDemand;
-    Sorgu.FetchOptions.Unidirectional := True;
-    Sorgu.FetchOptions.RowsetSize := OKUMA_PARCASI;
-    Sorgu.FetchOptions.Cache := [];
-    { NUMERIC(18,2) gibi degerler Currency'ye (4 hane, ~9e14) sigmasin diye hep FMTBCD okunur. }
-    Sorgu.FormatOptions.OwnMapRules := True;
-    Kural := Sorgu.FormatOptions.MapRules.Add;
-    Kural.SourceDataType := dtBCD;
-    Kural.TargetDataType := dtFmtBCD;
-    Sorgu.SQL.Text := Trim(Sql);
-    Sorgu.Open;
+    SaltOkunurSorguAc(Bag, Sql, Islem, Sorgu);
 
     SetLength(Turler, Sorgu.FieldCount);
     Atlanan := '';
@@ -308,6 +326,101 @@ begin
     Satir.Free;
     Sorgu.Free;
     { Salt okunur islemde commit ile rollback ayni sonucu verir; hicbir sey degismez. }
+    if Islem.Active then
+      Islem.Rollback;
+    Islem.Free;
+  end;
+end;
+
+function InsertDegeri(Alan: TField; Tur: TKolonTuru; const Bicim: TFormatSettings): string;
+begin
+  if Alan.IsNull or (Tur = ktIkili) then
+    Exit('NULL');
+  case Tur of
+    ktMetin, ktMetinBlob:
+      Result := '''' + StringReplace(Alan.AsString, '''', '''''', [rfReplaceAll]) + '''';
+    ktTarih:
+      Result := '''' + DegeriYaz(Alan, Tur, Bicim) + '''';
+    { Saat ve zaman damgasi: kesirli saniye de yazilir (CSV'deki gibi kirpilmaz). }
+    ktSaat:
+      Result := '''' + FormatDateTime('hh:nn:ss.zzz', Alan.AsDateTime, Bicim) + '''';
+    ktZaman:
+      Result := '''' + FormatDateTime('yyyy-mm-dd hh:nn:ss.zzz', Alan.AsDateTime, Bicim) + '''';
+  else
+    Result := DegeriYaz(Alan, Tur, Bicim);
+  end;
+end;
+
+function InsertScriptiUret(Bag: TAcikBaglanti; const Sql, Tablo: string; Yazici: TTextWriter;
+  Uyarilar: TStrings; Ilerleme: TCsvIlerlemesi; out SatirSayisi: Int64): Boolean;
+var
+  Islem: TFDTransaction;
+  Sorgu: TFDQuery;
+  Bicim: TFormatSettings;
+  Turler: array of TKolonTuru;
+  Satir: TStringBuilder;
+  Baslangic, Atlanan: string;
+  i: Integer;
+  Iptal: Boolean;
+begin
+  SatirSayisi := 0;
+  Result := True;
+  Iptal := False;
+  Bicim := TFormatSettings.Invariant;
+  Islem := TFDTransaction.Create(nil);
+  Sorgu := TFDQuery.Create(nil);
+  Satir := TStringBuilder.Create;
+  try
+    SaltOkunurSorguAc(Bag, Sql, Islem, Sorgu);
+    SetLength(Turler, Sorgu.FieldCount);
+    Baslangic := 'INSERT INTO ' + TirnakliAd(Tablo) + ' (';
+    Atlanan := '';
+    for i := 0 to Sorgu.FieldCount - 1 do
+    begin
+      Turler[i] := KolonTuruBul(Sorgu.Fields[i]);
+      if Turler[i] = ktIkili then
+      begin
+        if Atlanan <> '' then
+          Atlanan := Atlanan + ', ';
+        Atlanan := Atlanan + Sorgu.Fields[i].FieldName;
+      end;
+      if i > 0 then
+        Baslangic := Baslangic + ', ';
+      Baslangic := Baslangic + TirnakliAd(Sorgu.Fields[i].FieldName);
+    end;
+    Baslangic := Baslangic + ') VALUES (';
+
+    while (not Sorgu.Eof) and (SatirSayisi < INSERT_SATIR_SINIRI) do
+    begin
+      Satir.Clear;
+      Satir.Append(Baslangic);
+      for i := 0 to Sorgu.FieldCount - 1 do
+      begin
+        if i > 0 then
+          Satir.Append(', ');
+        Satir.Append(InsertDegeri(Sorgu.Fields[i], Turler[i], Bicim));
+      end;
+      Satir.Append(');').Append(#13#10);
+      Yazici.Write(Satir.ToString);
+      Inc(SatirSayisi);
+      if (SatirSayisi mod ILERLEME_ARALIGI = 0) and Assigned(Ilerleme) then
+      begin
+        Ilerleme(SatirSayisi, Iptal);
+        if Iptal then
+        begin
+          Result := False;
+          Break;
+        end;
+      end;
+      Sorgu.Next;
+    end;
+    if Result and (not Sorgu.Eof) then
+      Uyarilar.Add(TF('AKTAR_UYARI_INSERT_SINIR', [INSERT_SATIR_SINIRI]));
+    if Atlanan <> '' then
+      Uyarilar.Add(TF('AKTAR_UYARI_BLOB_NULL', [Atlanan]));
+  finally
+    Satir.Free;
+    Sorgu.Free;
     if Islem.Active then
       Islem.Rollback;
     Islem.Free;

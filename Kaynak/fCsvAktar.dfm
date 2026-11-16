@@ -2,7 +2,7 @@ object frmCsvAktar: TfrmCsvAktar
   Left = 0
   Top = 0
   BorderStyle = bsDialog
-  ClientHeight = 168
+  ClientHeight = 196
   ClientWidth = 560
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -19,9 +19,17 @@ object frmCsvAktar: TfrmCsvAktar
     Height = 17
     AutoSize = False
   end
+  object chkInsert: TCheckBox
+    Left = 12
+    Top = 76
+    Width = 536
+    Height = 21
+    TabOrder = 3
+    OnClick = chkInsertClick
+  end
   object lblDurum: TLabel
     Left = 12
-    Top = 90
+    Top = 106
     Width = 536
     Height = 36
     AutoSize = False
@@ -45,7 +53,7 @@ object frmCsvAktar: TfrmCsvAktar
   end
   object pnlAlt: TPanel
     Left = 0
-    Top = 116
+    Top = 144
     Width = 560
     Height = 52
     Align = alBottom

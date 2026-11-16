@@ -15,6 +15,7 @@ type
     lblDosya: TLabel;
     edtDosya: TEdit;
     btnSec: TButton;
+    chkInsert: TCheckBox;
     lblDurum: TLabel;
     pnlAlt: TPanel;
     btnKapat: TButton;
@@ -23,10 +24,13 @@ type
     procedure btnSecClick(Sender: TObject);
     procedure btnBaslatClick(Sender: TObject);
     procedure btnKapatClick(Sender: TObject);
+    procedure chkInsertClick(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
   private
     FBag: TAcikBaglanti;
     FSql: string;
+    FTablo: string;
+    FScriptAc: TScriptAcici;
     FSonuc: TStrings;
     FCalisiyor: Boolean;
     FIptalIstendi: Boolean;
@@ -34,18 +38,22 @@ type
     procedure YazilariYaz(const Ad: string; Filtreli: Boolean);
     procedure CalisiyorAyarla(Calisiyor: Boolean);
     procedure Ilerle(SatirSayisi: Int64; var Iptal: Boolean);
+    procedure InsertScriptiniAc;
     procedure SonucuYaz(Tamam: Boolean; const Dosya: string; SatirSayisi: Int64; Sure: Int64; Uyarilar: TStrings);
   end;
 
 { Pencereyi gosterir. Ad: varsayilan dosya adinin basi (tablo adi ya da "sorgu"). Bitince ozet ve uyarilar
-  Sonuc'a (ana pencerenin sonuc alani) eklenir. }
-procedure CsvPenceresiniGoster(Bag: TAcikBaglanti; const Sql, Ad: string; Sonuc: TStrings; Filtreli: Boolean = False);
+  Sonuc'a (ana pencerenin sonuc alani) eklenir. Tablo: INSERT script'teki tablo adi (sorgu sonucunda bos;
+  o zaman TABLO_ADI yazilir, kullanici degistirir). ScriptAc bos ise INSERT secenegi calismaz. }
+procedure CsvPenceresiniGoster(Bag: TAcikBaglanti; const Sql, Ad, Tablo: string; Sonuc: TStrings;
+  ScriptAc: TScriptAcici; Filtreli: Boolean = False);
 
 implementation
 
 {$R *.dfm}
 
-procedure CsvPenceresiniGoster(Bag: TAcikBaglanti; const Sql, Ad: string; Sonuc: TStrings; Filtreli: Boolean);
+procedure CsvPenceresiniGoster(Bag: TAcikBaglanti; const Sql, Ad, Tablo: string; Sonuc: TStrings;
+  ScriptAc: TScriptAcici; Filtreli: Boolean);
 var
   Pencere: TfrmCsvAktar;
 begin
@@ -53,6 +61,8 @@ begin
   try
     Pencere.FBag := Bag;
     Pencere.FSql := Sql;
+    Pencere.FTablo := Tablo;
+    Pencere.FScriptAc := ScriptAc;
     Pencere.FSonuc := Sonuc;
     Pencere.YazilariYaz(Ad, Filtreli);
     Pencere.ShowModal;
@@ -64,6 +74,8 @@ end;
 procedure TfrmCsvAktar.YazilariYaz(const Ad: string; Filtreli: Boolean);
 begin
   Caption := T('AKTAR_BASLIK');
+  chkInsert.Caption := T('AKTAR_INSERT');
+  chkInsert.Visible := Assigned(FScriptAc);
   { Tablo sekmesinde filtre varsa yalniz filtreye uyan satirlar aktarilir; pencere basliginda yazar. }
   if Filtreli then
     Caption := Caption + ' (' + T('LBL_FILTRELI') + ')';
@@ -82,8 +94,9 @@ procedure TfrmCsvAktar.CalisiyorAyarla(Calisiyor: Boolean);
 begin
   FCalisiyor := Calisiyor;
   FIptalIstendi := False;
-  edtDosya.Enabled := not Calisiyor;
-  btnSec.Enabled := not Calisiyor;
+  edtDosya.Enabled := not Calisiyor and not chkInsert.Checked;
+  btnSec.Enabled := not Calisiyor and not chkInsert.Checked;
+  chkInsert.Enabled := not Calisiyor;
   btnBaslat.Enabled := not Calisiyor;
   if Calisiyor then
     btnKapat.Caption := T('BTN_IPTAL')
@@ -110,6 +123,65 @@ begin
   dlgKaydet.FileName := edtDosya.Text;
   if dlgKaydet.Execute then
     edtDosya.Text := dlgKaydet.FileName;
+end;
+
+{ INSERT secilince dosya alani gerekmez. }
+procedure TfrmCsvAktar.chkInsertClick(Sender: TObject);
+begin
+  edtDosya.Enabled := not chkInsert.Checked;
+  btnSec.Enabled := not chkInsert.Checked;
+end;
+
+{ INSERT komutlarini uretir ve ana pencerede yeni sorgu sekmesinde acar; hicbiri calistirilmaz. }
+procedure TfrmCsvAktar.InsertScriptiniAc;
+var
+  Yazici: TStringWriter;
+  Uyarilar: TStringList;
+  Saat: TStopwatch;
+  SatirSayisi: Int64;
+  Tamam: Boolean;
+  Tablo, Sayi, Uyari: string;
+begin
+  Tablo := FTablo;
+  if Tablo = '' then
+    Tablo := 'TABLO_ADI';
+  Yazici := TStringWriter.Create;
+  Uyarilar := TStringList.Create;
+  try
+    CalisiyorAyarla(True);
+    try
+      Saat := TStopwatch.StartNew;
+      try
+        Tamam := InsertScriptiUret(FBag, FSql, Tablo, Yazici, Uyarilar, Ilerle, SatirSayisi);
+      except
+        on E: Exception do
+        begin
+          lblDurum.Caption := '';
+          UyariGoster(T('ERR_AKTAR_YAPILAMADI') + ' ' + AktarmaHatasiniCevir(E) + sLineBreak + sLineBreak +
+            T('AYRINTI') + ': ' + E.Message);
+          Exit;
+        end;
+      end;
+    finally
+      CalisiyorAyarla(False);
+    end;
+    Sayi := Format('%.0n', [SatirSayisi + 0.0]);
+    if not Tamam then
+      FSonuc.Add(T('AKTAR_INSERT_IPTAL'))
+    else if SatirSayisi = 0 then
+      FSonuc.Add(T('AKTAR_INSERT_BOS'))
+    else
+    begin
+      FScriptAc(FBag.Tanim.Ad, Yazici.ToString);
+      FSonuc.Add(TF('AKTAR_INSERT_BITTI', [Sayi, Format('%.1f', [Saat.ElapsedMilliseconds / 1000]), Tablo]));
+    end;
+    for Uyari in Uyarilar do
+      FSonuc.Add('  ' + Uyari);
+    ModalResult := mrOk;
+  finally
+    Uyarilar.Free;
+    Yazici.Free;
+  end;
 end;
 
 procedure TfrmCsvAktar.btnKapatClick(Sender: TObject);
@@ -155,6 +227,11 @@ var
   SatirSayisi: Int64;
   Tamam: Boolean;
 begin
+  if chkInsert.Checked then
+  begin
+    InsertScriptiniAc;
+    Exit;
+  end;
   Dosya := Trim(edtDosya.Text);
   if Dosya = '' then
   begin
