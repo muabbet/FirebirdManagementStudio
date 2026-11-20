@@ -75,7 +75,7 @@
   "HAKKINDA_YETKI_NORMAL": "Normal user",
   "HAKKINDA_PLATFORM": "Platform:",
   "BTN_SURUMU_KOPYALA": "Copy version",
-  "BTN_FIKIR_ONERI": "Ideas & feedback",
+  "BTN_FIKIR_ONERI": "Ideas && feedback",
   "HAKKINDA_BASLIK": "About",
   "HAKKINDA_LISANS_BASLIK": "License",
   "HAKKINDA_LISANS_METIN": "Free and open source, a personal project. Support is limited. Your ideas and suggestions are very welcome.",
@@ -1169,4 +1169,13 @@
   "ERR_SQL_OKUNAMADI": "The file could not be read: %s",
   "SQL_KAYDET_SOR": "\"%s\" has unsaved changes. Save them?",
   "BTN_KAYDETME": "Don't save"
+,
+  "BTN_GUNCELLEME_DENETLE": "Check for updates",
+  "MSG_YENI_SURUM": "A new version is available: %s. You can download it with the Check for updates button in the About window.",
+  "MSG_YENI_SURUM_DOSYASIZ": "A new version is available: %s. No download file was found; you can download it from the GitHub page.",
+  "GUNC_SOR": "A new version is available: %s\n\nFile: %s (%.1f MB)\nDownload folder: %s\n\nDownload it? The program does not change by itself; open the downloaded zip and replace the old exe.",
+  "MSG_GUNC_INDI": "New version downloaded: %s. Close the program and replace it with the exe in the zip.",
+  "MSG_SURUM_GUNCEL": "Your program is up to date (version %s).",
+  "ERR_GUNC_DENETLENEMEDI": "Could not check for a new version. Please check your internet connection.",
+  "ERR_GUNC_INDIRILEMEDI": "Could not download the new version. Detail:"
 }

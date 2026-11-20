@@ -73,6 +73,7 @@ uses
   uAra in 'uAra.pas',
   uDokuman in 'uDokuman.pas',
   uVeriFark in 'uVeriFark.pas',
+  uGuncelleme in 'uGuncelleme.pas',
   fVeriFark in 'fVeriFark.pas' {frmVeriFark},
   fAra in 'fAra.pas' {frmAra},
   fKullananlar in 'fKullananlar.pas' {frmKullananlar},

@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme, fIndeksOner, uAra, fAra, uSqlDosya, uDokuman, fVeriFark;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme, fIndeksOner, uAra, fAra, uSqlDosya, uDokuman, fVeriFark, uGuncelleme, uUygulama;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -201,6 +201,7 @@ type
     { Olusturma isi biten "Yeni" sekmesi: sekmenin kendi olayinin icinde silinmez, kuyruktan kapatilir. }
     FKapatilacakSayfa: TTabSheet;
     procedure SeritKur;
+    procedure AcilistaSurumDenetle;
     procedure YazilariYenile;
     procedure DilListesiniDoldur;
     procedure DurumuGuncelle;
@@ -331,6 +332,34 @@ begin
   Uyari := BozukDosyaUyarisiAl;
   if Uyari <> '' then
     UyariGoster(Uyari);
+  AcilistaSurumDenetle;
+end;
+
+{ Program acilirken arka planda GitHub'a sorar (ekran donmaz). Hata ya da ag yoksa sessiz kalir; yeni surum varsa
+  mesaj alanina yazar ve indirmek isteyip istemedigini sorar. Calisan exe degismez. }
+procedure TfrmAna.AcilistaSurumDenetle;
+begin
+  TThread.CreateAnonymousThread(
+    procedure
+    var
+      Bilgi: TSurumBilgisi;
+    begin
+      Bilgi := SonSurumuDenetle(UYGULAMA_SURUMU);
+      if not (Bilgi.Basarili and Bilgi.Yeni) then
+        Exit;
+      TThread.Queue(nil,
+        procedure
+        var
+          Mesaj: string;
+        begin
+          if csDestroying in ComponentState then
+            Exit;
+          MesajYaz(TF('MSG_YENI_SURUM', [Bilgi.Surum]));
+          Mesaj := YeniSurumuSorVeIndir(Bilgi);
+          if Mesaj <> '' then
+            MesajYaz(Mesaj);
+        end);
+    end).Start;
 end;
 
 procedure TfrmAna.FormDestroy(Sender: TObject);

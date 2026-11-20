@@ -1169,4 +1169,13 @@
   "ERR_SQL_OKUNAMADI": "Dosya okunamadı: %s",
   "SQL_KAYDET_SOR": "\"%s\" dosyasında kaydedilmemiş değişiklik var. Kaydedilsin mi?",
   "BTN_KAYDETME": "Kaydetme"
+,
+  "BTN_GUNCELLEME_DENETLE": "Güncellemeyi denetle",
+  "MSG_YENI_SURUM": "Yeni sürüm geldi: %s. Hakkında penceresindeki Güncellemeyi denetle düğmesiyle indirebilirsiniz.",
+  "MSG_YENI_SURUM_DOSYASIZ": "Yeni sürüm geldi: %s. İndirme dosyası bulunamadı; GitHub sayfasından indirebilirsiniz.",
+  "GUNC_SOR": "Yeni sürüm geldi: %s\n\nDosya: %s (%.1f MB)\nİndirilecek klasör: %s\n\nİndirilsin mi? Program kendiliğinden değişmez; indirilen zip dosyasını açıp eski exe yerine koyarsınız.",
+  "MSG_GUNC_INDI": "Yeni sürüm indirildi: %s. Programı kapatıp zip içindeki exe ile değiştirin.",
+  "MSG_SURUM_GUNCEL": "Programınız güncel (sürüm %s).",
+  "ERR_GUNC_DENETLENEMEDI": "Yeni sürüm denetlenemedi. İnternet bağlantınızı kontrol edin.",
+  "ERR_GUNC_INDIRILEMEDI": "Yeni sürüm indirilemedi. Ayrıntı:"
 }
