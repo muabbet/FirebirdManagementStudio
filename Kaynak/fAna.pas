@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme, fIndeksOner, uAra, fAra, uSqlDosya;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme, fIndeksOner, uAra, fAra, uSqlDosya, uDokuman, fVeriFark;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -108,6 +108,8 @@ type
     procedure btnAktifBaglantiClick(Sender: TObject);
     procedure btnBakimClick(Sender: TObject);
     procedure btnAraClick(Sender: TObject);
+    procedure btnDokumanClick(Sender: TObject);
+    procedure btnVeriFarkiClick(Sender: TObject);
     procedure btnYenileClick(Sender: TObject);
     procedure cmbDilChange(Sender: TObject);
     procedure btnYoneticiClick(Sender: TObject);
@@ -186,6 +188,8 @@ type
     btnAktifBaglanti: TSeritDugmesi;
     btnBakim: TSeritDugmesi;
     btnAra: TSeritDugmesi;
+    btnDokuman: TSeritDugmesi;
+    btnVeriFarki: TSeritDugmesi;
     FDilKodlari: TArray<string>;
     FOgeler: TObjectList<TAgacOgesi>;
     FSurukleNode: TTreeNode;
@@ -365,6 +369,8 @@ begin
   btnAktifBaglanti := FSerit.Ekle('GRUP_YONETIM', 'BTN_AKTIF_BAGLANTI', IKON_VERITABANI, btnAktifBaglantiClick);
   btnBakim := FSerit.Ekle('GRUP_YONETIM', 'BTN_BAKIM', IKON_VERITABANI, btnBakimClick);
   btnAra := FSerit.Ekle('GRUP_YONETIM', 'BTN_ARA', IKON_PLAN, btnAraClick);
+  btnDokuman := FSerit.Ekle('GRUP_YONETIM', 'BTN_DOKUMAN', IKON_METADATA, btnDokumanClick);
+  btnVeriFarki := FSerit.Ekle('GRUP_YONETIM', 'BTN_VERI_FARKI', IKON_PLAN, btnVeriFarkiClick);
   btnKullanicilar.ShowHint := True;
   btnAyrinti := FSerit.Ekle('GRUP_GORUNUM', 'BTN_AYRINTI_KAPAT', IKON_VIEW, btnAyrintiClick);
   btnTumKapat := FSerit.Ekle('GRUP_GORUNUM', 'BTN_TUM_KAPAT', IKON_KAPAT, btnTumKapatClick);
@@ -620,6 +626,8 @@ begin
   btnAktifBaglanti.Enabled := Bag <> nil;
   btnBakim.Enabled := Bag <> nil;
   btnAra.Enabled := Bag <> nil;
+  btnDokuman.Enabled := Bag <> nil;
+  btnVeriFarki.Enabled := Bag <> nil;
   { Kullanicilar: yalniz acik ve sunucu kipindeki baglantida; gomulu baglantida gerekce arac ipucunda. }
   btnKullanicilar.Enabled := (Bag <> nil) and KullaniciYetenekleri(Bag).YonetimVar;
   if (Bag <> nil) and not KullaniciYetenekleri(Bag).YonetimVar then
@@ -1595,6 +1603,70 @@ begin
   Bag := FbAcikBaglanti(OgeAl(SeciliBaglantiDugmesi).BaglantiAd);
   if (Bag <> nil) and AraPenceresiniGoster(Bag, Secim) then
     AramaSonucunuAc(Bag.Tanim.Ad, Secim);
+end;
+
+{ Veri farki penceresi: secili baglanti (ve secili tablo) kaynak olarak gelir (bkz. fVeriFark). }
+procedure TfrmAna.btnVeriFarkiClick(Sender: TObject);
+var
+  Tablo: string;
+begin
+  if SeciliBaglantiDugmesi = nil then
+    Exit;
+  Tablo := '';
+  if (tvNesneler.Selected <> nil) and (OgeAl(tvNesneler.Selected).Tur = atNesne) and
+    (OgeAl(tvNesneler.Selected).DalNo = DAL_TABLO) then
+    Tablo := OgeAl(tvNesneler.Selected).Ad;
+  VeriFarkPenceresiniGoster(OgeAl(SeciliBaglantiDugmesi).BaglantiAd, Tablo, memSonuc.Lines, ScriptiSekmedeAc);
+end;
+
+{ Veritabani dokumani: dosya adi sorulur (var olan dosya icin Windows onay sorar), tum yapi HTML'e yazilir (bkz. uDokuman). }
+procedure TfrmAna.btnDokumanClick(Sender: TObject);
+var
+  Bag: TAcikBaglanti;
+  Pencere: TSaveDialog;
+  Ozet: TDokumanOzeti;
+  Ilerleme: TfrmIlerleme;
+begin
+  if SeciliBaglantiDugmesi = nil then
+    Exit;
+  Bag := FbAcikBaglanti(OgeAl(SeciliBaglantiDugmesi).BaglantiAd);
+  if Bag = nil then
+    Exit;
+  Pencere := TSaveDialog.Create(Self);
+  try
+    Pencere.Filter := T('DOK_DOSYA_FILTRE');
+    Pencere.DefaultExt := 'html';
+    Pencere.Options := Pencere.Options + [ofOverwritePrompt];
+    Pencere.FileName := VarsayilanDokumanAdi(Bag);
+    if not Pencere.Execute then
+      Exit;
+    { Ilerleme penceresi: hangi tablo yazildigi gorunur, Iptal dugmesi dokumani eksik birakir (dosya silinmez). }
+    Ilerleme := IlerlemeAc(T('DOK_ILERLEME_BASLIK'));
+    try
+      try
+        Ozet := DokumanDosyasiYaz(Bag, Pencere.FileName,
+          procedure(const Adim: string; var Iptal: Boolean)
+          begin
+            Ilerleme.AdimBildir(Adim, '');
+            Ilerleme.Cikti('', Iptal);
+          end);
+      except
+        on E: Exception do
+        begin
+          HataYaz(T('ERR_DOKUMAN_YAPILAMADI') + ' ' + HataMetniniCevir(E), E.Message);
+          Exit;
+        end;
+      end;
+    finally
+      Ilerleme.Bitir;
+    end;
+    if Ozet.Iptal then
+      MesajYaz(TF('MSG_DOKUMAN_IPTAL', [Pencere.FileName]))
+    else
+      MesajYaz(TF('MSG_DOKUMAN_YAZILDI', [Pencere.FileName, Ozet.Tablo, Ozet.View, Ozet.Prosedur, Ozet.Tetikleyici]));
+  finally
+    Pencere.Free;
+  end;
 end;
 
 procedure TfrmAna.NesneDuzenleSekmesiAc(const BaglantiAd, Ad: string; Tur: TNesneTuru);

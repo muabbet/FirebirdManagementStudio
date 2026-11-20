@@ -187,6 +187,42 @@ begin
   Kontrol('yalniz yapi: tablo var, bos', S.Basarili and S.TabloOlustu and (Oku(B, 'select count(*) from t_yapi') = '0'));
 end;
 
+{ Yetkisiz kullanici hedef olunca (olculen 3.0.14 hata: "There is no privilege for this operation") anlasilir cumle gelmeli.
+  Gercek deneme yalniz sunucuda (3.0+) yapilir: gecici bir kullanici olusturulur ve sonunda silinir. Metin denemesi her yerde. }
+procedure YetkisizHedefTesti(Kaynak: TAcikBaglanti; const HedefTanimi: TBaglantiTanimi);
+var
+  Kisitli: TAcikBaglanti;
+  Tanim: TBaglantiTanimi;
+  S: TKopyaSonucu;
+  Hata: Exception;
+begin
+  Hata := Exception.Create('unsuccessful metadata update' + sLineBreak + 'CREATE TABLE DENEME_YENI failed' + sLineBreak +
+    'There is no privilege for this operation');
+  try
+    Kontrol('metin: "no privilege for this operation" -> ERR_YETKI_YOK', HataMetniniCevir(Hata) = T('ERR_YETKI_YOK'));
+  finally
+    Hata.Free;
+  end;
+  if (HedefTanimi.Sunucu = '') or (Kaynak.Surum < '3') then
+    Exit;
+  Komut(Kaynak, 'CREATE USER KOPYA_YETKISIZ PASSWORD ''kopya1234x''');
+  try
+    Tanim := HedefTanimi;
+    Tanim.Ad := 'kopya_yetkisiz';
+    Tanim.Kullanici := 'KOPYA_YETKISIZ';
+    Tanim.Sifre := 'kopya1234x';
+    Kisitli := FbBaglan(Tanim);
+    try
+      S := TabloKopyala(Kaynak, 'T_KAYNAK', Kisitli, 'T_YETKISIZ', True, nil);
+      Kontrol('yetkisiz hedef: basarisiz, anlasilir cumle (ERR_YETKI_YOK)', (not S.Basarili) and (S.Cumle = T('ERR_YETKI_YOK')));
+    finally
+      FbBaglantiyiKes(Kisitli);
+    end;
+  finally
+    Komut(Kaynak, 'DROP USER KOPYA_YETKISIZ');
+  end;
+end;
+
 procedure DilAnahtarTesti;
 const
   Anahtarlar: array[0..25] of string = ('MENU_TABLO_KOPYALA', 'KOPYA_BASLIK', 'KOPYA_KAYNAK', 'KOPYA_HEDEF_DB', 'KOPYA_HEDEF_AD',
@@ -244,6 +280,8 @@ begin
       Cikti.Add('--- Surum ' + A.Surum + ' ---');
       KaynakKur;
       KopyaTesti;
+      Cikti.Add('--- Yetkisiz hedef ---');
+      YetkisizHedefTesti(A, TanimB);
       Cikti.Add('--- Dil anahtarlari ---');
       DilAnahtarTesti;
       FbBaglantiyiKes(A);

@@ -11,7 +11,7 @@ unit uAktar;
 interface
 
 uses
-  System.SysUtils, System.Classes, uBaglanti;
+  System.SysUtils, System.Classes, Data.DB, FireDAC.Comp.Client, uBaglanti;
 
 const
   { Excel bir sayfada en fazla bu kadar veri satiri (baslik haric) acabilir. }
@@ -51,6 +51,17 @@ function CsvAktar(Bag: TAcikBaglanti; const Sql: string; Yazici: TTextWriter; co
 function InsertScriptiUret(Bag: TAcikBaglanti; const Sql, Tablo: string; Yazici: TTextWriter;
   Uyarilar: TStrings; Ilerleme: TCsvIlerlemesi; out SatirSayisi: Int64): Boolean;
 
+{ Sql'i yeni, salt okunur, anlik goruntulu bir islemle acar (Islem ve Sorgu cagiranin, o serbest birakir; once
+  Sorgu.Free, sonra Islem.Rollback ve Islem.Free). CSV, INSERT script ve veri farki ayni yolu kullanir. }
+procedure SaltOkunurSorguAc(Bag: TAcikBaglanti; const Sql: string; Islem: TFDTransaction; Sorgu: TFDQuery);
+
+{ Alanin gecerli satirdaki degeri SQL degeri olarak: NULL, 'metin' (kesme isareti ikiye katlanir), sayi, 'tarih'.
+  Ikili BLOB her zaman NULL doner (AlanIkiliMi ile ayrica sorulur). Iki degerin ayni olup olmadigini bakmak icin de kullanilir. }
+function AlanSqlDegeri(Alan: TField): string;
+
+{ Alan ikili BLOB mu (SQL degeri olarak yazilamaz)? }
+function AlanIkiliMi(Alan: TField): Boolean;
+
 { Aktarma hatasini anlasilir cumleye cevirir: dosya sorunlari (klasor yok, disk dolu, dosya acik) icin
   kendi cumlemiz, veritabani hatalari icin uBaglanti.HataMetniniCevir. }
 function AktarmaHatasiniCevir(Hata: Exception): string;
@@ -58,9 +69,9 @@ function AktarmaHatasiniCevir(Hata: Exception): string;
 implementation
 
 uses
-  Winapi.Windows, System.Math, Data.DB, Data.FmtBcd,
+  Winapi.Windows, System.Math, Data.FmtBcd,
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Param, FireDAC.Stan.Error,
-  FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Comp.DataSet, FireDAC.Comp.Client,
+  FireDAC.DatS, FireDAC.Phys.Intf, FireDAC.DApt.Intf, FireDAC.Comp.DataSet,
   uDil, uSorgu;
 
 const
@@ -349,6 +360,16 @@ begin
   else
     Result := DegeriYaz(Alan, Tur, Bicim);
   end;
+end;
+
+function AlanSqlDegeri(Alan: TField): string;
+begin
+  Result := InsertDegeri(Alan, KolonTuruBul(Alan), TFormatSettings.Invariant);
+end;
+
+function AlanIkiliMi(Alan: TField): Boolean;
+begin
+  Result := KolonTuruBul(Alan) = ktIkili;
 end;
 
 function InsertScriptiUret(Bag: TAcikBaglanti; const Sql, Tablo: string; Yazici: TTextWriter;

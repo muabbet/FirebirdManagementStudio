@@ -221,6 +221,12 @@
         <DCCReference Include="uIliski.pas"/>
         <DCCReference Include="uOtoArtan.pas"/>
         <DCCReference Include="uAra.pas"/>
+        <DCCReference Include="uDokuman.pas"/>
+        <DCCReference Include="uVeriFark.pas"/>
+        <DCCReference Include="fVeriFark.pas">
+            <Form>frmVeriFark</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <DCCReference Include="fAra.pas">
             <Form>frmAra</Form>
             <FormType>dfm</FormType>

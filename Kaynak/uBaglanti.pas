@@ -1117,7 +1117,8 @@ begin
     Exit(KullaniciVarCumlesi(Hata.Message));
   { Olcum (2.5.9, yetkisiz ALTER PROCEDURE): kod 335544352 gelmiyor, yalniz "no permission for protect access to
     PROCEDURE X" metni var. Erisim turu (protect, INSERT, DELETE, ALTER...) ne olursa olsun ayni cumle. }
-  if Iceriyor(Hata.Message, 'no permission for') then
+  { Olcum (3.0.14, yetkisiz kullanicinin CREATE TABLE'i): "There is no privilege for this operation". }
+  if Iceriyor(Hata.Message, 'no permission for') or Iceriyor(Hata.Message, 'no privilege for this operation') then
     Exit(T('ERR_YETKI_YOK'));
   { Olcum (3f, 2.5.9 - 5.0.4): view kolonu baska view tarafindan kullaniliyorsa "Column X from table V is referenced in
     view W"; DROP'ta "cannot delete ... there are N dependencies". Kod 2.5'te nesne-yok koduyla karisabildigi icin
