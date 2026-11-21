@@ -70,6 +70,7 @@ uses
   uFiltreSatiri in 'uFiltreSatiri.pas',
   uIliski in 'uIliski.pas',
   uOtoArtan in 'uOtoArtan.pas',
+  uAciklama in 'uAciklama.pas',
   uAra in 'uAra.pas',
   uDokuman in 'uDokuman.pas',
   uVeriFark in 'uVeriFark.pas',

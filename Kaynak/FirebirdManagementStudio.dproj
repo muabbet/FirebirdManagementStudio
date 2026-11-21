@@ -220,6 +220,7 @@
         <DCCReference Include="uFiltreSatiri.pas"/>
         <DCCReference Include="uIliski.pas"/>
         <DCCReference Include="uOtoArtan.pas"/>
+        <DCCReference Include="uAciklama.pas"/>
         <DCCReference Include="uAra.pas"/>
         <DCCReference Include="uDokuman.pas"/>
         <DCCReference Include="uVeriFark.pas"/>

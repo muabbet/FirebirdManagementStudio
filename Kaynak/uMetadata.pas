@@ -424,6 +424,8 @@ begin
     Result := Ad + '(' + IntToStr(Hassasiyet) + ',' + IntToStr(Olcek) + ')';
 end;
 
+procedure KolonAciklamalariniYaz(Bag: TAcikBaglanti; const Tablo: string; Kolonlar: TFDMemTable); forward;
+
 { Kolon bilgisini kucuk bir bellek tablosuna koyar. Tablo, Sahip ile birlikte yok olur. }
 function KolonTablosuOlustur(Bag: TAcikBaglanti; const Tablo: string; Sahip: TComponent): TFDMemTable;
 var
@@ -435,7 +437,9 @@ begin
   Result.FieldDefs.Add('TIP', ftString, 64);
   Result.FieldDefs.Add('BOS_OLUR', ftString, 8);
   Result.FieldDefs.Add('BOS_OLUR_MI', ftBoolean);
+  Result.FieldDefs.Add('ACIKLAMA', ftString, 500);
   Result.CreateDataSet;
+  Result.FieldByName('ACIKLAMA').DisplayWidth := 40;
   Result.FieldByName('AD').DisplayWidth := 30;
   Result.FieldByName('TIP').DisplayWidth := 22;
   Result.FieldByName('BOS_OLUR').DisplayWidth := 14;
@@ -462,6 +466,7 @@ begin
   finally
     Sorgu.Free;
   end;
+  KolonAciklamalariniYaz(Bag, Tablo, Result);
   Result.First;
 end;
 
@@ -512,6 +517,32 @@ begin
   except
     Result.Free;
     raise;
+  end;
+end;
+
+{ Aciklamasi olan kolonlarin metnini kolon tablosuna yazar (tek satira indirilir; grid icin). }
+procedure KolonAciklamalariniYaz(Bag: TAcikBaglanti; const Tablo: string; Kolonlar: TFDMemTable);
+var
+  Sorgu: TFDQuery;
+  Metin: string;
+begin
+  Sorgu := SorguAc(Bag, 'select rdb$field_name as AD, rdb$description as METIN from rdb$relation_fields ' +
+    'where rdb$relation_name = ''' + StringReplace(Tablo, '''', '''''', [rfReplaceAll]) +
+    ''' and rdb$description is not null', '');
+  try
+    while not Sorgu.Eof do
+    begin
+      if Kolonlar.Locate('AD', Trim(Sorgu.FieldByName('AD').AsString), []) then
+      begin
+        Metin := StringReplace(Sorgu.FieldByName('METIN').AsString, sLineBreak, ' ', [rfReplaceAll]);
+        Kolonlar.Edit;
+        Kolonlar.FieldByName('ACIKLAMA').AsString := Copy(Metin, 1, 500);
+        Kolonlar.Post;
+      end;
+      Sorgu.Next;
+    end;
+  finally
+    Sorgu.Free;
   end;
 end;
 

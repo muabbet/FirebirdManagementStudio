@@ -7,7 +7,7 @@ interface
 uses
   System.SysUtils, System.Classes, System.Types, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
   Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.ComCtrls, Vcl.Menus, FireDAC.Comp.Client,
-  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uFiltre, uFiltreSatiri, uSonucGrid, uKayitDuzelt, uKullanici, uProsedur, uKolon, uIndeksKisit, fKolonIslem, fYapiIslem, uAktar, fCsvAktar, fIceAktar, uIliski, fKullananlar, uOtoArtan;
+  uDil, uOnay, uBaglanti, uMetadata, uSorgu, uFiltre, uFiltreSatiri, uSonucGrid, uKayitDuzelt, uKullanici, uProsedur, uKolon, uIndeksKisit, fKolonIslem, fYapiIslem, uAktar, fCsvAktar, fIceAktar, uIliski, fKullananlar, uOtoArtan, uAciklama, fMetinSor;
 
 type
   { Bir tabloyu hazir filtreyle yeni sekmede acar (iliskili kayitlara git). }
@@ -27,6 +27,8 @@ type
     btnKolonSil: TButton;
     btnKolonPk: TButton;
     btnKolonOto: TButton;
+    btnKolonAciklama: TButton;
+    btnTabloAciklama: TButton;
     gridKolonlar: TDBGrid;
     tsIndeksler: TTabSheet;
     pnlIndeksDugme: TPanel;
@@ -84,6 +86,8 @@ type
     procedure btnKolonSilClick(Sender: TObject);
     procedure btnKolonPkClick(Sender: TObject);
     procedure btnKolonOtoClick(Sender: TObject);
+    procedure btnKolonAciklamaClick(Sender: TObject);
+    procedure btnTabloAciklamaClick(Sender: TObject);
     procedure btnIndeksOlusturClick(Sender: TObject);
     procedure btnIndeksSilClick(Sender: TObject);
     procedure btnIndeksDurumClick(Sender: TObject);
@@ -139,6 +143,7 @@ type
     function BaglantiAl: TAcikBaglanti;
     procedure SonucuBildir(Bag: TAcikBaglanti; const Sonuc: TProsedurSonucu);
     procedure KolonIsle(Islem: TKolonIslemi);
+    procedure AciklamaDuzenle(const Kolon: string);
     procedure IndeksIsle(Islem: TYapiIslemi);
     procedure KisitIsle(Islem: TYapiIslemi);
     procedure YenidenYukle(Bag: TAcikBaglanti);
@@ -1052,6 +1057,57 @@ begin
   SonucuBildir(Bag, OtoUygula(Bag, Plan));
 end;
 
+{ Tablo ya da kolon aciklamasi (COMMENT ON): mevcut metin pencerede gelir, bos birakilirsa aciklama kaldirilir.
+  Kolon bos ise tablo aciklamasidir. Calisan komut SQL alaninda gorunur; yalniz aciklama degisir, veriye dokunulmaz. }
+procedure TTabloSekme.AciklamaDuzenle(const Kolon: string);
+var
+  Bag: TAcikBaglanti;
+  Metin: string;
+  Sonuc: TProsedurSonucu;
+begin
+  Bag := BaglantiAl;
+  if Bag = nil then
+    Exit;
+  if Kolon = '' then
+  begin
+    Metin := TabloAciklamasiOku(Bag, TabloAdi);
+    if not MetinSor(T('ACIKLAMA_BASLIK'), TF('ACIKLAMA_TABLO_ETIKET', [TabloAdi]), Metin, False) then
+      Exit;
+  end
+  else
+  begin
+    Metin := KolonAciklamasiOku(Bag, TabloAdi, Kolon);
+    if not MetinSor(T('ACIKLAMA_BASLIK'), TF('ACIKLAMA_KOLON_ETIKET', [TabloAdi, Kolon]), Metin, False) then
+      Exit;
+  end;
+  Sonuc := AciklamaYaz(Bag, TabloAdi, Kolon, Trim(Metin));
+  if Sonuc.Basarili then
+  begin
+    Yaz(TF('MSG_ACIKLAMA_TAMAM', [TabloAdi]));
+    YenidenYukle(Bag);
+  end
+  else
+  begin
+    Yaz(TF('ERR_ACIKLAMA_YAZILAMADI', [TabloAdi]) + ' ' + Sonuc.Cumle);
+    if Sonuc.Ayrinti <> '' then
+      Yaz(T('AYRINTI') + ': ' + Sonuc.Ayrinti);
+  end;
+  if (Length(Sonuc.Komutlar) > 0) and Assigned(SqlYaz) then
+    SqlYaz(Sonuc.Komutlar);
+end;
+
+procedure TTabloSekme.btnKolonAciklamaClick(Sender: TObject);
+begin
+  if dsKolonlar.DataSet.IsEmpty then
+    Exit;
+  AciklamaDuzenle(dsKolonlar.DataSet.FieldByName('AD').AsString);
+end;
+
+procedure TTabloSekme.btnTabloAciklamaClick(Sender: TObject);
+begin
+  AciklamaDuzenle('');
+end;
+
 { "Birincil anahtar yap": secili kolon PRIMARY KEY olur. Kolon bos olabiliyorsa (Firebird 3.0 ve ustu) once NOT NULL yapilir;
   iki komut da onay penceresinde yazilidir. Engel varsa (zaten PK var, 2.5'te bos olabilen kolon) anlasilir cumle gosterilir. }
 procedure TTabloSekme.btnKolonPkClick(Sender: TObject);
@@ -1151,6 +1207,10 @@ begin
   btnKolonSil.Caption := T('BTN_KOLON_SIL');
   btnKolonPk.Caption := T('BTN_KOLON_PK');
   btnKolonOto.Caption := T('BTN_KOLON_OTO');
+  btnKolonAciklama.Caption := T('BTN_KOLON_ACIKLAMA');
+  btnTabloAciklama.Caption := T('BTN_TABLO_ACIKLAMA');
+  DugmeyiYaziyaUydur(btnKolonAciklama);
+  DugmeyiYaziyaUydur(btnTabloAciklama);
   DugmeyiYaziyaUydur(btnKolonOto);
   DugmeyiYaziyaUydur(btnKolonPk);
   DugmeyiYaziyaUydur(btnKolonEkle);
@@ -1194,6 +1254,7 @@ begin
     dsKolonlar.DataSet.FieldByName('AD').DisplayLabel := T('KOLON_AD');
     dsKolonlar.DataSet.FieldByName('TIP').DisplayLabel := T('KOLON_TIP');
     dsKolonlar.DataSet.FieldByName('BOS_OLUR').DisplayLabel := T('KOLON_BOS_OLUR');
+    dsKolonlar.DataSet.FieldByName('ACIKLAMA').DisplayLabel := T('KOLON_ACIKLAMA');
     KolonTablosuYazilariniYenile(dsKolonlar.DataSet);
   end;
   { Bagli degilse (kopmus) eski yazilar kalir; dil degisince yalniz bagliyken yeniden okunur. }

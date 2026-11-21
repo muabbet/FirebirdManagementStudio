@@ -1177,5 +1177,13 @@
   "MSG_GUNC_INDI": "New version downloaded: %s. Close the program and replace it with the exe in the zip.",
   "MSG_SURUM_GUNCEL": "Your program is up to date (version %s).",
   "ERR_GUNC_DENETLENEMEDI": "Could not check for a new version. Please check your internet connection.",
-  "ERR_GUNC_INDIRILEMEDI": "Could not download the new version. Detail:"
+  "ERR_GUNC_INDIRILEMEDI": "Could not download the new version. Detail:",
+  "BTN_KOLON_ACIKLAMA": "Column comment",
+  "BTN_TABLO_ACIKLAMA": "Table comment",
+  "KOLON_ACIKLAMA": "Comment",
+  "ACIKLAMA_BASLIK": "Comment",
+  "ACIKLAMA_TABLO_ETIKET": "Comment for table %s (leave empty to remove it):",
+  "ACIKLAMA_KOLON_ETIKET": "Comment for column %1:s of table %0:s (leave empty to remove it):",
+  "MSG_ACIKLAMA_TAMAM": "Comment saved for %s (transaction committed). Only the comment changed, no data was touched.",
+  "ERR_ACIKLAMA_YAZILAMADI": "Could not save the comment for %s, nothing was changed."
 }

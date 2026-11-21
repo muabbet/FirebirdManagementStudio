@@ -1177,5 +1177,13 @@
   "MSG_GUNC_INDI": "Yeni sürüm indirildi: %s. Programı kapatıp zip içindeki exe ile değiştirin.",
   "MSG_SURUM_GUNCEL": "Programınız güncel (sürüm %s).",
   "ERR_GUNC_DENETLENEMEDI": "Yeni sürüm denetlenemedi. İnternet bağlantınızı kontrol edin.",
-  "ERR_GUNC_INDIRILEMEDI": "Yeni sürüm indirilemedi. Ayrıntı:"
+  "ERR_GUNC_INDIRILEMEDI": "Yeni sürüm indirilemedi. Ayrıntı:",
+  "BTN_KOLON_ACIKLAMA": "Kolon açıklaması",
+  "BTN_TABLO_ACIKLAMA": "Tablo açıklaması",
+  "KOLON_ACIKLAMA": "Açıklama",
+  "ACIKLAMA_BASLIK": "Açıklama",
+  "ACIKLAMA_TABLO_ETIKET": "%s tablosunun açıklaması (boş bırakırsanız açıklama kaldırılır):",
+  "ACIKLAMA_KOLON_ETIKET": "%s tablosundaki %s kolonunun açıklaması (boş bırakırsanız açıklama kaldırılır):",
+  "MSG_ACIKLAMA_TAMAM": "%s için açıklama kaydedildi (işlem onaylandı: commit). Yalnız açıklama değişti, veriye dokunulmadı.",
+  "ERR_ACIKLAMA_YAZILAMADI": "%s için açıklama kaydedilemedi, hiçbir şey değişmedi."
 }

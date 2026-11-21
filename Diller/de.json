@@ -1177,5 +1177,13 @@
   "MSG_GUNC_INDI": "Neue Version heruntergeladen: %s. Schließen Sie das Programm und ersetzen Sie es durch die EXE aus der ZIP-Datei.",
   "MSG_SURUM_GUNCEL": "Ihr Programm ist aktuell (Version %s).",
   "ERR_GUNC_DENETLENEMEDI": "Die Suche nach einer neuen Version ist fehlgeschlagen. Bitte prüfen Sie Ihre Internetverbindung.",
-  "ERR_GUNC_INDIRILEMEDI": "Die neue Version konnte nicht heruntergeladen werden. Detail:"
+  "ERR_GUNC_INDIRILEMEDI": "Die neue Version konnte nicht heruntergeladen werden. Detail:",
+  "BTN_KOLON_ACIKLAMA": "Spaltenkommentar",
+  "BTN_TABLO_ACIKLAMA": "Tabellenkommentar",
+  "KOLON_ACIKLAMA": "Kommentar",
+  "ACIKLAMA_BASLIK": "Kommentar",
+  "ACIKLAMA_TABLO_ETIKET": "Kommentar für Tabelle %s (leer lassen, um ihn zu entfernen):",
+  "ACIKLAMA_KOLON_ETIKET": "Kommentar für Spalte %1:s der Tabelle %0:s (leer lassen, um ihn zu entfernen):",
+  "MSG_ACIKLAMA_TAMAM": "Kommentar für %s gespeichert (Transaktion bestätigt: Commit). Nur der Kommentar wurde geändert, Daten blieben unberührt.",
+  "ERR_ACIKLAMA_YAZILAMADI": "Der Kommentar für %s konnte nicht gespeichert werden, es wurde nichts geändert."
 }
