@@ -161,6 +161,11 @@
             <Form>frmYedek</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="uVeritabaniOzellik.pas"/>
+        <DCCReference Include="fVeritabaniOzellik.pas">
+            <Form>frmVeritabaniOzellik</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <DCCReference Include="uYedekPlan.pas"/>
         <DCCReference Include="fYedekPlan.pas">
             <Form>frmYedekPlan</Form>

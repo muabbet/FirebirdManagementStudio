@@ -44,6 +44,8 @@ uses
   fYedek in 'fYedek.pas' {frmYedek},
   uYedekPlan in 'uYedekPlan.pas',
   fYedekPlan in 'fYedekPlan.pas' {frmYedekPlan},
+  uVeritabaniOzellik in 'uVeritabaniOzellik.pas',
+  fVeritabaniOzellik in 'fVeritabaniOzellik.pas' {frmVeritabaniOzellik},
   uCokluSorgu in 'uCokluSorgu.pas',
   fCokluSorgu in 'fCokluSorgu.pas' {CokluSorguSekme: TFrame},
   uYetki in 'uYetki.pas',

@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fYedekPlan, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme, fIndeksOner, uAra, fAra, uSqlDosya, uDokuman, fVeriFark, uGuncelleme, uUygulama;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fYedekPlan, fVeritabaniOzellik, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme, fIndeksOner, uAra, fAra, uSqlDosya, uDokuman, fVeriFark, uGuncelleme, uUygulama;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -108,6 +108,7 @@ type
     procedure btnKullanicilarClick(Sender: TObject);
     procedure btnAktifBaglantiClick(Sender: TObject);
     procedure btnBakimClick(Sender: TObject);
+    procedure btnOzellikClick(Sender: TObject);
     procedure btnAraClick(Sender: TObject);
     procedure btnDokumanClick(Sender: TObject);
     procedure btnVeriFarkiClick(Sender: TObject);
@@ -186,6 +187,7 @@ type
     btnMetadata: TSeritDugmesi;
     btnYedek: TSeritDugmesi;
     btnYedekPlan: TSeritDugmesi;
+    btnOzellik: TSeritDugmesi;
     btnKullanicilar: TSeritDugmesi;
     btnAktifBaglanti: TSeritDugmesi;
     btnBakim: TSeritDugmesi;
@@ -400,6 +402,7 @@ begin
   btnSemaFarki := FSerit.Ekle('GRUP_YONETIM', 'BTN_SEMA_FARKI', IKON_PLAN, btnSemaFarkiClick);
   btnAktifBaglanti := FSerit.Ekle('GRUP_YONETIM', 'BTN_AKTIF_BAGLANTI', IKON_VERITABANI, btnAktifBaglantiClick);
   btnBakim := FSerit.Ekle('GRUP_YONETIM', 'BTN_BAKIM', IKON_VERITABANI, btnBakimClick);
+  btnOzellik := FSerit.Ekle('GRUP_YONETIM', 'BTN_OZELLIK', IKON_VERITABANI, btnOzellikClick);
   btnAra := FSerit.Ekle('GRUP_YONETIM', 'BTN_ARA', IKON_PLAN, btnAraClick);
   btnDokuman := FSerit.Ekle('GRUP_YONETIM', 'BTN_DOKUMAN', IKON_METADATA, btnDokumanClick);
   btnVeriFarki := FSerit.Ekle('GRUP_YONETIM', 'BTN_VERI_FARKI', IKON_PLAN, btnVeriFarkiClick);
@@ -658,6 +661,7 @@ begin
   btnYedekPlan.Enabled := Dugme <> nil;
   btnAktifBaglanti.Enabled := Bag <> nil;
   btnBakim.Enabled := Bag <> nil;
+  btnOzellik.Enabled := Bag <> nil;
   btnAra.Enabled := Bag <> nil;
   btnDokuman.Enabled := Bag <> nil;
   btnVeriFarki.Enabled := Bag <> nil;
@@ -2707,6 +2711,18 @@ begin
 end;
 
 { Yonetim > Veritabani bakimi: once rapor (veritabanina yazmaz), sonra onayla bakim. }
+{ Yonetim > Veritabani ozellikleri: secili (acik) baglantinin ozellikleri; sweep araligi, forced writes, yer ayirma degistirilebilir }
+procedure TfrmAna.btnOzellikClick(Sender: TObject);
+var
+  Bag: TAcikBaglanti;
+begin
+  if SeciliBaglantiDugmesi = nil then
+    Exit;
+  Bag := FbAcikBaglanti(OgeAl(SeciliBaglantiDugmesi).BaglantiAd);
+  if Bag <> nil then
+    VeritabaniOzellikPenceresiniGoster(Bag, SqlMesajiYaz, memSonuc.Lines);
+end;
+
 procedure TfrmAna.btnBakimClick(Sender: TObject);
 var
   Bag: TAcikBaglanti;
