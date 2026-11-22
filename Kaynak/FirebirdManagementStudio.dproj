@@ -161,6 +161,11 @@
             <Form>frmYedek</Form>
             <FormType>dfm</FormType>
         </DCCReference>
+        <DCCReference Include="uYedekPlan.pas"/>
+        <DCCReference Include="fYedekPlan.pas">
+            <Form>frmYedekPlan</Form>
+            <FormType>dfm</FormType>
+        </DCCReference>
         <DCCReference Include="uCokluSorgu.pas"/>
         <DCCReference Include="fCokluSorgu.pas">
             <Form>CokluSorguSekme</Form>

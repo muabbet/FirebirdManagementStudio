@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme, fIndeksOner, uAra, fAra, uSqlDosya, uDokuman, fVeriFark, uGuncelleme, uUygulama;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fYedekPlan, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme, fIndeksOner, uAra, fAra, uSqlDosya, uDokuman, fVeriFark, uGuncelleme, uUygulama;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -104,6 +104,7 @@ type
     procedure btnSqlFarkliKaydetClick(Sender: TObject);
     procedure btnMetadataClick(Sender: TObject);
     procedure btnYedekClick(Sender: TObject);
+    procedure btnYedekPlanClick(Sender: TObject);
     procedure btnKullanicilarClick(Sender: TObject);
     procedure btnAktifBaglantiClick(Sender: TObject);
     procedure btnBakimClick(Sender: TObject);
@@ -184,6 +185,7 @@ type
     btnSqlFarkliKaydet: TSeritDugmesi;
     btnMetadata: TSeritDugmesi;
     btnYedek: TSeritDugmesi;
+    btnYedekPlan: TSeritDugmesi;
     btnKullanicilar: TSeritDugmesi;
     btnAktifBaglanti: TSeritDugmesi;
     btnBakim: TSeritDugmesi;
@@ -393,6 +395,7 @@ begin
   btnSqlFarkliKaydet := FSerit.Ekle('GRUP_SORGU', 'BTN_SQL_FARKLI_KAYDET', IKON_SORGU, btnSqlFarkliKaydetClick);
   btnMetadata := FSerit.Ekle('GRUP_YONETIM', 'MENU_METADATA_CIKAR', IKON_METADATA, btnMetadataClick);
   btnYedek := FSerit.Ekle('GRUP_YONETIM', 'MENU_YEDEK', IKON_YEDEK, btnYedekClick);
+  btnYedekPlan := FSerit.Ekle('GRUP_YONETIM', 'BTN_YEDEK_PLAN', IKON_YEDEK, btnYedekPlanClick);
   btnKullanicilar := FSerit.Ekle('GRUP_YONETIM', 'BTN_KULLANICILAR', IKON_KULLANICI, btnKullanicilarClick);
   btnSemaFarki := FSerit.Ekle('GRUP_YONETIM', 'BTN_SEMA_FARKI', IKON_PLAN, btnSemaFarkiClick);
   btnAktifBaglanti := FSerit.Ekle('GRUP_YONETIM', 'BTN_AKTIF_BAGLANTI', IKON_VERITABANI, btnAktifBaglantiClick);
@@ -652,6 +655,7 @@ begin
   btnSqlFarkliKaydet.Enabled := AktifSorguSekmesi <> nil;
   btnMetadata.Enabled := Bag <> nil;
   btnYedek.Enabled := Dugme <> nil;
+  btnYedekPlan.Enabled := Dugme <> nil;
   btnAktifBaglanti.Enabled := Bag <> nil;
   btnBakim.Enabled := Bag <> nil;
   btnAra.Enabled := Bag <> nil;
@@ -2670,6 +2674,24 @@ procedure TfrmAna.btnYedekClick(Sender: TObject);
 begin
   if SeciliBaglantiDugmesi <> nil then
     YedekPenceresiAc(SeciliBaglantiDugmesi);
+end;
+
+{ Yonetim > Yedek planla: secili baglanti icin zamanlanmis otomatik yedek (Windows Gorev Zamanlayici) }
+procedure TfrmAna.btnYedekPlanClick(Sender: TObject);
+var
+  Satir: string;
+  Sonuc: TStringList;
+begin
+  if SeciliBaglantiDugmesi = nil then
+    Exit;
+  Sonuc := TStringList.Create;
+  try
+    YedekPlanPenceresiniGoster(OgeAl(SeciliBaglantiDugmesi).BaglantiAd, Sonuc);
+    for Satir in Sonuc do
+      MesajYaz(Satir);
+  finally
+    Sonuc.Free;
+  end;
 end;
 
 { Yonetim > Aktif baglantilar: secili (acik) baglantida kim bagli, ne calisiyor; istenirse baglanti koparilir. }

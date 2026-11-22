@@ -42,6 +42,8 @@ uses
   fMetadataCikar in 'fMetadataCikar.pas' {frmMetadataCikar},
   fCsvAktar in 'fCsvAktar.pas' {frmCsvAktar},
   fYedek in 'fYedek.pas' {frmYedek},
+  uYedekPlan in 'uYedekPlan.pas',
+  fYedekPlan in 'fYedekPlan.pas' {frmYedekPlan},
   uCokluSorgu in 'uCokluSorgu.pas',
   fCokluSorgu in 'fCokluSorgu.pas' {CokluSorguSekme: TFrame},
   uYetki in 'uYetki.pas',
@@ -107,6 +109,9 @@ begin
 end;
 
 begin
+  { Gorev Zamanlayici "/yedek" ile acarsa arayuz hic acilmaz: yedegi alir ve kapanir (uYedekPlan) }
+  if YedekGoreviMi then
+    Halt(YedekGoreviCalistir);
   UygulamaKimliginiAyarla;
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
