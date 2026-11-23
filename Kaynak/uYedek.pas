@@ -412,7 +412,8 @@ begin
     Iceriyor(HamCikti, 'ods version') then
     Result := T('ERR_YEDEK_SURUM')
   else if Iceriyor(HamCikti, 'expected backup') or Iceriyor(HamCikti, 'unexpected end of file on backup') or
-    Iceriyor(HamCikti, 'invalid backup') or Iceriyor(HamCikti, 'bad backup') then
+    Iceriyor(HamCikti, 'invalid backup') or Iceriyor(HamCikti, 'bad backup') or
+    Iceriyor(HamCikti, 'error while reading from backup file') then
     Result := T('ERR_YEDEK_BOZUK')
   else if Iceriyor(HamCikti, 'cannot open backup file') or Iceriyor(HamCikti, 'cannot write backup') or
     Iceriyor(HamCikti, 'error writing to backup') then

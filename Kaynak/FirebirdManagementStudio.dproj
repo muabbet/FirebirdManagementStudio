@@ -103,6 +103,7 @@
         <DCCReference Include="uKullanici.pas"/>
         <DCCReference Include="uProsedur.pas"/>
         <DCCReference Include="uNesneYonet.pas"/>
+        <DCCReference Include="uTetikleyiciDurum.pas"/>
         <DCCReference Include="uKolon.pas"/>
         <DCCReference Include="uIndeksKisit.pas"/>
         <DCCReference Include="fYapiIslem.pas">
@@ -167,6 +168,7 @@
             <FormType>dfm</FormType>
         </DCCReference>
         <DCCReference Include="uYedekPlan.pas"/>
+        <DCCReference Include="uYedekDogrula.pas"/>
         <DCCReference Include="fYedekPlan.pas">
             <Form>frmYedekPlan</Form>
             <FormType>dfm</FormType>

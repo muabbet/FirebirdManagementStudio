@@ -206,6 +206,9 @@ object frmAna: TfrmAna
     object miNesneDuzenle: TMenuItem
       OnClick = miNesneDuzenleClick
     end
+    object miTetikDurum: TMenuItem
+      OnClick = miTetikDurumClick
+    end
     object miYeniTabloTasarim: TMenuItem
       OnClick = miYeniTabloTasarimClick
     end

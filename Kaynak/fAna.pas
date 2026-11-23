@@ -15,7 +15,8 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, uYedekPlan, fYedekPlan, fVeritabaniOzellik, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme, fIndeksOner, uAra, fAra, uSqlDosya, uDokuman, fVeriFark, uGuncelleme, uUygulama;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, uYedekPlan, fYedekPlan, fVeritabaniOzellik, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme, fIndeksOner, uAra, fAra, uSqlDosya, uDokuman, fVeriFark, uGuncelleme, uUygulama,
+  uTetikleyiciDurum;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -58,6 +59,7 @@ type
     miTsUpdate: TMenuItem;
     miTsDelete: TMenuItem;
     miNesneDuzenle: TMenuItem;
+    miTetikDurum: TMenuItem;
     miYeniTabloTasarim: TMenuItem;
     miYeniNesne: TMenuItem;
     miDomVarsayilan: TMenuItem;
@@ -131,6 +133,7 @@ type
     procedure miScriptUretClick(Sender: TObject);
     procedure miTabloScriptClick(Sender: TObject);
     procedure miNesneDuzenleClick(Sender: TObject);
+    procedure miTetikDurumClick(Sender: TObject);
     procedure miYeniNesneClick(Sender: TObject);
     procedure miYeniTabloTasarimClick(Sender: TObject);
     procedure miDomVarsayilanClick(Sender: TObject);
@@ -237,6 +240,7 @@ type
     procedure BaglantiyiKapat(Dugme: TTreeNode);
     procedure AgaciYenile(Dugme: TTreeNode);
     procedure TabloyuBosalt(Dugme: TTreeNode);
+    procedure TetikleyiciDurumunuDegistir(Dugme: TTreeNode);
     procedure TabloyuTasarla(Dal: TTreeNode);
     procedure TabloyuKopyala(Dugme: TTreeNode);
     procedure BaglantiAgaciniYenile(const BaglantiAd: string);
@@ -2009,6 +2013,45 @@ begin
   DurumuGuncelle;
 end;
 
+{ Sag tik "Pasif yap" / "Aktif yap" (tetikleyici): net onay, sonra ALTER TRIGGER ... ACTIVE|INACTIVE tek islemde; calisan SQL
+  alt alanda, dal yenilenir (pasif tetikleyici agacta soluk gorunur). Menudeki yazi agactaki duruma gore secilir. }
+procedure TfrmAna.TetikleyiciDurumunuDegistir(Dugme: TTreeNode);
+var
+  Oge: TAgacOgesi;
+  Bag: TAcikBaglanti;
+  Aktif: Boolean;
+  Sonuc: TProsedurSonucu;
+begin
+  Oge := OgeAl(Dugme);
+  Bag := FbAcikBaglanti(Oge.BaglantiAd);
+  if Bag = nil then
+    Exit;
+  { Pasifse aktif yapilacak, aktifse pasif. }
+  Aktif := Oge.Pasif;
+  if not OnayIste(TetikleyiciDurumOnayMetni(Bag, Oge.Ad, Aktif)) then
+  begin
+    MesajYaz(T('TETIK_MSG_VAZGECILDI'));
+    Exit;
+  end;
+  Sonuc := TetikleyiciDurumAyarla(Bag, Oge.Ad, Aktif);
+  if Sonuc.Basarili then
+  begin
+    if Aktif then
+      MesajYaz(TF('TETIK_MSG_AKTIF', [Oge.Ad]))
+    else
+      MesajYaz(TF('TETIK_MSG_PASIF', [Oge.Ad]));
+    DalYenile(Dugme.Parent);
+  end
+  else
+  begin
+    HataYaz(TF('TETIK_ERR_YAPILAMADI', [Oge.Ad]) + ' ' + Sonuc.Cumle, Sonuc.Ayrinti);
+    if Length(Sonuc.Komutlar) > 0 then
+      MesajYaz(T('TETIK_MSG_GERI_ALINDI'));
+  end;
+  SqlMesajiYaz(Sonuc.Komutlar);
+  DurumuGuncelle;
+end;
+
 { Sag tik "Sil": net onay (nesne, geri alinamaz, yedek, kullananlar), yedek + DROP, sonuc ve SQL mesaj alaninda. }
 procedure TfrmAna.NesneyiSil(Dugme: TTreeNode);
 var
@@ -2970,6 +3013,13 @@ begin
   { Yetkiler: tablo, view ve prosedur (kimde ne yetkisi var, ver / geri al). }
   miYetkiler.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_TABLO, DAL_VIEW, DAL_PROSEDUR]);
   miNesneDuzenle.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_VIEW, DAL_PROSEDUR, DAL_TETIKLEYICI, DAL_ISTISNA]);
+  { Tetikleyici: tek madde, pasifse "Aktif yap", aktifse "Pasif yap" (DDL ve veritabani tetikleyicisinde de calisir). }
+  miTetikDurum.Visible := (not Bos) and (Tur = atNesne) and (OgeAl(Dugme).DalNo = DAL_TETIKLEYICI);
+  if miTetikDurum.Visible then
+    if OgeAl(Dugme).Pasif then
+      miTetikDurum.Caption := T('TETIK_MENU_AKTIF')
+    else
+      miTetikDurum.Caption := T('TETIK_MENU_PASIF');
   { Domain: CREATE OR ALTER yok; yalniz uc kucuk is (varsayilan, CHECK, ad). Sil: view, exception, domain, generator. }
   miDomVarsayilan.Visible := Uretilebilir and (OgeAl(Dugme).DalNo = DAL_DOMAIN);
   miDomKontrol.Visible := miDomVarsayilan.Visible;
@@ -3057,6 +3107,12 @@ procedure TfrmAna.miNesneDuzenleClick(Sender: TObject);
 begin
   if tvNesneler.Selected <> nil then
     NesneDuzenleAc(tvNesneler.Selected);
+end;
+
+procedure TfrmAna.miTetikDurumClick(Sender: TObject);
+begin
+  if tvNesneler.Selected <> nil then
+    TetikleyiciDurumunuDegistir(tvNesneler.Selected);
 end;
 
 procedure TfrmAna.miYeniNesneClick(Sender: TObject);

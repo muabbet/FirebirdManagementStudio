@@ -9,7 +9,7 @@ interface
 uses
   Winapi.Windows, System.SysUtils, System.Classes, System.IOUtils, Vcl.Controls, Vcl.Forms,
   Vcl.StdCtrls, Vcl.ExtCtrls, Vcl.ComCtrls, Vcl.Dialogs, Vcl.Samples.Spin,
-  uDil, uOnay, uBaglanti, uYedek, uYedekPlan;
+  uDil, uOnay, uBaglanti, uYedek, uYedekPlan, uYedekDogrula;
 
 type
   TfrmYedekPlan = class(TForm)
@@ -26,9 +26,11 @@ type
     dtpSaat: TDateTimePicker;
     spnSakla: TSpinEdit;
     memGunluk: TMemo;
+    memDogrula: TMemo;
     pnlAlt: TPanel;
     btnKapat: TButton;
     btnSimdi: TButton;
+    btnDogrula: TButton;
     btnKaldir: TButton;
     btnPlanla: TButton;
     dlgKlasor: TFileOpenDialog;
@@ -36,6 +38,7 @@ type
     procedure btnPlanlaClick(Sender: TObject);
     procedure btnKaldirClick(Sender: TObject);
     procedure btnSimdiClick(Sender: TObject);
+    procedure btnDogrulaClick(Sender: TObject);
     procedure btnKapatClick(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: Boolean);
   private
@@ -46,6 +49,7 @@ type
     FIptalIstendi: Boolean;
     FSonGuncelleme: Cardinal;
     FBaslangic: Cardinal;
+    FIslemYazisi: string;
     procedure YazilariYaz;
     procedure DurumuYenile;
     procedure CalisiyorAyarla(Calisiyor: Boolean);
@@ -93,11 +97,13 @@ begin
   btnPlanla.Caption := T('YEDEKPLAN_PLANLA');
   btnKaldir.Caption := T('YEDEKPLAN_KALDIR');
   btnSimdi.Caption := T('YEDEKPLAN_SIMDI');
+  btnDogrula.Caption := T('DOGRULA_DUGME');
   btnKapat.Caption := T('BTN_KAPAT');
   DugmeyiYaziyaUydur(btnKlasorSec);
   DugmeyiYaziyaUydur(btnPlanla);
   DugmeyiYaziyaUydur(btnKaldir);
   DugmeyiYaziyaUydur(btnSimdi);
+  DugmeyiYaziyaUydur(btnDogrula);
   DugmeyiYaziyaUydur(btnKapat);
   FSifreVar := KayitliBaglantiBul(FAd, Tanim) and (Tanim.Sifre <> '');
   { Kayitli plan varsa alanlar onunla, yoksa onerilen degerlerle dolar }
@@ -138,6 +144,7 @@ begin
     lblDurum.Caption := T('YEDEKPLAN_DURUM_YOK');
   btnPlanla.Enabled := FSifreVar and not FCalisiyor;
   btnSimdi.Enabled := FSifreVar and PlanVar and not FCalisiyor;
+  btnDogrula.Enabled := FSifreVar and PlanVar and not FCalisiyor;
   btnKaldir.Enabled := (PlanVar or GorevVar) and not FCalisiyor;
   memGunluk.Clear;
   for Satir in YedekGunlugu(FAd, 20) do
@@ -156,6 +163,7 @@ begin
   btnPlanla.Enabled := not Calisiyor;
   btnKaldir.Enabled := not Calisiyor;
   btnSimdi.Enabled := not Calisiyor;
+  btnDogrula.Enabled := not Calisiyor;
   if Calisiyor then
     btnKapat.Caption := T('BTN_IPTAL')
   else
@@ -170,7 +178,7 @@ begin
   if GetTickCount - FSonGuncelleme > 80 then
   begin
     FSonGuncelleme := GetTickCount;
-    lblDurum.Caption := T('YEDEK_ACIKLAMA_YEDEK') + ' ' +
+    lblDurum.Caption := FIslemYazisi + ' ' +
       TF('YEDEK_SURUYOR', [Format('%.1f', [(GetTickCount - FBaslangic) / 1000])]);
     Application.ProcessMessages;
   end;
@@ -234,6 +242,7 @@ var
   Sonuc: TYedekSonucu;
 begin
   FBaslangic := GetTickCount;
+  FIslemYazisi := T('YEDEK_ACIKLAMA_YEDEK');
   CalisiyorAyarla(True);
   try
     YedekPlaniCalistir(FAd, CiktiGeldi, Sonuc);
@@ -250,6 +259,36 @@ begin
     FSonuc.Add(T('ERR_YEDEK_YAPILAMADI') + ' ' + Sonuc.Cumle);
     UyariGoster(T('ERR_YEDEK_YAPILAMADI') + ' ' + Sonuc.Cumle);
   end;
+  DurumuYenile;
+end;
+
+{ En yeni yedegi yeni bir dosyaya geri yukler ve okur (is uYedekDogrula'dadir); rapor pencerede, ozet ana pencerenin sonuc alaninda. }
+procedure TfrmYedekPlan.btnDogrulaClick(Sender: TObject);
+var
+  Hazirlik: TDogrulamaHazirligi;
+  Sonuc: TDogrulamaSonucu;
+  Cumle: string;
+begin
+  if not DogrulamaHazirla(FAd, Hazirlik, Cumle) then
+  begin
+    UyariGoster(Cumle);
+    Exit;
+  end;
+  if not OnayIste(DogrulamaOnayMetni(Hazirlik)) then
+    Exit;
+  memDogrula.Clear;
+  FBaslangic := GetTickCount;
+  FIslemYazisi := T('DOGRULA_ACIKLAMA');
+  CalisiyorAyarla(True);
+  try
+    YedegiDogrula(Hazirlik, CiktiGeldi, Sonuc);
+  finally
+    CalisiyorAyarla(False);
+  end;
+  memDogrula.Text := Sonuc.Rapor;
+  if Sonuc.Ayrinti <> '' then
+    memDogrula.Text := Sonuc.Rapor + sLineBreak + sLineBreak + T('DOGRULA_AYRINTI') + sLineBreak + Sonuc.Ayrinti;
+  FSonuc.Add(Sonuc.Ozet + ' ' + TF('DOGRULA_SONUC_DOSYA', [Sonuc.GeriYuklenen]));
   DurumuYenile;
 end;
 

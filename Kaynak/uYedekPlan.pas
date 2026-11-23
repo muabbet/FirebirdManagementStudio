@@ -59,12 +59,22 @@ function YedekPlaniCalistir(const BaglantiAd: string; Cikti: TYedekCiktisi; out 
   (silinmez). Tasinan dosya sayisini verir. }
 function EskiYedekleriTasi(const Klasor, VeritabaniYolu: string; Sakla: Integer): Integer;
 
-{ Gunluk: son Say satir (eskiden yeniye) }
+{ Klasordeki bu veritabaninin en yeni yedegi (<ad>_yyyymmdd_hhnnss.fbk; "Eski" klasorune bakilmaz); yoksa bos. }
+function EnYeniYedekDosyasi(const Klasor, VeritabaniYolu: string): string;
+
+{ Gunluk: son Say satir (eskiden yeniye). Yedek satirlari (OK, HATA) ve dogrulama satirlari (DOGRULAMA-OK, DOGRULAMA-HATA) birlikte gelir. }
 function YedekGunlugu(const BaglantiAd: string; Say: Integer): TArray<string>;
 
+{ Gunluge bir satir yazar: Durum OK, HATA, DOGRULAMA-OK ya da DOGRULAMA-HATA. Yazilamazsa sessiz kalir. }
+procedure GunlukSatiriYaz(const BaglantiAd, Durum, Metin: string);
+
 { Gunluge gore bir planin uyarisi (saf yordam, denemek icin ayri): son satir HATA ise ya da son basarili yedek 2 gunden eskiyse
-  anlasilir cumle, degilse (ya da hic calismadiysa) bos. SonSatir: YedekGunlugu'nun son satiri. }
+  anlasilir cumle, degilse (ya da hic calismadiysa) bos. SonSatir: SonYedekSatiri'nin sonucu. Dogrulama satirlari
+  (DOGRULAMA-OK / DOGRULAMA-HATA) yedek sayilmaz, uyari uretmez. }
 function YedekGunlukUyarisi(const BaglantiAd, SonSatir: string; Simdi: TDateTime): string;
+
+{ Gunlukteki son YEDEK satiri (OK ya da HATA); dogrulama satirlari atlanir. Yoksa bos. }
+function SonYedekSatiri(const BaglantiAd: string): string;
 
 { Kayitli tum planlari denetler (program acilirken): gunluk uyarilari ve Windows gorevi silinmis planlar. Uyari yoksa bos dizi. }
 function YedekPlanlariniDenetle: TArray<string>;
@@ -300,20 +310,40 @@ end;
 
 { ---------- Eski yedekler ve gunluk ---------- }
 
+{ Klasordeki bu veritabaninin yedekleri, eskiden yeniye. Adlar VarsayilanYedekAdi bicimindedir: <ad>_yyyymmdd_hhnnss.fbk;
+  yalniz bu bicimdekiler gelir. }
+function KlasordekiYedekler(const Klasor, VeritabaniYolu: string): TArray<string>;
+var
+  Ornek, Onek: string;
+begin
+  SetLength(Result, 0);
+  if not TDirectory.Exists(Klasor) then
+    Exit;
+  Ornek := VarsayilanYedekAdi(VeritabaniYolu);
+  Onek := Copy(Ornek, 1, Length(Ornek) - Length('_yyyymmdd_hhnnss.fbk'));
+  Result := TDirectory.GetFiles(Klasor, Onek + '_????????_??????.fbk');
+  TArray.Sort<string>(Result);
+end;
+
+function EnYeniYedekDosyasi(const Klasor, VeritabaniYolu: string): string;
+var
+  Dosyalar: TArray<string>;
+begin
+  Dosyalar := KlasordekiYedekler(Klasor, VeritabaniYolu);
+  if Length(Dosyalar) = 0 then
+    Result := ''
+  else
+    Result := Dosyalar[High(Dosyalar)];
+end;
+
 function EskiYedekleriTasi(const Klasor, VeritabaniYolu: string; Sakla: Integer): Integer;
 var
-  Ornek, Onek, EskiKlasor, Hedef: string;
+  EskiKlasor, Hedef: string;
   Dosyalar: TArray<string>;
   i: Integer;
 begin
   Result := 0;
-  if not TDirectory.Exists(Klasor) then
-    Exit;
-  { Adlar VarsayilanYedekAdi bicimindedir: <ad>_yyyymmdd_hhnnss.fbk; yalniz bu bicimdekilere dokunulur }
-  Ornek := VarsayilanYedekAdi(VeritabaniYolu);
-  Onek := Copy(Ornek, 1, Length(Ornek) - Length('_yyyymmdd_hhnnss.fbk'));
-  Dosyalar := TDirectory.GetFiles(Klasor, Onek + '_????????_??????.fbk');
-  TArray.Sort<string>(Dosyalar);
+  Dosyalar := KlasordekiYedekler(Klasor, VeritabaniYolu);
   EskiKlasor := TPath.Combine(Klasor, 'Eski');
   for i := 0 to Length(Dosyalar) - Sakla - 1 do
   begin
@@ -326,14 +356,10 @@ begin
   end;
 end;
 
-procedure GunluguYaz(const BaglantiAd: string; Basarili: Boolean; const Metin: string);
+procedure GunlukSatiriYaz(const BaglantiAd, Durum, Metin: string);
 var
-  Durum, Satir: string;
+  Satir: string;
 begin
-  if Basarili then
-    Durum := 'OK'
-  else
-    Durum := 'HATA';
   Satir := FormatDateTime('yyyy-mm-dd hh:nn:ss', Now) + ' | ' + BaglantiAd + ' | ' + Durum + ' | ' +
     StringReplace(StringReplace(Metin, #13, ' ', [rfReplaceAll]), #10, ' ', [rfReplaceAll]);
   try
@@ -341,6 +367,14 @@ begin
   except
     { gunluk yazilamazsa yedegin kendisi bozulmasin }
   end;
+end;
+
+procedure GunluguYaz(const BaglantiAd: string; Basarili: Boolean; const Metin: string);
+begin
+  if Basarili then
+    GunlukSatiriYaz(BaglantiAd, 'OK', Metin)
+  else
+    GunlukSatiriYaz(BaglantiAd, 'HATA', Metin);
 end;
 
 function YedekGunlugu(const BaglantiAd: string; Say: Integer): TArray<string>;
@@ -387,6 +421,8 @@ begin
   Result := '';
   if not GunlukZamani(SonSatir, Zaman) then
     Exit;
+  if (Pos(' | OK | ', SonSatir) = 0) and (Pos(' | HATA | ', SonSatir) = 0) then
+    Exit;
   Sira := Pos(' | HATA | ', SonSatir);
   if Sira > 0 then
     Result := TF('YEDEKPLAN_UYARI_HATA', [BaglantiAd, FormatDateTime('dd.mm.yyyy hh:nn', Zaman),
@@ -395,13 +431,24 @@ begin
     Result := TF('YEDEKPLAN_UYARI_ESKI', [BaglantiAd, FormatDateTime('dd.mm.yyyy hh:nn', Zaman)]);
 end;
 
+function SonYedekSatiri(const BaglantiAd: string): string;
+var
+  Satirlar: TArray<string>;
+  i: Integer;
+begin
+  Result := '';
+  Satirlar := YedekGunlugu(BaglantiAd, MaxInt);
+  for i := High(Satirlar) downto 0 do
+    if (Pos(' | OK | ', Satirlar[i]) > 0) or (Pos(' | HATA | ', Satirlar[i]) > 0) then
+      Exit(Satirlar[i]);
+end;
+
 function YedekPlanlariniDenetle: TArray<string>;
 var
   Kok: TJSONObject;
   Cift: TJSONPair;
   Liste: TList<string>;
-  Satirlar: TArray<string>;
-  Uyari: string;
+  Satir, Uyari: string;
 begin
   Liste := TList<string>.Create;
   Kok := PlanlariOku;
@@ -410,10 +457,10 @@ begin
     begin
       if not YedekGorevVarMi(Cift.JsonString.Value) then
         Liste.Add(TF('YEDEKPLAN_UYARI_GOREV', [Cift.JsonString.Value]));
-      Satirlar := YedekGunlugu(Cift.JsonString.Value, 1);
-      if Length(Satirlar) > 0 then
+      Satir := SonYedekSatiri(Cift.JsonString.Value);
+      if Satir <> '' then
       begin
-        Uyari := YedekGunlukUyarisi(Cift.JsonString.Value, Satirlar[0], Now);
+        Uyari := YedekGunlukUyarisi(Cift.JsonString.Value, Satir, Now);
         if Uyari <> '' then
           Liste.Add(Uyari);
       end;

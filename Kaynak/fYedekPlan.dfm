@@ -2,7 +2,7 @@ object frmYedekPlan: TfrmYedekPlan
   Left = 0
   Top = 0
   BorderStyle = bsDialog
-  ClientHeight = 500
+  ClientHeight = 660
   ClientWidth = 640
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -126,9 +126,25 @@ object frmYedekPlan: TfrmYedekPlan
     TabOrder = 4
     WordWrap = False
   end
+  object memDogrula: TMemo
+    Left = 12
+    Top = 448
+    Width = 616
+    Height = 156
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -12
+    Font.Name = 'Consolas'
+    Font.Style = []
+    ParentFont = False
+    ReadOnly = True
+    ScrollBars = ssBoth
+    TabOrder = 9
+    WordWrap = False
+  end
   object pnlAlt: TPanel
     Left = 0
-    Top = 448
+    Top = 608
     Width = 640
     Height = 52
     Align = alBottom
@@ -149,6 +165,21 @@ object frmYedekPlan: TfrmYedekPlan
       Constraints.MinWidth = 80
       TabOrder = 3
       OnClick = btnKapatClick
+    end
+    object btnDogrula: TButton
+      AlignWithMargins = True
+      Left = 216
+      Top = 8
+      Width = 80
+      Height = 34
+      Margins.Left = 4
+      Margins.Top = 8
+      Margins.Right = 4
+      Margins.Bottom = 10
+      Align = alRight
+      Constraints.MinWidth = 80
+      TabOrder = 4
+      OnClick = btnDogrulaClick
     end
     object btnSimdi: TButton
       AlignWithMargins = True
