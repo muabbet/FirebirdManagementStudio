@@ -1249,5 +1249,8 @@
   "ERR_OZELLIK_YETKI": "Nur SYSDBA oder der Besitzer der Datenbank kann diese Einstellung ändern.",
   "ERR_OZELLIK_GENEL": "Die Einstellung konnte nicht geändert werden. Siehe Abschnitt Details.",
   "ERR_OZELLIK_ARAC_YOK": "gfix.exe wurde nicht gefunden (normalerweise im Ordner 'istemci').",
-  "ERR_OZELLIK_SWEEP_DEGER": "Das Sweep-Intervall muss 0 oder eine größere Zahl sein."
+  "ERR_OZELLIK_SWEEP_DEGER": "Das Sweep-Intervall muss 0 oder eine größere Zahl sein.",
+  "YEDEKPLAN_UYARI_HATA": "WARNUNG: Die geplante Sicherung von '%s' ist fehlgeschlagen (%s): %s Siehe Protokoll unter Verwaltung > Sicherung planen.",
+  "YEDEKPLAN_UYARI_ESKI": "WARNUNG: Die letzte erfolgreiche automatische Sicherung von '%s' wurde am %s erstellt, vor mehr als 2 Tagen. Der Computer war eventuell aus oder die Aufgabe läuft nicht (Verwaltung > Sicherung planen).",
+  "YEDEKPLAN_UYARI_GOREV": "WARNUNG: Für '%s' ist ein Sicherungsplan gespeichert, aber die Windows-Aufgabe wurde nicht gefunden, es wird keine automatische Sicherung erstellt. Richten Sie sie unter Verwaltung > Sicherung planen neu ein."
 }

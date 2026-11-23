@@ -1249,5 +1249,8 @@
   "ERR_OZELLIK_YETKI": "Only SYSDBA or the owner of the database can change this setting.",
   "ERR_OZELLIK_GENEL": "The setting could not be changed. See the details section.",
   "ERR_OZELLIK_ARAC_YOK": "gfix.exe was not found (normally in the 'istemci' folder).",
-  "ERR_OZELLIK_SWEEP_DEGER": "The sweep interval must be 0 or a larger number."
+  "ERR_OZELLIK_SWEEP_DEGER": "The sweep interval must be 0 or a larger number.",
+  "YEDEKPLAN_UYARI_HATA": "WARNING: the scheduled backup of '%s' failed (%s): %s See the log in Management > Schedule backup.",
+  "YEDEKPLAN_UYARI_ESKI": "WARNING: the last successful automatic backup of '%s' was made on %s, more than 2 days ago. The computer may have been off or the task is not running (Management > Schedule backup).",
+  "YEDEKPLAN_UYARI_GOREV": "WARNING: a backup plan is saved for '%s' but its Windows task was not found, so no automatic backup is made. Set it up again in Management > Schedule backup."
 }

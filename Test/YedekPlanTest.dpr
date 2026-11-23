@@ -159,6 +159,40 @@ begin
   Kontrol('Klasor yoksa hata vermez', EskiYedekleriTasi(TPath.Combine(Kok, 'hic_olmayan_klasor'), 'C:\Veri\T.fdb', 3) = 0);
 end;
 
+{ ---------- Acilista uyari ---------- }
+
+procedure UyariDene;
+var
+  Simdi: TDateTime;
+  P: TYedekPlani;
+  Uyarilar: TArray<string>;
+  Dun, UcGunOnce: string;
+begin
+  Simdi := EncodeDate(2026, 11, 23) + EncodeTime(10, 0, 0, 0);
+  Dun := '2026-11-22 02:00:00 | Muh | OK | Yedek alindi';
+  UcGunOnce := '2026-11-20 02:00:00 | Muh | OK | Yedek alindi';
+  Kontrol('Uyari: gunluk bos ise uyari yok', YedekGunlukUyarisi('Muh', '', Simdi) = '');
+  Kontrol('Uyari: dunku basarili yedek uyari vermez', YedekGunlukUyarisi('Muh', Dun, Simdi) = '');
+  Kontrol('Uyari: 3 gun onceki basarili yedek uyari verir (ad ve tarih icinde)',
+    (Pos('Muh', YedekGunlukUyarisi('Muh', UcGunOnce, Simdi)) > 0) and (Pos('20.11.2026 02:00', YedekGunlukUyarisi('Muh', UcGunOnce, Simdi)) > 0));
+  Kontrol('Uyari: son satir HATA ise uyari verir ve hata metni icinde',
+    (Pos('disk dolu', YedekGunlukUyarisi('Muh', '2026-11-23 02:00:00 | Muh | HATA | Islem yapilamadi. disk dolu', Simdi)) > 0));
+  Kontrol('Uyari: bozuk satir sessiz gecilir', YedekGunlukUyarisi('Muh', 'bozuk satir', Simdi) = '');
+  Kontrol('Uyari: gecersiz tarih sessiz gecilir', YedekGunlukUyarisi('Muh', '2026-13-45 99:00:00 | Muh | OK | x', Simdi) = '');
+
+  { Plan kayitli ama Windows gorevi yok: tek uyari }
+  P := Default(TYedekPlani);
+  P.BaglantiAd := 'gorevsiz_plan';
+  P.Klasor := 'C:Y';
+  P.Saat := '02:00';
+  P.Sakla := 3;
+  YedekPlaniKaydet(P);
+  Uyarilar := YedekPlanlariniDenetle;
+  Kontrol('Gorevi olmayan plan icin uyari var', (Length(Uyarilar) = 1) and (Pos('gorevsiz_plan', Uyarilar[0]) > 0));
+  YedekPlaniSil(P.BaglantiAd);
+  Kontrol('Plan yoksa uyari da yok', Length(YedekPlanlariniDenetle) = 0);
+end;
+
 { ---------- Plani calistirma ---------- }
 
 procedure CalistirDene(const Kok: string);
@@ -256,6 +290,7 @@ begin
       PlanDene;
       GorevDene;
       EskiDene(Kok);
+      UyariDene;
       CalistirDene(Kok);
     except
       on E: Exception do

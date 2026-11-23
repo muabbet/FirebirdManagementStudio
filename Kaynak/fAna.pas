@@ -15,7 +15,7 @@ uses
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
-  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, fYedekPlan, fVeritabaniOzellik, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme, fIndeksOner, uAra, fAra, uSqlDosya, uDokuman, fVeriFark, uGuncelleme, uUygulama;
+  fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, uYedekPlan, fYedekPlan, fVeritabaniOzellik, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme, fIndeksOner, uAra, fAra, uSqlDosya, uDokuman, fVeriFark, uGuncelleme, uUygulama;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -206,6 +206,7 @@ type
     FKapatilacakSayfa: TTabSheet;
     procedure SeritKur;
     procedure AcilistaSurumDenetle;
+    procedure AcilistaYedekDenetle;
     procedure YazilariYenile;
     procedure DilListesiniDoldur;
     procedure DurumuGuncelle;
@@ -337,6 +338,17 @@ begin
   if Uyari <> '' then
     UyariGoster(Uyari);
   AcilistaSurumDenetle;
+  AcilistaYedekDenetle;
+end;
+
+{ Program acilirken zamanlanmis yedek planlarina bakar: son yedek basarisizsa, 2 gunden eskiyse ya da Windows gorevi silinmisse
+  mesaj alanina yazar. Plan yoksa hicbir sey yazmaz. }
+procedure TfrmAna.AcilistaYedekDenetle;
+var
+  Satir: string;
+begin
+  for Satir in YedekPlanlariniDenetle do
+    MesajYaz(Satir);
 end;
 
 { Program acilirken arka planda GitHub'a sorar (ekran donmaz). Hata ya da ag yoksa sessiz kalir; yeni surum varsa

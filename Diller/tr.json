@@ -1249,5 +1249,8 @@
   "ERR_OZELLIK_YETKI": "Bu ayarı yalnızca SYSDBA ya da veritabanının sahibi değiştirebilir.",
   "ERR_OZELLIK_GENEL": "Ayar değiştirilemedi. Ayrıntı bölümüne bakın.",
   "ERR_OZELLIK_ARAC_YOK": "gfix.exe bulunamadı (normalde 'istemci' klasöründe durur).",
-  "ERR_OZELLIK_SWEEP_DEGER": "Sweep aralığı 0 ya da daha büyük bir sayı olmalı."
+  "ERR_OZELLIK_SWEEP_DEGER": "Sweep aralığı 0 ya da daha büyük bir sayı olmalı.",
+  "YEDEKPLAN_UYARI_HATA": "UYARI: '%s' için zamanlanmış yedek başarısız oldu (%s): %s Yönetim > Yedek planla penceresinde günlüğe bakın.",
+  "YEDEKPLAN_UYARI_ESKI": "UYARI: '%s' için son başarılı otomatik yedek %s tarihinde alındı, 2 günden eski. Bilgisayar kapalıydı ya da görev çalışmıyor olabilir (Yönetim > Yedek planla).",
+  "YEDEKPLAN_UYARI_GOREV": "UYARI: '%s' için yedek planı kayıtlı ama Windows görevi bulunamadı, otomatik yedek alınmıyor. Yönetim > Yedek planla ile yeniden kurun."
 }

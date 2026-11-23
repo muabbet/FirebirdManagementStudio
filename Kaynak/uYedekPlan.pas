@@ -62,6 +62,13 @@ function EskiYedekleriTasi(const Klasor, VeritabaniYolu: string; Sakla: Integer)
 { Gunluk: son Say satir (eskiden yeniye) }
 function YedekGunlugu(const BaglantiAd: string; Say: Integer): TArray<string>;
 
+{ Gunluge gore bir planin uyarisi (saf yordam, denemek icin ayri): son satir HATA ise ya da son basarili yedek 2 gunden eskiyse
+  anlasilir cumle, degilse (ya da hic calismadiysa) bos. SonSatir: YedekGunlugu'nun son satiri. }
+function YedekGunlukUyarisi(const BaglantiAd, SonSatir: string; Simdi: TDateTime): string;
+
+{ Kayitli tum planlari denetler (program acilirken): gunluk uyarilari ve Windows gorevi silinmis planlar. Uyari yoksa bos dizi. }
+function YedekPlanlariniDenetle: TArray<string>;
+
 { Program "/yedek" ile acildiysa True (dpr, arayuzu hic acmadan bu kipe girer). }
 function YedekGoreviMi: Boolean;
 { Gorev kipini calistirir; cikis kodu: 0 basarili, 1 yedek alinamadi. }
@@ -353,6 +360,67 @@ begin
       Baslangic := 0;
     Result := Copy(Liste.ToArray, Baslangic, Liste.Count - Baslangic);
   finally
+    Liste.Free;
+  end;
+end;
+
+{ ---------- Acilista denetim ---------- }
+
+function GunlukZamani(const Satir: string; out Zaman: TDateTime): Boolean;
+var
+  Y, A, G, S, D, N: Integer;
+begin
+  Result := (Length(Satir) >= 19) and TryStrToInt(Copy(Satir, 1, 4), Y) and TryStrToInt(Copy(Satir, 6, 2), A) and
+    TryStrToInt(Copy(Satir, 9, 2), G) and TryStrToInt(Copy(Satir, 12, 2), S) and TryStrToInt(Copy(Satir, 15, 2), D) and
+    TryStrToInt(Copy(Satir, 18, 2), N);
+  if Result then
+    Result := TryEncodeDate(Y, A, G, Zaman) and (S < 24) and (D < 60) and (N < 60);
+  if Result then
+    Zaman := Zaman + EncodeTime(S, D, N, 0);
+end;
+
+function YedekGunlukUyarisi(const BaglantiAd, SonSatir: string; Simdi: TDateTime): string;
+var
+  Zaman: TDateTime;
+  Sira: Integer;
+begin
+  Result := '';
+  if not GunlukZamani(SonSatir, Zaman) then
+    Exit;
+  Sira := Pos(' | HATA | ', SonSatir);
+  if Sira > 0 then
+    Result := TF('YEDEKPLAN_UYARI_HATA', [BaglantiAd, FormatDateTime('dd.mm.yyyy hh:nn', Zaman),
+      Copy(SonSatir, Sira + Length(' | HATA | '), MaxInt)])
+  else if Simdi - Zaman > 2 then
+    Result := TF('YEDEKPLAN_UYARI_ESKI', [BaglantiAd, FormatDateTime('dd.mm.yyyy hh:nn', Zaman)]);
+end;
+
+function YedekPlanlariniDenetle: TArray<string>;
+var
+  Kok: TJSONObject;
+  Cift: TJSONPair;
+  Liste: TList<string>;
+  Satirlar: TArray<string>;
+  Uyari: string;
+begin
+  Liste := TList<string>.Create;
+  Kok := PlanlariOku;
+  try
+    for Cift in Kok do
+    begin
+      if not YedekGorevVarMi(Cift.JsonString.Value) then
+        Liste.Add(TF('YEDEKPLAN_UYARI_GOREV', [Cift.JsonString.Value]));
+      Satirlar := YedekGunlugu(Cift.JsonString.Value, 1);
+      if Length(Satirlar) > 0 then
+      begin
+        Uyari := YedekGunlukUyarisi(Cift.JsonString.Value, Satirlar[0], Now);
+        if Uyari <> '' then
+          Liste.Add(Uyari);
+      end;
+    end;
+    Result := Liste.ToArray;
+  finally
+    Kok.Free;
     Liste.Free;
   end;
 end;
