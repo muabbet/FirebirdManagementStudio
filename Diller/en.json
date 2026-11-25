@@ -1186,6 +1186,8 @@
   "ACIKLAMA_KOLON_ETIKET": "Comment for column %1:s of table %0:s (leave empty to remove it):",
   "MSG_ACIKLAMA_TAMAM": "Comment saved for %s (transaction committed). Only the comment changed, no data was touched.",
   "ERR_ACIKLAMA_YAZILAMADI": "Could not save the comment for %s, nothing was changed.",
+  "MENU_ACIKLAMA": "Comment",
+  "ACIKLAMA_NESNE_ETIKET": "Comment for %s (leave empty to remove it):",
   "BTN_YEDEK_PLAN": "Schedule backup",
   "YEDEKPLAN_BASLIK": "Scheduled backup",
   "YEDEKPLAN_BAGLANTI": "Connection: %s",

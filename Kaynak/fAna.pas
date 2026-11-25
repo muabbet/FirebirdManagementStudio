@@ -16,7 +16,7 @@ uses
   Vcl.ImageCollection,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
   fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, uYedekPlan, fYedekPlan, fVeritabaniOzellik, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme, fIndeksOner, uAra, fAra, uSqlDosya, uDokuman, fVeriFark, uGuncelleme, uUygulama,
-  uTetikleyiciDurum;
+  uTetikleyiciDurum, uAciklama;
 
 type
   TAgacTuru = (atKlasor, atBaglanti, atDal, atNesne);
@@ -68,6 +68,7 @@ type
     miGenDeger: TMenuItem;
     miTabloKopyala: TMenuItem;
     miTabloBosalt: TMenuItem;
+    miAciklama: TMenuItem;
     miNesneSil: TMenuItem;
     miBaglan: TMenuItem;
     miKes: TMenuItem;
@@ -142,6 +143,7 @@ type
     procedure miGenDegerClick(Sender: TObject);
     procedure miNesneSilClick(Sender: TObject);
     procedure miTabloBosaltClick(Sender: TObject);
+    procedure miAciklamaClick(Sender: TObject);
     procedure miTabloKopyalaClick(Sender: TObject);
     procedure miBaglanClick(Sender: TObject);
     procedure miKesClick(Sender: TObject);
@@ -241,6 +243,7 @@ type
     procedure AgaciYenile(Dugme: TTreeNode);
     procedure TabloyuBosalt(Dugme: TTreeNode);
     procedure TetikleyiciDurumunuDegistir(Dugme: TTreeNode);
+    procedure NesneAciklamasiniDuzenle(Dugme: TTreeNode);
     procedure TabloyuTasarla(Dal: TTreeNode);
     procedure TabloyuKopyala(Dugme: TTreeNode);
     procedure BaglantiAgaciniYenile(const BaglantiAd: string);
@@ -476,6 +479,7 @@ begin
   miGenDeger.Caption := T('MENU_GEN_DEGER');
   miNesneSil.Caption := T('MENU_SIL');
   miTabloBosalt.Caption := T('MENU_TABLO_BOSALT');
+  miAciklama.Caption := T('MENU_ACIKLAMA');
   miTabloKopyala.Caption := T('MENU_TABLO_KOPYALA');
   miYeniTabloTasarim.Caption := T('MENU_YENI_TABLO_TASARIM');
   miBaglan.Caption := T('BTN_BAGLAN');
@@ -2052,6 +2056,41 @@ begin
   DurumuGuncelle;
 end;
 
+{ Sag tik "Aciklama": mevcut metin pencerede gelir, bos birakilirsa aciklama kaldirilir. COMMENT ON tek islemde calisir,
+  yalniz aciklama degisir; calisan SQL alt alanda gorunur. }
+procedure TfrmAna.NesneAciklamasiniDuzenle(Dugme: TTreeNode);
+var
+  Oge: TAgacOgesi;
+  Bag: TAcikBaglanti;
+  Tur: TNesneTuru;
+  Metin: string;
+  Sonuc: TProsedurSonucu;
+begin
+  Oge := OgeAl(Dugme);
+  Bag := FbAcikBaglanti(Oge.BaglantiAd);
+  if Bag = nil then
+    Exit;
+  Tur := DalTuru(Oge.DalNo);
+  try
+    Metin := NesneAciklamasiOku(Bag, Tur, Oge.Ad);
+  except
+    on E: Exception do
+    begin
+      HataYaz(TF('ERR_ACIKLAMA_YAZILAMADI', [Oge.Ad]) + ' ' + HataMetniniCevir(E), E.Message);
+      Exit;
+    end;
+  end;
+  if not MetinSor(T('ACIKLAMA_BASLIK'), TF('ACIKLAMA_NESNE_ETIKET', [Oge.Ad]), Metin, False) then
+    Exit;
+  Sonuc := NesneAciklamaYaz(Bag, Tur, Oge.Ad, Trim(Metin));
+  if Sonuc.Basarili then
+    MesajYaz(TF('MSG_ACIKLAMA_TAMAM', [Oge.Ad]))
+  else
+    HataYaz(TF('ERR_ACIKLAMA_YAZILAMADI', [Oge.Ad]) + ' ' + Sonuc.Cumle, Sonuc.Ayrinti);
+  SqlMesajiYaz(Sonuc.Komutlar);
+  DurumuGuncelle;
+end;
+
 { Sag tik "Sil": net onay (nesne, geri alinamaz, yedek, kullananlar), yedek + DROP, sonuc ve SQL mesaj alaninda. }
 procedure TfrmAna.NesneyiSil(Dugme: TTreeNode);
 var
@@ -3027,6 +3066,8 @@ begin
   miNesneSil.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_TABLO, DAL_VIEW, DAL_DOMAIN, DAL_ISTISNA, DAL_GENERATOR]);
   miTabloBosalt.Visible := Uretilebilir and (OgeAl(Dugme).DalNo = DAL_TABLO);
   miTabloKopyala.Visible := miTabloBosalt.Visible;
+  { Aciklama (COMMENT ON): her nesne turunde. }
+  miAciklama.Visible := Uretilebilir;
   { Dala sag tik: yeni exception / domain. }
   miYeniNesne.Visible := (not Bos) and (Tur = atDal) and Acik and (OgeAl(Dugme).DalNo in [DAL_TABLO, DAL_DOMAIN, DAL_ISTISNA, DAL_GENERATOR]);
   miYeniTabloTasarim.Visible := miYeniNesne.Visible and (OgeAl(Dugme).DalNo = DAL_TABLO);
@@ -3172,6 +3213,12 @@ procedure TfrmAna.miTabloBosaltClick(Sender: TObject);
 begin
   if tvNesneler.Selected <> nil then
     TabloyuBosalt(tvNesneler.Selected);
+end;
+
+procedure TfrmAna.miAciklamaClick(Sender: TObject);
+begin
+  if tvNesneler.Selected <> nil then
+    NesneAciklamasiniDuzenle(tvNesneler.Selected);
 end;
 
 procedure TfrmAna.miBaglanClick(Sender: TObject);

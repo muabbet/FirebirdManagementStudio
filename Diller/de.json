@@ -1186,6 +1186,8 @@
   "ACIKLAMA_KOLON_ETIKET": "Kommentar für Spalte %1:s der Tabelle %0:s (leer lassen, um ihn zu entfernen):",
   "MSG_ACIKLAMA_TAMAM": "Kommentar für %s gespeichert (Transaktion bestätigt: Commit). Nur der Kommentar wurde geändert, Daten blieben unberührt.",
   "ERR_ACIKLAMA_YAZILAMADI": "Der Kommentar für %s konnte nicht gespeichert werden, es wurde nichts geändert.",
+  "MENU_ACIKLAMA": "Kommentar",
+  "ACIKLAMA_NESNE_ETIKET": "Kommentar für %s (leer lassen, um ihn zu entfernen):",
   "BTN_YEDEK_PLAN": "Sicherung planen",
   "YEDEKPLAN_BASLIK": "Geplante Sicherung",
   "YEDEKPLAN_BAGLANTI": "Verbindung: %s",

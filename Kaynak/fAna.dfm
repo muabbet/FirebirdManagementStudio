@@ -242,6 +242,9 @@ object frmAna: TfrmAna
     object miTabloBosalt: TMenuItem
       OnClick = miTabloBosaltClick
     end
+    object miAciklama: TMenuItem
+      OnClick = miAciklamaClick
+    end
     object miNesneSil: TMenuItem
       OnClick = miNesneSilClick
     end

@@ -12,7 +12,7 @@ uses
   System.SysUtils, System.Classes, System.IOUtils, Data.DB,
   FireDAC.Stan.Intf, FireDAC.Stan.Option, FireDAC.Stan.Error, FireDAC.Comp.Client, FireDAC.Phys.FB,
   FireDAC.ConsoleUI.Wait,
-  uDil, uBaglanti, uSorgu, uMetadata, uProsedur, uAciklama;
+  uDil, uBaglanti, uSorgu, uMetadata, uProsedur, uDDL, uAciklama;
 
 var
   Cikti: TStringList;
@@ -46,7 +46,8 @@ procedure Dene;
 var
   S: TProsedurSonucu;
   Kolonlar: TFDMemTable;
-  Metin: string;
+  Metin, Ad: string;
+  Tur: TNesneTuru;
 begin
   Calistir('CREATE TABLE T_ACK (ID INTEGER NOT NULL PRIMARY KEY, AD VARCHAR(20))');
   Calistir('INSERT INTO T_ACK VALUES (1, ''a'')');
@@ -94,6 +95,41 @@ begin
   S := AciklamaYaz(Bag, 'YOK_BOYLE_TABLO', '', 'x');
   Cikti.Add('Olmayan tablo: basarili=' + BoolToStr(S.Basarili, True) + ' cumle=' + S.Cumle);
   Kontrol('Olmayan tabloda basarisiz, cumle dolu', (not S.Basarili) and (S.Cumle <> ''));
+
+  { Agac sag tik: tum nesne turleri }
+  Calistir('CREATE VIEW V_ACK AS SELECT ID, AD FROM T_ACK');
+  Calistir('CREATE PROCEDURE P_ACK AS BEGIN END');
+  Calistir('CREATE TRIGGER TR_ACK FOR T_ACK ACTIVE BEFORE INSERT POSITION 0 AS BEGIN END');
+  Calistir('CREATE DOMAIN D_ACK AS INTEGER');
+  Calistir('CREATE EXCEPTION E_ACK ''hata''');
+  Calistir('CREATE GENERATOR GEN_ACK');
+  for Tur := Low(TNesneTuru) to High(TNesneTuru) do
+  begin
+    case Tur of
+      ntTablo: Ad := 'T_ACK';
+      ntView: Ad := 'V_ACK';
+      ntProsedur: Ad := 'P_ACK';
+      ntTetikleyici: Ad := 'TR_ACK';
+      ntDomain: Ad := 'D_ACK';
+      ntIstisna: Ad := 'E_ACK';
+    else
+      Ad := 'GEN_ACK';
+    end;
+    Metin := 'nesne ' + Ad + '; ''ok''';
+    S := NesneAciklamaYaz(Bag, Tur, Ad, Metin);
+    Cikti.Add(Ad + ': basarili=' + BoolToStr(S.Basarili, True) + ' cumle=' + S.Cumle + ' ham=' + Copy(S.Ayrinti, 1, 200));
+    if Tur = ntTablo then
+      Kontrol('Nesne aciklamasi (tablo) yazildi ve okunur', S.Basarili and (NesneAciklamasiOku(Bag, Tur, Ad) = Metin) and
+        (Pos('COMMENT ON TABLE', S.Komutlar[0]) = 1))
+    else
+      Kontrol('Nesne aciklamasi yazildi ve okunur: ' + Ad, S.Basarili and (NesneAciklamasiOku(Bag, Tur, Ad) = Metin));
+    S := NesneAciklamaYaz(Bag, Tur, Ad, '');
+    Kontrol('Nesne aciklamasi kaldirilir: ' + Ad, S.Basarili and (NesneAciklamasiOku(Bag, Tur, Ad) = '') and
+      (Pos('IS NULL', S.Komutlar[0]) > 0));
+  end;
+  Kontrol('Tablo kolon aciklamasi nesne aciklamasindan etkilenmedi', KolonAciklamasiOku(Bag, 'T_ACK', 'ID') <> '');
+  S := NesneAciklamaYaz(Bag, ntProsedur, 'YOK_BOYLE_PROSEDUR', 'x');
+  Kontrol('Olmayan nesnede basarisiz, cumle dolu', (not S.Basarili) and (S.Cumle <> ''));
 end;
 
 var

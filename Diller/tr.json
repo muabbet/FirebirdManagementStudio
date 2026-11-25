@@ -1186,6 +1186,8 @@
   "ACIKLAMA_KOLON_ETIKET": "%s tablosundaki %s kolonunun açıklaması (boş bırakırsanız açıklama kaldırılır):",
   "MSG_ACIKLAMA_TAMAM": "%s için açıklama kaydedildi (işlem onaylandı: commit). Yalnız açıklama değişti, veriye dokunulmadı.",
   "ERR_ACIKLAMA_YAZILAMADI": "%s için açıklama kaydedilemedi, hiçbir şey değişmedi.",
+  "MENU_ACIKLAMA": "Açıklama",
+  "ACIKLAMA_NESNE_ETIKET": "%s için açıklama (boş bırakırsanız açıklama kaldırılır):",
   "BTN_YEDEK_PLAN": "Yedek planla",
   "YEDEKPLAN_BASLIK": "Zamanlanmış yedek",
   "YEDEKPLAN_BAGLANTI": "Bağlantı: %s",

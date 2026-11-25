@@ -21,6 +21,13 @@ function AciklamaKomutu(Bag: TAcikBaglanti; const Tablo, Kolon, Metin: string): 
 { Komutu tek islemde calistirir; calisan komut Sonuc.Komutlar'a yazilir. }
 function AciklamaYaz(Bag: TAcikBaglanti; const Tablo, Kolon, Metin: string): TProsedurSonucu;
 
+{ Agactaki bir nesnenin (tablo, view, prosedur, trigger, domain, exception, generator) aciklamasi; yoksa bos. }
+function NesneAciklamasiOku(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string): string;
+{ COMMENT ON TABLE|VIEW|PROCEDURE|TRIGGER|DOMAIN|EXCEPTION|GENERATOR ad IS '...'; (Metin bos ise IS NULL). }
+function NesneAciklamaKomutu(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad, Metin: string): string;
+{ Komutu tek islemde calistirir; calisan komut Sonuc.Komutlar'a yazilir. }
+function NesneAciklamaYaz(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad, Metin: string): TProsedurSonucu;
+
 implementation
 
 function Sabit(const Metin: string): string;
@@ -76,6 +83,72 @@ function AciklamaYaz(Bag: TAcikBaglanti; const Tablo, Kolon, Metin: string): TPr
 begin
   Result := Default(TProsedurSonucu);
   MetniCalistir(Bag, AciklamaKomutu(Bag, Tablo, Kolon, Metin), Result);
+end;
+
+function NesneAciklamasiOku(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad: string): string;
+var
+  Tablo, Alan: string;
+begin
+  case Tur of
+    ntTablo, ntView:
+      begin
+        Tablo := 'rdb$relations';
+        Alan := 'rdb$relation_name';
+      end;
+    ntProsedur:
+      begin
+        Tablo := 'rdb$procedures';
+        Alan := 'rdb$procedure_name';
+      end;
+    ntTetikleyici:
+      begin
+        Tablo := 'rdb$triggers';
+        Alan := 'rdb$trigger_name';
+      end;
+    ntDomain:
+      begin
+        Tablo := 'rdb$fields';
+        Alan := 'rdb$field_name';
+      end;
+    ntIstisna:
+      begin
+        Tablo := 'rdb$exceptions';
+        Alan := 'rdb$exception_name';
+      end;
+  else
+    begin
+      Tablo := 'rdb$generators';
+      Alan := 'rdb$generator_name';
+    end;
+  end;
+  Result := MetinOku(Bag, 'select rdb$description as METIN from ' + Tablo + ' where ' + Alan + ' = ' + Sabit(Ad));
+end;
+
+function NesneAciklamaKomutu(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad, Metin: string): string;
+var
+  Anahtar, Deger: string;
+begin
+  case Tur of
+    ntTablo: Anahtar := 'TABLE';
+    ntView: Anahtar := 'VIEW';
+    ntProsedur: Anahtar := 'PROCEDURE';
+    ntTetikleyici: Anahtar := 'TRIGGER';
+    ntDomain: Anahtar := 'DOMAIN';
+    ntIstisna: Anahtar := 'EXCEPTION';
+  else
+    Anahtar := 'GENERATOR';
+  end;
+  if Metin = '' then
+    Deger := 'NULL'
+  else
+    Deger := Sabit(Metin);
+  Result := 'COMMENT ON ' + Anahtar + ' ' + AdiYaz(Bag, Ad) + ' IS ' + Deger + ';';
+end;
+
+function NesneAciklamaYaz(Bag: TAcikBaglanti; Tur: TNesneTuru; const Ad, Metin: string): TProsedurSonucu;
+begin
+  Result := Default(TProsedurSonucu);
+  MetniCalistir(Bag, NesneAciklamaKomutu(Bag, Tur, Ad, Metin), Result);
 end;
 
 end.
