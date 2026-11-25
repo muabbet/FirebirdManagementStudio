@@ -290,6 +290,7 @@ type
     procedure ScriptAc(Dugme: TTreeNode);
     procedure TabloKomutAc(Dugme: TTreeNode; Tur: TTabloKomutTuru);
     procedure ProsedurCagriAc(Dugme: TTreeNode);
+    procedure ViewVerisiAc(Dugme: TTreeNode);
     procedure NesneAdiniKopyala(Dugme: TTreeNode);
     function ProsedurSekmeAl(Sayfa: TTabSheet): TProsedurSekme;
     function AktifProsedurSekmesi: TProsedurSekme;
@@ -1669,6 +1670,26 @@ begin
   MesajYaz(TF('MSG_PROSEDUR_CAGRI_ACILDI', [Oge.Ad]));
 end;
 
+{ View'a cift tik: ilk 100 satir yeni sorgu sekmesinde calisir (yalniz okuyan SELECT; filtre satiri ve Disa aktar hazir).
+  Tablo sekmesi acilmaz, cunku oradaki Duzenle/Sil/kolon dugmeleri view'da anlamsiz. }
+procedure TfrmAna.ViewVerisiAc(Dugme: TTreeNode);
+var
+  Oge: TAgacOgesi;
+  Bag: TAcikBaglanti;
+  Sekme: TSorguSekme;
+begin
+  Oge := OgeAl(Dugme);
+  Bag := FbAcikBaglanti(Oge.BaglantiAd);
+  if Bag = nil then
+    Exit;
+  YeniSorgu(ViewVeriSql(Bag, Oge.Ad), '', Oge.BaglantiAd);
+  Sekme := SorguSekmeAl(pcCalisma.ActivePage);
+  if Sekme = nil then
+    Exit;
+  MesajYaz(TF('MSG_VIEW_ACILDI', [Oge.Ad]));
+  Sekme.Calistir;
+end;
+
 { Agacta Ctrl+C: secili nesnenin adi panoya (SQL'de gerekiyorsa tirnakli). Baglanti, klasor ve dalda bir sey yapmaz. }
 procedure TfrmAna.NesneAdiniKopyala(Dugme: TTreeNode);
 var
@@ -2997,6 +3018,8 @@ begin
     BaglantiyiAc(Dugme)
   else if (OgeAl(Dugme).Tur = atNesne) and (OgeAl(Dugme).DalNo = DAL_TABLO) then
     TabloAc(Dugme)
+  else if (OgeAl(Dugme).Tur = atNesne) and (OgeAl(Dugme).DalNo = DAL_VIEW) then
+    ViewVerisiAc(Dugme)
   else if (OgeAl(Dugme).Tur = atDal) and (OgeAl(Dugme).DalNo = DAL_TABLO) then
     TabloListesiAc(Dugme);
 end;

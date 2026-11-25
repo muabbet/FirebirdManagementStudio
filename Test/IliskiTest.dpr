@@ -182,6 +182,17 @@ begin
       Kontrol('Cagri: olmayan prosedurde hata', True);
   end;
 
+  { View'a cift tik: SELECT FIRST 100, ad gerekiyorsa tirnakli, gecerli SQL. }
+  Calistir('CREATE VIEW V_MUSTERI AS SELECT ID, AD FROM MUSTERI');
+  Calistir('CREATE VIEW "kucuk_view" AS SELECT ID FROM MUSTERI');
+  Kontrol('View SQL: FIRST 100', ViewVeriSql(Bag, 'V_MUSTERI') = 'SELECT FIRST 100 * FROM V_MUSTERI;');
+  Kontrol('View SQL: kucuk harfli ad tirnakli', ViewVeriSql(Bag, 'kucuk_view') = 'SELECT FIRST 100 * FROM "kucuk_view";');
+  Sonuc := SorguCalistir(Bag, KomutlaraBol(ViewVeriSql(Bag, 'V_MUSTERI'))[0]);
+  Sonuc.Free;
+  Sonuc := SorguCalistir(Bag, KomutlaraBol(ViewVeriSql(Bag, 'kucuk_view'))[0]);
+  Sonuc.Free;
+  Kontrol('View SQL: iki komut da calisti', True);
+
   S := KayitSayisiSql('MUSTERI', 'ID > 0');
   Cikti.Add('Kayit say SQL: ' + S);
   Kontrol('Kayit say SQL: COUNT ve filtre', (Pos('SELECT COUNT(*) FROM ', S) = 1) and (Pos('MUSTERI', S) > 0) and

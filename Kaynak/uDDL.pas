@@ -52,6 +52,9 @@ function TabloKomutScripti(Bag: TAcikBaglanti; const Ad: string; Tur: TTabloKomu
   EXECUTE PROCEDURE P(...). Girdi parametreleri NULL yer tutucusudur, yaninda ad ve tip yazar. Calistirilmaz. }
 function ProsedurCagriScripti(Bag: TAcikBaglanti; const Ad: string): string;
 
+{ View'a cift tik: SELECT FIRST 100 * FROM ad; (yalniz okur; ad gerekiyorsa tirnakli). }
+function ViewVeriSql(Bag: TAcikBaglanti; const Ad: string): string;
+
 { Tabloyu BASKA bir ada (ve baska veritabanina) kopyalamak icin CREATE TABLE: kolonlar, PRIMARY KEY / UNIQUE / CHECK ve indexler.
   Yabanci anahtarlar, tetikleyiciler, yetkiler ve dis dosya baglantisi KOPYALANMAZ. Kisit ve index adlari cakismasin diye
   kisitlar adsiz, indexler yeni adla yazilir. Domain kullanan kolonlar domain adiyla kalir (hedefte domain olmali). }
@@ -771,6 +774,11 @@ begin
   finally
     AnahtarKelimeleriBirak;
   end;
+end;
+
+function ViewVeriSql(Bag: TAcikBaglanti; const Ad: string): string;
+begin
+  Result := 'SELECT FIRST 100 * FROM ' + AdiYaz(Bag, Ad) + ';';
 end;
 
 function GeneratorDegerKomutu(Bag: TAcikBaglanti; const Ad: string; Deger: Int64): string;

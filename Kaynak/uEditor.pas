@@ -18,9 +18,13 @@ unit uEditor;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Generics.Collections, Vcl.Controls, Vcl.Graphics, Vcl.ExtCtrls,
-  SynEdit, SynHighlighterSQL, SynCompletionProposal,
+  Winapi.Windows, System.SysUtils, System.Classes, System.Generics.Collections, Vcl.Controls, Vcl.Graphics, Vcl.ExtCtrls,
+  SynEdit, SynEditTypes, SynHighlighterSQL, SynCompletionProposal,
   uDil, uSorgu, uMetadata;
+
+{ Ctrl+/ icin: satirlarin hepsi (bos olanlar haric) "--" ile basliyorsa yorum kaldirilir ("-- " ya da "--"),
+  degilse her dolu satirin basina "-- " eklenir. Bos satirlara dokunulmaz. }
+function YorumDegistir(const Satirlar: TArray<string>): TArray<string>;
 
 type
   { Tablo adini verir, kolon adlarini Kolonlar'a ekler. Tablo yoksa bos birakir. }
@@ -46,6 +50,7 @@ type
       EndToken: WideChar);
     function NoktadanOnceAd: string;
     function TabloKolonlari(const Tablo: string): TStringList;
+    procedure TusBasildi(Sender: TObject; var Key: Word; Shift: TShiftState);
   public
     { Kolon onerisi icin gerekli; atanmazsa "ad." yazilinca liste acilmaz. }
     KolonGetirici: TKolonGetirici;
@@ -71,9 +76,47 @@ type
     procedure AnahtarKelimeleriYukle(const Dosya, Surum: string);
     { Tablo, view, prosedur, generator adlarini oneri listesine koyar. }
     procedure NesneAdlariniVer(Liste: TStrings);
+    { Secili satirlari (secim yoksa imlecin satirini) yorum yapar ya da yorumu kaldirir (Ctrl+/). Geri al ile donulur. }
+    procedure YorumuDegistir;
   end;
 
 implementation
+
+function YorumDegistir(const Satirlar: TArray<string>): TArray<string>;
+var
+  i: Integer;
+  HepsiYorum: Boolean;
+  Satir: string;
+begin
+  HepsiYorum := False;
+  for i := 0 to High(Satirlar) do
+    if Trim(Satirlar[i]) <> '' then
+    begin
+      HepsiYorum := True;
+      Break;
+    end;
+  for i := 0 to High(Satirlar) do
+    if (Trim(Satirlar[i]) <> '') and not TrimLeft(Satirlar[i]).StartsWith('--') then
+      HepsiYorum := False;
+  SetLength(Result, Length(Satirlar));
+  for i := 0 to High(Satirlar) do
+  begin
+    Satir := Satirlar[i];
+    if Trim(Satir) = '' then
+      Result[i] := Satir
+    else if HepsiYorum then
+    begin
+      { Girintiyi koru: ilk "--" (ve ardindaki tek bosluk) silinir. }
+      Result[i] := Copy(Satir, 1, Pos('--', Satir) - 1);
+      Satir := Copy(Satir, Pos('--', Satir) + 2, MaxInt);
+      if Satir.StartsWith(' ') then
+        Satir := Copy(Satir, 2, MaxInt);
+      Result[i] := Result[i] + Satir;
+    end
+    else
+      Result[i] := '-- ' + Satir;
+  end;
+end;
 
 function KimlikKarakteri(C: Char): Boolean;
 begin
@@ -117,6 +160,7 @@ begin
   FEdit.Highlighter := FRenk;
   FEdit.OnSpecialLineColors := HataSatiriRengi;
   FEdit.OnChange := MetinDegisti;
+  FEdit.OnKeyDown := TusBasildi;
   FOneri := TSynCompletionProposal.Create(Self);
   { Ctrl+Bosluk bilesenin varsayilan kisayoludur. '.' yazilinca da kisa beklemeden liste acilir. }
   FOneri.Options := FOneri.Options + [scoUseBuiltInTimer];
@@ -222,6 +266,55 @@ end;
 procedure TSqlEditor.MetinYaz(const Metin: string);
 begin
   FEdit.Text := Metin;
+end;
+
+{ Ctrl+/ (ABD klavyesi), Ctrl+Shift+7 (Turkce ve Almanca klavyede "/" Shift+7'dir) ya da Ctrl + sayi tusu "/".
+  Ctrl+Shift+7 SynEdit'te 7. yer imini koyardi; burada yorum isine verildi. }
+procedure TSqlEditor.TusBasildi(Sender: TObject; var Key: Word; Shift: TShiftState);
+begin
+  if not (ssCtrl in Shift) or (ssAlt in Shift) then
+    Exit;
+  if (Key = VK_OEM_2) or (Key = VK_DIVIDE) or ((Key = Ord('7')) and (ssShift in Shift)) then
+  begin
+    YorumuDegistir;
+    Key := 0;
+  end;
+end;
+
+procedure TSqlEditor.YorumuDegistir;
+var
+  Bas, Son, i: Integer;
+  Satirlar, Yeni: TArray<string>;
+  Metin: string;
+begin
+  if FEdit.ReadOnly or (FEdit.Lines.Count = 0) then
+    Exit;
+  if FEdit.SelAvail then
+  begin
+    Bas := FEdit.BlockBegin.Line;
+    Son := FEdit.BlockEnd.Line;
+    { Secim bir sonraki satirin basinda bitiyorsa o satir dahil edilmez. }
+    if (FEdit.BlockEnd.Char = 1) and (Son > Bas) then
+      Dec(Son);
+  end
+  else
+  begin
+    Bas := FEdit.CaretY;
+    Son := Bas;
+  end;
+  if Son > FEdit.Lines.Count then
+    Son := FEdit.Lines.Count;
+  SetLength(Satirlar, Son - Bas + 1);
+  for i := Bas to Son do
+    Satirlar[i - Bas] := FEdit.Lines[i - 1];
+  Yeni := YorumDegistir(Satirlar);
+  Metin := string.Join(sLineBreak, Yeni);
+  { Satirlari secip yerine yazmak Geri al (Ctrl+Z) ile tek adimda donulebilir kalir. }
+  FEdit.BlockBegin := BufferCoord(1, Bas);
+  FEdit.BlockEnd := BufferCoord(Length(FEdit.Lines[Son - 1]) + 1, Son);
+  FEdit.SelText := Metin;
+  FEdit.BlockBegin := BufferCoord(1, Bas);
+  FEdit.BlockEnd := BufferCoord(Length(Yeni[High(Yeni)]) + 1, Son);
 end;
 
 procedure TSqlEditor.NesneAdlariniVer(Liste: TStrings);

@@ -1193,6 +1193,7 @@
   "MSG_PROSEDUR_CAGRI_ACILDI": "Aufrufbefehl für %s in einem neuen Tab geöffnet, nicht ausgeführt. Parameterwerte ausfüllen und mit F5 ausführen; ändert die Prozedur Daten, werden sie beim Ausführen geändert.",
   "SCRIPT_PARAMETRE_DOLDURUN": "Parameterwerte ausfüllen, dann F5",
   "BTN_KAYIT_SAY": "Zeilen zählen",
+  "MSG_VIEW_ACILDI": "Die ersten 100 Zeilen der View %s werden in einem neuen Abfrage-Tab angezeigt (nur lesendes SELECT).",
   "LBL_TOPLAM_KAYIT": "Insgesamt %s Zeilen",
   "BTN_YEDEK_PLAN": "Sicherung planen",
   "YEDEKPLAN_BASLIK": "Geplante Sicherung",

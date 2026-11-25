@@ -1193,6 +1193,7 @@
   "MSG_PROSEDUR_CAGRI_ACILDI": "Call statement for %s opened in a new tab, not executed. Fill in the parameter values and run it with F5; if the procedure changes data, running it will change data.",
   "SCRIPT_PARAMETRE_DOLDURUN": "fill in the parameter values, then F5",
   "BTN_KAYIT_SAY": "Count rows",
+  "MSG_VIEW_ACILDI": "First 100 rows of view %s shown in a new query tab (read-only SELECT).",
   "LBL_TOPLAM_KAYIT": "%s rows in total",
   "BTN_YEDEK_PLAN": "Schedule backup",
   "YEDEKPLAN_BASLIK": "Scheduled backup",

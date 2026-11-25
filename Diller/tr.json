@@ -1193,6 +1193,7 @@
   "MSG_PROSEDUR_CAGRI_ACILDI": "%s için çalıştırma komutu yeni sekmede açıldı, çalıştırılmadı. Parametre değerlerini doldurup F5 ile çalıştırın; prosedür veriyi değiştiriyorsa çalıştırınca değiştirir.",
   "SCRIPT_PARAMETRE_DOLDURUN": "parametre değerlerini doldurun, sonra F5",
   "BTN_KAYIT_SAY": "Kayıt say",
+  "MSG_VIEW_ACILDI": "%s view'ının ilk 100 satırı yeni sorgu sekmesinde gösteriliyor (yalnız okuyan SELECT).",
   "LBL_TOPLAM_KAYIT": "Toplam %s kayıt",
   "BTN_YEDEK_PLAN": "Yedek planla",
   "YEDEKPLAN_BASLIK": "Zamanlanmış yedek",
