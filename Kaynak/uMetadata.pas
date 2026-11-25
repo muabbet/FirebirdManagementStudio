@@ -243,6 +243,11 @@ function TabloBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TTabloBilgisi;
 procedure TabloOzellikleriniOku(Bag: TAcikBaglanti; const Ad: string; var Bilgi: TTabloBilgisi);
 function ViewBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TViewBilgisi;
 function ProsedurBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TProsedurBilgisi;
+{ Prosedurun girdi (Girdi = True) ya da cikti parametreleri, sirasiyla. }
+function ParametreleriOku(Bag: TAcikBaglanti; const Prosedur: string; Girdi: Boolean): TArray<TParametreBilgisi>;
+{ Prosedur SUSPEND ile satir donduruyor mu (RDB$PROCEDURE_TYPE = 1; SELECT * FROM P ile cagrilir). Tur kayitli degilse
+  (cok eski veritabani) cikti parametresi varsa evet sayilir. Prosedur yoksa EMetadataHatasi. }
+function ProsedurSecilebilirMi(Bag: TAcikBaglanti; const Ad: string): Boolean;
 function GeneratorBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TGeneratorBilgisi;
 { Nesneyi kullananlar (RDB$DEPENDENCIES; domain'de ayrica tablo kolonlari). Silmeden ve degistirmeden once gosterilir.
   Kendisi listeye girmez; bagimli yoksa bos dizi. }
@@ -1127,6 +1132,21 @@ begin
     raise EMetadataHatasi.Create(TF('ERR_DDL_KAYNAK_YOK', [Ad]));
   Result.Girdiler := ParametreleriOku(Bag, Ad, True);
   Result.Ciktilar := ParametreleriOku(Bag, Ad, False);
+end;
+
+function ProsedurSecilebilirMi(Bag: TAcikBaglanti; const Ad: string): Boolean;
+var
+  PaketSarti, Tur: string;
+begin
+  PaketSarti := '';
+  if SurumNo(Bag) >= 3 then
+    PaketSarti := ' and rdb$package_name is null';
+  NesneVarMi(Bag, 'select rdb$procedure_name from rdb$procedures where rdb$procedure_name = :N' + PaketSarti, Ad);
+  Tur := TekDeger(Bag, 'select rdb$procedure_type from rdb$procedures where rdb$procedure_name = :N' + PaketSarti, Ad);
+  if Tur = '' then
+    Result := Length(ParametreleriOku(Bag, Ad, False)) > 0
+  else
+    Result := Tur = '1';
 end;
 
 function GeneratorBilgisiOku(Bag: TAcikBaglanti; const Ad: string): TGeneratorBilgisi;

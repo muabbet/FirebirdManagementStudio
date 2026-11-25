@@ -88,6 +88,8 @@ function FiltreliSorguSql(const Sql, Filtre: string): string;
 
 { Filtreye uyan kayit sayisi (SELECT COUNT(*) ... WHERE); filtre bossa tablonun tamami. Hata olursa istisna firlar. }
 function KayitSayisi(Bag: TAcikBaglanti; const Tablo, Filtre: string): Int64;
+{ KayitSayisi'nin calistirdigi SQL (SELECT COUNT(*) FROM tablo WHERE filtre); alt alanda gosterilir. }
+function KayitSayisiSql(const Tablo, Filtre: string): string;
 
 type
   { Ne hesaplanacagi: yalniz sayim / + en kucuk, en buyuk / + toplam, ortalama (sayi kolonlari). }
@@ -600,12 +602,17 @@ begin
     Sorgu.Connection := Bag.Baglanti;
     Sorgu.UpdateOptions.ReadOnly := True;
     Sorgu.FetchOptions.Mode := fmAll;
-    Sorgu.SQL.Text := 'SELECT COUNT(*) FROM ' + TirnakliAd(Tablo) + FiltreKosulu(Filtre);
+    Sorgu.SQL.Text := KayitSayisiSql(Tablo, Filtre);
     Sorgu.Open;
     Result := Sorgu.Fields[0].AsLargeInt;
   finally
     Sorgu.Free;
   end;
+end;
+
+function KayitSayisiSql(const Tablo, Filtre: string): string;
+begin
+  Result := 'SELECT COUNT(*) FROM ' + TirnakliAd(Tablo) + FiltreKosulu(Filtre);
 end;
 
 function KolonOzetiSql(const Tablo, Alan: string; Kapsam: TOzetKapsami; const Filtre: string): string;

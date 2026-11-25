@@ -356,6 +356,21 @@ object TabloSekme: TTabloSekme
         TabOrder = 0
         OnClick = btnDisaAktarClick
       end
+      object btnKayitSay: TButton
+        AlignWithMargins = True
+        Left = 610
+        Top = 2
+        Width = 92
+        Height = 25
+        Margins.Top = 2
+        Margins.Right = 4
+        Margins.Bottom = 2
+        Align = alRight
+        Constraints.MinWidth = 92
+        Enabled = False
+        TabOrder = 9
+        OnClick = btnKayitSayClick
+      end
       object btnDuzenle: TButton
         AlignWithMargins = True
         Left = 520

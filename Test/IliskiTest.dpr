@@ -144,6 +144,52 @@ begin
     (Once = 1) and (Sonra = 1) and (KayitSayisi(Bag, 'T_ANAHTARSIZ', '') = 1));
 end;
 
+{ Prosedur cagri komutu (sag tik > Calistirma komutu) ve kayit sayisi SQL'i. }
+procedure CagriDene;
+var
+  S: string;
+  Komutlar: TArray<string>;
+  Sonuc: TSorguSonucu;
+begin
+  Calistir('CREATE PROCEDURE P_SEC (A INTEGER, B VARCHAR(10)) RETURNS (C INTEGER) AS BEGIN C = 1; SUSPEND; END');
+  Calistir('CREATE PROCEDURE P_CAL (A INTEGER) AS BEGIN END');
+  Calistir('CREATE PROCEDURE P_BOS AS BEGIN END');
+
+  S := ProsedurCagriScripti(Bag, 'P_SEC');
+  Cikti.Add('--- P_SEC ---' + sLineBreak + S);
+  Kontrol('Cagri: satir donduren prosedur SELECT * FROM, iki NULL, ad ve tip', (Pos('SELECT * FROM P_SEC(', S) > 0) and
+    (Pos('NULL, -- A INTEGER', S) > 0) and (Pos('NULL -- B VARCHAR(10)', S) > 0) and (Pos(');', S) > 0));
+  S := ProsedurCagriScripti(Bag, 'P_CAL');
+  Cikti.Add('--- P_CAL ---' + sLineBreak + S);
+  Kontrol('Cagri: digerinde EXECUTE PROCEDURE', (Pos('EXECUTE PROCEDURE P_CAL(', S) > 0) and (Pos('NULL -- A INTEGER', S) > 0));
+  S := ProsedurCagriScripti(Bag, 'P_BOS');
+  Kontrol('Cagri: parametresiz prosedurde parantez yok', S = 'EXECUTE PROCEDURE P_BOS;' + sLineBreak);
+
+  { Uretilen komutlar oldugu gibi (NULL ile) gecerli SQL. }
+  for S in [ProsedurCagriScripti(Bag, 'P_SEC'), ProsedurCagriScripti(Bag, 'P_CAL'), ProsedurCagriScripti(Bag, 'P_BOS')] do
+  begin
+    Komutlar := KomutlaraBol(S);
+    Sonuc := SorguCalistir(Bag, Komutlar[0]);
+    Sonuc.Free;
+  end;
+  Kontrol('Cagri: uc komut da hatasiz calisti', True);
+
+  try
+    ProsedurCagriScripti(Bag, 'YOK_BOYLE');
+    Kontrol('Cagri: olmayan prosedurde hata', False);
+  except
+    on E: EMetadataHatasi do
+      Kontrol('Cagri: olmayan prosedurde hata', True);
+  end;
+
+  S := KayitSayisiSql('MUSTERI', 'ID > 0');
+  Cikti.Add('Kayit say SQL: ' + S);
+  Kontrol('Kayit say SQL: COUNT ve filtre', (Pos('SELECT COUNT(*) FROM ', S) = 1) and (Pos('MUSTERI', S) > 0) and
+    (Pos('ID > 0', S) > 0));
+  Kontrol('Kayit say: filtreli sayi dogru', KayitSayisi(Bag, 'MUSTERI', 'ID > 0') = KayitSayisi(Bag, 'MUSTERI', ''));
+  Kontrol('Kayit say SQL filtresiz WHERE yok', Pos('WHERE', KayitSayisiSql('MUSTERI', '')) = 0);
+end;
+
 { Veritabaninda arama (7l): ad, kolon ve kaynak metni. }
 procedure AraDene;
 var
@@ -333,6 +379,7 @@ begin
       OzetDene;
       AraDene;
       ScriptDene;
+      CagriDene;
     except
       on E: Exception do
       begin

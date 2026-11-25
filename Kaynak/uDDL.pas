@@ -48,6 +48,10 @@ type
   kayda dokunmaz. Calistirilmaz, yeni sorgu sekmesinde acilir. }
 function TabloKomutScripti(Bag: TAcikBaglanti; const Ad: string; Tur: TTabloKomutTuru): string;
 
+{ Prosedur cagrisi (sag tik > Calistirma komutu): satir donduren prosedurde SELECT * FROM P(...), digerinde
+  EXECUTE PROCEDURE P(...). Girdi parametreleri NULL yer tutucusudur, yaninda ad ve tip yazar. Calistirilmaz. }
+function ProsedurCagriScripti(Bag: TAcikBaglanti; const Ad: string): string;
+
 { Tabloyu BASKA bir ada (ve baska veritabanina) kopyalamak icin CREATE TABLE: kolonlar, PRIMARY KEY / UNIQUE / CHECK ve indexler.
   Yabanci anahtarlar, tetikleyiciler, yetkiler ve dis dosya baglantisi KOPYALANMAZ. Kisit ve index adlari cakismasin diye
   kisitlar adsiz, indexler yeni adla yazilir. Domain kullanan kolonlar domain adiyla kalir (hedefte domain olmali). }
@@ -733,6 +737,37 @@ begin
   AnahtarKelimeleriKur(Bag.Surum);
   try
     Result := TabloKomutMetni(Ad, TabloBilgisiOku(Bag, Ad), Tur);
+  finally
+    AnahtarKelimeleriBirak;
+  end;
+end;
+
+function ProsedurCagriScripti(Bag: TAcikBaglanti; const Ad: string): string;
+var
+  Secilebilir: Boolean;
+  Girdiler: TArray<TParametreBilgisi>;
+  Bas, Satir: string;
+  i: Integer;
+begin
+  AnahtarKelimeleriKur(Bag.Surum);
+  try
+    Secilebilir := ProsedurSecilebilirMi(Bag, Ad);
+    Girdiler := ParametreleriOku(Bag, Ad, True);
+    if Secilebilir then
+      Bas := 'SELECT * FROM ' + AdYaz(Ad)
+    else
+      Bas := 'EXECUTE PROCEDURE ' + AdYaz(Ad);
+    if Length(Girdiler) = 0 then
+      Exit(Bas + ';' + sLineBreak);
+    Result := '-- ' + T('SCRIPT_PARAMETRE_DOLDURUN') + sLineBreak + Bas + '(' + sLineBreak;
+    for i := 0 to High(Girdiler) do
+    begin
+      Satir := '    NULL';
+      if i < High(Girdiler) then
+        Satir := Satir + ',';
+      Result := Result + Satir + ' -- ' + ParametreSatiri(Girdiler[i]) + sLineBreak;
+    end;
+    Result := Result + ');' + sLineBreak;
   finally
     AnahtarKelimeleriBirak;
   end;

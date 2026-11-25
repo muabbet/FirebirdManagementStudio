@@ -13,7 +13,7 @@ uses
   Winapi.Windows, Winapi.Messages, Winapi.ShellAPI, System.SysUtils, System.Classes, System.Generics.Collections,
   Vcl.Controls, Vcl.Dialogs, Vcl.Graphics, Vcl.Forms, Vcl.ComCtrls, Vcl.ExtCtrls, Vcl.StdCtrls,
   Vcl.Menus, Vcl.ImgList, Vcl.VirtualImageList, Vcl.BaseImageCollection,
-  Vcl.ImageCollection,
+  Vcl.ImageCollection, Vcl.Clipbrd,
   uDil, uIkon, uSerit, uOnay, uBaglanti, uMetadata, uSorgu, uDDL, fBaglanti, fMetinSor, fMetadataCikar, fYedek,
   fTabloSekme, fSorguSekme, fKullanicilar, fProsedurSekme, fGeneratorDeger, uProsedur, uNesneYonet, uYetki, fYetkiler, fCokluSorgu, fTopluGuncelle, fTabloListe, fSemaFark, fHakkinda, uYonetici, uYedekPlan, fYedekPlan, fVeritabaniOzellik, fTabloKopya, fAktifBaglanti, fTabloTasarim, fBakim, uKlonla, uYedek, fIlerleme, fIndeksOner, uAra, fAra, uSqlDosya, uDokuman, fVeriFark, uGuncelleme, uUygulama,
   uTetikleyiciDurum, uAciklama;
@@ -52,6 +52,7 @@ type
     miBagimliliklar: TMenuItem;
     miYetkiler: TMenuItem;
     miScriptUret: TMenuItem;
+    miProsedurCagri: TMenuItem;
     miTabloScript: TMenuItem;
     miTsCreate: TMenuItem;
     miTsSelect: TMenuItem;
@@ -132,6 +133,7 @@ type
     procedure miBagimliliklarClick(Sender: TObject);
     procedure miYetkilerClick(Sender: TObject);
     procedure miScriptUretClick(Sender: TObject);
+    procedure miProsedurCagriClick(Sender: TObject);
     procedure miTabloScriptClick(Sender: TObject);
     procedure miNesneDuzenleClick(Sender: TObject);
     procedure miTetikDurumClick(Sender: TObject);
@@ -161,6 +163,7 @@ type
     procedure miTumSekmeleriKapatClick(Sender: TObject);
     procedure pmSekmePopup(Sender: TObject);
     procedure tvNesnelerMouseMove(Sender: TObject; Shift: TShiftState; X, Y: Integer);
+    procedure tvNesnelerKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
     procedure pcCalismaMouseDown(Sender: TObject; Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure btnAyrintiClick(Sender: TObject);
     procedure btnTumKapatClick(Sender: TObject);
@@ -286,6 +289,8 @@ type
     procedure FormKapanirken(Sender: TObject; var CanClose: Boolean);
     procedure ScriptAc(Dugme: TTreeNode);
     procedure TabloKomutAc(Dugme: TTreeNode; Tur: TTabloKomutTuru);
+    procedure ProsedurCagriAc(Dugme: TTreeNode);
+    procedure NesneAdiniKopyala(Dugme: TTreeNode);
     function ProsedurSekmeAl(Sayfa: TTabSheet): TProsedurSekme;
     function AktifProsedurSekmesi: TProsedurSekme;
     procedure NesneDuzenleAc(Dugme: TTreeNode);
@@ -466,6 +471,7 @@ begin
   miBagimliliklar.Caption := T('MENU_BAGIMLILIKLAR');
   miYetkiler.Caption := T('MENU_YETKILER');
   miScriptUret.Caption := T('MENU_SCRIPT_URET');
+  miProsedurCagri.Caption := T('MENU_PROSEDUR_CAGRI');
   miTabloScript.Caption := T('MENU_SCRIPT_URET');
   miTsCreate.Caption := T('SCRIPT_CREATE');
   miTsSelect.Caption := T('SCRIPT_SELECT');
@@ -1631,6 +1637,54 @@ begin
   end;
   YeniSorgu(Script);
   MesajYaz(TF('MSG_KOMUT_SCRIPT_URETILDI', [Oge.Ad]));
+end;
+
+{ Prosedure sag tik > Calistirma komutu: SELECT * FROM P(...) ya da EXECUTE PROCEDURE P(...) yeni sorgu sekmesinde acilir,
+  calistirilmaz; girdi parametreleri NULL yer tutucusudur, kullanici doldurur. }
+procedure TfrmAna.ProsedurCagriAc(Dugme: TTreeNode);
+var
+  Oge: TAgacOgesi;
+  Bag: TAcikBaglanti;
+  Script: string;
+begin
+  Oge := OgeAl(Dugme);
+  Bag := FbAcikBaglanti(Oge.BaglantiAd);
+  if Bag = nil then
+    Exit;
+  try
+    Script := ProsedurCagriScripti(Bag, Oge.Ad);
+  except
+    on E: EMetadataHatasi do
+    begin
+      HataYaz(E.Message, '');
+      Exit;
+    end;
+    on E: Exception do
+    begin
+      HataYaz(T('ERR_DDL_ALINAMADI') + ' ' + HataMetniniCevir(E), E.Message);
+      Exit;
+    end;
+  end;
+  YeniSorgu(Script);
+  MesajYaz(TF('MSG_PROSEDUR_CAGRI_ACILDI', [Oge.Ad]));
+end;
+
+{ Agacta Ctrl+C: secili nesnenin adi panoya (SQL'de gerekiyorsa tirnakli). Baglanti, klasor ve dalda bir sey yapmaz. }
+procedure TfrmAna.NesneAdiniKopyala(Dugme: TTreeNode);
+var
+  Oge: TAgacOgesi;
+  Bag: TAcikBaglanti;
+  Ad: string;
+begin
+  Oge := OgeAl(Dugme);
+  if (Oge = nil) or (Oge.Tur <> atNesne) then
+    Exit;
+  Bag := FbAcikBaglanti(Oge.BaglantiAd);
+  if Bag = nil then
+    Exit;
+  Ad := AdiYaz(Bag, Oge.Ad);
+  Clipboard.AsText := Ad;
+  MesajYaz(TF('MSG_AD_KOPYALANDI', [Ad]));
 end;
 
 { Prosedurun, tetikleyicinin veya view'in CREATE OR ALTER metnini duzenleme sekmesinde acar (hangisi oldugu agactaki
@@ -2906,6 +2960,16 @@ begin
     UyariGoster(T('YONETICI_BASLATILAMADI'));
 end;
 
+{ Ctrl+C: secili nesnenin adini panoya kopyalar. }
+procedure TfrmAna.tvNesnelerKeyDown(Sender: TObject; var Key: Word; Shift: TShiftState);
+begin
+  if (Key = Ord('C')) and (Shift = [ssCtrl]) and (tvNesneler.Selected <> nil) then
+  begin
+    NesneAdiniKopyala(tvNesneler.Selected);
+    Key := 0;
+  end;
+end;
+
 procedure TfrmAna.tvNesnelerChange(Sender: TObject; Node: TTreeNode);
 begin
   DurumuGuncelle;
@@ -3049,6 +3113,7 @@ begin
   { Tablo: "Script uret" alt menu (CREATE, SELECT, INSERT, UPDATE, DELETE); diger nesneler: tek madde (CREATE). }
   miTabloScript.Visible := Uretilebilir and (OgeAl(Dugme).DalNo = DAL_TABLO);
   miScriptUret.Visible := Uretilebilir and not miTabloScript.Visible;
+  miProsedurCagri.Visible := Uretilebilir and (OgeAl(Dugme).DalNo = DAL_PROSEDUR);
   { Yetkiler: tablo, view ve prosedur (kimde ne yetkisi var, ver / geri al). }
   miYetkiler.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_TABLO, DAL_VIEW, DAL_PROSEDUR]);
   miNesneDuzenle.Visible := Uretilebilir and (OgeAl(Dugme).DalNo in [DAL_VIEW, DAL_PROSEDUR, DAL_TETIKLEYICI, DAL_ISTISNA]);
@@ -3122,6 +3187,12 @@ begin
   Sekme := SekmeAl(pcCalisma.ActivePage);
   if Sekme <> nil then
     Sekme.BagimliliklariGoster;
+end;
+
+procedure TfrmAna.miProsedurCagriClick(Sender: TObject);
+begin
+  if tvNesneler.Selected <> nil then
+    ProsedurCagriAc(tvNesneler.Selected);
 end;
 
 procedure TfrmAna.miScriptUretClick(Sender: TObject);

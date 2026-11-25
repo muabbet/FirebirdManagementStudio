@@ -48,6 +48,7 @@ type
     pnlVeriBaslik: TPanel;
     lblVeri: TLabel;
     btnDisaAktar: TButton;
+    btnKayitSay: TButton;
     btnDuzenle: TButton;
     btnIceAktar: TButton;
     btnYeniKayit: TButton;
@@ -74,6 +75,7 @@ type
     dsKisitlar: TDataSource;
     dsBagimliliklar: TDataSource;
     procedure btnDisaAktarClick(Sender: TObject);
+    procedure btnKayitSayClick(Sender: TObject);
     procedure btnDuzenleClick(Sender: TObject);
     procedure btnIceAktarClick(Sender: TObject);
     procedure btnYeniKayitClick(Sender: TObject);
@@ -191,6 +193,7 @@ begin
   edtFiltre.Text := FFiltre;
   btnFiltreKaldir.Visible := TamFiltre <> '';
   btnDisaAktar.Enabled := True;
+  btnKayitSay.Enabled := True;
   btnDuzenle.Enabled := True;
   btnIceAktar.Enabled := True;
 end;
@@ -1174,6 +1177,49 @@ begin
     VeriyiYukle(Bag);
 end;
 
+{ "Kayit say": tablonun (filtre varsa filtreye uyan) toplam kayit sayisi, COUNT(*) sunucuda. Buyuk tabloda surebilir,
+  bu yuzden kendiliginden degil dugmeyle. Sonuc baslikta ve alt alanda, SQL karsiligi SQL alaninda. }
+procedure TTabloSekme.btnKayitSayClick(Sender: TObject);
+var
+  Bag: TAcikBaglanti;
+  Sayi: Int64;
+  Sql, Satir: string;
+begin
+  Bag := BaglantiAl;
+  if Bag = nil then
+    Exit;
+  { Filtre kosulu satir sonuyla kapanir (yorum satiri kapanisi yutmasin); alt alanda tek satir gorunsun. }
+  Sql := StringReplace(KayitSayisiSql(TabloAdi, TamFiltre), sLineBreak, ' ', [rfReplaceAll]);
+  Screen.Cursor := crHourGlass;
+  try
+    try
+      Sayi := KayitSayisi(Bag, TabloAdi, TamFiltre);
+    except
+      on E: Exception do
+      begin
+        if Assigned(SqlYaz) then
+          SqlYaz([Sql]);
+        UyariGoster(HataMetniniCevir(E));
+        Exit;
+      end;
+    end;
+  finally
+    Screen.Cursor := crDefault;
+  end;
+  Satir := TF('LBL_TOPLAM_KAYIT', [FormatFloat('#,##0', Sayi)]);
+  if TamFiltre <> '' then
+    Satir := Satir + ' (' + T('LBL_FILTRELI') + ')';
+  Yaz(TabloAdi + ': ' + Satir);
+  if FDuzelt = nil then
+  begin
+    DuzenlemeDurumunuYaz;
+    lblVeri.Caption := lblVeri.Caption + ' - ' + Satir;
+    lblVeri.Hint := lblVeri.Caption;
+  end;
+  if Assigned(SqlYaz) then
+    SqlYaz([Sql]);
+end;
+
 procedure TTabloSekme.btnDisaAktarClick(Sender: TObject);
 var
   Bag: TAcikBaglanti;
@@ -1234,6 +1280,8 @@ begin
   btnFiltreKaldir.Caption := T('FILTRE_KALDIR');
   DugmeyiYaziyaUydur(btnFiltreKaldir);
   btnDisaAktar.Caption := T('AKTAR_DUGME');
+  btnKayitSay.Caption := T('BTN_KAYIT_SAY');
+  DugmeyiYaziyaUydur(btnKayitSay);
   btnIceAktar.Caption := T('BTN_ICE_AKTAR');
   DugmeyiYaziyaUydur(btnIceAktar);
   if FDuzelt = nil then

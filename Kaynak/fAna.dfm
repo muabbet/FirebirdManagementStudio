@@ -107,6 +107,7 @@ object frmAna: TfrmAna
     OnDragOver = tvNesnelerDragOver
     OnMouseDown = tvNesnelerMouseDown
     OnMouseMove = tvNesnelerMouseMove
+    OnKeyDown = tvNesnelerKeyDown
   end
   object bolSol: TSplitter
     Left = 270
@@ -180,6 +181,9 @@ object frmAna: TfrmAna
     end
     object miScriptUret: TMenuItem
       OnClick = miScriptUretClick
+    end
+    object miProsedurCagri: TMenuItem
+      OnClick = miProsedurCagriClick
     end
     object miTabloScript: TMenuItem
       object miTsCreate: TMenuItem
