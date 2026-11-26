@@ -10,7 +10,7 @@ Firebird için sade, ücretsiz ve açık kaynak yönetim aracı. SSMS'e (SQL Ser
 
 [Son sürümü indirin](https://github.com/muabbet/FirebirdManagementStudio/releases/latest), zip dosyasını açın, `FirebirdManagementStudio.exe` dosyasını çalıştırın. Kurulum yok; Firebird istemcisi, diller ve ikonlar exe'nin içindedir.
 
-- **Windows 10/11, 64 bit gerekir.** 32 bit Windows'ta çalışmaz. Windows 7 denenmedi.
+- **Windows 10/11, 64 bit gerekir.** 32 bit Windows'ta, Windows 7 ve 8.1'de desteklenmez.
 - Bağlanmak için ağda ya da yerelde çalışan bir Firebird sunucusu gerekir (2.5, 3.0, 4.0 veya 5.0).
 - Bağlantı penceresindeki **Sunucular** düğmesi ağdaki Firebird sunucularını bulur.
 

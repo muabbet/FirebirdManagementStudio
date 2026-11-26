@@ -95,6 +95,7 @@ object SorguSekme: TSorguSekme
       Align = alClient
       DataSource = dsSonuc
       Options = [dgTitles, dgIndicator, dgColumnResize, dgColLines, dgRowLines, dgTabs, dgCancelOnExit]
+      PopupMenu = pmSonuc
       ReadOnly = True
       TabOrder = 0
     end
@@ -103,5 +104,19 @@ object SorguSekme: TSorguSekme
     OnDataChange = dsSonucDataChange
     Left = 40
     Top = 300
+  end
+  object pmSonuc: TPopupMenu
+    OnPopup = pmSonucPopup
+    Left = 120
+    Top = 300
+    object miKopyala: TMenuItem
+      OnClick = miKopyalaClick
+    end
+    object miBaslikliKopyala: TMenuItem
+      OnClick = miBaslikliKopyalaClick
+    end
+    object miInListesi: TMenuItem
+      OnClick = miInListesiClick
+    end
   end
 end

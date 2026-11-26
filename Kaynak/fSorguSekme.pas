@@ -9,7 +9,7 @@ interface
 
 uses
   Winapi.Windows, Winapi.Messages, System.SysUtils, System.Classes, System.Generics.Collections, Data.DB, Vcl.Controls, Vcl.Forms, Vcl.ExtCtrls,
-  Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.Dialogs,
+  Vcl.StdCtrls, Vcl.Grids, Vcl.DBGrids, Vcl.Dialogs, Vcl.Menus,
   FireDAC.Comp.Client,
   uDil, uPaket, uOnay, uBaglanti, uMetadata, uSorgu, uEditor, uSonucGrid, uCokluSorgu, uAktar, fCsvAktar, uKullanici, fIndeksOner, uSorguGecmisi, fGecmis, uFiltreSatiri, uSqlDosya;
 
@@ -25,8 +25,16 @@ type
     memMesaj: TMemo;
     gridSonuc: TDBGrid;
     dsSonuc: TDataSource;
+    pmSonuc: TPopupMenu;
+    miKopyala: TMenuItem;
+    miBaslikliKopyala: TMenuItem;
+    miInListesi: TMenuItem;
     procedure dsSonucDataChange(Sender: TObject; Field: TField);
     procedure btnDisaAktarClick(Sender: TObject);
+    procedure pmSonucPopup(Sender: TObject);
+    procedure miKopyalaClick(Sender: TObject);
+    procedure miBaslikliKopyalaClick(Sender: TObject);
+    procedure miInListesiClick(Sender: TObject);
   private
     FEditor: TSqlEditor;
     FGrid: TSonucGrid;
@@ -35,6 +43,8 @@ type
     { Filtre satirinin dayandigi SELECT (kullanicinin calistirdigi, filtresiz hali) ve uygulanan kolon kosulu. }
     FTemelSql: string;
     FSatirKosulu: string;
+    { Sag tik menusunun acildigi kolon (IN listesi icin); kolon ustunde degilse bos. }
+    FMenuAlan: string;
     procedure SonucuBirak;
     procedure FiltreSatiriDegisti(Sender: TObject);
     procedure FiltreOnerisiIste(const AlanAdi, Yazi: string; Sonuc: TStrings);
@@ -84,6 +94,10 @@ type
 implementation
 
 {$R *.dfm}
+
+type
+  { Row korumalidir; sag tiklanan satira gitmek icin tek amacli erisim. }
+  TSorguGridErisim = class(TDBGrid);
 
 destructor TSorguSekme.Destroy;
 begin
@@ -345,6 +359,70 @@ end;
 procedure TSorguSekme.dsSonucDataChange(Sender: TObject; Field: TField);
 begin
   SatirSayisiniYaz;
+end;
+
+{ Sag tik menusu: tiklanan hucre aktif hucre olur (Ctrl+tikla satir secimi yoksa); IN listesi o kolon icin. }
+procedure TSorguSekme.pmSonucPopup(Sender: TObject);
+var
+  Nokta: TPoint;
+  Koordinat: TGridCoord;
+  Veri: TDataSet;
+  SonucVar: Boolean;
+begin
+  FMenuAlan := '';
+  Veri := dsSonuc.DataSet;
+  SonucVar := (Veri <> nil) and Veri.Active and not Veri.IsEmpty;
+  Nokta := gridSonuc.ScreenToClient(Mouse.CursorPos);
+  Koordinat := gridSonuc.MouseCoord(Nokta.X, Nokta.Y);
+  if SonucVar and (Koordinat.X > 0) and (Koordinat.X <= gridSonuc.Columns.Count) then
+  begin
+    if (Koordinat.Y > 0) and (gridSonuc.SelectedRows.Count = 0) then
+    begin
+      Veri.MoveBy(Koordinat.Y - TSorguGridErisim(gridSonuc).Row);
+      gridSonuc.SelectedIndex := Koordinat.X - 1;
+    end;
+    if InListesineUygunMu(gridSonuc.Columns[Koordinat.X - 1].Field) then
+      FMenuAlan := gridSonuc.Columns[Koordinat.X - 1].FieldName;
+  end;
+  miKopyala.Caption := T('GRID_KOPYALA');
+  miBaslikliKopyala.Caption := T('GRID_BASLIKLI_KOPYALA');
+  if FMenuAlan <> '' then
+    miInListesi.Caption := TF('GRID_IN_LISTESI', [FMenuAlan])
+  else
+    miInListesi.Caption := T('GRID_IN_LISTESI_KOLONSUZ');
+  miKopyala.Enabled := SonucVar;
+  miBaslikliKopyala.Enabled := SonucVar;
+  miInListesi.Enabled := FMenuAlan <> '';
+end;
+
+procedure TSorguSekme.miKopyalaClick(Sender: TObject);
+begin
+  FGrid.SecimiKopyala(False);
+end;
+
+procedure TSorguSekme.miBaslikliKopyalaClick(Sender: TObject);
+begin
+  FGrid.SecimiKopyala(True);
+end;
+
+{ Kolonun yuklenmis degerleri panoya: (1, 2, 3) ya da ('a', 'b'). Firebird sinirini asarsa uyarir. }
+procedure TSorguSekme.miInListesiClick(Sender: TObject);
+var
+  Sayi: Integer;
+  Metin: string;
+begin
+  if FMenuAlan = '' then
+    Exit;
+  Sayi := FGrid.KolonuInListesiKopyala(FMenuAlan);
+  if Sayi = 0 then
+  begin
+    MesajYaz(TF('MSG_IN_LISTESI_BOS', [FMenuAlan]));
+    Exit;
+  end;
+  Metin := TF('MSG_IN_LISTESI_KOPYALANDI', [Sayi, FMenuAlan]);
+  if Sayi > IN_LISTESI_SINIRI then
+    Metin := Metin + sLineBreak + TF('MSG_IN_LISTESI_SINIR', [IN_LISTESI_SINIRI]);
+  MesajYaz(Metin);
 end;
 
 { Dugme: ekrandaki sonucu uretan SELECT'i yeniden calistirip TUM satirlari CSV'ye yazar (bkz. uAktar). }

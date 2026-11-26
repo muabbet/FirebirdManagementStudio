@@ -6,7 +6,8 @@
     3. NULL degerler gri ve egik yazi ile
     4. Kolon genisligi icerige gore (ilk satirlara bakar)
     5. Ctrl+C: Ctrl+tikla secilen satirlar, secim yoksa aktif hucre kopyalanir
-       (sekmeyle ayrili, Excel'e yapistirilabilir)
+       (sekmeyle ayrili, Excel'e yapistirilabilir); basliklarla kopyalama ve
+       kolonu IN listesi olarak kopyalama (sorgu sekmesinin sag tik menusu)
     6. Uzun yazi ve BLOB kisaltilir, cift tiklayinca tamami acilir
 
   Kullanim: TSonucGrid.Create(Grid) bir kez; her yeni sonuc verisetine
@@ -19,7 +20,7 @@ uses
   System.SysUtils, System.Classes, System.Types, System.Math, System.Variants, Data.DB,
   Winapi.Windows, Vcl.Graphics, Vcl.Controls, Vcl.Forms, Vcl.Grids, Vcl.DBGrids,
   Vcl.Clipbrd,
-  FireDAC.Comp.DataSet,
+  FireDAC.Stan.Option, FireDAC.Comp.DataSet,
   uDil, fMetinGoster;
 
 type
@@ -40,7 +41,6 @@ type
     procedure CiftTik(Sender: TObject);
     procedure BasliklariYaz;
     procedure KolonGenisliginiAyarla;
-    procedure SecimiKopyala;
   public
     { Doluysa baslik tiklayinca (duzenleme kapaliyken) siralama bu olaya birakilir: sonucu sunucuda
       siralayip YeniSonuc(Alan, Azalan) ile geri verir. Bos ise yuklenen satirlar grid icinde siralanir. }
@@ -50,13 +50,34 @@ type
     procedure YeniSonuc(const SiraAlan: string = ''; Azalan: Boolean = False);
     { Kayit duzeltme kipi (Asama 4d, bkz. uKayitDuzelt): hucre yazilabilir, degisen hucreler sari. }
     procedure Duzenle(Ac: Boolean);
+    { Ctrl+C ve sag tik "Kopyala": Ctrl+tikla secilen satirlar, secim yoksa aktif hucre panoya.
+      Basliklarla ise ilk satira kolon adlari yazilir. }
+    procedure SecimiKopyala(Basliklarla: Boolean = False);
+    { Sag tik "Kolonu IN listesi olarak kopyala": kolonun YUKLENMIS satirlardaki degerleri, tekrarsiz,
+      ('a', 'b') ya da (1, 2) bicimiyle panoya. NULL alinmaz, yeni satir cekilmez. Kopyalanan deger sayisi doner. }
+    function KolonuInListesiKopyala(const AlanAdi: string): Integer;
   end;
 
+{ Degerler (zaten SQL degeri: 'metin' ya da 12) virgulle ayrilip parantez icine alinir. Bos listede ''. }
+function InListesiMetni(Degerler: TStrings): string;
+
+{ Alan IN listesine konabilir mi (ikili BLOB konamaz). }
+function InListesineUygunMu(Alan: TField): Boolean;
+
+const
+  { Firebird bir IN listesinde en cok bu kadar deger kabul eder (5.0 oncesi). }
+  IN_LISTESI_SINIRI = 1500;
+
 implementation
+
+uses
+  uAktar;
 
 type
   { DefaultRowHeight korumalidir; satir yuksekligini ayarlamak icin tek amacli erisim. }
   TGridErisim = class(TDBGrid);
+  { FetchOptions TFDDataSet'te korumalidir; IN listesi dolasirken yeni satir cekilmesin diye tek amacli erisim. }
+  TVeriErisim = class(TFDDataSet);
 
 const
   KISA_UZUNLUK = 100;
@@ -396,7 +417,7 @@ begin
   end;
 end;
 
-procedure TSonucGrid.SecimiKopyala;
+procedure TSonucGrid.SecimiKopyala(Basliklarla: Boolean);
 var
   Veri: TDataSet;
   Yer: TBookmark;
@@ -409,9 +430,23 @@ begin
   Veri := FGrid.DataSource.DataSet;
   Metin := '';
   if FGrid.SelectedRows.Count = 0 then
-    Metin := KopyaMetni(FGrid.SelectedField)
+  begin
+    Metin := KopyaMetni(FGrid.SelectedField);
+    if Basliklarla and (FGrid.SelectedField <> nil) then
+      Metin := FGrid.SelectedField.FieldName + #13#10 + Metin;
+  end
   else
   begin
+    if Basliklarla then
+    begin
+      for j := 0 to FGrid.Columns.Count - 1 do
+      begin
+        if j > 0 then
+          Metin := Metin + #9;
+        Metin := Metin + FGrid.Columns[j].FieldName;
+      end;
+      Metin := Metin + #13#10;
+    end;
     Veri.DisableControls;
     Yer := Veri.GetBookmark;
     try
@@ -434,6 +469,92 @@ begin
     end;
   end;
   Clipboard.AsText := Metin;
+end;
+
+{ ---------- Sag tik: kolonu IN listesi olarak kopyala ---------- }
+
+function InListesiMetni(Degerler: TStrings): string;
+var
+  i: Integer;
+begin
+  Result := '';
+  if Degerler.Count = 0 then
+    Exit;
+  for i := 0 to Degerler.Count - 1 do
+  begin
+    if i > 0 then
+      Result := Result + ', ';
+    Result := Result + Degerler[i];
+  end;
+  Result := '(' + Result + ')';
+end;
+
+function InListesineUygunMu(Alan: TField): Boolean;
+begin
+  Result := (Alan <> nil) and (Alan.FieldKind = fkData) and not AlanIkiliMi(Alan);
+end;
+
+function TSonucGrid.KolonuInListesiKopyala(const AlanAdi: string): Integer;
+var
+  Veri: TDataSet;
+  Alan: TField;
+  Yer: TBookmark;
+  Degerler, Gorulen: TStringList;
+  Deger: string;
+  EskiKip: TFDFetchMode;
+begin
+  Result := 0;
+  if (FGrid.DataSource = nil) or (FGrid.DataSource.DataSet = nil) or
+    not FGrid.DataSource.DataSet.Active then
+    Exit;
+  Veri := FGrid.DataSource.DataSet;
+  Alan := Veri.FindField(AlanAdi);
+  if not InListesineUygunMu(Alan) then
+    Exit;
+  Degerler := TStringList.Create;
+  { Tekrar denetimi: sirali liste hizli arar; Degerler ise gridde gorunen sirayi korur. }
+  Gorulen := TStringList.Create;
+  Gorulen.Sorted := True;
+  Gorulen.CaseSensitive := True;
+  { Yalniz yuklenmis satirlar: dolasirken sunucudan yeni satir cekilmesin. }
+  EskiKip := fmAll;
+  if Veri is TFDDataSet then
+  begin
+    EskiKip := TVeriErisim(Veri).FetchOptions.Mode;
+    TVeriErisim(Veri).FetchOptions.Mode := fmManual;
+  end;
+  try
+    Veri.DisableControls;
+    Yer := Veri.GetBookmark;
+    try
+      Veri.First;
+      while not Veri.Eof do
+      begin
+        if not Alan.IsNull then
+        begin
+          Deger := AlanSqlDegeri(Alan);
+          if Gorulen.IndexOf(Deger) < 0 then
+          begin
+            Gorulen.Add(Deger);
+            Degerler.Add(Deger);
+          end;
+        end;
+        Veri.Next;
+      end;
+      Veri.GotoBookmark(Yer);
+    finally
+      Veri.FreeBookmark(Yer);
+      Veri.EnableControls;
+      if Veri is TFDDataSet then
+        TVeriErisim(Veri).FetchOptions.Mode := EskiKip;
+    end;
+    Result := Degerler.Count;
+    if Result > 0 then
+      Clipboard.AsText := InListesiMetni(Degerler);
+  finally
+    Degerler.Free;
+    Gorulen.Free;
+  end;
 end;
 
 end.
